@@ -427,6 +427,9 @@ pub fn process_patch(data_dir : &str, path : &str) {
 
                                 fs::remove_file(new_path.as_str());
                             }
+                            SqpkFileOperation::RemoveAll => {
+                                println!("STUB: SqpkFileOperation::RemoveAll");
+                            }
                             _ => {
                                 panic!("Unhandled operation!");
                             }
