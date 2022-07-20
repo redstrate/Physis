@@ -32,3 +32,4 @@ mod macros;
 
 pub mod blowfish;
 mod blowfish_constants;
+pub mod installer;
