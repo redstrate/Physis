@@ -414,6 +414,9 @@ pub fn process_patch(data_dir : &str, path : &str) {
 
                                 fs::remove_file(new_path.as_str());
                             }
+                            _ => {
+                                panic!("Unhandled operation!");
+                            }
                         }
                     }
                     _ => {}
