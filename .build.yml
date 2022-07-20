@@ -1,0 +1,13 @@
+image: archlinux
+packages:
+  - rust
+  - cargo-deny
+sources:
+  - https://git.sr.ht/~redstrate/physis
+tasks:
+  - check: |
+      cd physis
+      cargo check
+  - deny-check: |
+      cd physis
+      cargo deny check
