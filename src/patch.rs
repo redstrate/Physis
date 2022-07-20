@@ -306,6 +306,31 @@ fn write_empty_file_block_at(mut file : &File, offset : i32, block_number : i32)
     file.write(used_blocks.to_le_bytes().as_slice());
 }
 
+fn get_expansion_folder(sub_id : u16) -> String {
+    let expansion_id = sub_id >> 8;
+
+    match expansion_id {
+        0 => "ffxiv".to_string(),
+        (x) => format!("ex{}", x)
+    }
+}
+
+fn get_dat_filename(data_dir : &str, main_id : u16, sub_id : u16, file_id : u32) -> String {
+    format!("{}/sqpack/{}/{:02x}{:04x}.win32.dat{}", data_dir, get_expansion_folder(sub_id), main_id, sub_id, file_id)
+}
+
+fn get_index_filename(data_dir : &str, main_id : u16, sub_id : u16, file_id : u32) -> String {
+    // FIXME: don't hardcode win32 here. target/patchinfo contains the correct platform :-)
+    let mut path = format!("{}/sqpack/{}/{:02x}{:04x}.win32.index", data_dir, get_expansion_folder(sub_id), main_id, sub_id);
+
+    // index files have no special ending if it's file_id == 0
+    if file_id != 0 {
+        path += &*format!("{}", file_id);
+    }
+
+    path
+}
+
 pub fn process_patch(data_dir : &str, path : &str) {
     let mut file = File::open(path).unwrap();
 
@@ -318,7 +343,7 @@ pub fn process_patch(data_dir : &str, path : &str) {
             ChunkType::Sqpk(pchunk) => {
                 match pchunk.operation {
                     SqpkOperation::AddData(add) => {
-                        let filename = format!("{}/sqpack/ffxiv/{:02x}{:04x}.win32.dat{}", data_dir, add.main_id, add.sub_id, add.file_id);
+                        let filename = get_dat_filename(data_dir, add.main_id, add.sub_id, add.file_id);
 
                         let mut new_file = OpenOptions::new()
                             .write(true)
@@ -332,7 +357,7 @@ pub fn process_patch(data_dir : &str, path : &str) {
                         wipe(&mut new_file, add.block_delete_number);
                     }
                     SqpkOperation::DeleteData(delete) => {
-                        let filename = format!("{}/sqpack/ffxiv/{:02x}{:04x}.win32.dat{}", data_dir, delete.main_id, delete.sub_id, delete.file_id);
+                        let filename = get_dat_filename(data_dir, delete.main_id, delete.sub_id, delete.file_id);
 
                         let mut new_file = OpenOptions::new()
                             .write(true)
@@ -342,7 +367,7 @@ pub fn process_patch(data_dir : &str, path : &str) {
                         write_empty_file_block_at(&mut new_file, delete.block_offset, delete.block_number);
                     }
                     SqpkOperation::ExpandData(expand) => {
-                        let filename = format!("{}/sqpack/ffxiv/{:02x}{:04x}.win32.dat{}", data_dir, expand.main_id, expand.sub_id, expand.file_id);
+                        let filename = get_dat_filename(data_dir, expand.main_id, expand.sub_id, expand.file_id);
 
                         let mut new_file = OpenOptions::new()
                             .write(true)
@@ -356,15 +381,10 @@ pub fn process_patch(data_dir : &str, path : &str) {
 
                         match header.file_kind {
                             TargetFileKind::Dat => {
-                                file_path = format!("{}/sqpack/ffxiv/{:02x}{:04x}.win32.dat{}", data_dir, header.main_id, header.sub_id, header.file_id);
+                                file_path = get_dat_filename(data_dir, header.main_id, header.sub_id, header.file_id)
                             }
                             TargetFileKind::Index => {
-                                file_path = format!("{}/sqpack/ffxiv/{:02x}{:04x}.win32.index", data_dir, header.main_id, header.sub_id);
-
-                                // index files have no special ending if it's file_id == 0
-                                if header.file_id != 0 {
-                                    file_path += &*format!("{}", header.file_id);
-                                }
+                                file_path = get_index_filename(data_dir, header.main_id, header.sub_id, header.file_id)
                             }
                         }
 
