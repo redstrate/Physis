@@ -162,7 +162,8 @@ struct SqpkPatchInfo {
 #[derive(PartialEq, Debug)]
 enum SqpkFileOperation {
     #[br(magic = b'A')] AddFile,
-    #[br(magic = b'R')] RemoveAll
+    #[br(magic = b'R')] RemoveAll,
+    #[br(magic = b'D')] DeleteFile
 }
 
 #[derive(BinRead, PartialEq, Debug)]
@@ -268,6 +269,43 @@ struct SqpkChunk {
     operation : SqpkOperation
 }
 
+const WIPE_BUFFER: [u8; 1 << 16] = [0; 1 << 16];
+
+fn wipe(mut file : &File, length : i32) {
+    let mut length = length;
+    while length > 0 {
+        let num_bytes = min(WIPE_BUFFER.len() as i32, length);
+        file.write(&WIPE_BUFFER[0..num_bytes as usize]);
+        length -= num_bytes;
+    }
+}
+
+fn wipe_from_offset(mut file : &File, length : i32, offset : i32) {
+    file.seek(SeekFrom::Start(offset as u64));
+    wipe(file, length);
+}
+
+fn write_empty_file_block_at(mut file : &File, offset : i32, block_number : i32) {
+    wipe_from_offset(file, block_number << 7, offset);
+
+    file.seek(SeekFrom::Start(offset as u64));
+
+    let block_size : i32 = 1 << 7;
+    file.write(block_size.to_le_bytes().as_slice());
+
+    let unknown : i32 = 0;
+    file.write(unknown.to_le_bytes().as_slice());
+
+    let file_size : i32 = 0;
+    file.write(file_size.to_le_bytes().as_slice());
+
+    let num_blocks : i32 = block_number - 1;
+    file.write(num_blocks.to_le_bytes().as_slice());
+
+    let used_blocks : i32 = 0;
+    file.write(used_blocks.to_le_bytes().as_slice());
+}
+
 pub fn process_patch(data_dir : &str, path : &str) {
     let mut file = File::open(path).unwrap();
 
@@ -291,15 +329,7 @@ pub fn process_patch(data_dir : &str, path : &str) {
 
                         new_file.write(&*add.block_data);
 
-                        let wipe_buffer : [u8; 1 << 16] = [0; 1 << 16];
-
-                        let mut length = add.block_delete_number;
-                        let mut num_bytes = 0;
-                        while length > 0 {
-                            num_bytes = min(wipe_buffer.len() as i32, add.block_delete_number);
-                            new_file.write(&wipe_buffer[0..num_bytes as usize]);
-                            length -= num_bytes;
-                        }
+                        wipe(&mut new_file, add.block_delete_number);
                     }
                     SqpkOperation::DeleteData(delete) => {
                         let filename = format!("{}/sqpack/ffxiv/{:02x}{:04x}.win32.dat{}", data_dir, delete.main_id, delete.sub_id, delete.file_id);
@@ -309,32 +339,7 @@ pub fn process_patch(data_dir : &str, path : &str) {
                             .create(true)
                             .open(filename).unwrap();
 
-                        new_file.seek(SeekFrom::Start(delete.block_offset as u64));
-
-                        let wipe_buffer : [u8; 1 << 16] = [0; 1 << 16];
-
-                        let mut length = delete.block_number << 7;
-                        let mut num_bytes = 0;
-                        while length > 0 {
-                            num_bytes = min(wipe_buffer.len() as i32, delete.block_number << 7);
-                            new_file.write(&wipe_buffer[0..num_bytes as usize]);
-                            length -= num_bytes;
-                        }
-
-                        let block_size : i32 = 1 >> 7;
-                        new_file.write(block_size.to_le_bytes().as_slice());
-
-                        let unknown : i32 = 0;
-                        new_file.write(unknown.to_le_bytes().as_slice());
-
-                        let file_size : i32 = 0;
-                        new_file.write(file_size.to_le_bytes().as_slice());
-
-                        let num_blocks : i32 = delete.block_number - 1;
-                        new_file.write(num_blocks.to_le_bytes().as_slice());
-
-                        let used_blocks : i32 = 0;
-                        new_file.write(used_blocks.to_le_bytes().as_slice());
+                        write_empty_file_block_at(&mut new_file, delete.block_offset, delete.block_number);
                     }
                     SqpkOperation::ExpandData(expand) => {
                         let filename = format!("{}/sqpack/ffxiv/{:02x}{:04x}.win32.dat{}", data_dir, expand.main_id, expand.sub_id, expand.file_id);
@@ -344,32 +349,7 @@ pub fn process_patch(data_dir : &str, path : &str) {
                             .create(true)
                             .open(filename).unwrap();
 
-                        new_file.seek(SeekFrom::Start(expand.block_offset as u64));
-
-                        let wipe_buffer : [u8; 1 << 16] = [0; 1 << 16];
-
-                        let mut length = expand.block_number << 7;
-                        let mut num_bytes = 0;
-                        while length > 0 {
-                            num_bytes = min(wipe_buffer.len() as i32, expand.block_number << 7);
-                            new_file.write(&wipe_buffer[0..num_bytes as usize]);
-                            length -= num_bytes;
-                        }
-
-                        let block_size : i32 = 1 >> 7;
-                        new_file.write(block_size.to_le_bytes().as_slice());
-
-                        let unknown : i32 = 0;
-                        new_file.write(unknown.to_le_bytes().as_slice());
-
-                        let file_size : i32 = 0;
-                        new_file.write(file_size.to_le_bytes().as_slice());
-
-                        let num_blocks : i32 = expand.block_number - 1;
-                        new_file.write(num_blocks.to_le_bytes().as_slice());
-
-                        let used_blocks : i32 = 0;
-                        new_file.write(used_blocks.to_le_bytes().as_slice());
+                        write_empty_file_block_at(&mut new_file, expand.block_offset, expand.block_number);
                     }
                     SqpkOperation::HeaderUpdate(header) => {
                         let mut file_path : String;
@@ -429,7 +409,11 @@ pub fn process_patch(data_dir : &str, path : &str) {
 
                                 new_file.write(&mut data);
                             }
-                            _ => {}
+                            SqpkFileOperation::DeleteFile => {
+                                let new_path = data_dir.to_owned() + "/" + &fop.path;
+
+                                fs::remove_file(new_path.as_str());
+                            }
                         }
                     }
                     _ => {}
