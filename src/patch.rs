@@ -338,6 +338,9 @@ pub fn process_patch(data_dir : &str, path : &str) {
                     SqpkOperation::AddData(add) => {
                         let filename = get_dat_filename(data_dir, add.main_id, add.sub_id, add.file_id);
 
+                        let (left, right) = filename.rsplit_once('/').unwrap();
+                        fs::create_dir_all(left);
+
                         let mut new_file = OpenOptions::new()
                             .write(true)
                             .create(true)
@@ -362,6 +365,9 @@ pub fn process_patch(data_dir : &str, path : &str) {
                     SqpkOperation::ExpandData(expand) => {
                         let filename = get_dat_filename(data_dir, expand.main_id, expand.sub_id, expand.file_id);
 
+                        let (left, right) = filename.rsplit_once('/').unwrap();
+                        fs::create_dir_all(left);
+
                         let mut new_file = OpenOptions::new()
                             .write(true)
                             .create(true)
@@ -380,6 +386,9 @@ pub fn process_patch(data_dir : &str, path : &str) {
                                 file_path = get_index_filename(data_dir, header.main_id, header.sub_id, header.file_id)
                             }
                         }
+
+                        let (left, right) = file_path.rsplit_once('/').unwrap();
+                        fs::create_dir_all(left);
 
                         let mut new_file = OpenOptions::new()
                             .write(true)
