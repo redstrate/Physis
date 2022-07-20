@@ -19,7 +19,10 @@ struct PatchChunk {
 
 #[derive(BinRead, PartialEq, Debug)]
 enum ChunkType {
-    #[br(magic = b"FHDR")] FileHeader(FileHeaderChunk),
+    #[br(magic = b"FHDR")] FileHeader(
+        #[br(pad_before = 2)]
+        #[br(pad_after = 1)]
+        FileHeaderChunk),
     #[br(magic = b"APLY")] ApplyOption(ApplyOptionChunk),
     #[br(magic = b"ADIR")] AddDirectory(AddDirectoryChunk),
     #[br(magic = b"DELD")] DeleteDirectory(DeleteDirectoryChunk),
@@ -28,53 +31,43 @@ enum ChunkType {
 }
 
 #[derive(BinRead, PartialEq, Debug)]
-#[br(big)]
-struct FileHeaderChunk {
-    #[br(pad_before = 2)]
-    #[br(pad_after = 1)]
-    version: u8,
+enum FileHeaderChunk {
+    #[br(magic = 2u8)] Version2(FileHeaderChunk2),
+    #[br(magic = 3u8)] Version3(FileHeaderChunk3)
+}
 
+#[derive(BinRead, PartialEq, Debug)]
+#[br(big)]
+struct FileHeaderChunk2 {
     #[br(count = 4)]
     #[br(map = | x: Vec < u8 > | String::from_utf8(x).unwrap())]
     name: String,
 
-    #[br(big)]
+    #[br(pad_before = 8)]
+    depot_hash: u32
+}
+
+#[derive(BinRead, PartialEq, Debug)]
+#[br(big)]
+struct FileHeaderChunk3 {
+    #[br(count = 4)]
+    #[br(map = | x: Vec < u8 > | String::from_utf8(x).unwrap())]
+    name: String,
+
     entry_files: u32,
 
-    #[br(big)]
     add_directories : u32,
-
-    #[br(big)]
     delete_directories : u32,
-
-    #[br(big)]
     delete_data_size : u32,
-
-    #[br(big)]
     delete_data_size_2 : u32,
-
-    #[br(big)]
     minor_version : u32,
-
-    #[br(big)]
     repository_name : u32,
-
-    #[br(big)]
     commands : u32,
-
-    #[br(big)]
     sqpk_add_commands: u32,
-
-    #[br(big)]
     sqpk_delete_commands: u32,
-
-    #[br(big)]
     sqpk_expand_commands: u32,
-
-    #[br(big)]
     sqpk_header_commands: u32,
 
-    #[br(big)]
     #[br(pad_after = 0xB8)]
     sqpk_file_commands: u32
 }
