@@ -2,7 +2,11 @@ use std::ffi::OsStr;
 use std::fs;
 use std::fs::DirEntry;
 use std::path::PathBuf;
+use crate::common::Language;
 use crate::dat::DatFile;
+use crate::exd::EXD;
+use crate::exh::EXH;
+use crate::exl::EXL;
 use crate::index::IndexFile;
 use crate::repository::{Category, Repository, string_to_category};
 use crate::sqpack::calculate_hash;
@@ -173,6 +177,32 @@ impl GameData {
         }
 
         Some((&self.repositories[0], string_to_category(tokens[0])?))
+    }
+
+    pub fn read_excel_sheet_header(&self, name : &str) -> Option<EXH> {
+        let root_exl_file = self.extract("exd/root.exl").unwrap();
+
+        let root_exl = EXL::from_existing(&root_exl_file).unwrap();
+
+        for (row, _) in root_exl.entries {
+            if row == name {
+                let new_filename = name.to_lowercase();
+
+                let path = format!("exd/{new_filename}.exh");
+
+                return EXH::from_existing(&self.extract(&path).unwrap())
+            }
+        }
+
+        None
+    }
+
+    pub fn read_excel_sheet(&self, name : &str, exh : &EXH, language : Language, page : usize) -> Option<EXD> {
+        let exd_path = format!("exd/{}", EXD::calculate_filename(name, language, &exh.pages[page]));
+
+        let exd_file = self.extract(&exd_path).unwrap();
+
+        EXD::from_existing(&exh, &exd_file)
     }
 }
 

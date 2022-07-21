@@ -1,5 +1,6 @@
 use std::collections::HashMap;
-use std::io::{BufRead, BufReader};
+use std::io::{BufRead, BufReader, Cursor};
+use crate::gamedata::MemoryBuffer;
 
 /// Represents an Excel List.
 pub struct EXL {
@@ -12,15 +13,14 @@ pub struct EXL {
 
 impl EXL {
     /// Initializes `EXL` from an existing list.
-    pub fn from_existing(path: &str) -> Option<EXL> {
+    pub fn from_existing(buffer : &MemoryBuffer) -> Option<EXL> {
         let mut exl = Self {
             version: 0,
             entries: HashMap::new(),
         };
 
-        let file = std::fs::File::open(path).unwrap();
-
-        let reader = BufReader::new(file);
+        let cursor = Cursor::new(buffer);
+        let reader = BufReader::new(cursor);
 
         for (_, line) in reader.lines().enumerate() {
             // now parse the line!
