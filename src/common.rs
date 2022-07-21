@@ -1,4 +1,7 @@
-#[repr(u8)]
+use binrw::binread;
+
+#[binread]
+#[br(repr(u8))]
 pub enum Language {
     None,
     Japanese,
@@ -10,8 +13,8 @@ pub enum Language {
     Korean,
 }
 
-pub fn get_language_code(lang: Language) -> &'static str {
-    match lang {
+pub fn get_language_code(lang: &Language) -> &'static str {
+    match &lang {
         Language::None => "",
         Language::Japanese => "ja",
         Language::English => "en",
