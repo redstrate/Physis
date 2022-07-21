@@ -32,6 +32,7 @@ const GAME_COMPONENT_FILES: [&str; 1] = ["ffxivgame.ver"];
 #[repr(C)]
 struct Unshield;
 
+#[link(name = "unshield")]
 extern "C" {
     fn unshield_open(filename: *const c_char) -> *mut Unshield;
     fn unshield_close(unshield: *mut Unshield);
