@@ -2,6 +2,7 @@ use binrw::binread;
 
 #[binread]
 #[br(repr(u8))]
+#[repr(u8)]
 pub enum Language {
     None,
     Japanese,
