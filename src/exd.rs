@@ -44,6 +44,7 @@ pub struct EXD {
 }
 
 #[derive(Debug)]
+#[repr(C)]
 pub enum ColumnData {
     String(String),
     Bool(bool),

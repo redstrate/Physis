@@ -63,13 +63,13 @@ pub struct ExcelDataPagination {
 #[binread]
 #[br(big)]
 pub struct EXH {
-    pub(crate) header : EXHHeader,
+    pub header : EXHHeader,
 
     #[br(count = header.column_count)]
-    pub(crate) column_definitions : Vec<ExcelColumnDefinition>,
+    pub column_definitions : Vec<ExcelColumnDefinition>,
 
     #[br(count = header.page_count)]
-    pub(crate) pages : Vec<ExcelDataPagination>,
+    pub pages : Vec<ExcelDataPagination>,
 
     #[br(count = header.language_count)]
     languages : Vec<Language>
