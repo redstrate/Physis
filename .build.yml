@@ -11,3 +11,6 @@ tasks:
   - deny-check: |
       cd physis
       cargo deny check
+  - test: |
+      cd physis
+      cargo test
