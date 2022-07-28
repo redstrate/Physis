@@ -16,7 +16,7 @@ pub mod index;
 
 mod dat;
 mod compression;
-mod model;
+pub mod model;
 
 /// All of the races in Eorzea in a nice enum package.
 pub mod race;

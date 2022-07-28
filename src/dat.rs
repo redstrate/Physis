@@ -2,7 +2,7 @@ use std::io::{Cursor, Read, Seek, SeekFrom};
 use binrw::BinRead;
 use binrw::binrw;
 use crate::gamedata::MemoryBuffer;
-use crate::model::ModelHeader;
+use crate::model::ModelFileHeader;
 use std::io::Write;
 use binrw::BinWrite;
 use crate::sqpack::read_data_block;
@@ -284,7 +284,7 @@ impl DatFile {
                     process_model_data(i, model_file_info.num.index_buffer_size[i] as u32, model_file_info.offset.index_buffer_size[i], &mut index_data_offsets, &mut index_data_sizes);
                 }
 
-                let header = ModelHeader {
+                let header = ModelFileHeader {
                     version: model_file_info.version,
                     stack_size,
                     runtime_size,
