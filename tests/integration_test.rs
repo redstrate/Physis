@@ -1,6 +1,7 @@
 use std::env;
 
 #[test]
+#[cfg_attr(not(feature = "retail_game_testing"), ignore)]
 fn test_index_read() {
     let game_dir = env::var("FFXIV_GAME_DIR").unwrap();
 
@@ -8,6 +9,7 @@ fn test_index_read() {
 }
 
 #[test]
+#[cfg_attr(not(feature = "retail_game_testing"), ignore)]
 fn test_gamedata_extract() {
     let game_dir = env::var("FFXIV_GAME_DIR").unwrap();
 

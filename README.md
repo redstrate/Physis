@@ -24,7 +24,9 @@ features over.
 
 If you're interested to see how these formats work in more detail, see [xiv.dev](https://xiv.dev/) and [docs.xiv.zone](https://docs.xiv.zone)!
 
-Some tests and benchmarks require the environment variable `FFXIV_GAME_DIR` to be set.
+Some tests and benchmarks require the environment variable `FFXIV_GAME_DIR` to be set. By default, these are disabled
+since they require a legitimate copy of the retail game data. These tests can be turned on via the `retail_game_testing`
+feature.
 
 ## Contributing
 
