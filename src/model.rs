@@ -290,13 +290,14 @@ struct VertexElement {
 }
 
 #[derive(Clone)]
+#[repr(C)]
 pub struct Vertex {
-    position : [f32; 3],
-    uv: [f32; 2],
-    normal: [f32; 3],
+    pub position : [f32; 3],
+    pub uv: [f32; 2],
+    pub normal: [f32; 3],
 
-    bone_weight: [f32; 4],
-    bone_id : [u8; 4]
+    pub bone_weight: [f32; 4],
+    pub bone_id : [u8; 4]
 }
 
 pub struct Part {
