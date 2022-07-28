@@ -1,5 +1,4 @@
-use std::collections::HashMap;
-use std::io::{BufRead, BufReader, Cursor, Seek, SeekFrom};
+use std::io::{Cursor, Seek, SeekFrom};
 use crate::gamedata::MemoryBuffer;
 use binrw::{binread, Endian, ReadOptions};
 use crate::common::Language;

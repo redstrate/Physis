@@ -65,7 +65,7 @@ pub fn read_data_block_patch<T : Read + Seek>(mut buf : T) -> Option<Vec<u8>> {
             Some(decompressed_data)
         }
         CompressionMode::Uncompressed { file_size } => {
-            let new_file_size : usize = ((file_size as usize + 143) & 0xFFFFFF80);
+            let new_file_size : usize = (file_size as usize + 143) & 0xFFFFFF80;
 
             let mut local_data: Vec<u8> = vec![0; file_size as usize];
             buf.read_exact(&mut local_data).ok()?;

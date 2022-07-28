@@ -1,4 +1,3 @@
-use std::ffi::OsStr;
 use std::fs;
 use std::fs::DirEntry;
 use std::path::PathBuf;
@@ -21,7 +20,7 @@ pub struct GameData {
 }
 
 fn is_valid(path: &str) -> bool {
-    let mut d = PathBuf::from(path);
+    let d = PathBuf::from(path);
 
     if fs::metadata(d.as_path()).is_err() {
         println!("Failed game directory.");

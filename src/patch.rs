@@ -1,10 +1,9 @@
 use std::fs;
 use std::fs::{File, OpenOptions};
-use std::io::{Cursor, Seek, SeekFrom, Write};
+use std::io::{Seek, SeekFrom, Write};
 use binrw::BinRead;
 use binrw::binread;
-use crate::{BootData, GameData};
-use crate::sqpack::{read_data_block, read_data_block_patch};
+use crate::sqpack::read_data_block_patch;
 use core::cmp::min;
 use crate::patch::TargetHeaderKind::Version;
 
@@ -304,7 +303,7 @@ fn get_expansion_folder(sub_id : u16) -> String {
 
     match expansion_id {
         0 => "ffxiv".to_string(),
-        (x) => format!("ex{}", x)
+        x => format!("ex{}", x)
     }
 }
 
@@ -338,7 +337,7 @@ pub fn process_patch(data_dir : &str, path : &str) {
                     SqpkOperation::AddData(add) => {
                         let filename = get_dat_filename(data_dir, add.main_id, add.sub_id, add.file_id);
 
-                        let (left, right) = filename.rsplit_once('/').unwrap();
+                        let (left, _) = filename.rsplit_once('/').unwrap();
                         fs::create_dir_all(left);
 
                         let mut new_file = OpenOptions::new()
@@ -365,7 +364,7 @@ pub fn process_patch(data_dir : &str, path : &str) {
                     SqpkOperation::ExpandData(expand) => {
                         let filename = get_dat_filename(data_dir, expand.main_id, expand.sub_id, expand.file_id);
 
-                        let (left, right) = filename.rsplit_once('/').unwrap();
+                        let (left, _) = filename.rsplit_once('/').unwrap();
                         fs::create_dir_all(left);
 
                         let mut new_file = OpenOptions::new()
@@ -376,7 +375,7 @@ pub fn process_patch(data_dir : &str, path : &str) {
                         write_empty_file_block_at(&mut new_file, expand.block_offset, expand.block_number);
                     }
                     SqpkOperation::HeaderUpdate(header) => {
-                        let mut file_path : String;
+                        let file_path : String;
 
                         match header.file_kind {
                             TargetFileKind::Dat => {
@@ -387,7 +386,7 @@ pub fn process_patch(data_dir : &str, path : &str) {
                             }
                         }
 
-                        let (left, right) = file_path.rsplit_once('/').unwrap();
+                        let (left, _) = file_path.rsplit_once('/').unwrap();
                         fs::create_dir_all(left);
 
                         let mut new_file = OpenOptions::new()
@@ -406,7 +405,7 @@ pub fn process_patch(data_dir : &str, path : &str) {
                             SqpkFileOperation::AddFile => {
                                 let new_path = data_dir.to_owned() + "/" + &fop.path;
 
-                                let (left, right) = new_path.rsplit_once('/').unwrap();
+                                let (left, _) = new_path.rsplit_once('/').unwrap();
 
                                 fs::create_dir_all(left);
 
@@ -438,9 +437,6 @@ pub fn process_patch(data_dir : &str, path : &str) {
                             }
                             SqpkFileOperation::RemoveAll => {
                                 println!("STUB: SqpkFileOperation::RemoveAll");
-                            }
-                            _ => {
-                                panic!("Unhandled operation!");
                             }
                         }
                     }

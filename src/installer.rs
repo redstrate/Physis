@@ -30,7 +30,9 @@ const BOOT_COMPONENT_FILES: [&str; 18] = [
 const GAME_COMPONENT_FILES: [&str; 1] = ["ffxivgame.ver"];
 
 #[repr(C)]
-struct Unshield;
+struct Unshield {
+    _private: [u8; 0]
+}
 
 #[link(name = "unshield")]
 extern "C" {
@@ -46,9 +48,8 @@ extern "C" {
 
 /// Installs the game from the provided retail installer.
 pub unsafe fn install_game(installer_path : &str, game_directory : &str) {
-    let installer_file = std::fs::read(installer_path).unwrap();
+    let installer_file = fs::read(installer_path).unwrap();
 
-    let mut file_size = installer_file.len();
     let mut last_position = 0;
     let mut last_filename = "";
     for filename in FILES_TO_EXTRACT {
@@ -69,13 +70,10 @@ pub unsafe fn install_game(installer_path : &str, game_directory : &str) {
             } else {
                 new_file.write(&installer_file[last_position + 33..position - 42]);
             }
-
-            last_position = position;
         }
 
         last_position = position;
         last_filename = filename;
-        file_size -= (position + 4) - last_position;
     }
 
     let mut new_file = File::create(last_filename).unwrap();
@@ -85,32 +83,30 @@ pub unsafe fn install_game(installer_path : &str, game_directory : &str) {
     fs::create_dir_all(format!("{game_directory}/boot"));
     fs::create_dir_all(format!("{game_directory}/game"));
 
-    unsafe {
-        // set unshield to shut up
-        unshield_set_log_level(0);
+    // set unshield to shut up
+    unshield_set_log_level(0);
 
-        let unshield = unshield_open(b"data1.cab".as_ptr() as *const c_char);
-        let file_count = unshield_file_count(unshield);
+    let unshield = unshield_open(b"data1.cab".as_ptr() as *const c_char);
+    let file_count = unshield_file_count(unshield);
 
-        for i in 0..file_count {
-            let filename = CStr::from_ptr(unshield_file_name(unshield, i)).to_string_lossy();
+    for i in 0..file_count {
+        let filename = CStr::from_ptr(unshield_file_name(unshield, i)).to_string_lossy();
 
-            for boot_name in BOOT_COMPONENT_FILES {
-                if boot_name == filename {
-                    let save_filename = format!("{game_directory}/boot/{boot_name}");
-                    unshield_file_save(unshield, i, CString::new(save_filename).unwrap().as_ptr());
-                }
-            }
-
-            for game_name in GAME_COMPONENT_FILES {
-                if game_name == filename {
-                    let save_filename = format!("{game_directory}/game/{game_name}");
-                    unshield_file_save(unshield, i, CString::new(save_filename).unwrap().as_ptr());
-                }
+        for boot_name in BOOT_COMPONENT_FILES {
+            if boot_name == filename {
+                let save_filename = format!("{game_directory}/boot/{boot_name}");
+                unshield_file_save(unshield, i, CString::new(save_filename).unwrap().as_ptr());
             }
         }
 
-        unshield_close(unshield);
+        for game_name in GAME_COMPONENT_FILES {
+            if game_name == filename {
+                let save_filename = format!("{game_directory}/game/{game_name}");
+                unshield_file_save(unshield, i, CString::new(save_filename).unwrap().as_ptr());
+            }
+        }
     }
+
+    unshield_close(unshield);
 }
 

@@ -1,10 +1,5 @@
 extern crate core;
 
-use std::fs;
-use std::path::PathBuf;
-use crate::bootdata::BootData;
-use crate::gamedata::GameData;
-
 pub mod gamedata;
 
 /// Reading game data repositories, such as "ffxiv" and "ex1", and so on.

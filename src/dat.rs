@@ -1,7 +1,6 @@
 use std::io::{Cursor, Read, Seek, SeekFrom};
 use binrw::BinRead;
 use binrw::binrw;
-use crate::compression::no_header_decompress;
 use crate::gamedata::MemoryBuffer;
 use crate::model::ModelHeader;
 use std::io::Write;
