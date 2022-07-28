@@ -56,6 +56,7 @@ impl EXL {
 
 #[cfg(test)]
 mod tests {
+    use std::fs::read;
     use std::path::PathBuf;
     use super::*;
 
@@ -64,7 +65,7 @@ mod tests {
         d.push("resources/tests");
         d.push("test.exl");
 
-        EXL::from_existing(d.to_str().unwrap()).unwrap()
+        EXL::from_existing(&read(d).unwrap()).unwrap()
     }
 
     #[test]
