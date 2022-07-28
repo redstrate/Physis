@@ -1,5 +1,6 @@
 #[derive(PartialEq)]
 #[repr(u8)]
+/// Gender of the character.
 pub enum Gender {
     Male,
     Female,
@@ -7,6 +8,8 @@ pub enum Gender {
 
 #[derive(PartialEq)]
 #[repr(u8)]
+/// The race's "subrace". Each race has two subraces, which are actually identical (even down to the ids!)
+/// with the exception of Hyurs, which have two unique subraces that are really two separate races.
 pub enum Subrace {
     Midlander,
     Highlander,
@@ -28,6 +31,7 @@ pub enum Subrace {
 
 #[derive(PartialEq)]
 #[repr(u8)]
+/// The major races of Eorzea.
 pub enum Race {
     Hyur,
     Elezen,

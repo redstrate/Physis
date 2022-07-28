@@ -1,32 +1,51 @@
 extern crate core;
 
+/// Reading and writing game data repositories, such as "ffxiv" and "ex1", and so on.
 pub mod gamedata;
 
-/// Reading game data repositories, such as "ffxiv" and "ex1", and so on.
+/// Parsing game repositories, such as "ffxiv", "ex1" and their version information.
 pub mod repository;
 
+/// Reading and writing the boot data repository.
 pub mod bootdata;
 
-/// Everything to do with reading SqPack files.
-pub mod sqpack;
+mod sqpack;
 
+/// Reading and writing SqPack index files.
 pub mod index;
-pub mod dat;
+
+mod dat;
 mod compression;
 mod model;
+
+/// All of the races in Eorzea in a nice enum package.
 pub mod race;
 
 /// Reading Excel lists (EXL).
 pub mod exl;
+
+/// Reading equipment and equipment-related data.
 pub mod equipment;
+
+/// Common structures used by other modules.
 pub mod common;
+
+/// Methods for installing game and boot patches.
 pub mod patch;
 
 #[macro_use]
 mod macros;
 
+/// Implementation of the Blowfish ECB block cipher used by the retail client.
 pub mod blowfish;
+
 mod blowfish_constants;
+
+/// Initializing a new retail game install from the official retail installer. No execution required!
 pub mod installer;
+
+/// Reading Excel header files (EXH).
 pub mod exh;
+
+/// Reading Excel data files (EXD).
 pub mod exd;

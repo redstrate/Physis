@@ -3,17 +3,27 @@ use binrw::binread;
 #[binread]
 #[br(repr(u8))]
 #[repr(u8)]
+/// The language the game data is written for.
 pub enum Language {
+    /// Used for data that is language-agnostic, such as item data.
     None,
+    /// Japanese language.
     Japanese,
+    /// English language.
     English,
+    /// German language.
     German,
+    /// French language.
     French,
+    /// Chinese (Simplified) language.
     ChineseSimplified,
+    /// Chinese (Traditional) language.
     ChineseTraditional,
+    /// Korean language.
     Korean,
 }
 
+/// Returns the shorthand language code for `language`. For example, English becomes "en".
 pub fn get_language_code(lang: &Language) -> &'static str {
     match &lang {
         Language::None => "",

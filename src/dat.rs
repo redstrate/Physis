@@ -166,7 +166,6 @@ impl DatFile {
         })
     }
 
-
     pub fn read_from_offset(&mut self, offset: u32) -> Option<MemoryBuffer> {
         let offset: u64 = (offset * 0x80) as u64;
 

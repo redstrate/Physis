@@ -11,6 +11,7 @@ pub struct Blowfish {
 }
 
 impl Blowfish {
+    /// Initializes a new Blowfish session with a key.
     pub fn new(key: &[u8]) -> Blowfish {
         let mut s = Self {
             p: BLOWFISH_P,
@@ -90,8 +91,8 @@ impl Blowfish {
         vec
     }
 
-    /// Decrypts a block of data. If the decryption fails due to buffer overflow issues, will return None - but it
-    /// does not indicate that the wrong key was used.
+    /// Decrypts a block of data. If the decryption fails due to buffer overflow issues, will return
+    /// None - but this does not indicate that the wrong key was used.
     pub fn decrypt(&self, data: &[u8]) -> Option<Vec<u8>> {
         let padded_data = Blowfish::pad_buffer(data);
 
