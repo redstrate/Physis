@@ -337,8 +337,6 @@ impl MDL {
             };
 
             let to_seek = 17 * 8 - (declaration.elements.len() + 1) * 8;
-            println!("now seeking {to_seek}!");
-
             cursor.seek(SeekFrom::Current(to_seek as i64));
         }
 
