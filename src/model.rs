@@ -380,7 +380,10 @@ impl MDL {
                                 vertices[k as usize].bone_id = <[u8; 4]>::read(&mut cursor).unwrap();
                             }
                             VertexUsage::Normal => {
-                                vertices[k as usize].normal = <[f32; 3]>::read(&mut cursor).unwrap();
+                                // TODO: normals are assumed to be half4
+                                vertices[k as usize].normal[0] = f16::from_bits(<u16 as BinRead>::read(&mut cursor).unwrap()).to_f32();
+                                vertices[k as usize].normal[1] = f16::from_bits(<u16 as BinRead>::read(&mut cursor).unwrap()).to_f32();
+                                vertices[k as usize].normal[2] = f16::from_bits(<u16 as BinRead>::read(&mut cursor).unwrap()).to_f32();
                             }
                             VertexUsage::UV => {
                                 vertices[k as usize].uv[0] = f16::from_bits(<u16 as BinRead>::read(&mut cursor).unwrap()).to_f32();
