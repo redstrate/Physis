@@ -23,8 +23,8 @@ enum ChunkType {
         #[br(pad_after = 1)]
         FileHeaderChunk),
     #[br(magic = b"APLY")] ApplyOption(ApplyOptionChunk),
-    #[br(magic = b"ADIR")] AddDirectory(AddDirectoryChunk),
-    #[br(magic = b"DELD")] DeleteDirectory(DeleteDirectoryChunk),
+    #[br(magic = b"ADIR")] AddDirectory(DirectoryChunk),
+    #[br(magic = b"DELD")] DeleteDirectory(DirectoryChunk),
     #[br(magic = b"SQPK")] Sqpk(SqpkChunk),
     #[br(magic = b"EOF_")] EndOfFile,
 }
@@ -81,19 +81,7 @@ struct ApplyOptionChunk {
 
 #[binrw::binread]
 #[derive(PartialEq, Debug)]
-struct AddDirectoryChunk {
-    #[br(temp)]
-    path_length: u32,
-
-    #[br(count = path_length)]
-    #[br(map = | x: Vec < u8 > | String::from_utf8(x).unwrap())]
-    name: String,
-}
-
-#[binread]
-#[br(big)]
-#[derive(PartialEq, Debug)]
-struct DeleteDirectoryChunk {
+struct DirectoryChunk {
     #[br(temp)]
     path_length: u32,
 
