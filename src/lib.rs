@@ -9,7 +9,8 @@ pub mod repository;
 /// Reading and writing the boot data repository.
 pub mod bootdata;
 
-mod sqpack;
+/// Common methods and structures relating to the SqPack data format.
+pub mod sqpack;
 
 /// Reading and writing SqPack index files.
 pub mod index;
@@ -49,3 +50,6 @@ pub mod exh;
 
 /// Reading Excel data files (EXD).
 pub mod exd;
+
+// Reading Havok XML sidecar files.
+pub mod skeleton;
