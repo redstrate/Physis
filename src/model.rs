@@ -1,5 +1,4 @@
 use std::io::{Cursor, Seek, SeekFrom};
-use std::ops::Bound;
 use binrw::binrw;
 use crate::gamedata::MemoryBuffer;
 use binrw::BinRead;
@@ -324,7 +323,7 @@ impl MDL {
         }
 
         let mut vertex_declarations: Vec<VertexDeclaration> = vec![VertexDeclaration{ elements : vec![] }; model_file_header.vertex_declaration_count as usize];
-        for mut declaration in &mut vertex_declarations {
+        for declaration in &mut vertex_declarations {
             let mut element = VertexElement::read(&mut cursor).unwrap();
 
             loop {
@@ -338,7 +337,7 @@ impl MDL {
             };
 
             let to_seek = 17 * 8 - (declaration.elements.len() + 1) * 8;
-            cursor.seek(SeekFrom::Current(to_seek as i64));
+            cursor.seek(SeekFrom::Current(to_seek as i64)).ok()?;
         }
 
         let model = ModelData::read(&mut cursor).unwrap();
@@ -367,7 +366,7 @@ impl MDL {
                         cursor.seek(SeekFrom::Start((model.lods[i as usize].vertex_data_offset +
                             model.meshes[j as usize].vertex_buffer_offsets[element.stream as usize] +
                             element.offset as u32 +
-                            model.meshes[i as usize].vertex_buffer_strides[element.stream as usize] as u32 * k as u32) as u64));
+                            model.meshes[i as usize].vertex_buffer_strides[element.stream as usize] as u32 * k as u32) as u64)).ok()?;
 
                         match element.vertex_usage {
                             VertexUsage::Position => {
@@ -396,11 +395,11 @@ impl MDL {
                     }
                 }
 
-                cursor.seek(SeekFrom::Start((model_file_header.index_offsets[i as usize] + (model.meshes[j as usize].start_index * 2)) as u64));
+                cursor.seek(SeekFrom::Start((model_file_header.index_offsets[i as usize] + (model.meshes[j as usize].start_index * 2)) as u64)).ok()?;
 
                 // TODO: optimize!
                 let mut indices : Vec<u16> = Vec::with_capacity(model.meshes[j as usize].index_count as usize);
-                for k in 0..model.meshes[j as usize].index_count {
+                for _ in 0..model.meshes[j as usize].index_count {
                     indices.push(<u16 as BinRead>::read(&mut cursor).unwrap());
                 }
 
