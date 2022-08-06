@@ -8,9 +8,9 @@ tasks:
   - check: |
       cd physis
       cargo check
-  - deny-check: |
-      cd physis
-      cargo deny check
   - test: |
       cd physis
       cargo test
+  - deny-check: |
+      cd physis
+      cargo deny check
