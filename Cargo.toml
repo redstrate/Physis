@@ -22,9 +22,25 @@ criterion = { git = "https://github.com/bheisler/criterion.rs", branch="version-
 retail_game_testing = []
 
 [dependencies]
+# used for jamcrc implementation, should eventually move away from it
 crc = "3.0.0"
+
+# amazing binary parsing/writing library
 binrw = "0.9.2"
+
+# used for zlib compression in sqpack files
 libz-sys = { version = "1.1.8", default-features = false }
+
+# nice to have features rust is lacking at the moment
 bitfield-struct = "0.1.7"
 paste = "1.0.7"
+
+# needed for half-float support which FFXIV uses in it's model data
 half = "2.1.0"
+
+# needed for havok xml parsing
+hard-xml = "1.13.0"
+
+# needed for textools skel parsing
+serde_json = "1.0"
+serde = { version = "1.0", features = ["derive"] }
