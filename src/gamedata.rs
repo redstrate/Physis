@@ -119,7 +119,7 @@ impl GameData {
         index_file.entries.iter().any(|s| s.hash == hash)
     }
 
-    /// Extracts the file lcoated at `path`. This is returned as an in-memory buffer, and will usually
+    /// Extracts the file located at `path`. This is returned as an in-memory buffer, and will usually
     /// have to be further parsed.
     ///
     /// # Example
