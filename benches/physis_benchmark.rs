@@ -1,5 +1,5 @@
 use std::env;
-use criterion::{black_box, criterion_group, criterion_main, Criterion};
+use criterion::{criterion_group, criterion_main, Criterion};
 use physis::sqpack::calculate_hash;
 
 fn reload_repos() {
