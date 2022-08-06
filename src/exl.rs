@@ -44,10 +44,16 @@ impl EXL {
     ///
     /// # Example
     ///
-    /// ```should_panic
+    /// ```
+    /// # use std::fs::read;
+    /// # use std::path::PathBuf;
     /// # use physis::exl::EXL;
-    /// let exl = EXL::from_existing("root.exl").unwrap();
-    /// exl.contains("Achivements");
+    /// # let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    /// # d.push("resources/tests");
+    /// # d.push("test.exl");
+    /// # let exl_file = read(d).unwrap();
+    /// let exl = EXL::from_existing(&exl_file).unwrap();
+    /// exl.contains("Foo");
     /// ```
     pub fn contains(&self, key: &str) -> bool {
         self.entries.contains_key(key)
