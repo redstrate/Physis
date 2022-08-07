@@ -67,7 +67,7 @@ pub struct IndexFile {
     index_header: SqPackIndexHeader,
 
     #[br(seek_before = SeekFrom::Start(index_header.index_data_offset.into()))]
-    #[br(count = index_header.index_data_size / (core::mem::size_of::< IndexHashTableEntry > () as u32))]
+    #[br(count = index_header.index_data_size / 24)]
     pub entries: Vec<IndexHashTableEntry>,
 }
 
