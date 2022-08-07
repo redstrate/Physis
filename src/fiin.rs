@@ -41,11 +41,17 @@ pub struct FIINEntry {
 }
 
 impl FileInfo {
+    /// Parses an existing FIIN file.
     pub fn from_existing(buffer : &MemoryBuffer) -> Option<FileInfo> {
         let mut cursor = Cursor::new(buffer);
         Some(FileInfo::read(&mut cursor).ok()?)
     }
 
+    /// Creates a new FileInfo structure from a list of filenames. These filenames must be present in
+    /// the current working directory in order to be read properly, since it also generates SHA1
+    /// hashes.
+    ///
+    /// The new FileInfo structure can then be serialized back into retail-compatible form.
     pub fn new(file_names : Vec<&str>) -> Option<FileInfo> {
         let mut entries = vec![];
 
