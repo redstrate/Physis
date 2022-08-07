@@ -44,3 +44,6 @@ hard-xml = "1.13.0"
 # needed for textools skel parsing
 serde_json = "1.0"
 serde = { version = "1.0", features = ["derive"] }
+
+# needed for file info (fiin)
+sha1_smol = "1.0.0"
