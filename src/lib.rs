@@ -56,3 +56,6 @@ pub mod skeleton;
 
 // Reading file into files (FIIN).
 pub mod fiin;
+
+// Reading and writing chat logs (LOG)
+pub mod log;
