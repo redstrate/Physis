@@ -53,3 +53,6 @@ pub mod exd;
 
 // Reading Havok XML sidecar files.
 pub mod skeleton;
+
+// Reading file into files (FIIN).
+pub mod fiin;
