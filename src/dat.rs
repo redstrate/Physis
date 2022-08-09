@@ -10,10 +10,15 @@ use crate::sqpack::read_data_block;
 #[binrw]
 #[brw(repr = i32)]
 #[derive(Debug, PartialEq)]
+/// The file type of the data entry.
 pub enum FileType {
+    /// Empty entry, usually invalid.
     Empty = 1,
+    /// Encompasses every file that is not a model or a texture, which are stored in a special fashion.
     Standard,
+    /// Model (MDL) files.
     Model,
+    /// Texture (TEX) files.
     Texture,
 }
 
