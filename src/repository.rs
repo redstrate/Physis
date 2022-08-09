@@ -94,7 +94,7 @@ pub enum Category {
     Music,
     /// Unknown purpose, most likely to test SqPack functionality.
     SqPackTest,
-    /// Unknown purpose, msot likely debug files.
+    /// Unknown purpose, most likely debug files.
     Debug,
 }
 
