@@ -166,174 +166,187 @@ impl DatFile {
         })
     }
 
+    /// Reads from a certain offset inside of the dat file. This offset will be fixed automatically
+    /// by the function.
+    ///
+    /// If the block of data is successfully parsed, it returns the file data - otherwise is None.
     pub fn read_from_offset(&mut self, offset: u32) -> Option<MemoryBuffer> {
-        let offset: u64 = (offset * 0x80) as u64;
+        let offset = (offset * 0x80) as u64;
 
         self.file.seek(SeekFrom::Start(offset))
-            .expect("TODO: panic message");
+            .expect("Unable to find offset in file.");
 
         let file_info = FileInfo::read(&mut self.file)
             .expect("Failed to parse file info.");
 
         match file_info.file_type {
             FileType::Empty => None,
-            FileType::Standard => {
-                let standard_file_info = file_info.standard_info.unwrap();
+            FileType::Standard => self.read_standard_file(offset, &file_info),
+            FileType::Model => self.read_model_file(offset, &file_info),
+            FileType::Texture => self.read_texture_file(offset, &file_info)
+        }
+    }
 
-                let mut blocks: Vec<Block> = Vec::with_capacity(standard_file_info.num_blocks as usize);
+    /// Reads a standard file block.
+    fn read_standard_file(&mut self, offset : u64, file_info : &FileInfo) -> Option<MemoryBuffer> {
+        let standard_file_info = file_info.standard_info.as_ref().unwrap();
 
-                for _ in 0..standard_file_info.num_blocks {
-                    blocks.push(Block::read(&mut self.file).unwrap());
-                }
+        let mut blocks: Vec<Block> = Vec::with_capacity(standard_file_info.num_blocks as usize);
 
-                let mut data: Vec<u8> = Vec::with_capacity(file_info.file_size as usize);
+        for _ in 0..standard_file_info.num_blocks {
+            blocks.push(Block::read(&mut self.file).unwrap());
+        }
 
-                let starting_position = offset + (file_info.size as u64);
+        let mut data: Vec<u8> = Vec::with_capacity(file_info.file_size as usize);
 
-                for i in 0..standard_file_info.num_blocks {
-                    data.append(&mut read_data_block(&mut self.file, starting_position + (blocks[i as usize].offset as u64))
-                        .expect("Failed to read data block."));
-                }
+        let starting_position = offset + (file_info.size as u64);
 
-                Some(data)
+        for i in 0..standard_file_info.num_blocks {
+            data.append(&mut read_data_block(&mut self.file, starting_position + (blocks[i as usize].offset as u64))
+                .expect("Failed to read data block."));
+        }
+
+        Some(data)
+    }
+
+    /// Reads a model file block.
+    fn read_model_file(&mut self, offset : u64, file_info : &FileInfo) -> Option<MemoryBuffer> {
+        let mut buffer = Cursor::new(Vec::new());
+
+        let model_file_info = file_info.model_info.as_ref().unwrap();
+
+        let base_offset = offset + (file_info.size as u64);
+
+        let total_blocks = model_file_info.num.total();
+
+        let mut compressed_block_sizes: Vec<u16> = vec![0; total_blocks as usize];
+        let slice: &mut [u8] = to_u8_slice(&mut compressed_block_sizes);
+
+        self.file.read_exact(slice).ok()?;
+
+        let mut current_block = 0;
+
+        let mut vertex_data_offsets: [u32; 3] = [0; 3];
+        let mut vertex_data_sizes: [u32; 3] = [0; 3];
+
+        let mut index_data_offsets: [u32; 3] = [0; 3];
+        let mut index_data_sizes: [u32; 3] = [0; 3];
+
+        // start writing at 0x44
+        buffer.seek(SeekFrom::Start(0x44)).ok()?;
+
+        self.file.seek(SeekFrom::Start(base_offset + (model_file_info.offset.stack_size as u64))).ok()?;
+
+        // read from stack blocks
+        let mut read_model_blocks = |offset: u64, size: usize| -> Option<u64> {
+            self.file.seek(SeekFrom::Start(base_offset + offset)).ok()?;
+            let stack_start = buffer.position();
+            for _ in 0..size {
+                let last_pos = &self.file.stream_position().unwrap();
+
+                let data = read_data_block(&self.file, *last_pos)
+                    .expect("Unable to read block data.");
+                // write to buffer
+                buffer.write(data.as_slice()).ok()?;
+
+                self.file.seek(SeekFrom::Start(last_pos + (compressed_block_sizes[current_block as usize] as u64))).ok()?;
+                current_block += 1;
             }
-            FileType::Model => {
-                let mut buffer = Cursor::new(Vec::new());
 
-                let model_file_info = file_info.model_info.unwrap();
+            Some(buffer.position() - stack_start)
+        };
 
-                let base_offset = offset + (file_info.size as u64);
+        let stack_size = read_model_blocks(model_file_info.offset.stack_size as u64, model_file_info.num.stack_size as usize).unwrap() as u32;
+        let runtime_size = read_model_blocks(model_file_info.offset.runtime_size as u64, model_file_info.num.runtime_size as usize).unwrap() as u32;
 
-                let total_blocks = model_file_info.num.total();
-
-                let mut compressed_block_sizes: Vec<u16> = vec![0; total_blocks as usize];
-                let slice: &mut [u8] = to_u8_slice(&mut compressed_block_sizes);
-
-                self.file.read_exact(slice).ok()?;
-
-                let mut current_block = 0;
-
-                let mut vertex_data_offsets: [u32; 3] = [0; 3];
-                let mut vertex_data_sizes: [u32; 3] = [0; 3];
-
-                let mut index_data_offsets: [u32; 3] = [0; 3];
-                let mut index_data_sizes: [u32; 3] = [0; 3];
-
-                // start writing at 0x44
-                buffer.seek(SeekFrom::Start(0x44)).ok()?;
-
-                self.file.seek(SeekFrom::Start(base_offset + (model_file_info.offset.stack_size as u64))).ok()?;
-
-                // read from stack blocks
-                let mut read_model_blocks = |offset: u64, size: usize| -> Option<u64> {
-                    self.file.seek(SeekFrom::Start(base_offset + offset)).ok()?;
-                    let stack_start = buffer.position();
-                    for _ in 0..size {
-                        let last_pos = &self.file.stream_position().unwrap();
-
-                        let data = read_data_block(&self.file, *last_pos)
-                            .expect("Unable to read block data.");
-                        // write to buffer
-                        buffer.write(data.as_slice()).ok()?;
-
-                        self.file.seek(SeekFrom::Start(last_pos + (compressed_block_sizes[current_block as usize] as u64))).ok()?;
-                        current_block += 1;
-                    }
-
-                    Some(buffer.position() - stack_start)
-                };
-
-                let stack_size = read_model_blocks(model_file_info.offset.stack_size as u64, model_file_info.num.stack_size as usize).unwrap() as u32;
-                let runtime_size = read_model_blocks(model_file_info.offset.runtime_size as u64, model_file_info.num.runtime_size as usize).unwrap() as u32;
-
-                let mut process_model_data = |i: usize, size: u32, offset: u32, offsets: &mut [u32; 3], data_sizes: &mut [u32; 3]| {
-                    if size != 0 {
-                        let current_vertex_offset = buffer.position() as u32;
-                        if i == 0 || current_vertex_offset != offsets[i - 1] {
-                            offsets[i] = current_vertex_offset;
-                        } else {
-                            offsets[i] = 0;
-                        }
-
-                        self.file.seek(SeekFrom::Start(base_offset + (offset as u64))).ok();
-
-                        for _ in 0..size {
-                            let last_pos = self.file.stream_position().unwrap();
-
-                            let data = read_data_block(&self.file, last_pos)
-                                .expect("Unable to read raw model block!");
-
-                            buffer.write(data.as_slice()).expect("Unable to write to memory buffer!");
-
-                            data_sizes[i] += data.len() as u32;
-                            self.file.seek(SeekFrom::Start(last_pos + (compressed_block_sizes[current_block] as u64)))
-                                .expect("Unable to seek properly.");
-                            current_block += 1;
-                        }
-                    }
-                };
-
-                // process all 3 lods
-                for i in 0..3 {
-                    // process vertices
-                    process_model_data(i, model_file_info.num.vertex_buffer_size[i] as u32, model_file_info.offset.vertex_buffer_size[i], &mut vertex_data_offsets, &mut vertex_data_sizes);
-
-                    // TODO: process edges
-
-                    // process indices
-                    process_model_data(i, model_file_info.num.index_buffer_size[i] as u32, model_file_info.offset.index_buffer_size[i], &mut index_data_offsets, &mut index_data_sizes);
+        let mut process_model_data = |i: usize, size: u32, offset: u32, offsets: &mut [u32; 3], data_sizes: &mut [u32; 3]| {
+            if size != 0 {
+                let current_vertex_offset = buffer.position() as u32;
+                if i == 0 || current_vertex_offset != offsets[i - 1] {
+                    offsets[i] = current_vertex_offset;
+                } else {
+                    offsets[i] = 0;
                 }
 
-                let header = ModelFileHeader {
-                    version: model_file_info.version,
-                    stack_size,
-                    runtime_size,
-                    vertex_declaration_count: model_file_info.vertex_declaration_num,
-                    material_count: model_file_info.material_num,
-                    vertex_offsets: vertex_data_offsets,
-                    index_offsets: index_data_offsets,
-                    vertex_buffer_size: vertex_data_sizes,
-                    index_buffer_size: index_data_sizes,
-                    lod_count: model_file_info.num_lods,
-                    index_buffer_streaming_enabled: model_file_info.index_buffer_streaming_enabled,
-                    has_edge_geometry: model_file_info.edge_geometry_enabled,
-                };
+                self.file.seek(SeekFrom::Start(base_offset + (offset as u64))).ok();
 
-                buffer.seek(SeekFrom::Start(0)).ok()?;
+                for _ in 0..size {
+                    let last_pos = self.file.stream_position().unwrap();
 
-                header.write_to(&mut buffer).ok()?;
+                    let data = read_data_block(&self.file, last_pos)
+                        .expect("Unable to read raw model block!");
 
-                Some(buffer.into_inner())
+                    buffer.write(data.as_slice()).expect("Unable to write to memory buffer!");
+
+                    data_sizes[i] += data.len() as u32;
+                    self.file.seek(SeekFrom::Start(last_pos + (compressed_block_sizes[current_block] as u64)))
+                        .expect("Unable to seek properly.");
+                    current_block += 1;
+                }
             }
-            FileType::Texture => {
-                let mut data: Vec<u8> = Vec::with_capacity(file_info.file_size as usize);
+        };
 
-                let texture_file_info = file_info.texture_info.unwrap();
+        // process all 3 lods
+        for i in 0..3 {
+            // process vertices
+            process_model_data(i, model_file_info.num.vertex_buffer_size[i] as u32, model_file_info.offset.vertex_buffer_size[i], &mut vertex_data_offsets, &mut vertex_data_sizes);
 
-                // write the header if it exists
-                if texture_file_info.lods[0].compressed_offset != 0 {
-                    let original_pos = self.file.stream_position().unwrap();
+            // TODO: process edges
 
-                    self.file.seek(SeekFrom::Start(offset + file_info.size as u64));
-                    let mut header = vec![0u8; texture_file_info.lods[0].compressed_offset as usize];
-                    self.file.read(&mut header);
-                    data.append(&mut header);
+            // process indices
+            process_model_data(i, model_file_info.num.index_buffer_size[i] as u32, model_file_info.offset.index_buffer_size[i], &mut index_data_offsets, &mut index_data_sizes);
+        }
 
-                    self.file.seek(SeekFrom::Start(original_pos));
-                }
+        let header = ModelFileHeader {
+            version: model_file_info.version,
+            stack_size,
+            runtime_size,
+            vertex_declaration_count: model_file_info.vertex_declaration_num,
+            material_count: model_file_info.material_num,
+            vertex_offsets: vertex_data_offsets,
+            index_offsets: index_data_offsets,
+            vertex_buffer_size: vertex_data_sizes,
+            index_buffer_size: index_data_sizes,
+            lod_count: model_file_info.num_lods,
+            index_buffer_streaming_enabled: model_file_info.index_buffer_streaming_enabled,
+            has_edge_geometry: model_file_info.edge_geometry_enabled,
+        };
 
-                for i in 0..texture_file_info.num_blocks {
-                    let mut running_block_total = (texture_file_info.lods[i as usize].compressed_offset as u64) + offset + (file_info.size as u64);
+        buffer.seek(SeekFrom::Start(0)).ok()?;
 
-                    for _ in 0..texture_file_info.lods[i as usize].block_count {
-                        data.append(&mut read_data_block(&self.file, running_block_total).unwrap());
-                        self.file.seek(SeekFrom::Start(running_block_total));
-                        running_block_total += i16::read(&mut self.file).unwrap() as u64;
-                    }
-                }
+        header.write_to(&mut buffer).ok()?;
 
-                Some(data)
+        Some(buffer.into_inner())
+    }
+
+    /// Reads a texture file block.
+    fn read_texture_file(&mut self, offset : u64, file_info : &FileInfo) -> Option<MemoryBuffer> {
+        let mut data: Vec<u8> = Vec::with_capacity(file_info.file_size as usize);
+
+        let texture_file_info = file_info.texture_info.as_ref().unwrap();
+
+        // write the header if it exists
+        if texture_file_info.lods[0].compressed_offset != 0 {
+            let original_pos = self.file.stream_position().unwrap();
+
+            self.file.seek(SeekFrom::Start(offset + file_info.size as u64)).ok()?;
+            let mut header = vec![0u8; texture_file_info.lods[0].compressed_offset as usize];
+            self.file.read(&mut header).ok()?;
+            data.append(&mut header);
+
+            self.file.seek(SeekFrom::Start(original_pos)).ok()?;
+        }
+
+        for i in 0..texture_file_info.num_blocks {
+            let mut running_block_total = (texture_file_info.lods[i as usize].compressed_offset as u64) + offset + (file_info.size as u64);
+
+            for _ in 0..texture_file_info.lods[i as usize].block_count {
+                data.append(&mut read_data_block(&self.file, running_block_total).unwrap());
+                self.file.seek(SeekFrom::Start(running_block_total)).ok()?;
+                running_block_total += i16::read(&mut self.file).unwrap() as u64;
             }
         }
+
+        Some(data)
     }
 }
