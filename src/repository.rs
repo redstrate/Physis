@@ -103,10 +103,10 @@ pub fn string_to_category(string: &str) -> Option<Category> {
 
     match string {
         "common" => Some(Common),
-        "bgcommon" => Some(BgCommon),
-        "bg" => Some(Bg),
-        "cut" => Some(Cut),
-        "chara" => Some(Chara),
+        "bgcommon" => Some(BackgroundCommon),
+        "bg" => Some(Background),
+        "cut" => Some(Cutscene),
+        "chara" => Some(Character),
         "shader" => Some(Shader),
         "ui" => Some(UI),
         "sound" => Some(Sound),
