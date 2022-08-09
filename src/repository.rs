@@ -69,13 +69,13 @@ pub enum Category {
     /// Common files such as game fonts, and other data that doesn't really fit anywhere else.
     Common,
     /// Shared data between game maps.
-    BgCommon,
+    BackgroundCommon,
     /// Game map data such as models, textures, and so on.
-    Bg,
+    Background,
     /// Cutscene content such as animations.
-    Cut,
+    Cutscene,
     /// Character model files and more.
-    Chara,
+    Character,
     /// Compiled shaders used by the retail client.
     Shader,
     /// UI layouts and textures.
