@@ -310,18 +310,26 @@ impl DatFile {
 
                 let texture_file_info = file_info.texture_info.unwrap();
 
+                // write the header if it exists
+                if texture_file_info.lods[0].compressed_offset != 0 {
+                    let original_pos = self.file.stream_position().unwrap();
+
+                    self.file.seek(SeekFrom::Start(offset + file_info.size as u64));
+                    let mut header = vec![0u8; texture_file_info.lods[0].compressed_offset as usize];
+                    self.file.read(&mut header);
+                    data.append(&mut header);
+
+                    self.file.seek(SeekFrom::Start(original_pos));
+                }
+
                 for i in 0..texture_file_info.num_blocks {
                     let mut running_block_total = (texture_file_info.lods[i as usize].compressed_offset as u64) + offset + (file_info.size as u64);
 
-                    data.append(&mut read_data_block(&self.file, running_block_total).unwrap());
-
-                    for _ in 1..texture_file_info.lods[i as usize].block_count {
-                        running_block_total += i16::read(&mut self.file).unwrap() as u64;
+                    for _ in 0..texture_file_info.lods[i as usize].block_count {
                         data.append(&mut read_data_block(&self.file, running_block_total).unwrap());
+                        self.file.seek(SeekFrom::Start(running_block_total));
+                        running_block_total += i16::read(&mut self.file).unwrap() as u64;
                     }
-
-                    // dummy?
-                    i16::read(&mut self.file).unwrap();
                 }
 
                 Some(data)
