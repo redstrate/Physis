@@ -1,7 +1,7 @@
 use std::fs;
 use std::path::PathBuf;
 use crate::gamedata::MemoryBuffer;
-use crate::patch::apply_patch;
+use crate::patch::{apply_patch, PatchError};
 
 /// Boot data for FFXIV.
 pub struct BootData {
@@ -46,7 +46,7 @@ impl BootData {
         }
     }
 
-    pub fn apply_patch(&self, patch_path : &str) {
-        apply_patch(&self.path, patch_path);
+    pub fn apply_patch(&self, patch_path : &str) -> Result<(), PatchError> {
+        apply_patch(&self.path, patch_path)
     }
 }
