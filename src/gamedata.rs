@@ -147,7 +147,7 @@ impl GameData {
     /// let data = game.extract("exd/root.exl").unwrap();
     ///
     /// let mut file = std::fs::File::create("root.exl").unwrap();
-    /// file.write(data.as_slice());
+    /// file.write(data.as_slice()).unwrap();
     /// ```
     pub fn extract(&self, path: &str) -> Option<MemoryBuffer> {
         let hash = calculate_hash(path);
