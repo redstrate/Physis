@@ -77,6 +77,6 @@ impl IndexFile {
         let mut index_file = std::fs::File::open(path)
             .expect("Failed to read index file.");
 
-        Some(IndexFile::read(&mut index_file).ok()?)
+        IndexFile::read(&mut index_file).ok()
     }
 }
