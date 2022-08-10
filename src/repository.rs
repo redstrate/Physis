@@ -5,7 +5,7 @@ use std::path::{Path, PathBuf};
 use crate::repository::RepositoryType::{Base, Expansion};
 
 /// The type of repository, discerning game data from expansion data.
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Copy, Clone)]
 #[repr(C)]
 pub enum RepositoryType {
     /// The base game directory, like "ffxiv".
