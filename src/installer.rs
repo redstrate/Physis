@@ -1,4 +1,4 @@
-use std::ffi::{CStr, CString};
+use std::ffi::{CStr, CString, NulError};
 use std::fs;
 use std::fs::File;
 use std::io::Write;
@@ -46,8 +46,25 @@ extern "C" {
     fn unshield_file_save(unshield: *mut Unshield, index : i32, filename: *const c_char) -> bool;
 }
 
+pub enum InstallError {
+    IOFailure,
+    FFIFailure
+}
+
+impl From<std::io::Error> for InstallError {
+    fn from(_: std::io::Error) -> Self {
+        InstallError::IOFailure
+    }
+}
+
+impl From<NulError> for InstallError {
+    fn from(_: NulError) -> Self {
+        InstallError::FFIFailure
+    }
+}
+
 /// Installs the game from the provided retail installer.
-pub unsafe fn install_game(installer_path : &str, game_directory : &str) {
+pub fn install_game(installer_path : &str, game_directory : &str) -> Result<(), InstallError> {
     let installer_file = fs::read(installer_path).unwrap();
 
     let mut last_position = 0;
@@ -66,9 +83,9 @@ pub unsafe fn install_game(installer_path : &str, game_directory : &str) {
             let mut new_file = File::create(last_filename).unwrap();
 
             if last_filename == "data1.hdr" {
-                new_file.write(&installer_file[last_position + 30..position - 42]);
+                new_file.write(&installer_file[last_position + 30..position - 42])?;
             } else {
-                new_file.write(&installer_file[last_position + 33..position - 42]);
+                new_file.write(&installer_file[last_position + 33..position - 42])?;
             }
         }
 
@@ -78,35 +95,39 @@ pub unsafe fn install_game(installer_path : &str, game_directory : &str) {
 
     let mut new_file = File::create(last_filename).unwrap();
 
-    new_file.write(&installer_file[last_position + 33..installer_file.len() - 42]);
+    new_file.write(&installer_file[last_position + 33..installer_file.len() - 42])?;
 
-    fs::create_dir_all(format!("{game_directory}/boot"));
-    fs::create_dir_all(format!("{game_directory}/game"));
+    fs::create_dir_all(format!("{game_directory}/boot"))?;
+    fs::create_dir_all(format!("{game_directory}/game"))?;
 
     // set unshield to shut up
-    unshield_set_log_level(0);
+    unsafe { unshield_set_log_level(0) };
 
-    let unshield = unshield_open(b"data1.cab".as_ptr() as *const c_char);
-    let file_count = unshield_file_count(unshield);
+    let unshield = unsafe { unshield_open(b"data1.cab".as_ptr() as *const c_char) };
+    let file_count = unsafe { unshield_file_count(unshield) };
 
     for i in 0..file_count {
-        let filename = CStr::from_ptr(unshield_file_name(unshield, i)).to_string_lossy();
+        let filename = unsafe { CStr::from_ptr(unshield_file_name(unshield, i)).to_string_lossy() };
 
         for boot_name in BOOT_COMPONENT_FILES {
             if boot_name == filename {
                 let save_filename = format!("{game_directory}/boot/{boot_name}");
-                unshield_file_save(unshield, i, CString::new(save_filename).unwrap().as_ptr());
+                let save_filename_c = CString::new(save_filename)?;
+                unsafe { unshield_file_save(unshield, i, save_filename_c.as_ptr()) };
             }
         }
 
         for game_name in GAME_COMPONENT_FILES {
             if game_name == filename {
                 let save_filename = format!("{game_directory}/game/{game_name}");
-                unshield_file_save(unshield, i, CString::new(save_filename).unwrap().as_ptr());
+                let save_filename_c = CString::new(save_filename)?;
+                unsafe { unshield_file_save(unshield, i, save_filename_c.as_ptr()) };
             }
         }
     }
 
-    unshield_close(unshield);
+    unsafe { unshield_close(unshield); }
+
+    Ok(())
 }
 
