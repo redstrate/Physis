@@ -1,6 +1,6 @@
 use std::fs;
 use std::fs::DirEntry;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use crate::common::Language;
 use crate::dat::DatFile;
 use crate::exd::EXD;
@@ -91,10 +91,13 @@ impl GameData {
     fn get_index_file(&self, path: &str) -> Option<IndexFile> {
         let (repository, category) = self.parse_repository_category(path).unwrap();
 
-        let index_path = format!("{}/sqpack/{}/{}",
-                                 self.game_directory, repository.name, repository.index_filename(category));
+        let index_path : PathBuf = [self.game_directory.clone(),
+            "sqpack".to_string(),
+            repository.name.clone(),
+            repository.index_filename(category)]
+            .iter().collect();
 
-        IndexFile::from_existing(index_path.as_str())
+        IndexFile::from_existing(index_path.to_str()?)
     }
 
     /// Checks if a file located at `path` exists.
