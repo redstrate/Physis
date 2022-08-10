@@ -1,5 +1,4 @@
 use std::io::{Cursor, Seek, SeekFrom};
-use std::os::unix::raw::time_t;
 use binrw::binread;
 use crate::gamedata::MemoryBuffer;
 use binrw::BinRead;
@@ -71,7 +70,7 @@ impl ChatLog {
         let content_offset = (8 + header.file_size * 4) as u64;
 
         // beginning of content offset
-        cursor.seek(SeekFrom::Start(content_offset));
+        cursor.seek(SeekFrom::Start(content_offset)).ok()?;
 
         let mut entries = vec![];
 
@@ -83,7 +82,7 @@ impl ChatLog {
             // TODO: handle the coloring properly, in some way
             entry.message = String::from_utf8_lossy(&*buffer[cursor.position() as usize..new_last_offset as usize].to_vec()).to_string();
 
-            cursor.seek(SeekFrom::Start(new_last_offset));
+            cursor.seek(SeekFrom::Start(new_last_offset)).ok()?;
 
             entries.push(entry);
         }

@@ -1,4 +1,3 @@
-use std::ffi::CString;
 use std::fs::read;
 use std::io::Cursor;
 use binrw::binrw;

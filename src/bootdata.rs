@@ -1,6 +1,5 @@
 use std::fs;
 use std::path::PathBuf;
-use crate::gamedata::MemoryBuffer;
 use crate::patch::{apply_patch, PatchError};
 
 /// Boot data for FFXIV.
