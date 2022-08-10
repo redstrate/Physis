@@ -139,7 +139,7 @@ impl Repository {
             repo_type = Base;
         } else {
             repo_type = Expansion {
-                number: 0
+                number: name[2..3].parse().unwrap()
             }
         }
 
