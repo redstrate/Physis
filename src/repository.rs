@@ -6,6 +6,7 @@ use crate::repository::RepositoryType::{Base, Expansion};
 
 /// The type of repository, discerning game data from expansion data.
 #[derive(Debug, PartialEq)]
+#[repr(C)]
 pub enum RepositoryType {
     /// The base game directory, like "ffxiv".
     Base,
