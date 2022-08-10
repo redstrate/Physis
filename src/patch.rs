@@ -3,10 +3,11 @@ use std::fs::{File, OpenOptions};
 use std::io::{Seek, SeekFrom, Write};
 use binrw::BinRead;
 use binrw::binread;
+use binrw::binrw;
 use crate::sqpack::read_data_block_patch;
 use core::cmp::min;
 use std::path::PathBuf;
-use crate::common::{get_platform_string, PlatformId, Region};
+use crate::common::Region;
 
 #[binread]
 #[derive(Debug)]
@@ -246,6 +247,23 @@ struct SqpkFileOperationData {
     #[br(count = path_length)]
     #[br(map = | x: Vec < u8 > | String::from_utf8(x[..x.len() - 1].to_vec()).unwrap())]
     path: String,
+}
+
+#[binrw]
+#[brw(repr = u16)]
+#[derive(Debug, PartialEq)]
+enum PlatformId {
+    Windows,
+    PS3,
+    PS4,
+}
+
+fn get_platform_string(id: &PlatformId) -> &'static str {
+    match &id {
+        PlatformId::Windows => "win32",
+        PlatformId::PS3 => "ps3", // TODO: lol are these even correct? i have no idea
+        PlatformId::PS4 => "ps4"
+    }
 }
 
 #[derive(BinRead, PartialEq, Debug)]

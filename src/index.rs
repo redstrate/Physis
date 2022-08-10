@@ -2,7 +2,15 @@ use std::io::SeekFrom;
 use binrw::binrw;
 use binrw::BinRead;
 use bitfield_struct::bitfield;
-use crate::common::PlatformId;
+
+#[binrw]
+#[brw(repr = u8)]
+#[derive(Debug, PartialEq)]
+enum PlatformId {
+    Windows,
+    PS3,
+    PS4,
+}
 
 #[binrw]
 #[br(magic = b"SqPack")]
