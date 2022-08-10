@@ -37,7 +37,7 @@ impl BootData {
         match is_valid(directory) {
             true => Some(BootData {
                 path: directory.parse().unwrap(),
-                version: String::new()
+                version: fs::read_to_string(format!("{directory}/ffxivboot.ver")).unwrap()
             }),
             false => {
                 println!("Boot data is not valid!");
