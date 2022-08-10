@@ -1,19 +1,20 @@
 use crate::gamedata::MemoryBuffer;
 use hard_xml::XmlRead;
+use glam::Mat4;
 
 #[derive(Debug)]
 pub struct Bone {
-    name: String,
-    parent_index: usize,
+    pub name: String,
+    pub parent_index: i32,
 
-    position: [f32; 3],
-    rotation: [f32; 4],
-    scale: [f32; 3]
+    pub position: [f32; 3],
+    pub rotation: [f32; 4],
+    pub scale: [f32; 3]
 }
 
 #[derive(Debug)]
 pub struct Skeleton {
-    bones : Vec<Bone>
+    pub bones : Vec<Bone>
 }
 
 impl Skeleton {
@@ -116,22 +117,17 @@ impl Skeleton {
         };
 
         for bone in &json_bones {
+            let pose_matrix = Mat4::from_cols_array(&bone.pose_matrix);
+
+            let (scale, rotation, translation) = pose_matrix.to_scale_rotation_translation();
+
             skeleton.bones.push(Bone {
                 name: bone.bone_name.clone(),
-                parent_index: 0,
-                position: [0.0; 3],
-                rotation: [0.0; 4],
-                scale: [0.0; 3]
+                parent_index: bone.bone_parent,
+                position: translation.to_array(),
+                rotation: rotation.to_array(),
+                scale: scale.to_array()
             });
-        }
-
-        // assign parenting
-        for bone in &json_bones {
-            if bone.bone_parent != -1 {
-                let mut new_bone = &mut skeleton.bones[bone.bone_number as usize];
-
-                new_bone.parent_index = bone.bone_parent as usize;
-            }
         }
 
         Some(skeleton)

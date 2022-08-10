@@ -47,3 +47,6 @@ serde = { version = "1.0", features = ["derive"] }
 
 # needed for file info (fiin)
 sha1_smol = "1.0.0"
+
+# needed for deconstructing skeleton pose matrices
+glam = "0.21.3"
