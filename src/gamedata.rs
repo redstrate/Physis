@@ -152,8 +152,7 @@ impl GameData {
     pub fn extract(&self, path: &str) -> Option<MemoryBuffer> {
         let hash = calculate_hash(path);
 
-        let index_file = self.get_index_file(path)
-            .expect("Failed to find index file.");
+        let index_file = self.get_index_file(path)?;
 
         let slice = index_file.entries.iter().find(|s| s.hash == hash);
         match slice {
@@ -162,10 +161,7 @@ impl GameData {
 
                 dat_file.read_from_offset(entry.bitfield.offset())
             }
-            None => {
-                println!("Entry not found.");
-                None
-            }
+            None => None
         }
     }
 
@@ -188,9 +184,9 @@ impl GameData {
     }
 
     pub fn read_excel_sheet_header(&self, name : &str) -> Option<EXH> {
-        let root_exl_file = self.extract("exd/root.exl").unwrap();
+        let root_exl_file = self.extract("exd/root.exl")?;
 
-        let root_exl = EXL::from_existing(&root_exl_file).unwrap();
+        let root_exl = EXL::from_existing(&root_exl_file)?;
 
         for (row, _) in root_exl.entries {
             if row == name {
@@ -198,7 +194,7 @@ impl GameData {
 
                 let path = format!("exd/{new_filename}.exh");
 
-                return EXH::from_existing(&self.extract(&path).unwrap())
+                return EXH::from_existing(&self.extract(&path)?)
             }
         }
 
