@@ -309,7 +309,8 @@ pub struct Lod {
 }
 
 pub struct MDL {
-    pub lods : Vec<Lod>
+    pub lods : Vec<Lod>,
+    pub affected_bone_names : Vec<String>
 }
 
 impl MDL {
@@ -341,6 +342,21 @@ impl MDL {
         }
 
         let model = ModelData::read(&mut cursor).unwrap();
+
+        let mut affected_bone_names = vec![];
+
+        for mut offset in model.bone_name_offsets {
+            let mut string = String::new();
+
+            let mut next_char = model.header.strings[offset as usize] as char;
+            while next_char != '\0' {
+                string.push(next_char);
+                offset += 1;
+                next_char = model.header.strings[offset as usize] as char;
+            }
+
+            affected_bone_names.push(string);
+        }
 
         let mut lods = vec![];
 
@@ -415,7 +431,8 @@ impl MDL {
         }
 
         Some(MDL {
-            lods
+            lods,
+            affected_bone_names
         })
     }
 }
