@@ -3,9 +3,17 @@ packages:
   - rust
   - cargo-deny
   - unshield
+  - rsync
 sources:
   - https://git.sr.ht/~redstrate/physis
+secrets:
+  - b748582a-5d31-4fe8-94d6-4a63035e97aa
 tasks:
+  - update-docs: |
+      cd physis
+      cargo doc --release --no-deps
+      echo "StrictHostKeyChecking=no" >> ~/.ssh/config
+      rsync -Wvr target/doc/ deploy@ryne.moe:/var/ryne/sync/physis-docs
   - check: |
       cd physis
       cargo check
