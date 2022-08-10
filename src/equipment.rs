@@ -1,6 +1,7 @@
 use crate::race::{Gender, get_race_id, Race, Subrace};
 
 #[repr(u8)]
+#[derive(Debug, PartialEq)]
 /// The slot the item is for.
 pub enum Slot {
     /// The head slot. Shorthand is "met".
@@ -55,6 +56,24 @@ pub fn get_slot_from_id(id: i32) -> Option<Slot> {
     }
 }
 
+/// Determines the correct slot from an id. This can fail, so a None is returned when no slot matches
+/// that id.
+pub fn get_slot_from_abbreviation(abrev: &str) -> Option<Slot> {
+    match abrev {
+        "met" => Some(Slot::Head),
+        "glv" => Some(Slot::Hands),
+        "dwn" => Some(Slot::Legs),
+        "sho" => Some(Slot::Feet),
+        "top" => Some(Slot::Body),
+        "ear" => Some(Slot::Earring),
+        "nek" => Some(Slot::Neck),
+        "rir" => Some(Slot::Rings),
+        "wrs" => Some(Slot::Wrists),
+        _ => None
+    }
+}
+
+
 /// Builds a game path to the equipment specified.
 pub fn build_equipment_path(model_id: i32, race: Race, subrace: Subrace, gender: Gender, slot: Slot) -> String {
     format!("chara/equipment/e{:04}/model/c{:04}e{:04}_{}.mdl",
@@ -62,6 +81,13 @@ pub fn build_equipment_path(model_id: i32, race: Race, subrace: Subrace, gender:
             get_race_id(race, subrace, gender).unwrap(),
             model_id,
             get_slot_abbreviation(slot))
+}
+
+pub fn deconstruct_equipment_path(path : &str) -> Option<(i32, Slot)> {
+    let model_id = &path[6..10];
+    let slot_name = &path[11..14];
+
+    Some((model_id.parse().ok()?, get_slot_from_abbreviation(slot_name)?))
 }
 
 #[cfg(test)]
