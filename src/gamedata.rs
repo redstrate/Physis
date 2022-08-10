@@ -100,6 +100,18 @@ impl GameData {
         IndexFile::from_existing(index_path.to_str()?)
     }
 
+    fn get_dat_file(&self, path: &str, data_file_id : u32) -> Option<DatFile> {
+        let (repository, category) = self.parse_repository_category(path).unwrap();
+
+        let dat_path : PathBuf = [self.game_directory.clone(),
+            "sqpack".to_string(),
+            repository.name.clone(),
+            repository.dat_filename(category, data_file_id)]
+            .iter().collect();
+
+        DatFile::from_existing(dat_path.to_str()?)
+    }
+
     /// Checks if a file located at `path` exists.
     ///
     /// # Example
@@ -145,14 +157,7 @@ impl GameData {
         let slice = index_file.entries.iter().find(|s| s.hash == hash);
         match slice {
             Some(entry) => {
-                let (repository, category) = self.parse_repository_category(path).unwrap();
-
-                let dat_filename = repository.dat_filename(category, entry.bitfield.data_file_id().into());
-
-                let dat_path = format!("{}/sqpack/{}/{}",
-                                       self.game_directory, repository.name, dat_filename);
-
-                let mut dat_file = DatFile::from_existing(dat_path.as_str()).unwrap();
+                let mut dat_file = self.get_dat_file(path, entry.bitfield.data_file_id())?;
 
                 dat_file.read_from_offset(entry.bitfield.offset())
             }
