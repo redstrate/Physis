@@ -27,7 +27,7 @@ features over, but I plan to expand functionality beyond the original scope.
 
 **Note:** The API is nowhere near stable, so things may change or break.
 
-If you intend to use this in a Rust project, you can simply include this crate directly.
+If you intend to use this in a Rust project, you can simply include this crate directly. You can view the documentation at [docs.xiv.zone](https://docs.xiv.zone/docs/physis)!
 
 For other use in languages I maintain [libphysis](https://git.sr.ht/~redstrate/libphysis), which is a C wrapper
 around the same functionality. This isn't for show, I actually use these bindings in [other projects](https://git.sr.ht/~redstrate/astra).
