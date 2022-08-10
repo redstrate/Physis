@@ -7,6 +7,7 @@ use crate::exd::EXD;
 use crate::exh::EXH;
 use crate::exl::EXL;
 use crate::index::IndexFile;
+use crate::patch::{apply_patch, PatchError};
 use crate::repository::{Category, Repository, string_to_category};
 use crate::sqpack::calculate_hash;
 
@@ -210,6 +211,10 @@ impl GameData {
         let exd_file = self.extract(&exd_path).unwrap();
 
         EXD::from_existing(&exh, &exd_file)
+    }
+
+    pub fn apply_patch(&self, patch_path : &str) -> Result<(), PatchError> {
+        apply_patch(&self.game_directory, patch_path)
     }
 }
 

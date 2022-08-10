@@ -1,7 +1,7 @@
-use binrw::binread;
+use binrw::binrw;
 
-#[binread]
-#[br(repr(u8))]
+#[binrw]
+#[brw(repr(u8))]
 #[repr(u8)]
 /// The language the game data is written for.
 pub enum Language {
@@ -35,4 +35,29 @@ pub fn get_language_code(lang: &Language) -> &'static str {
         Language::ChineseTraditional => "cht",
         Language::Korean => "ko"
     }
+}
+
+#[binrw]
+#[brw(repr = u16)]
+#[derive(Debug, PartialEq)]
+pub enum PlatformId {
+    Windows,
+    PS3,
+    PS4,
+}
+
+pub fn get_platform_string(id: &PlatformId) -> &'static str {
+    match &id {
+        PlatformId::Windows => "win32",
+        PlatformId::PS3 => "ps3", // TODO: lol are these even correct? i have no idea
+        PlatformId::PS4 => "ps4"
+    }
+}
+
+#[binrw]
+#[brw(repr = i16)]
+#[derive(Debug, PartialEq)]
+pub enum Region {
+    Global = -1
+    // TODO: find patch codes for other regions :-)
 }
