@@ -62,3 +62,6 @@ pub mod log;
 
 // Reading textures (TEX).
 pub mod tex;
+
+// Reading material files (MTRL)
+pub mod mtrl;
