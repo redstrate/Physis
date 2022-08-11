@@ -62,9 +62,9 @@ struct TexHeader {
 }
 
 pub struct Texture {
-    width: u32,
-    height: u32,
-    rgba: Vec<u8>
+    pub width: u32,
+    pub height: u32,
+    pub rgba: Vec<u8>
 }
 
 impl Texture {
