@@ -1,8 +1,10 @@
-use std::io::Cursor;
+use std::cmp::min;
+use std::io::{Cursor, Read, Seek, SeekFrom};
 use binrw::binread;
 use crate::gamedata::MemoryBuffer;
 use binrw::BinRead;
 use bitflags::bitflags;
+use texpresso::Format;
 
 // Attributes and Format are adapted from Lumina (https://github.com/NotAdam/Lumina/blob/master/src/Lumina/Data/Files/TexFile.cs)
 bitflags! {
@@ -35,51 +37,13 @@ bitflags! {
     }
 }
 
-bitflags! {
-    #[binread]
-    struct TextureFormat : u32 {
-        const TypeShift = 0xC;
-        const TypeMask = 0xF000;
-        const ComponentShift = 0x8;
-        const ComponentMask = 0xF00;
-        const BppShift = 0x4;
-        const BppMask = 0xF0;
-        const EnumShift = 0x0;
-        const EnumMask = 0xF;
-        const TypeInteger = 0x1;
-        const TypeFloat = 0x2;
-        const TypeDxt = 0x3;
-        const TypeBc123 = 0x3;
-        const TypeDepthStencil = 0x4;
-        const TypeSpecial = 0x5;
-        const TypeBc57 = 0x6;
-
-        const L8 = 0x1130;
-        const A8 = 0x1131;
-        const B4G4R4A4 = 0x1440;
-        const B5G5R5A1 = 0x1441;
-        const B8G8R8A8 = 0x1450;
-        const B8G8R8X8 = 0x1451;
-
-        const R32F = 0x2150;
-        const R16G16F = 0x2250;
-        const R32G32F = 0x2260;
-        const R16G16B16A16F = 0x2460;
-        const R32G32B32A32F = 0x2470;
-
-        const BC1 = 0x3420;
-        const BC2 = 0x3430;
-        const BC3 = 0x3431;
-        const BC5 = 0x6230;
-        const BC7 = 0x6432;
-
-        const D16 = 0x4140;
-        const D24S8 = 0x4250;
-
-        const Null = 0x5100;
-        const Shadow16 = 0x5140;
-        const Shadow24 = 0x5150;
-    }
+#[binread]
+#[br(repr = u32)]
+#[derive(Debug)]
+enum TextureFormat {
+    B8G8R8A8 = 0x1450,
+    BC1 = 0x3420,
+    BC5 = 0x3431
 }
 
 #[binread]
@@ -98,7 +62,7 @@ struct TexHeader {
 }
 
 pub struct Texture {
-
+    rgba: Vec<u8>
 }
 
 impl Texture {
@@ -106,8 +70,38 @@ impl Texture {
         let mut cursor = Cursor::new(buffer);
         let header = TexHeader::read(&mut cursor).unwrap();
 
-        println!("{:#?}", header);
+        // TODO: Adapted from Lumina, but this really can be written better...
+        let mut texture_data_size = vec![];
+        texture_data_size.resize(min(13, header.mip_levels as usize), 0);
+        let size = texture_data_size.len();
+        for i in 0..size - 1 {
+            texture_data_size[i] = header.offset_to_surface[i + 1] - header.offset_to_surface[i];
+        }
+        texture_data_size[size - 1] = (buffer.len() - header.offset_to_surface[size - 1] as usize) as u32;
 
-        None
+        cursor.seek(SeekFrom::Start(header.offset_to_surface[0] as u64)).ok()?;
+
+        let mut src = vec![0u8; texture_data_size.iter().sum::<u32>() as usize];
+        cursor.read_exact(src.as_mut_slice()).ok()?;
+
+        let mut dst : Vec<u8> = vec![0u8; (header.width as usize * header.height as usize * 4) as usize];
+
+        match header.format {
+            TextureFormat::B8G8R8A8 => {
+                dst.copy_from_slice(&src);
+            }
+            TextureFormat::BC1 => {
+                let format = Format::Bc1;
+                format.decompress(&src, header.width as usize, header.height as usize, dst.as_mut_slice());
+            }
+            TextureFormat::BC5 => {
+                let format = Format::Bc3;
+                format.decompress(&src, header.width as usize, header.height as usize, dst.as_mut_slice());
+            }
+        }
+
+        Some(Texture {
+            rgba: dst
+        })
     }
 }

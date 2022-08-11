@@ -28,7 +28,7 @@ struct StandardFileBlock {
     num_blocks: u32,
 }
 
-#[derive(BinRead)]
+#[derive(BinRead, Debug)]
 struct TextureLodBlock {
     compressed_offset: u32,
     compressed_size: u32,
@@ -88,7 +88,7 @@ pub struct ModelFileBlock {
     pub edge_geometry_enabled: bool,
 }
 
-#[derive(BinRead)]
+#[derive(BinRead, Debug)]
 struct TextureBlock {
     #[br(pad_before = 8)]
     num_blocks: u32,
@@ -103,7 +103,7 @@ struct TextureBlock {
 struct FileInfo {
     size: u32,
     file_type: FileType,
-    file_size: i32,
+    file_size: u32,
 
     #[br(if (file_type == FileType::Standard))]
     standard_info: Option<StandardFileBlock>,
@@ -331,12 +331,15 @@ impl DatFile {
         let texture_file_info = file_info.texture_info.as_ref().unwrap();
 
         // write the header if it exists
-        if texture_file_info.lods[0].compressed_offset != 0 {
-            let original_pos = self.file.stream_position().unwrap();
+        let mipmap_size = texture_file_info.lods[0].compressed_size;
+        if mipmap_size != 0 {
+            let original_pos = self.file.stream_position().ok()?;
 
             self.file.seek(SeekFrom::Start(offset + file_info.size as u64)).ok()?;
+
             let mut header = vec![0u8; texture_file_info.lods[0].compressed_offset as usize];
-            self.file.read(&mut header).ok()?;
+            self.file.read_exact(&mut header).ok()?;
+
             data.append(&mut header);
 
             self.file.seek(SeekFrom::Start(original_pos)).ok()?;
@@ -346,9 +349,13 @@ impl DatFile {
             let mut running_block_total = (texture_file_info.lods[i as usize].compressed_offset as u64) + offset + (file_info.size as u64);
 
             for _ in 0..texture_file_info.lods[i as usize].block_count {
-                data.append(&mut read_data_block(&self.file, running_block_total).unwrap());
-                self.file.seek(SeekFrom::Start(running_block_total)).ok()?;
-                running_block_total += i16::read(&mut self.file).unwrap() as u64;
+                let original_pos = self.file.stream_position().ok()?;
+
+                data.append(&mut read_data_block(&self.file, running_block_total)?);
+
+                self.file.seek(SeekFrom::Start(original_pos)).ok()?;
+
+                running_block_total += i16::read(&mut self.file).ok()? as u64;
             }
         }
 
