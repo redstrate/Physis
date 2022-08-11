@@ -441,6 +441,7 @@ version = "0.1.0"
 dependencies = [
  "binrw",
  "bitfield-struct",
+ "bitflags",
  "crc",
  "criterion",
  "glam",

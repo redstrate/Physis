@@ -50,3 +50,6 @@ sha1_smol = "1.0.0"
 
 # needed for deconstructing skeleton pose matrices
 glam = "0.21.3"
+
+# needed for c-style bitflags used in some formats (such as tex files)
+bitflags = "1.3"
