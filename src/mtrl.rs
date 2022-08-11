@@ -110,7 +110,7 @@ struct MaterialData {
 
 #[derive(Debug)]
 pub struct Material {
-    texture_paths: Vec<String>
+    pub texture_paths: Vec<String>
 }
 
 impl Material {
