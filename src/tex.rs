@@ -62,6 +62,8 @@ struct TexHeader {
 }
 
 pub struct Texture {
+    width: u32,
+    height: u32,
     rgba: Vec<u8>
 }
 
@@ -101,6 +103,8 @@ impl Texture {
         }
 
         Some(Texture {
+            width: header.width as u32,
+            height: header.height as u32,
             rgba: dst
         })
     }
