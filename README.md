@@ -22,6 +22,8 @@ features over, but I plan to expand functionality beyond the original scope.
   * All three Excel data types (EXD, EXH, EXL)
   * Models
   * Havok Packfile/TexTool skeletons
+  * Textures
+  * Materials
 
 ## Usage
 
