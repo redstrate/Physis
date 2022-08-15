@@ -72,7 +72,7 @@ pub struct IndexFile {
 }
 
 impl IndexFile {
-    /// Creates a new reference to an existing index file, this reads both an index and index2 file.
+    /// Creates a new reference to an existing index file.
     pub fn from_existing(path: &str) -> Option<IndexFile> {
         let mut index_file = std::fs::File::open(path).ok()?;
 
