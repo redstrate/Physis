@@ -23,9 +23,9 @@ fn fetch_data() {
 }
 
 fn criterion_benchmark(c: &mut Criterion) {
-    c.bench_function("hash calc", |b| b.iter(|| bench_calculate_hash()));
-    c.bench_function("gamedata reloading repositories", |b| b.iter(|| reload_repos()));
-    c.bench_function("gamedata extract", |b| b.iter(|| fetch_data()));
+    c.bench_function("hash calc", |b| b.iter(bench_calculate_hash));
+    c.bench_function("gamedata reloading repositories", |b| b.iter(reload_repos));
+    c.bench_function("gamedata extract", |b| b.iter(fetch_data));
 }
 
 criterion_group!(benches, criterion_benchmark);

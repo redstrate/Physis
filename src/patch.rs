@@ -295,7 +295,7 @@ fn wipe(mut file : &File, length : i32) -> Result<(), PatchError> {
     let mut length = length;
     while length > 0 {
         let num_bytes = min(WIPE_BUFFER.len() as i32, length);
-        file.write(&WIPE_BUFFER[0..num_bytes as usize])?;
+        file.write_all(&WIPE_BUFFER[0..num_bytes as usize])?;
         length -= num_bytes;
     }
 
@@ -313,19 +313,19 @@ fn write_empty_file_block_at(mut file : &File, offset : i32, block_number : i32)
     file.seek(SeekFrom::Start(offset as u64))?;
 
     let block_size : i32 = 1 << 7;
-    file.write(block_size.to_le_bytes().as_slice())?;
+    file.write_all(block_size.to_le_bytes().as_slice())?;
 
     let unknown : i32 = 0;
-    file.write(unknown.to_le_bytes().as_slice())?;
+    file.write_all(unknown.to_le_bytes().as_slice())?;
 
     let file_size : i32 = 0;
-    file.write(file_size.to_le_bytes().as_slice())?;
+    file.write_all(file_size.to_le_bytes().as_slice())?;
 
     let num_blocks : i32 = block_number - 1;
-    file.write(num_blocks.to_le_bytes().as_slice())?;
+    file.write_all(num_blocks.to_le_bytes().as_slice())?;
 
     let used_blocks : i32 = 0;
-    file.write(used_blocks.to_le_bytes().as_slice())?;
+    file.write_all(used_blocks.to_le_bytes().as_slice())?;
 
     Ok(())
 }
@@ -392,7 +392,7 @@ pub(crate) fn apply_patch(data_dir : &str, patch_path : &str) -> Result<(), Patc
             ChunkType::Sqpk(pchunk) => {
                 match pchunk.operation {
                     SqpkOperation::AddData(add) => {
-                        let filename = get_dat_path(&target_info.as_ref().unwrap(), add.main_id, add.sub_id, add.file_id);
+                        let filename = get_dat_path(target_info.as_ref().unwrap(), add.main_id, add.sub_id, add.file_id);
 
                         let (left, _) = filename.rsplit_once('/').unwrap();
                         fs::create_dir_all(left)?;
@@ -404,37 +404,37 @@ pub(crate) fn apply_patch(data_dir : &str, patch_path : &str) -> Result<(), Patc
 
                         new_file.seek(SeekFrom::Start(add.block_offset as u64))?;
 
-                        new_file.write(&*add.block_data)?;
+                        new_file.write_all(&*add.block_data)?;
 
-                        wipe(&mut new_file, add.block_delete_number)?;
+                        wipe(&new_file, add.block_delete_number)?;
                     }
                     SqpkOperation::DeleteData(delete) => {
-                        let filename = get_dat_path(&target_info.as_ref().unwrap(), delete.main_id, delete.sub_id, delete.file_id);
+                        let filename = get_dat_path(target_info.as_ref().unwrap(), delete.main_id, delete.sub_id, delete.file_id);
 
-                        let mut new_file = OpenOptions::new()
+                        let new_file = OpenOptions::new()
                             .write(true)
                             .create(true)
                             .open(filename)?;
 
-                        write_empty_file_block_at(&mut new_file, delete.block_offset, delete.block_number)?;
+                        write_empty_file_block_at(&new_file, delete.block_offset, delete.block_number)?;
                     }
                     SqpkOperation::ExpandData(expand) => {
-                        let filename = get_dat_path(&target_info.as_ref().unwrap(), expand.main_id, expand.sub_id, expand.file_id);
+                        let filename = get_dat_path(target_info.as_ref().unwrap(), expand.main_id, expand.sub_id, expand.file_id);
 
                         let (left, _) = filename.rsplit_once('/').unwrap();
                         fs::create_dir_all(left)?;
 
-                        let mut new_file = OpenOptions::new()
+                        let new_file = OpenOptions::new()
                             .write(true)
                             .create(true)
                             .open(filename)?;
 
-                        write_empty_file_block_at(&mut new_file, expand.block_offset, expand.block_number)?;
+                        write_empty_file_block_at(&new_file, expand.block_offset, expand.block_number)?;
                     }
                     SqpkOperation::HeaderUpdate(header) => {
                         let file_path = match header.file_kind {
-                            TargetFileKind::Dat => get_dat_path(&target_info.as_ref().unwrap(), header.main_id, header.sub_id, header.file_id),
-                            TargetFileKind::Index => get_index_path(&target_info.as_ref().unwrap(), header.main_id, header.sub_id, header.file_id)
+                            TargetFileKind::Dat => get_dat_path(target_info.as_ref().unwrap(), header.main_id, header.sub_id, header.file_id),
+                            TargetFileKind::Index => get_index_path(target_info.as_ref().unwrap(), header.main_id, header.sub_id, header.file_id)
                         };
 
                         let (left, _) = file_path.rsplit_once('/')
@@ -450,7 +450,7 @@ pub(crate) fn apply_patch(data_dir : &str, patch_path : &str) -> Result<(), Patc
                             new_file.seek(SeekFrom::Start(1024))?;
                         }
 
-                        new_file.write(&*header.header_data)?;
+                        new_file.write_all(&*header.header_data)?;
                     }
                     SqpkOperation::FileOperation(fop) => {
                         match fop.operation {
@@ -480,7 +480,7 @@ pub(crate) fn apply_patch(data_dir : &str, patch_path : &str) -> Result<(), Patc
                                     .open(new_path)?;
 
                                 new_file.seek(SeekFrom::Start(fop.offset as u64))?;
-                                new_file.write(&mut data)?;
+                                new_file.write_all(&data)?;
                             }
                             SqpkFileOperation::DeleteFile => {
                                 let new_path = data_dir.to_owned() + "/" + &fop.path;

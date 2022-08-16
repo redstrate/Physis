@@ -83,9 +83,9 @@ pub fn install_game(installer_path : &str, game_directory : &str) -> Result<(), 
             let mut new_file = File::create(last_filename).unwrap();
 
             if last_filename == "data1.hdr" {
-                new_file.write(&installer_file[last_position + 30..position - 42])?;
+                new_file.write_all(&installer_file[last_position + 30..position - 42])?;
             } else {
-                new_file.write(&installer_file[last_position + 33..position - 42])?;
+                new_file.write_all(&installer_file[last_position + 33..position - 42])?;
             }
         }
 
@@ -95,7 +95,7 @@ pub fn install_game(installer_path : &str, game_directory : &str) -> Result<(), 
 
     let mut new_file = File::create(last_filename).unwrap();
 
-    new_file.write(&installer_file[last_position + 33..installer_file.len() - 42])?;
+    new_file.write_all(&installer_file[last_position + 33..installer_file.len() - 42])?;
 
     fs::create_dir_all(format!("{game_directory}/boot"))?;
     fs::create_dir_all(format!("{game_directory}/game"))?;

@@ -71,7 +71,7 @@ impl Skeleton {
             content : String
         }
 
-        let pak = HkPackfile::from_str(&mut std::str::from_utf8(&buffer).unwrap())
+        let pak = HkPackfile::from_str(std::str::from_utf8(buffer).unwrap())
             .expect("Failed to parse sidecar file!");
 
         // find the root level object
@@ -97,7 +97,7 @@ impl Skeleton {
         string_repr.push(']');
 
         // then we turn all of newlines into commas, except of course for the last one!
-        string_repr = string_repr.replacen("\n", ",", string_repr.matches("\n").count() - 1);
+        string_repr = string_repr.replacen('\n', ",", string_repr.matches('\n').count() - 1);
 
         use serde::Deserialize;
 

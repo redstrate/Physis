@@ -206,7 +206,7 @@ impl GameData {
 
         let exd_file = self.extract(&exd_path).unwrap();
 
-        EXD::from_existing(&exh, &exd_file)
+        EXD::from_existing(exh, &exd_file)
     }
 
     pub fn apply_patch(&self, patch_path : &str) -> Result<(), PatchError> {

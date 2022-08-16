@@ -43,7 +43,7 @@ impl FileInfo {
     /// Parses an existing FIIN file.
     pub fn from_existing(buffer : &MemoryBuffer) -> Option<FileInfo> {
         let mut cursor = Cursor::new(buffer);
-        Some(FileInfo::read(&mut cursor).ok()?)
+        FileInfo::read(&mut cursor).ok()
     }
 
     /// Creates a new FileInfo structure from a list of filenames. These filenames must be present in

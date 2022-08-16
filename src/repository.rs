@@ -133,31 +133,27 @@ impl Repository {
 
         let name = String::from(path.file_stem().unwrap().to_str().unwrap());
 
-        let repo_type: RepositoryType;
-
-        if name == "ffxiv" {
-            repo_type = Base;
+        let repo_type = if name == "ffxiv" {
+            Base
         } else {
-            repo_type = Expansion {
+            Expansion {
                 number: name[2..3].parse().unwrap()
             }
-        }
+        };
 
-        let version: Option<String>;
-
-        if repo_type == Base {
+        let version = if repo_type == Base {
             let mut d = PathBuf::from(dir);
             d.pop();
             d.pop();
             d.push("ffxivgame.ver");
 
-            version = read_version(d.as_path());
+            read_version(d.as_path())
         } else {
             let mut d = PathBuf::from(dir);
             d.push(format!("{}.ver", name));
 
-            version = read_version(d.as_path());
-        }
+            read_version(d.as_path())
+        };
 
         if version == None {
             return None;

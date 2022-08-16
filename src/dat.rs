@@ -252,7 +252,7 @@ impl DatFile {
                 let data = read_data_block(&self.file, *last_pos)
                     .expect("Unable to read block data.");
                 // write to buffer
-                buffer.write(data.as_slice()).ok()?;
+                buffer.write_all(data.as_slice()).ok()?;
 
                 self.file.seek(SeekFrom::Start(last_pos + (compressed_block_sizes[current_block as usize] as u64))).ok()?;
                 current_block += 1;
@@ -281,7 +281,7 @@ impl DatFile {
                     let data = read_data_block(&self.file, last_pos)
                         .expect("Unable to read raw model block!");
 
-                    buffer.write(data.as_slice()).expect("Unable to write to memory buffer!");
+                    buffer.write_all(data.as_slice()).expect("Unable to write to memory buffer!");
 
                     data_sizes[i] += data.len() as u32;
                     self.file.seek(SeekFrom::Start(last_pos + (compressed_block_sizes[current_block] as u64)))

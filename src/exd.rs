@@ -74,7 +74,7 @@ impl EXD {
             (bool_data & bit) == bit
         };
 
-        return match column.data_type {
+        match column.data_type {
             ColumnDataType::String => {
                 let string_offset : u32 = Self::read_data_raw(cursor).unwrap();
 

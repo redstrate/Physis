@@ -71,8 +71,8 @@ impl Blowfish {
 
             let (l, r) = self.encrypt_pair(u32::from_le_bytes(l_bytes), u32::from_le_bytes(r_bytes));
 
-            cursor.write(u32::to_le_bytes(l).as_slice()).ok()?;
-            cursor.write(u32::to_le_bytes(r).as_slice()).ok()?;
+            cursor.write_all(u32::to_le_bytes(l).as_slice()).ok()?;
+            cursor.write_all(u32::to_le_bytes(r).as_slice()).ok()?;
         }
 
         Some(cursor.into_inner())
@@ -84,8 +84,7 @@ impl Blowfish {
             padded_length = data.len() + (8 - (data.len() % 8));
         }
 
-        let mut vec = Vec::with_capacity(padded_length);
-        vec.resize(padded_length, 0);
+        let mut vec = vec![0; padded_length];
         vec[..data.len()].clone_from_slice(data);
 
         vec
@@ -105,8 +104,8 @@ impl Blowfish {
 
             let (l, r) = self.decrypt_pair(u32::from_le_bytes(l_bytes), u32::from_le_bytes(r_bytes));
 
-            cursor.write(u32::to_le_bytes(l).as_slice()).ok()?;
-            cursor.write(u32::to_le_bytes(r).as_slice()).ok()?;
+            cursor.write_all(u32::to_le_bytes(l).as_slice()).ok()?;
+            cursor.write_all(u32::to_le_bytes(r).as_slice()).ok()?;
         }
 
         Some(buffer)
@@ -130,7 +129,7 @@ impl Blowfish {
             l ^= self.f(r);
         }
 
-        return (r ^ self.p[17], l ^ self.p[16]);
+        (r ^ self.p[17], l ^ self.p[16])
     }
 
     fn decrypt_pair(&self, mut l: u32, mut r: u32) -> (u32, u32) {
@@ -141,6 +140,6 @@ impl Blowfish {
             l ^= self.f(r);
         }
 
-        return (r ^ self.p[0], l ^ self.p[1]);
+        (r ^ self.p[0], l ^ self.p[1])
     }
 }

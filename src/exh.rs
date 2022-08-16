@@ -76,6 +76,6 @@ pub struct EXH {
 
 impl EXH {
     pub fn from_existing(buffer : &MemoryBuffer) -> Option<EXH> {
-        Some(EXH::read(&mut Cursor::new(&buffer)).ok()?)
+        EXH::read(&mut Cursor::new(&buffer)).ok()
     }
 }
