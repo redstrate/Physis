@@ -1,5 +1,5 @@
-use std::io::{Cursor, Write};
 use crate::blowfish_constants::{BLOWFISH_P, BLOWFISH_S};
+use std::io::{Cursor, Write};
 
 const ROUNDS: usize = 16;
 const KEYBITS: u32 = 64u32 >> 3;
@@ -69,7 +69,8 @@ impl Blowfish {
             let l_bytes: [u8; 4] = padded_data[i..i + 4].try_into().ok()?;
             let r_bytes: [u8; 4] = padded_data[i + 4..i + 8].try_into().ok()?;
 
-            let (l, r) = self.encrypt_pair(u32::from_le_bytes(l_bytes), u32::from_le_bytes(r_bytes));
+            let (l, r) =
+                self.encrypt_pair(u32::from_le_bytes(l_bytes), u32::from_le_bytes(r_bytes));
 
             cursor.write_all(u32::to_le_bytes(l).as_slice()).ok()?;
             cursor.write_all(u32::to_le_bytes(r).as_slice()).ok()?;
@@ -102,7 +103,8 @@ impl Blowfish {
             let l_bytes: [u8; 4] = padded_data[i..i + 4].try_into().ok()?;
             let r_bytes: [u8; 4] = padded_data[i + 4..i + 8].try_into().ok()?;
 
-            let (l, r) = self.decrypt_pair(u32::from_le_bytes(l_bytes), u32::from_le_bytes(r_bytes));
+            let (l, r) =
+                self.decrypt_pair(u32::from_le_bytes(l_bytes), u32::from_le_bytes(r_bytes));
 
             cursor.write_all(u32::to_le_bytes(l).as_slice()).ok()?;
             cursor.write_all(u32::to_le_bytes(r).as_slice()).ok()?;

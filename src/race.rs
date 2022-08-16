@@ -44,14 +44,14 @@ pub enum Race {
 }
 
 mod internal_race {
-    use crate::race::Race;
-    use crate::race::Subrace;
-    use crate::race::Gender;
-    use crate::race::Race::*;
-    use crate::race::Subrace::*;
-    use crate::race::Gender::*;
-    use paste::paste;
     use crate::define_race_enum;
+    use crate::race::Gender;
+    use crate::race::Gender::*;
+    use crate::race::Race;
+    use crate::race::Race::*;
+    use crate::race::Subrace;
+    use crate::race::Subrace::*;
+    use paste::paste;
 
     define_race_enum! {
         pub enum RaceTest {
@@ -92,12 +92,14 @@ pub fn get_race_id(race: Race, subrace: Subrace, gender: Gender) -> Option<i32> 
 
 #[cfg(test)]
 mod tests {
-    use crate::race::internal_race::{convert_to_internal, RaceTest};
     use super::*;
+    use crate::race::internal_race::{convert_to_internal, RaceTest};
 
     #[test]
     fn test_convert_to_internal() {
-        assert_eq!(convert_to_internal(Race::Hyur, Subrace::Midlander, Gender::Female).unwrap(),
-                   RaceTest::HyurMidlanderFemale);
+        assert_eq!(
+            convert_to_internal(Race::Hyur, Subrace::Midlander, Gender::Female).unwrap(),
+            RaceTest::HyurMidlanderFemale
+        );
     }
 }

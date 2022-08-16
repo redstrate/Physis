@@ -24,14 +24,14 @@ const BOOT_COMPONENT_FILES: [&str; 18] = [
     "icudt.dll",
     "libcef.dll",
     "license.txt",
-    "locales/reserved.txt"
+    "locales/reserved.txt",
 ];
 
 const GAME_COMPONENT_FILES: [&str; 1] = ["ffxivgame.ver"];
 
 #[repr(C)]
 struct Unshield {
-    _private: [u8; 0]
+    _private: [u8; 0],
 }
 
 #[link(name = "unshield")]
@@ -39,16 +39,16 @@ extern "C" {
     fn unshield_open(filename: *const c_char) -> *mut Unshield;
     fn unshield_close(unshield: *mut Unshield);
 
-    fn unshield_set_log_level(level : i32);
+    fn unshield_set_log_level(level: i32);
 
     fn unshield_file_count(unshield: *mut Unshield) -> i32;
-    fn unshield_file_name(unshield: *mut Unshield, index : i32) -> *const c_char;
-    fn unshield_file_save(unshield: *mut Unshield, index : i32, filename: *const c_char) -> bool;
+    fn unshield_file_name(unshield: *mut Unshield, index: i32) -> *const c_char;
+    fn unshield_file_save(unshield: *mut Unshield, index: i32, filename: *const c_char) -> bool;
 }
 
 pub enum InstallError {
     IOFailure,
-    FFIFailure
+    FFIFailure,
 }
 
 impl From<std::io::Error> for InstallError {
@@ -64,7 +64,7 @@ impl From<NulError> for InstallError {
 }
 
 /// Installs the game from the provided retail installer.
-pub fn install_game(installer_path : &str, game_directory : &str) -> Result<(), InstallError> {
+pub fn install_game(installer_path: &str, game_directory: &str) -> Result<(), InstallError> {
     let installer_file = fs::read(installer_path).unwrap();
 
     let mut last_position = 0;
@@ -72,7 +72,9 @@ pub fn install_game(installer_path : &str, game_directory : &str) -> Result<(), 
     for filename in FILES_TO_EXTRACT {
         let needle = format!("Disk1\\{}", filename);
 
-        let position = installer_file.windows(needle.len()).position(|window| window == needle.as_str().as_bytes());
+        let position = installer_file
+            .windows(needle.len())
+            .position(|window| window == needle.as_str().as_bytes());
         if position == None {
             break;
         }
@@ -126,8 +128,9 @@ pub fn install_game(installer_path : &str, game_directory : &str) -> Result<(), 
         }
     }
 
-    unsafe { unshield_close(unshield); }
+    unsafe {
+        unshield_close(unshield);
+    }
 
     Ok(())
 }
-

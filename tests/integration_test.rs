@@ -1,12 +1,14 @@
-use std::env;
 use physis::index;
+use std::env;
 
 #[test]
 #[cfg_attr(not(feature = "retail_game_testing"), ignore)]
 fn test_index_read() {
     let game_dir = env::var("FFXIV_GAME_DIR").unwrap();
 
-    index::IndexFile::from_existing(format!("{}/game/sqpack/ffxiv/000000.win32.index", game_dir).as_str());
+    index::IndexFile::from_existing(
+        format!("{}/game/sqpack/ffxiv/000000.win32.index", game_dir).as_str(),
+    );
 }
 
 #[test]
@@ -14,7 +16,8 @@ fn test_index_read() {
 fn test_gamedata_extract() {
     let game_dir = env::var("FFXIV_GAME_DIR").unwrap();
 
-    let mut gamedata = physis::gamedata::GameData::from_existing(format!("{}/game", game_dir).as_str()).unwrap();
+    let mut gamedata =
+        physis::gamedata::GameData::from_existing(format!("{}/game", game_dir).as_str()).unwrap();
 
     gamedata.reload_repositories();
 

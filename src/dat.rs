@@ -1,11 +1,11 @@
-use std::io::{Cursor, Read, Seek, SeekFrom};
-use binrw::BinRead;
-use binrw::binrw;
 use crate::gamedata::MemoryBuffer;
 use crate::model::ModelFileHeader;
-use std::io::Write;
-use binrw::BinWrite;
 use crate::sqpack::read_data_block;
+use binrw::binrw;
+use binrw::BinRead;
+use binrw::BinWrite;
+use std::io::Write;
+use std::io::{Cursor, Read, Seek, SeekFrom};
 
 #[binrw]
 #[brw(repr = i32)]
@@ -39,7 +39,14 @@ struct TextureLodBlock {
 }
 
 #[binrw]
-pub struct ModelMemorySizes<T: 'static + binrw::BinRead<Args=()> + binrw::BinWrite<Args=()> + Default + std::ops::AddAssign + Copy> {
+pub struct ModelMemorySizes<
+    T: 'static
+        + binrw::BinRead<Args = ()>
+        + binrw::BinWrite<Args = ()>
+        + Default
+        + std::ops::AddAssign
+        + Copy,
+> {
     pub stack_size: T,
     pub runtime_size: T,
 
@@ -48,7 +55,15 @@ pub struct ModelMemorySizes<T: 'static + binrw::BinRead<Args=()> + binrw::BinWri
     pub index_buffer_size: [T; 3],
 }
 
-impl<T: 'static + binrw::BinRead<Args=()> + binrw::BinWrite<Args=()> + Default + std::ops::AddAssign + Copy> ModelMemorySizes<T> {
+impl<
+        T: 'static
+            + binrw::BinRead<Args = ()>
+            + binrw::BinWrite<Args = ()>
+            + Default
+            + std::ops::AddAssign
+            + Copy,
+    > ModelMemorySizes<T>
+{
     pub fn total(&self) -> T {
         let mut total: T = T::default();
 
@@ -127,21 +142,26 @@ pub struct Block {
 #[br(map = | _ : i32 | if x < 32000 { CompressionMode::Compressed{ compressed_length : x, decompressed_length : y} } else { CompressionMode::Uncompressed { file_size : y } } )]
 pub enum CompressionMode {
     // we manually map here, because for this case the enum value is also a raw value we want to extract :-)
-    Compressed { compressed_length: i32, decompressed_length: i32 },
-    Uncompressed { file_size: i32 },
+    Compressed {
+        compressed_length: i32,
+        decompressed_length: i32,
+    },
+    Uncompressed {
+        file_size: i32,
+    },
 }
 
 #[binrw::binread]
 #[derive(Debug)]
 pub struct BlockHeader {
     #[br(pad_after = 4)]
-    pub size : u32,
+    pub size: u32,
 
     #[br(temp)]
-    x : i32,
+    x: i32,
 
     #[br(temp)]
-    y : i32,
+    y: i32,
 
     #[br(args { x, y })]
     #[br(restore_position)]
@@ -155,19 +175,14 @@ pub struct DatFile {
 // from https://users.rust-lang.org/t/how-best-to-convert-u8-to-u16/57551/4
 fn to_u8_slice(slice: &mut [u16]) -> &mut [u8] {
     let byte_len = 2 * slice.len();
-    unsafe {
-        std::slice::from_raw_parts_mut(
-            slice.as_mut_ptr().cast::<u8>(),
-            byte_len,
-        )
-    }
+    unsafe { std::slice::from_raw_parts_mut(slice.as_mut_ptr().cast::<u8>(), byte_len) }
 }
 
 impl DatFile {
     /// Creates a new reference to an existing dat file.
     pub fn from_existing(path: &str) -> Option<DatFile> {
         Some(DatFile {
-            file: std::fs::File::open(path).ok()?
+            file: std::fs::File::open(path).ok()?,
         })
     }
 
@@ -178,22 +193,22 @@ impl DatFile {
     pub fn read_from_offset(&mut self, offset: u32) -> Option<MemoryBuffer> {
         let offset = (offset * 0x80) as u64;
 
-        self.file.seek(SeekFrom::Start(offset))
+        self.file
+            .seek(SeekFrom::Start(offset))
             .expect("Unable to find offset in file.");
 
-        let file_info = FileInfo::read(&mut self.file)
-            .expect("Failed to parse file info.");
+        let file_info = FileInfo::read(&mut self.file).expect("Failed to parse file info.");
 
         match file_info.file_type {
             FileType::Empty => None,
             FileType::Standard => self.read_standard_file(offset, &file_info),
             FileType::Model => self.read_model_file(offset, &file_info),
-            FileType::Texture => self.read_texture_file(offset, &file_info)
+            FileType::Texture => self.read_texture_file(offset, &file_info),
         }
     }
 
     /// Reads a standard file block.
-    fn read_standard_file(&mut self, offset : u64, file_info : &FileInfo) -> Option<MemoryBuffer> {
+    fn read_standard_file(&mut self, offset: u64, file_info: &FileInfo) -> Option<MemoryBuffer> {
         let standard_file_info = file_info.standard_info.as_ref().unwrap();
 
         let mut blocks: Vec<Block> = Vec::with_capacity(standard_file_info.num_blocks as usize);
@@ -207,15 +222,20 @@ impl DatFile {
         let starting_position = offset + (file_info.size as u64);
 
         for i in 0..standard_file_info.num_blocks {
-            data.append(&mut read_data_block(&mut self.file, starting_position + (blocks[i as usize].offset as u64))
-                .expect("Failed to read data block."));
+            data.append(
+                &mut read_data_block(
+                    &mut self.file,
+                    starting_position + (blocks[i as usize].offset as u64),
+                )
+                .expect("Failed to read data block."),
+            );
         }
 
         Some(data)
     }
 
     /// Reads a model file block.
-    fn read_model_file(&mut self, offset : u64, file_info : &FileInfo) -> Option<MemoryBuffer> {
+    fn read_model_file(&mut self, offset: u64, file_info: &FileInfo) -> Option<MemoryBuffer> {
         let mut buffer = Cursor::new(Vec::new());
 
         let model_file_info = file_info.model_info.as_ref().unwrap();
@@ -240,7 +260,11 @@ impl DatFile {
         // start writing at 0x44
         buffer.seek(SeekFrom::Start(0x44)).ok()?;
 
-        self.file.seek(SeekFrom::Start(base_offset + (model_file_info.offset.stack_size as u64))).ok()?;
+        self.file
+            .seek(SeekFrom::Start(
+                base_offset + (model_file_info.offset.stack_size as u64),
+            ))
+            .ok()?;
 
         // read from stack blocks
         let mut read_model_blocks = |offset: u64, size: usize| -> Option<u64> {
@@ -249,57 +273,93 @@ impl DatFile {
             for _ in 0..size {
                 let last_pos = &self.file.stream_position().unwrap();
 
-                let data = read_data_block(&self.file, *last_pos)
-                    .expect("Unable to read block data.");
+                let data =
+                    read_data_block(&self.file, *last_pos).expect("Unable to read block data.");
                 // write to buffer
                 buffer.write_all(data.as_slice()).ok()?;
 
-                self.file.seek(SeekFrom::Start(last_pos + (compressed_block_sizes[current_block as usize] as u64))).ok()?;
+                self.file
+                    .seek(SeekFrom::Start(
+                        last_pos + (compressed_block_sizes[current_block as usize] as u64),
+                    ))
+                    .ok()?;
                 current_block += 1;
             }
 
             Some(buffer.position() - stack_start)
         };
 
-        let stack_size = read_model_blocks(model_file_info.offset.stack_size as u64, model_file_info.num.stack_size as usize).unwrap() as u32;
-        let runtime_size = read_model_blocks(model_file_info.offset.runtime_size as u64, model_file_info.num.runtime_size as usize).unwrap() as u32;
+        let stack_size = read_model_blocks(
+            model_file_info.offset.stack_size as u64,
+            model_file_info.num.stack_size as usize,
+        )
+        .unwrap() as u32;
+        let runtime_size = read_model_blocks(
+            model_file_info.offset.runtime_size as u64,
+            model_file_info.num.runtime_size as usize,
+        )
+        .unwrap() as u32;
 
-        let mut process_model_data = |i: usize, size: u32, offset: u32, offsets: &mut [u32; 3], data_sizes: &mut [u32; 3]| {
-            if size != 0 {
-                let current_vertex_offset = buffer.position() as u32;
-                if i == 0 || current_vertex_offset != offsets[i - 1] {
-                    offsets[i] = current_vertex_offset;
-                } else {
-                    offsets[i] = 0;
+        let mut process_model_data =
+            |i: usize,
+             size: u32,
+             offset: u32,
+             offsets: &mut [u32; 3],
+             data_sizes: &mut [u32; 3]| {
+                if size != 0 {
+                    let current_vertex_offset = buffer.position() as u32;
+                    if i == 0 || current_vertex_offset != offsets[i - 1] {
+                        offsets[i] = current_vertex_offset;
+                    } else {
+                        offsets[i] = 0;
+                    }
+
+                    self.file
+                        .seek(SeekFrom::Start(base_offset + (offset as u64)))
+                        .ok();
+
+                    for _ in 0..size {
+                        let last_pos = self.file.stream_position().unwrap();
+
+                        let data = read_data_block(&self.file, last_pos)
+                            .expect("Unable to read raw model block!");
+
+                        buffer
+                            .write_all(data.as_slice())
+                            .expect("Unable to write to memory buffer!");
+
+                        data_sizes[i] += data.len() as u32;
+                        self.file
+                            .seek(SeekFrom::Start(
+                                last_pos + (compressed_block_sizes[current_block] as u64),
+                            ))
+                            .expect("Unable to seek properly.");
+                        current_block += 1;
+                    }
                 }
-
-                self.file.seek(SeekFrom::Start(base_offset + (offset as u64))).ok();
-
-                for _ in 0..size {
-                    let last_pos = self.file.stream_position().unwrap();
-
-                    let data = read_data_block(&self.file, last_pos)
-                        .expect("Unable to read raw model block!");
-
-                    buffer.write_all(data.as_slice()).expect("Unable to write to memory buffer!");
-
-                    data_sizes[i] += data.len() as u32;
-                    self.file.seek(SeekFrom::Start(last_pos + (compressed_block_sizes[current_block] as u64)))
-                        .expect("Unable to seek properly.");
-                    current_block += 1;
-                }
-            }
-        };
+            };
 
         // process all 3 lods
         for i in 0..3 {
             // process vertices
-            process_model_data(i, model_file_info.num.vertex_buffer_size[i] as u32, model_file_info.offset.vertex_buffer_size[i], &mut vertex_data_offsets, &mut vertex_data_sizes);
+            process_model_data(
+                i,
+                model_file_info.num.vertex_buffer_size[i] as u32,
+                model_file_info.offset.vertex_buffer_size[i],
+                &mut vertex_data_offsets,
+                &mut vertex_data_sizes,
+            );
 
             // TODO: process edges
 
             // process indices
-            process_model_data(i, model_file_info.num.index_buffer_size[i] as u32, model_file_info.offset.index_buffer_size[i], &mut index_data_offsets, &mut index_data_sizes);
+            process_model_data(
+                i,
+                model_file_info.num.index_buffer_size[i] as u32,
+                model_file_info.offset.index_buffer_size[i],
+                &mut index_data_offsets,
+                &mut index_data_sizes,
+            );
         }
 
         let header = ModelFileHeader {
@@ -325,7 +385,7 @@ impl DatFile {
     }
 
     /// Reads a texture file block.
-    fn read_texture_file(&mut self, offset : u64, file_info : &FileInfo) -> Option<MemoryBuffer> {
+    fn read_texture_file(&mut self, offset: u64, file_info: &FileInfo) -> Option<MemoryBuffer> {
         let mut data: Vec<u8> = Vec::with_capacity(file_info.file_size as usize);
 
         let texture_file_info = file_info.texture_info.as_ref().unwrap();
@@ -335,7 +395,9 @@ impl DatFile {
         if mipmap_size != 0 {
             let original_pos = self.file.stream_position().ok()?;
 
-            self.file.seek(SeekFrom::Start(offset + file_info.size as u64)).ok()?;
+            self.file
+                .seek(SeekFrom::Start(offset + file_info.size as u64))
+                .ok()?;
 
             let mut header = vec![0u8; texture_file_info.lods[0].compressed_offset as usize];
             self.file.read_exact(&mut header).ok()?;
@@ -346,7 +408,10 @@ impl DatFile {
         }
 
         for i in 0..texture_file_info.num_blocks {
-            let mut running_block_total = (texture_file_info.lods[i as usize].compressed_offset as u64) + offset + (file_info.size as u64);
+            let mut running_block_total = (texture_file_info.lods[i as usize].compressed_offset
+                as u64)
+                + offset
+                + (file_info.size as u64);
 
             for _ in 0..texture_file_info.lods[i as usize].block_count {
                 let original_pos = self.file.stream_position().ok()?;

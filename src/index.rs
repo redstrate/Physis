@@ -1,7 +1,7 @@
-use std::io::SeekFrom;
 use binrw::binrw;
 use binrw::BinRead;
 use bitfield_struct::bitfield;
+use std::io::SeekFrom;
 
 #[binrw]
 #[brw(repr = u8)]

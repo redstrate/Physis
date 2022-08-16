@@ -15,8 +15,8 @@ pub mod sqpack;
 /// Reading and writing SqPack index files.
 pub mod index;
 
-mod dat;
 mod compression;
+mod dat;
 pub mod model;
 
 /// All of the races in Eorzea in a nice enum package.

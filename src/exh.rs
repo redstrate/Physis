@@ -1,23 +1,23 @@
-use std::io::Cursor;
+use crate::common::Language;
 use crate::gamedata::MemoryBuffer;
 use binrw::binread;
-use crate::common::Language;
 use binrw::BinRead;
+use std::io::Cursor;
 
 #[binread]
 #[br(magic = b"EXHF")]
 #[br(big)]
 pub struct EXHHeader {
-    version : u16,
+    version: u16,
 
-    pub(crate) data_offset : u16,
-    column_count : u16,
-    page_count : u16,
-    language_count : u16,
+    pub(crate) data_offset: u16,
+    column_count: u16,
+    page_count: u16,
+    language_count: u16,
 
     #[br(pad_before = 6)]
-    #[br(pad_after  = 8)]
-    pub(crate) row_count : u32
+    #[br(pad_after = 8)]
+    pub(crate) row_count: u32,
 }
 
 #[binread]
@@ -48,34 +48,34 @@ pub enum ColumnDataType {
 #[binread]
 #[br(big)]
 pub struct ExcelColumnDefinition {
-    pub data_type : ColumnDataType,
-    pub offset : u16,
+    pub data_type: ColumnDataType,
+    pub offset: u16,
 }
 
 #[binread]
 #[br(big)]
 pub struct ExcelDataPagination {
-    pub start_id : u32,
-    row_count : u32,
+    pub start_id: u32,
+    row_count: u32,
 }
 
 #[binread]
 #[br(big)]
 pub struct EXH {
-    pub header : EXHHeader,
+    pub header: EXHHeader,
 
     #[br(count = header.column_count)]
-    pub column_definitions : Vec<ExcelColumnDefinition>,
+    pub column_definitions: Vec<ExcelColumnDefinition>,
 
     #[br(count = header.page_count)]
-    pub pages : Vec<ExcelDataPagination>,
+    pub pages: Vec<ExcelDataPagination>,
 
     #[br(count = header.language_count)]
-    languages : Vec<Language>
+    languages: Vec<Language>,
 }
 
 impl EXH {
-    pub fn from_existing(buffer : &MemoryBuffer) -> Option<EXH> {
+    pub fn from_existing(buffer: &MemoryBuffer) -> Option<EXH> {
         EXH::read(&mut Cursor::new(&buffer)).ok()
     }
 }

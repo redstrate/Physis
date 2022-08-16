@@ -1,15 +1,15 @@
-use std::io::{Cursor, Seek, SeekFrom};
-use binrw::binread;
 use crate::gamedata::MemoryBuffer;
+use binrw::binread;
 use binrw::BinRead;
+use std::io::{Cursor, Seek, SeekFrom};
 
 #[binread]
 pub struct ChatLogHeader {
-    content_size : u32,
-    file_size : u32,
+    content_size: u32,
+    file_size: u32,
 
     #[br(count = file_size - content_size)]
-    offset_entries : Vec<u32>
+    offset_entries: Vec<u32>,
 }
 
 #[binread]
@@ -45,24 +45,24 @@ enum EventChannel {
 #[binread]
 #[derive(Debug)]
 pub struct ChatLogEntry {
-    timestamp : u32,
-    filter : EventFilter,
-    channel : EventChannel,
+    timestamp: u32,
+    filter: EventFilter,
+    channel: EventChannel,
 
     #[br(temp)]
-    garbage : u32,
+    garbage: u32,
 
     #[br(ignore)]
-    message : String
+    message: String,
 }
 
 #[derive(Debug)]
 pub struct ChatLog {
-    entries : Vec<ChatLogEntry>
+    entries: Vec<ChatLogEntry>,
 }
 
 impl ChatLog {
-    pub fn from_existing(buffer : &MemoryBuffer) -> Option<ChatLog> {
+    pub fn from_existing(buffer: &MemoryBuffer) -> Option<ChatLog> {
         let mut cursor = Cursor::new(buffer);
 
         let header = ChatLogHeader::read(&mut cursor).expect("Cannot parse header.");
@@ -80,15 +80,16 @@ impl ChatLog {
             let mut entry = ChatLogEntry::read(&mut cursor).expect("Unable to parse log message.");
 
             // TODO: handle the coloring properly, in some way
-            entry.message = String::from_utf8_lossy(&*buffer[cursor.position() as usize..new_last_offset as usize].to_vec()).to_string();
+            entry.message = String::from_utf8_lossy(
+                &*buffer[cursor.position() as usize..new_last_offset as usize].to_vec(),
+            )
+            .to_string();
 
             cursor.seek(SeekFrom::Start(new_last_offset)).ok()?;
 
             entries.push(entry);
         }
 
-        Some(ChatLog {
-            entries
-        })
+        Some(ChatLog { entries })
     }
 }

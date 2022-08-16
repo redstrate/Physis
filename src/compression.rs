@@ -1,11 +1,11 @@
-use std::ptr::null_mut;
 use libz_sys::*;
+use std::ptr::null_mut;
 
 // This module's functions are licensed under MIT from https://github.com/rust-lang/flate2-rs
 mod flate2_zallocation {
+    use std::alloc::{self, Layout};
     use std::ffi::c_void;
     use std::ptr::null_mut;
-    use std::alloc::{self, Layout};
 
     const ALIGN: usize = std::mem::align_of::<usize>();
 
@@ -81,7 +81,12 @@ pub fn no_header_decompress(in_data: &mut [u8], out_data: &mut [u8]) -> bool {
             reserved: 0,
         };
 
-        let ret = inflateInit2_(&mut strm, -15, zlibVersion(), core::mem::size_of::<z_stream>() as i32);
+        let ret = inflateInit2_(
+            &mut strm,
+            -15,
+            zlibVersion(),
+            core::mem::size_of::<z_stream>() as i32,
+        );
         if ret != Z_OK {
             return false;
         }

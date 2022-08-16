@@ -1,8 +1,8 @@
+use crate::repository::RepositoryType::{Base, Expansion};
 use std::cmp::Ordering;
 use std::cmp::Ordering::{Greater, Less};
 use std::fs;
 use std::path::{Path, PathBuf};
-use crate::repository::RepositoryType::{Base, Expansion};
 
 /// The type of repository, discerning game data from expansion data.
 #[derive(Debug, PartialEq, Copy, Clone)]
@@ -13,7 +13,7 @@ pub enum RepositoryType {
     /// An expansion directory, like "ex1".
     Expansion {
         /// The expansion number starting at 1.
-        number: i32
+        number: i32,
     },
 }
 
@@ -46,7 +46,7 @@ impl Ord for Repository {
                 let super_number = number;
                 match other.repo_type {
                     Base => Greater,
-                    Expansion { number } => super_number.cmp(&number)
+                    Expansion { number } => super_number.cmp(&number),
                 }
             }
         }
@@ -118,7 +118,7 @@ pub fn string_to_category(string: &str) -> Option<Category> {
         "music" => Some(Music),
         "sqpack_test" => Some(SqPackTest),
         "debug" => Some(Debug),
-        _ => None
+        _ => None,
     }
 }
 
@@ -137,7 +137,7 @@ impl Repository {
             Base
         } else {
             Expansion {
-                number: name[2..3].parse().unwrap()
+                number: name[2..3].parse().unwrap(),
             }
         };
 
@@ -169,14 +169,19 @@ impl Repository {
     fn expansion(&self) -> i32 {
         match self.repo_type {
             Base => 0,
-            Expansion { number } => number
+            Expansion { number } => number,
         }
     }
 
     /// Calculate an index filename for a specific category, like _"0a0000.win32.index"_.
     pub fn index_filename(&self, category: Category) -> String {
-        format!("{:02x}{:02}{:02}.{}.index",
-                category as i32, self.expansion(), 0, "win32")
+        format!(
+            "{:02x}{:02}{:02}.{}.index",
+            category as i32,
+            self.expansion(),
+            0,
+            "win32"
+        )
     }
 
     /// Calculate a dat filename given a category and a data file id, returns something like _"0a0000.win32.dat0"_.
@@ -185,7 +190,9 @@ impl Repository {
         let chunk = 0;
         let platform = "win32";
 
-        format!("{:02x}{expansion:02}{chunk:02}.{platform}.dat{data_file_id}",
-                category as u32)
+        format!(
+            "{:02x}{expansion:02}{chunk:02}.{platform}.dat{data_file_id}",
+            category as u32
+        )
     }
 }

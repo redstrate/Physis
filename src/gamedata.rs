@@ -1,6 +1,3 @@
-use std::fs;
-use std::fs::DirEntry;
-use std::path::PathBuf;
 use crate::common::Language;
 use crate::dat::DatFile;
 use crate::exd::EXD;
@@ -8,8 +5,11 @@ use crate::exh::EXH;
 use crate::exl::EXL;
 use crate::index::IndexFile;
 use crate::patch::{apply_patch, PatchError};
-use crate::repository::{Category, Repository, string_to_category};
+use crate::repository::{string_to_category, Category, Repository};
 use crate::sqpack::calculate_hash;
+use std::fs;
+use std::fs::DirEntry;
+use std::path::PathBuf;
 
 /// Framework for operating on game data.
 pub struct GameData {
@@ -83,7 +83,8 @@ impl GameData {
             .collect();
 
         for repository_path in repository_paths {
-            self.repositories.push(Repository::from_existing(repository_path.path().to_str().unwrap()).unwrap());
+            self.repositories
+                .push(Repository::from_existing(repository_path.path().to_str().unwrap()).unwrap());
         }
 
         self.repositories.sort();
@@ -92,23 +93,29 @@ impl GameData {
     fn get_index_file(&self, path: &str) -> Option<IndexFile> {
         let (repository, category) = self.parse_repository_category(path).unwrap();
 
-        let index_path : PathBuf = [self.game_directory.clone(),
+        let index_path: PathBuf = [
+            self.game_directory.clone(),
             "sqpack".to_string(),
             repository.name.clone(),
-            repository.index_filename(category)]
-            .iter().collect();
+            repository.index_filename(category),
+        ]
+        .iter()
+        .collect();
 
         IndexFile::from_existing(index_path.to_str()?)
     }
 
-    fn get_dat_file(&self, path: &str, data_file_id : u32) -> Option<DatFile> {
+    fn get_dat_file(&self, path: &str, data_file_id: u32) -> Option<DatFile> {
         let (repository, category) = self.parse_repository_category(path).unwrap();
 
-        let dat_path : PathBuf = [self.game_directory.clone(),
+        let dat_path: PathBuf = [
+            self.game_directory.clone(),
             "sqpack".to_string(),
             repository.name.clone(),
-            repository.dat_filename(category, data_file_id)]
-            .iter().collect();
+            repository.dat_filename(category, data_file_id),
+        ]
+        .iter()
+        .collect();
 
         DatFile::from_existing(dat_path.to_str()?)
     }
@@ -129,7 +136,8 @@ impl GameData {
     pub fn exists(&self, path: &str) -> bool {
         let hash = calculate_hash(path);
 
-        let index_file = self.get_index_file(path)
+        let index_file = self
+            .get_index_file(path)
             .expect("Failed to find index file.");
 
         index_file.entries.iter().any(|s| s.hash == hash)
@@ -161,7 +169,7 @@ impl GameData {
 
                 dat_file.read_from_offset(entry.bitfield.offset())
             }
-            None => None
+            None => None,
         }
     }
 
@@ -183,7 +191,7 @@ impl GameData {
         Some((&self.repositories[0], string_to_category(tokens[0])?))
     }
 
-    pub fn read_excel_sheet_header(&self, name : &str) -> Option<EXH> {
+    pub fn read_excel_sheet_header(&self, name: &str) -> Option<EXH> {
         let root_exl_file = self.extract("exd/root.exl")?;
 
         let root_exl = EXL::from_existing(&root_exl_file)?;
@@ -194,30 +202,39 @@ impl GameData {
 
                 let path = format!("exd/{new_filename}.exh");
 
-                return EXH::from_existing(&self.extract(&path)?)
+                return EXH::from_existing(&self.extract(&path)?);
             }
         }
 
         None
     }
 
-    pub fn read_excel_sheet(&self, name : &str, exh : &EXH, language : Language, page : usize) -> Option<EXD> {
-        let exd_path = format!("exd/{}", EXD::calculate_filename(name, language, &exh.pages[page]));
+    pub fn read_excel_sheet(
+        &self,
+        name: &str,
+        exh: &EXH,
+        language: Language,
+        page: usize,
+    ) -> Option<EXD> {
+        let exd_path = format!(
+            "exd/{}",
+            EXD::calculate_filename(name, language, &exh.pages[page])
+        );
 
         let exd_file = self.extract(&exd_path).unwrap();
 
         EXD::from_existing(exh, &exd_file)
     }
 
-    pub fn apply_patch(&self, patch_path : &str) -> Result<(), PatchError> {
+    pub fn apply_patch(&self, patch_path: &str) -> Result<(), PatchError> {
         apply_patch(&self.game_directory, patch_path)
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::repository::Category::EXD;
     use super::*;
+    use crate::repository::Category::EXD;
 
     fn common_setup_data() -> GameData {
         let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
@@ -243,8 +260,12 @@ mod tests {
         let mut data = common_setup_data();
         data.reload_repositories();
 
-        assert_eq!(data.parse_repository_category("exd/root.exl").unwrap(),
-                   (&data.repositories[0], EXD));
-        assert!(data.parse_repository_category("what/some_font.dat").is_none());
+        assert_eq!(
+            data.parse_repository_category("exd/root.exl").unwrap(),
+            (&data.repositories[0], EXD)
+        );
+        assert!(data
+            .parse_repository_category("what/some_font.dat")
+            .is_none());
     }
 }

@@ -1,6 +1,6 @@
+use crate::gamedata::MemoryBuffer;
 use std::collections::HashMap;
 use std::io::{BufRead, BufReader, Cursor};
-use crate::gamedata::MemoryBuffer;
 
 /// Represents an Excel List.
 pub struct EXL {
@@ -13,7 +13,7 @@ pub struct EXL {
 
 impl EXL {
     /// Initializes `EXL` from an existing list.
-    pub fn from_existing(buffer : &MemoryBuffer) -> Option<EXL> {
+    pub fn from_existing(buffer: &MemoryBuffer) -> Option<EXL> {
         let mut exl = Self {
             version: 0,
             entries: HashMap::new(),
@@ -62,9 +62,9 @@ impl EXL {
 
 #[cfg(test)]
 mod tests {
+    use super::*;
     use std::fs::read;
     use std::path::PathBuf;
-    use super::*;
 
     fn common_setup() -> EXL {
         let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));

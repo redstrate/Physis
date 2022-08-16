@@ -1,9 +1,9 @@
-use std::cmp::min;
-use std::io::{Cursor, Read, Seek, SeekFrom};
-use binrw::binread;
 use crate::gamedata::MemoryBuffer;
+use binrw::binread;
 use binrw::BinRead;
 use bitflags::bitflags;
+use std::cmp::min;
+use std::io::{Cursor, Read, Seek, SeekFrom};
 use texpresso::Format;
 
 // Attributes and Format are adapted from Lumina (https://github.com/NotAdam/Lumina/blob/master/src/Lumina/Data/Files/TexFile.cs)
@@ -43,28 +43,28 @@ bitflags! {
 enum TextureFormat {
     B8G8R8A8 = 0x1450,
     BC1 = 0x3420,
-    BC5 = 0x3431
+    BC5 = 0x3431,
 }
 
 #[binread]
 #[derive(Debug)]
 struct TexHeader {
-    attribute : TextureAttribute,
+    attribute: TextureAttribute,
     format: TextureFormat,
 
-    width : u16,
-    height : u16,
-    depth : u16,
-    mip_levels : u16,
+    width: u16,
+    height: u16,
+    depth: u16,
+    mip_levels: u16,
 
-    lod_offsets : [u32; 3],
-    offset_to_surface : [u32; 13]
+    lod_offsets: [u32; 3],
+    offset_to_surface: [u32; 13],
 }
 
 pub struct Texture {
     pub width: u32,
     pub height: u32,
-    pub rgba: Vec<u8>
+    pub rgba: Vec<u8>,
 }
 
 impl Texture {
@@ -79,14 +79,18 @@ impl Texture {
         for i in 0..size - 1 {
             texture_data_size[i] = header.offset_to_surface[i + 1] - header.offset_to_surface[i];
         }
-        texture_data_size[size - 1] = (buffer.len() - header.offset_to_surface[size - 1] as usize) as u32;
+        texture_data_size[size - 1] =
+            (buffer.len() - header.offset_to_surface[size - 1] as usize) as u32;
 
-        cursor.seek(SeekFrom::Start(header.offset_to_surface[0] as u64)).ok()?;
+        cursor
+            .seek(SeekFrom::Start(header.offset_to_surface[0] as u64))
+            .ok()?;
 
         let mut src = vec![0u8; texture_data_size.iter().sum::<u32>() as usize];
         cursor.read_exact(src.as_mut_slice()).ok()?;
 
-        let mut dst : Vec<u8> = vec![0u8; (header.width as usize * header.height as usize * 4) as usize];
+        let mut dst: Vec<u8> =
+            vec![0u8; (header.width as usize * header.height as usize * 4) as usize];
 
         match header.format {
             TextureFormat::B8G8R8A8 => {
@@ -94,18 +98,28 @@ impl Texture {
             }
             TextureFormat::BC1 => {
                 let format = Format::Bc1;
-                format.decompress(&src, header.width as usize, header.height as usize, dst.as_mut_slice());
+                format.decompress(
+                    &src,
+                    header.width as usize,
+                    header.height as usize,
+                    dst.as_mut_slice(),
+                );
             }
             TextureFormat::BC5 => {
                 let format = Format::Bc3;
-                format.decompress(&src, header.width as usize, header.height as usize, dst.as_mut_slice());
+                format.decompress(
+                    &src,
+                    header.width as usize,
+                    header.height as usize,
+                    dst.as_mut_slice(),
+                );
             }
         }
 
         Some(Texture {
             width: header.width as u32,
             height: header.height as u32,
-            rgba: dst
+            rgba: dst,
         })
     }
 }

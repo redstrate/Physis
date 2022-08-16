@@ -1,4 +1,4 @@
-use crate::race::{Gender, get_race_id, Race, Subrace};
+use crate::race::{get_race_id, Gender, Race, Subrace};
 
 #[repr(u8)]
 #[derive(Debug, PartialEq)]
@@ -35,7 +35,7 @@ pub fn get_slot_abbreviation(slot: Slot) -> &'static str {
         Slot::Earring => "ear",
         Slot::Neck => "nek",
         Slot::Rings => "rir",
-        Slot::Wrists => "wrs"
+        Slot::Wrists => "wrs",
     }
 }
 
@@ -52,7 +52,7 @@ pub fn get_slot_from_id(id: i32) -> Option<Slot> {
         10 => Some(Slot::Neck),
         12 => Some(Slot::Rings),
         11 => Some(Slot::Wrists),
-        _ => None
+        _ => None,
     }
 }
 
@@ -69,25 +69,35 @@ pub fn get_slot_from_abbreviation(abrev: &str) -> Option<Slot> {
         "nek" => Some(Slot::Neck),
         "rir" => Some(Slot::Rings),
         "wrs" => Some(Slot::Wrists),
-        _ => None
+        _ => None,
     }
 }
 
-
 /// Builds a game path to the equipment specified.
-pub fn build_equipment_path(model_id: i32, race: Race, subrace: Subrace, gender: Gender, slot: Slot) -> String {
-    format!("chara/equipment/e{:04}/model/c{:04}e{:04}_{}.mdl",
-            model_id,
-            get_race_id(race, subrace, gender).unwrap(),
-            model_id,
-            get_slot_abbreviation(slot))
+pub fn build_equipment_path(
+    model_id: i32,
+    race: Race,
+    subrace: Subrace,
+    gender: Gender,
+    slot: Slot,
+) -> String {
+    format!(
+        "chara/equipment/e{:04}/model/c{:04}e{:04}_{}.mdl",
+        model_id,
+        get_race_id(race, subrace, gender).unwrap(),
+        model_id,
+        get_slot_abbreviation(slot)
+    )
 }
 
-pub fn deconstruct_equipment_path(path : &str) -> Option<(i32, Slot)> {
+pub fn deconstruct_equipment_path(path: &str) -> Option<(i32, Slot)> {
     let model_id = &path[6..10];
     let slot_name = &path[11..14];
 
-    Some((model_id.parse().ok()?, get_slot_from_abbreviation(slot_name)?))
+    Some((
+        model_id.parse().ok()?,
+        get_slot_from_abbreviation(slot_name)?,
+    ))
 }
 
 #[cfg(test)]
@@ -96,6 +106,9 @@ mod tests {
 
     #[test]
     fn test_equipment_path() {
-        assert_eq!(build_equipment_path(0, Race::Hyur, Subrace::Midlander, Gender::Male, Slot::Body), "chara/equipment/e0000/model/c0101e0000_top.mdl");
+        assert_eq!(
+            build_equipment_path(0, Race::Hyur, Subrace::Midlander, Gender::Male, Slot::Body),
+            "chara/equipment/e0000/model/c0101e0000_top.mdl"
+        );
     }
 }

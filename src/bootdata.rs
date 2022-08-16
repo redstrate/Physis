@@ -1,12 +1,12 @@
+use crate::patch::{apply_patch, PatchError};
 use std::fs;
 use std::path::PathBuf;
-use crate::patch::{apply_patch, PatchError};
 
 /// Boot data for FFXIV.
 pub struct BootData {
-    path : String,
+    path: String,
 
-    pub version : String,
+    pub version: String,
 }
 
 fn is_valid(path: &str) -> bool {
@@ -36,7 +36,7 @@ impl BootData {
         match is_valid(directory) {
             true => Some(BootData {
                 path: directory.parse().unwrap(),
-                version: fs::read_to_string(format!("{directory}/ffxivboot.ver")).unwrap()
+                version: fs::read_to_string(format!("{directory}/ffxivboot.ver")).unwrap(),
             }),
             false => {
                 println!("Boot data is not valid!");
@@ -45,7 +45,7 @@ impl BootData {
         }
     }
 
-    pub fn apply_patch(&self, patch_path : &str) -> Result<(), PatchError> {
+    pub fn apply_patch(&self, patch_path: &str) -> Result<(), PatchError> {
         apply_patch(&self.path, patch_path)
     }
 }

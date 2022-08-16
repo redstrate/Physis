@@ -1,6 +1,6 @@
-use std::io::Cursor;
 use crate::gamedata::MemoryBuffer;
 use binrw::{binread, BinRead};
+use std::io::Cursor;
 
 #[binread]
 #[derive(Debug)]
@@ -13,7 +13,7 @@ struct MaterialFileHeader {
     texture_count: u8,
     uv_set_count: u8,
     color_set_count: u8,
-    additional_data_size: u8
+    additional_data_size: u8,
 }
 
 #[binread]
@@ -23,7 +23,7 @@ struct MaterialHeader {
     shader_key_count: u16,
     constant_count: u16,
     #[br(pad_after = 4)]
-    sampler_count: u16
+    sampler_count: u16,
 }
 
 #[binread]
@@ -31,28 +31,28 @@ struct MaterialHeader {
 struct ColorSet {
     name_offset: u16,
     #[br(pad_after = 1)]
-    index: u8
+    index: u8,
 }
 
 #[binread]
 #[derive(Debug)]
 struct ColorSetInfo {
     #[br(count = 256)]
-    data: Vec<u16>
+    data: Vec<u16>,
 }
 
 #[binread]
 #[derive(Debug)]
 struct ColorSetDyeInfo {
     #[br(count = 16)]
-    data: Vec<u16>
+    data: Vec<u16>,
 }
 
 #[binread]
 #[derive(Debug)]
 struct ShaderKey {
     category: u32,
-    value: u32
+    value: u32,
 }
 
 #[binread]
@@ -60,7 +60,7 @@ struct ShaderKey {
 struct Constant {
     constant_id: u32,
     value_offset: u16,
-    value_size: u16
+    value_size: u16,
 }
 
 #[binread]
@@ -105,12 +105,12 @@ struct MaterialData {
     #[br(count = header.sampler_count)]
     samplers: Vec<Sampler>,
     #[br(count = header.shader_value_list_size / 4)]
-    shader_values: Vec<f32>
+    shader_values: Vec<f32>,
 }
 
 #[derive(Debug)]
 pub struct Material {
-    pub texture_paths: Vec<String>
+    pub texture_paths: Vec<String>,
 }
 
 impl Material {
@@ -136,8 +136,6 @@ impl Material {
             offset += 1;
         }
 
-        Some(Material {
-            texture_paths
-        })
+        Some(Material { texture_paths })
     }
 }

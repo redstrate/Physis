@@ -33,7 +33,7 @@ pub fn get_language_code(lang: &Language) -> &'static str {
         Language::French => "fr",
         Language::ChineseSimplified => "chs",
         Language::ChineseTraditional => "cht",
-        Language::Korean => "ko"
+        Language::Korean => "ko",
     }
 }
 
@@ -41,6 +41,5 @@ pub fn get_language_code(lang: &Language) -> &'static str {
 #[brw(repr = i16)]
 #[derive(Debug, PartialEq)]
 pub enum Region {
-    Global = -1
-    // TODO: find patch codes for other regions :-)
+    Global = -1, // TODO: find patch codes for other regions :-)
 }

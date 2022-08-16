@@ -1,5 +1,6 @@
 /// Creates a enum list of combined race identifiers. For example, (Hyur, Midlander, Male) becomes a new variant called HyurMidlanderMale.
-#[macro_export(crate)] macro_rules! define_race_enum {
+#[macro_export(crate)]
+macro_rules! define_race_enum {
     (
 	    pub enum $name:ident {
 	        $(
