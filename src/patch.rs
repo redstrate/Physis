@@ -564,7 +564,9 @@ pub(crate) fn apply_patch(data_dir: &str, patch_path: &str) -> Result<(), PatchE
                             }
                         }
                     }
-                    SqpkOperation::IndexAddDelete(_) => todo!(),
+                    SqpkOperation::IndexAddDelete(_) => {
+                        println!("NOP");
+                    },
                     SqpkOperation::PatchInfo(patch_info) => {
                         println!("Got patch info: {:#?}", patch_info);
                     }
