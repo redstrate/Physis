@@ -560,15 +560,15 @@ pub(crate) fn apply_patch(data_dir: &str, patch_path: &str) -> Result<(), PatchE
                                 fs::remove_file(new_path.as_str())?;
                             }
                             SqpkFileOperation::RemoveAll => {
-                                println!("have to remove all files in {}...", fop.path);
+                                println!("PATCH: NOP RemoveAll");
                             }
                         }
                     }
                     SqpkOperation::IndexAddDelete(_) => {
-                        println!("NOP");
+                        println!("PATCH: NOP IndexAddDelete");
                     },
                     SqpkOperation::PatchInfo(patch_info) => {
-                        println!("Got patch info: {:#?}", patch_info);
+                        println!("PATCH: NOP PatchInfo");
                     }
                     SqpkOperation::TargetInfo(new_target_info) => {
                         target_info = Some(new_target_info);
@@ -576,13 +576,17 @@ pub(crate) fn apply_patch(data_dir: &str, patch_path: &str) -> Result<(), PatchE
                 }
             }
             ChunkType::FileHeader(header) => {
-                println!("Got file header: {:#?}", header);
+                println!("PATCH: NOP FileHeader");
             }
             ChunkType::ApplyOption(option) => {
-                println!("apply option: {:#?}", option);
+                println!("PATCH: NOP ApplyOption");
             }
-            ChunkType::AddDirectory(_) => todo!(),
-            ChunkType::DeleteDirectory(_) => todo!(),
+            ChunkType::AddDirectory(_) => {
+                println!("PATCH: NOP AddDirectory");
+            },
+            ChunkType::DeleteDirectory(_) => {
+                println!("PATCH: NOP DeleteDirectory");
+            },
             ChunkType::EndOfFile => {
                 return Ok(());
             }
