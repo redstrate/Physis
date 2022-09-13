@@ -3,9 +3,6 @@
 Framework for interacting with FFXIV data, and successor to [libxiv](https://git.sr.ht/~redstrate/libxiv). This intended for 
 developers writing modding tools, launchers and other programs.
 
-**Note:** This library is still experimental, and no releases are planned. I'm currently busy with bringing all of libxiv's
-features over, but I plan to expand functionality beyond the original scope.
-
 ## Goals
 * Make it extremely easy for people to tinker around with game data. 
 * Parsing data should be safe, and unit tested vigorously.
@@ -14,7 +11,7 @@ features over, but I plan to expand functionality beyond the original scope.
 ## Features
 
 * Easily extract game data from SqPack files.
-* Apply game and boot updates, enabling custom launchers to patch the game.
+* Apply game and boot updates, enabling custom launchers to patch the game easily.
 * Blockfish ciphers for encrypting and decrypting SqexArg.
 * Parse various game formats:
   * SqPack index and dat files
@@ -27,7 +24,7 @@ features over, but I plan to expand functionality beyond the original scope.
 
 ## Usage
 
-**Note:** The API is nowhere near stable, so things may change or break.
+**Note:** The API will not be stable until 1.0.
 
 If you intend to use this in a Rust project, you can simply include this crate directly. You can view the documentation at [docs.xiv.zone](https://docs.xiv.zone/docs/physis)!
 
