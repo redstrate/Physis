@@ -8,7 +8,6 @@ license = "GPL-3.0"
 homepage = "https://xiv.zone/physis"
 repository = "https://git.sr.ht/~redstrate/physis"
 keywords = ["ffxiv", "modding"]
-categories = ["parsing"]
 documentation = "https://docs.xiv.zone/docs/physis/"
 readme = "README.md"
 
