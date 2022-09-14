@@ -16,8 +16,7 @@ name = "physis_benchmark"
 harness = false
 
 [dev-dependencies]
-# criterion is not updated to 0.4 yet, which removes an unmaintained package
-criterion = { git = "https://github.com/bheisler/criterion.rs", branch="version-0.4", version="0.3.5" }
+criterion = "0.4.0"
 
 [features]
 retail_game_testing = []
