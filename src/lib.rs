@@ -17,6 +17,8 @@ pub mod index;
 
 mod compression;
 mod dat;
+
+// Reading model (MDL) files.
 pub mod model;
 
 /// All of the races in Eorzea in a nice enum package.
@@ -51,17 +53,17 @@ pub mod exh;
 /// Reading Excel data files (EXD).
 pub mod exd;
 
-// Reading Havok XML sidecar files.
+/// Reading Havok XML sidecar files.
 pub mod skeleton;
 
-// Reading file into files (FIIN).
+/// Reading file into files (FIIN).
 pub mod fiin;
 
-// Reading and writing chat logs (LOG).
+/// Reading and writing chat logs (LOG).
 pub mod log;
 
-// Reading textures (TEX).
+/// Reading textures (TEX).
 pub mod tex;
 
-// Reading material files (MTRL)
+/// Reading material files (MTRL)
 pub mod mtrl;
