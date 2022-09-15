@@ -18,7 +18,7 @@ pub mod index;
 mod compression;
 mod dat;
 
-// Reading model (MDL) files.
+/// Reading model (MDL) files.
 pub mod model;
 
 /// All of the races in Eorzea in a nice enum package.
