@@ -9,32 +9,31 @@ use texpresso::Format;
 // Attributes and Format are adapted from Lumina (https://github.com/NotAdam/Lumina/blob/master/src/Lumina/Data/Files/TexFile.cs)
 bitflags! {
     #[binread]
-    #[allow(non_upper_case_globals)]
     struct TextureAttribute : u32 {
-        const DiscardPerFrame = 0x1;
-        const DiscardPerMap = 0x2;
+        const DISCARD_PER_FRAME = 0x1;
+        const DISCARD_PER_MAP = 0x2;
 
-        const Managed = 0x4;
-        const UserManaged = 0x8;
-        const CpuRead = 0x10;
-        const LocationMain = 0x20;
-        const NoGpuRead = 0x40;
-        const AlignedSize = 0x80;
-        const EdgeCulling = 0x100;
-        const LocationOnion = 0x200;
-        const ReadWrite = 0x400;
-        const Immutable = 0x800;
+        const MANAGED = 0x4;
+        const USER_MANAGED = 0x8;
+        const CPU_READ = 0x10;
+        const LOCATION_MAIN = 0x20;
+        const NO_GPU_READ = 0x40;
+        const ALIGNED_SIZE = 0x80;
+        const EDGE_CULLING = 0x100;
+        const LOCATION_ONION = 0x200;
+        const READ_WRITE = 0x400;
+        const IMMUTABLE = 0x800;
 
-        const TextureRenderTarget = 0x100000;
-        const TextureDepthStencil = 0x200000;
-        const TextureType1D = 0x400000;
-        const TextureType2D = 0x800000;
-        const TextureType3D = 0x1000000;
-        const TextureTypeCube = 0x2000000;
-        const TextureTypeMask = 0x3C00000;
-        const TextureSwizzle = 0x4000000;
-        const TextureNoTiled = 0x8000000;
-        const TextureNoSwizzle = 0x80000000;
+        const TEXTURE_RENDER_TARGET = 0x100000;
+        const TEXTURE_DEPTH_STENCIL = 0x200000;
+        const TEXTURE_TYPE1_D = 0x400000;
+        const TEXTURE_TYPE2_D = 0x800000;
+        const TEXTURE_TYPE3_D = 0x1000000;
+        const TEXTURE_TYPE_CUBE = 0x2000000;
+        const TEXTURE_TYPE_MASK = 0x3C00000;
+        const TEXTURE_SWIZZLE = 0x4000000;
+        const TEXTURE_NO_TILED = 0x8000000;
+        const TEXTURE_NO_SWIZZLE = 0x80000000;
     }
 }
 
