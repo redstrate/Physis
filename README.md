@@ -1,5 +1,8 @@
 # Physis
 
+![Crates.io](https://img.shields.io/crates/v/physis)
+[![builds.sr.ht status](https://builds.sr.ht/~redstrate/physis.svg)](https://builds.sr.ht/~redstrate/physis?)
+
 Framework for interacting with FFXIV data, and successor to [libxiv](https://git.sr.ht/~redstrate/libxiv). This intended for 
 developers writing modding tools, launchers and other programs.
 
