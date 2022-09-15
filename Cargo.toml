@@ -36,7 +36,7 @@ bitfield-struct = "0.1.7"
 paste = "1.0.7"
 
 # needed for half-float support which FFXIV uses in it's model data
-half = "1.0"
+half = "2.1.0"
 
 # needed for havok xml parsing
 hard-xml = "1.13.0"
