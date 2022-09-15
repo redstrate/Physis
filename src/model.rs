@@ -63,6 +63,7 @@ enum ModelFlags2 {
 
 #[binread]
 #[derive(Debug)]
+#[allow(dead_code)]
 pub struct ModelHeader {
     #[br(pad_after = 2)]
     string_count: u16,
@@ -107,6 +108,7 @@ pub struct ModelHeader {
 
 #[binread]
 #[derive(Debug)]
+#[allow(dead_code)]
 struct MeshLod {
     mesh_index: u16,
     mesh_count: u16,
@@ -141,6 +143,7 @@ struct MeshLod {
 
 #[binread]
 #[derive(Debug)]
+#[allow(dead_code)]
 struct Mesh {
     #[br(pad_after = 2)]
     vertex_count: u16,
@@ -161,6 +164,7 @@ struct Mesh {
 
 #[binread]
 #[derive(Debug)]
+#[allow(dead_code)]
 struct Submesh {
     index_offset: i32,
     index_count: i32,
@@ -173,6 +177,7 @@ struct Submesh {
 
 #[binread]
 #[derive(Debug)]
+#[allow(dead_code)]
 struct BoneTable {
     bone_indices: [u16; 64],
 
@@ -182,6 +187,7 @@ struct BoneTable {
 
 #[binread]
 #[derive(Debug)]
+#[allow(dead_code)]
 struct BoundingBox {
     min: [f32; 4],
     max: [f32; 4],
@@ -189,6 +195,7 @@ struct BoundingBox {
 
 #[binread]
 #[derive(Debug)]
+#[allow(dead_code)]
 struct ModelData {
     header: ModelHeader,
 
@@ -240,6 +247,7 @@ struct ModelData {
 
 #[binread]
 #[derive(Debug)]
+#[allow(dead_code)]
 struct ElementId {
     element_id: u32,
     parent_bone_name: u32,
@@ -276,6 +284,7 @@ enum VertexUsage {
 
 #[binread]
 #[derive(Copy, Clone, Debug)]
+#[allow(dead_code)]
 struct VertexElement {
     stream: u8,
     offset: u8,

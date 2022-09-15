@@ -4,6 +4,7 @@ use std::io::Cursor;
 
 #[binread]
 #[derive(Debug)]
+#[allow(dead_code)]
 struct MaterialFileHeader {
     version: u32,
     file_size: u16,
@@ -28,6 +29,7 @@ struct MaterialHeader {
 
 #[binread]
 #[derive(Debug)]
+#[allow(dead_code)]
 struct ColorSet {
     name_offset: u16,
     #[br(pad_after = 1)]
@@ -36,6 +38,7 @@ struct ColorSet {
 
 #[binread]
 #[derive(Debug)]
+#[allow(dead_code)]
 struct ColorSetInfo {
     #[br(count = 256)]
     data: Vec<u16>,
@@ -43,6 +46,7 @@ struct ColorSetInfo {
 
 #[binread]
 #[derive(Debug)]
+#[allow(dead_code)]
 struct ColorSetDyeInfo {
     #[br(count = 16)]
     data: Vec<u16>,
@@ -50,6 +54,7 @@ struct ColorSetDyeInfo {
 
 #[binread]
 #[derive(Debug)]
+#[allow(dead_code)]
 struct ShaderKey {
     category: u32,
     value: u32,
@@ -57,6 +62,7 @@ struct ShaderKey {
 
 #[binread]
 #[derive(Debug)]
+#[allow(dead_code)]
 struct Constant {
     constant_id: u32,
     value_offset: u16,
@@ -65,6 +71,7 @@ struct Constant {
 
 #[binread]
 #[derive(Debug)]
+#[allow(dead_code)]
 struct Sampler {
     sampler_id: u32,
     flags: u32, // TODO: unknown
@@ -74,6 +81,7 @@ struct Sampler {
 
 #[binread]
 #[derive(Debug)]
+#[allow(dead_code)]
 struct MaterialData {
     file_header: MaterialFileHeader,
 

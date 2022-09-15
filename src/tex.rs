@@ -9,6 +9,7 @@ use texpresso::Format;
 // Attributes and Format are adapted from Lumina (https://github.com/NotAdam/Lumina/blob/master/src/Lumina/Data/Files/TexFile.cs)
 bitflags! {
     #[binread]
+    #[allow(non_upper_case_globals)]
     struct TextureAttribute : u32 {
         const DiscardPerFrame = 0x1;
         const DiscardPerMap = 0x2;
@@ -48,6 +49,7 @@ enum TextureFormat {
 
 #[binread]
 #[derive(Debug)]
+#[allow(dead_code)]
 struct TexHeader {
     attribute: TextureAttribute,
     format: TextureFormat,

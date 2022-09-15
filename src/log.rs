@@ -4,6 +4,7 @@ use binrw::BinRead;
 use std::io::{Cursor, Seek, SeekFrom};
 
 #[binread]
+#[allow(dead_code)]
 pub struct ChatLogHeader {
     content_size: u32,
     file_size: u32,
@@ -44,6 +45,7 @@ enum EventChannel {
 
 #[binread]
 #[derive(Debug)]
+#[allow(dead_code)]
 pub struct ChatLogEntry {
     timestamp: u32,
     filter: EventFilter,
@@ -57,6 +59,7 @@ pub struct ChatLogEntry {
 }
 
 #[derive(Debug)]
+#[allow(dead_code)]
 pub struct ChatLog {
     entries: Vec<ChatLogEntry>,
 }

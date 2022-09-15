@@ -5,7 +5,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 /// The type of repository, discerning game data from expansion data.
-#[derive(Debug, PartialEq, Copy, Clone)]
+#[derive(Debug, PartialEq, Eq, Copy, Clone)]
 #[repr(C)]
 pub enum RepositoryType {
     /// The base game directory, like "ffxiv".
@@ -65,7 +65,7 @@ fn read_version(p: &Path) -> Option<String> {
 
 /// This refers to the specific root directory a file is located in.
 /// This is a fixed list of directories, and all of them are known.
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum Category {
     /// Common files such as game fonts, and other data that doesn't really fit anywhere else.
     Common,

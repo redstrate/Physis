@@ -39,7 +39,7 @@ pub fn get_language_code(lang: &Language) -> &'static str {
 
 #[binrw]
 #[brw(repr = i16)]
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum Region {
     Global = -1, // TODO: find patch codes for other regions :-)
 }

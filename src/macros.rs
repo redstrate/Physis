@@ -9,7 +9,7 @@ macro_rules! define_race_enum {
 	    }
     ) => {
         paste! {
-            #[derive(PartialEq, Debug)]
+            #[derive(PartialEq, Eq, Debug)]
 
             pub enum $name {
                 $(

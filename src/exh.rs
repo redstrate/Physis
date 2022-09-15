@@ -7,6 +7,7 @@ use std::io::Cursor;
 #[binread]
 #[br(magic = b"EXHF")]
 #[br(big)]
+#[allow(dead_code)]
 pub struct EXHHeader {
     version: u16,
 
@@ -54,6 +55,7 @@ pub struct ExcelColumnDefinition {
 
 #[binread]
 #[br(big)]
+#[allow(dead_code)]
 pub struct ExcelDataPagination {
     pub start_id: u32,
     row_count: u32,
@@ -61,6 +63,7 @@ pub struct ExcelDataPagination {
 
 #[binread]
 #[br(big)]
+#[allow(dead_code)]
 pub struct EXH {
     pub header: EXHHeader,
 

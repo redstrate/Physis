@@ -1,7 +1,7 @@
 use crate::race::{get_race_id, Gender, Race, Subrace};
 
 #[repr(u8)]
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 /// The slot the item is for.
 pub enum Slot {
     /// The head slot. Shorthand is "met".

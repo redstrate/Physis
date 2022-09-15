@@ -9,7 +9,7 @@ use std::io::{Cursor, Read, Seek, SeekFrom};
 
 #[binrw]
 #[brw(repr = i32)]
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 /// The file type of the data entry.
 pub enum FileType {
     /// Empty entry, usually invalid.
@@ -29,6 +29,7 @@ struct StandardFileBlock {
 }
 
 #[derive(BinRead, Debug)]
+#[allow(dead_code)]
 struct TextureLodBlock {
     compressed_offset: u32,
     compressed_size: u32,

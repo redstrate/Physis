@@ -31,6 +31,7 @@ impl Skeleton {
 
         #[derive(XmlRead, Debug)]
         #[xml(tag = "hksection")]
+        #[allow(dead_code)]
         struct HkSection {
             #[xml(attr = "name")]
             name: String,
@@ -41,6 +42,7 @@ impl Skeleton {
 
         #[derive(XmlRead, Debug)]
         #[xml(tag = "hkobject")]
+        #[allow(dead_code)]
         struct HkObject {
             #[xml(attr = "name")]
             name: Option<String>,
@@ -54,6 +56,7 @@ impl Skeleton {
 
         #[derive(XmlRead, Debug)]
         #[xml(tag = "hkparam")]
+        #[allow(dead_code)]
         struct HkParam {
             #[xml(attr = "name")]
             name: String,
@@ -105,6 +108,7 @@ impl Skeleton {
 
         #[derive(Debug, Deserialize)]
         #[serde(rename_all = "PascalCase")]
+        #[allow(dead_code)]
         struct BoneObject {
             bone_name: String,
             bone_number: i32,

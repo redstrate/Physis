@@ -21,6 +21,7 @@ struct PatchHeader {
 }
 
 #[derive(BinRead, Debug)]
+#[allow(dead_code)]
 struct PatchChunk {
     #[br(big)]
     size: u32,
@@ -567,7 +568,7 @@ pub(crate) fn apply_patch(data_dir: &str, patch_path: &str) -> Result<(), PatchE
                     SqpkOperation::IndexAddDelete(_) => {
                         println!("PATCH: NOP IndexAddDelete");
                     },
-                    SqpkOperation::PatchInfo(patch_info) => {
+                    SqpkOperation::PatchInfo(_) => {
                         println!("PATCH: NOP PatchInfo");
                     }
                     SqpkOperation::TargetInfo(new_target_info) => {
@@ -575,10 +576,10 @@ pub(crate) fn apply_patch(data_dir: &str, patch_path: &str) -> Result<(), PatchE
                     }
                 }
             }
-            ChunkType::FileHeader(header) => {
+            ChunkType::FileHeader(_) => {
                 println!("PATCH: NOP FileHeader");
             }
-            ChunkType::ApplyOption(option) => {
+            ChunkType::ApplyOption(_) => {
                 println!("PATCH: NOP ApplyOption");
             }
             ChunkType::AddDirectory(_) => {

@@ -8,6 +8,7 @@ use std::io::{Cursor, Seek, SeekFrom};
 #[binread]
 #[br(magic = b"EXDF")]
 #[br(big)]
+#[allow(dead_code)]
 struct EXDHeader {
     version: u16,
 
@@ -25,6 +26,7 @@ struct ExcelDataOffset {
 
 #[binread]
 #[br(big)]
+#[allow(dead_code)]
 struct ExcelDataRowHeader {
     data_size: u32,
     row_count: u16,
@@ -32,6 +34,7 @@ struct ExcelDataRowHeader {
 
 #[binread]
 #[br(big)]
+#[allow(dead_code)]
 pub struct EXD {
     header: EXDHeader,
 
@@ -198,13 +201,13 @@ impl EXD {
     ) -> String {
         use crate::common::get_language_code;
 
-        return match language {
+        match language {
             Language::None => {
                 format!("{name}_{}.exd", page.start_id)
             }
             lang => {
                 format!("{name}_{}_{}.exd", page.start_id, get_language_code(&lang))
             }
-        };
+        }
     }
 }
