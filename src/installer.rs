@@ -105,7 +105,7 @@ pub fn install_game(installer_path: &str, game_directory: &str) -> Result<(), In
     // set unshield to shut up
     unsafe { unshield_set_log_level(0) };
 
-    let unshield = unsafe { unshield_open(b"data1.cab".as_ptr() as *const c_char) };
+    let unshield = unsafe { unshield_open(CStr::from_bytes_with_nul(b"data1.cab\0").unwrap().as_ptr()) };
     let file_count = unsafe { unshield_file_count(unshield) };
 
     for i in 0..file_count {
