@@ -1,8 +1,8 @@
 use crate::gamedata::MemoryBuffer;
-use binrw::{binread, BinRead};
+use binrw::{binread, BinRead, binrw};
 use std::io::Cursor;
 
-#[binread]
+#[binrw]
 #[derive(Debug)]
 #[allow(dead_code)]
 struct MaterialFileHeader {
@@ -17,7 +17,7 @@ struct MaterialFileHeader {
     additional_data_size: u8,
 }
 
-#[binread]
+#[binrw]
 #[derive(Debug)]
 struct MaterialHeader {
     shader_value_list_size: u16,
@@ -27,7 +27,7 @@ struct MaterialHeader {
     sampler_count: u16,
 }
 
-#[binread]
+#[binrw]
 #[derive(Debug)]
 #[allow(dead_code)]
 struct ColorSet {
@@ -36,7 +36,7 @@ struct ColorSet {
     index: u8,
 }
 
-#[binread]
+#[binrw]
 #[derive(Debug)]
 #[allow(dead_code)]
 struct ColorSetInfo {
@@ -44,7 +44,7 @@ struct ColorSetInfo {
     data: Vec<u16>,
 }
 
-#[binread]
+#[binrw]
 #[derive(Debug)]
 #[allow(dead_code)]
 struct ColorSetDyeInfo {
@@ -52,7 +52,7 @@ struct ColorSetDyeInfo {
     data: Vec<u16>,
 }
 
-#[binread]
+#[binrw]
 #[derive(Debug)]
 #[allow(dead_code)]
 struct ShaderKey {
@@ -60,7 +60,7 @@ struct ShaderKey {
     value: u32,
 }
 
-#[binread]
+#[binrw]
 #[derive(Debug)]
 #[allow(dead_code)]
 struct Constant {
@@ -69,7 +69,7 @@ struct Constant {
     value_size: u16,
 }
 
-#[binread]
+#[binrw]
 #[derive(Debug)]
 #[allow(dead_code)]
 struct Sampler {
@@ -79,7 +79,7 @@ struct Sampler {
     texture_index: u8,
 }
 
-#[binread]
+#[binrw]
 #[derive(Debug)]
 #[allow(dead_code)]
 #[br(little)]

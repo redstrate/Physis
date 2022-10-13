@@ -7,7 +7,7 @@ use std::io::Cursor;
 #[binrw]
 #[brw(magic = b"FileInfo")]
 #[derive(Debug)]
-#[br(little)]
+#[brw(little)]
 pub struct FileInfo {
     #[brw(pad_before = 16)]
     #[br(ignore)]

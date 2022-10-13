@@ -1,13 +1,13 @@
 use crate::common::Language;
 use crate::exh::{ColumnDataType, ExcelColumnDefinition, ExcelDataPagination, EXH};
 use crate::gamedata::MemoryBuffer;
-use binrw::BinRead;
-use binrw::{binread, Endian, ReadOptions};
+use binrw::binrw;
+use binrw::{BinRead, Endian, ReadOptions};
 use std::io::{Cursor, Seek, SeekFrom};
 
-#[binread]
-#[br(magic = b"EXDF")]
-#[br(big)]
+#[binrw]
+#[brw(magic = b"EXDF")]
+#[brw(big)]
 #[allow(dead_code)]
 struct EXDHeader {
     version: u16,
@@ -17,23 +17,23 @@ struct EXDHeader {
     index_size: u32,
 }
 
-#[binread]
-#[br(big)]
+#[binrw]
+#[brw(big)]
 struct ExcelDataOffset {
     row_id: u32,
     pub offset: u32,
 }
 
-#[binread]
-#[br(big)]
+#[binrw]
+#[brw(big)]
 #[allow(dead_code)]
 struct ExcelDataRowHeader {
     data_size: u32,
     row_count: u16,
 }
 
-#[binread]
-#[br(big)]
+#[binrw]
+#[brw(big)]
 #[allow(dead_code)]
 pub struct EXD {
     header: EXDHeader,
@@ -41,7 +41,7 @@ pub struct EXD {
     #[br(count = header.index_size / core::mem::size_of::<ExcelDataOffset>() as u32)]
     data_offsets: Vec<ExcelDataOffset>,
 
-    #[br(ignore)]
+    #[brw(ignore)]
     pub rows: Vec<ExcelRow>,
 }
 

@@ -1,5 +1,5 @@
 use crate::gamedata::MemoryBuffer;
-use binrw::binread;
+use binrw::{binread, binrw};
 use binrw::BinRead;
 use bitflags::bitflags;
 use std::cmp::min;
@@ -8,7 +8,7 @@ use texpresso::Format;
 
 // Attributes and Format are adapted from Lumina (https://github.com/NotAdam/Lumina/blob/master/src/Lumina/Data/Files/TexFile.cs)
 bitflags! {
-    #[binread]
+    #[binrw]
     struct TextureAttribute : u32 {
         const DISCARD_PER_FRAME = 0x1;
         const DISCARD_PER_MAP = 0x2;
@@ -37,8 +37,8 @@ bitflags! {
     }
 }
 
-#[binread]
-#[br(repr = u32)]
+#[binrw]
+#[brw(repr = u32)]
 #[derive(Debug)]
 enum TextureFormat {
     B8G8R8A8 = 0x1450,
@@ -46,10 +46,10 @@ enum TextureFormat {
     BC5 = 0x3431,
 }
 
-#[binread]
+#[binrw]
 #[derive(Debug)]
 #[allow(dead_code)]
-#[br(little)]
+#[brw(little)]
 struct TexHeader {
     attribute: TextureAttribute,
     format: TextureFormat,

@@ -33,8 +33,8 @@ pub struct ModelFileHeader {
     pub has_edge_geometry: bool,
 }
 
-#[binread]
-#[br(repr = u8)]
+#[binrw]
+#[brw(repr = u8)]
 #[derive(Debug)]
 enum ModelFlags1 {
     DustOcclusionEnabled = 0x80,
@@ -47,8 +47,8 @@ enum ModelFlags1 {
     ShadowDisabled = 0x01,
 }
 
-#[binread]
-#[br(repr = u8)]
+#[binrw]
+#[brw(repr = u8)]
 #[derive(Debug)]
 enum ModelFlags2 {
     None = 0x0,
@@ -62,7 +62,7 @@ enum ModelFlags2 {
     Unknown3 = 0x01,
 }
 
-#[binread]
+#[binrw]
 #[derive(Debug)]
 #[allow(dead_code)]
 pub struct ModelHeader {
@@ -107,7 +107,7 @@ pub struct ModelHeader {
     bg_crest_change_material_index: u8,
 }
 
-#[binread]
+#[binrw]
 #[derive(Debug)]
 #[allow(dead_code)]
 struct MeshLod {
@@ -142,7 +142,7 @@ struct MeshLod {
     index_data_offset: u32,
 }
 
-#[binread]
+#[binrw]
 #[derive(Debug)]
 #[allow(dead_code)]
 struct Mesh {
@@ -163,7 +163,7 @@ struct Mesh {
     vertex_stream_count: u8,
 }
 
-#[binread]
+#[binrw]
 #[derive(Debug)]
 #[allow(dead_code)]
 struct Submesh {
@@ -176,7 +176,7 @@ struct Submesh {
     bone_count: u16,
 }
 
-#[binread]
+#[binrw]
 #[derive(Debug)]
 #[allow(dead_code)]
 struct BoneTable {
@@ -186,7 +186,7 @@ struct BoneTable {
     bone_count: u8,
 }
 
-#[binread]
+#[binrw]
 #[derive(Debug)]
 #[allow(dead_code)]
 struct BoundingBox {
@@ -194,10 +194,10 @@ struct BoundingBox {
     max: [f32; 4],
 }
 
-#[binread]
+#[binrw]
 #[derive(Debug)]
 #[allow(dead_code)]
-#[br(little)]
+#[brw(little)]
 struct ModelData {
     header: ModelHeader,
 
@@ -229,12 +229,14 @@ struct ModelData {
 
     // TODO: implement shapes
     #[br(temp)]
+    #[bw(ignore)]
     submesh_bone_map_size: u32,
 
     #[br(count = submesh_bone_map_size / 2, err_context("lods = {:#?}", lods))]
     submesh_bone_map: Vec<u16>,
 
     #[br(temp)]
+    #[bw(ignore)]
     padding_amount: u8,
 
     #[br(pad_before = padding_amount)]
@@ -247,7 +249,7 @@ struct ModelData {
     bone_bounding_boxes: Vec<BoundingBox>,
 }
 
-#[binread]
+#[binrw]
 #[derive(Debug)]
 #[allow(dead_code)]
 struct ElementId {
@@ -257,8 +259,8 @@ struct ElementId {
     rotate: [f32; 3],
 }
 
-#[binread]
-#[br(repr = u8)]
+#[binrw]
+#[brw(repr = u8)]
 #[derive(Copy, Clone, Debug, PartialEq)]
 enum VertexType {
     Invalid = 0,
@@ -270,8 +272,8 @@ enum VertexType {
     Half4 = 14,
 }
 
-#[binread]
-#[br(repr = u8)]
+#[binrw]
+#[brw(repr = u8)]
 #[derive(Copy, Clone, Debug)]
 enum VertexUsage {
     Position = 0,
@@ -284,10 +286,10 @@ enum VertexUsage {
     Color = 7,
 }
 
-#[binread]
+#[binrw]
 #[derive(Copy, Clone, Debug)]
 #[allow(dead_code)]
-#[br(little)]
+#[brw(little)]
 struct VertexElement {
     stream: u8,
     offset: u8,

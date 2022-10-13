@@ -1,11 +1,11 @@
 use crate::gamedata::MemoryBuffer;
-use binrw::binread;
+use binrw::binrw;
 use binrw::BinRead;
 use std::io::{Cursor, Seek, SeekFrom};
 
-#[binread]
+#[binrw]
 #[allow(dead_code)]
-#[br(little)]
+#[brw(little)]
 pub struct ChatLogHeader {
     content_size: u32,
     file_size: u32,
@@ -14,8 +14,8 @@ pub struct ChatLogHeader {
     offset_entries: Vec<u32>,
 }
 
-#[binread]
-#[br(repr = u8)]
+#[binrw]
+#[brw(repr = u8)]
 #[derive(Debug)]
 enum EventFilter {
     SystemMessages = 3,
@@ -28,9 +28,9 @@ enum EventFilter {
     EnemyBattle = 170,
 }
 
-#[binread]
+#[binrw]
 #[derive(Debug)]
-#[br(repr = u8)]
+#[brw(repr = u8)]
 enum EventChannel {
     System = 0,
     ServerAnnouncement = 3,
@@ -44,19 +44,20 @@ enum EventChannel {
     Unknown6 = 170,
 }
 
-#[binread]
+#[binrw]
 #[derive(Debug)]
 #[allow(dead_code)]
-#[br(little)]
+#[brw(little)]
 pub struct ChatLogEntry {
     timestamp: u32,
     filter: EventFilter,
     channel: EventChannel,
 
     #[br(temp)]
+    #[bw(calc = 1)]
     garbage: u32,
 
-    #[br(ignore)]
+    #[brw(ignore)]
     message: String,
 }
 
