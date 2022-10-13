@@ -1,5 +1,5 @@
 use crate::gamedata::MemoryBuffer;
-use binrw::{binread, binrw};
+use binrw::{binrw};
 use binrw::BinRead;
 use bitflags::bitflags;
 use std::cmp::min;

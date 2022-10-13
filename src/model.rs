@@ -1,5 +1,5 @@
 use crate::gamedata::MemoryBuffer;
-use binrw::{binread, Endian, ReadOptions};
+use binrw::{Endian, ReadOptions};
 use binrw::binrw;
 use binrw::BinRead;
 use half::f16;
