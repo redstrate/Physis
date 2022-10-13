@@ -1,7 +1,7 @@
 use crate::gamedata::MemoryBuffer;
 use crate::model::ModelFileHeader;
 use crate::sqpack::read_data_block;
-use binrw::binrw;
+use binrw::{binrw, Endian, ReadOptions};
 use binrw::BinRead;
 use binrw::BinWrite;
 use std::io::Write;
@@ -116,6 +116,7 @@ struct TextureBlock {
 /// A SqPack file info header. It can optionally contain extra information, such as texture or
 /// model data depending on the file type.
 #[derive(BinRead)]
+#[br(little)]
 struct FileInfo {
     size: u32,
     file_type: FileType,
@@ -132,6 +133,7 @@ struct FileInfo {
 }
 
 #[binrw]
+#[br(little)]
 pub struct Block {
     #[br(pad_after = 4)]
     offset: i32,
@@ -154,6 +156,7 @@ pub enum CompressionMode {
 
 #[binrw::binread]
 #[derive(Debug)]
+#[br(little)]
 pub struct BlockHeader {
     #[br(pad_after = 4)]
     pub size: u32,
@@ -380,7 +383,7 @@ impl DatFile {
 
         buffer.seek(SeekFrom::Start(0)).ok()?;
 
-        header.write_to(&mut buffer).ok()?;
+        header.write(&mut buffer).ok()?;
 
         Some(buffer.into_inner())
     }
@@ -421,7 +424,8 @@ impl DatFile {
 
                 self.file.seek(SeekFrom::Start(original_pos)).ok()?;
 
-                running_block_total += i16::read(&mut self.file).ok()? as u64;
+                let mut options = ReadOptions::new(Endian::Little);
+                running_block_total += i16::read_options(&mut self.file, &options, ()).ok()? as u64;
             }
         }
 

@@ -60,6 +60,7 @@ pub struct IndexEntry {
 }
 
 #[binrw]
+#[br(little)]
 pub struct IndexFile {
     sqpack_header: SqPackHeader,
 

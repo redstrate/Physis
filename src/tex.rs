@@ -49,6 +49,7 @@ enum TextureFormat {
 #[binread]
 #[derive(Debug)]
 #[allow(dead_code)]
+#[br(little)]
 struct TexHeader {
     attribute: TextureAttribute,
     format: TextureFormat,

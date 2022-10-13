@@ -11,6 +11,7 @@ use std::path::PathBuf;
 
 #[binread]
 #[derive(Debug)]
+#[br(little)]
 struct PatchHeader {
     #[br(temp)]
     #[br(count = 7)]
@@ -22,6 +23,7 @@ struct PatchHeader {
 
 #[derive(BinRead, Debug)]
 #[allow(dead_code)]
+#[br(little)]
 struct PatchChunk {
     #[br(big)]
     size: u32,

@@ -82,6 +82,7 @@ struct Sampler {
 #[binread]
 #[derive(Debug)]
 #[allow(dead_code)]
+#[br(little)]
 struct MaterialData {
     file_header: MaterialFileHeader,
 
