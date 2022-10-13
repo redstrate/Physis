@@ -82,7 +82,10 @@ pub fn install_game(installer_path: &str, game_directory: &str) -> Result<(), In
         let position = position.unwrap();
 
         if last_position != 0 {
-            let mut new_file = File::create(last_filename).unwrap();
+            let mut temp_dir = std::env::temp_dir();
+            temp_dir.push(last_filename);
+
+            let mut new_file = File::create(temp_dir).unwrap();
 
             if last_filename == "data1.hdr" {
                 new_file.write_all(&installer_file[last_position + 30..position - 42])?;
@@ -95,7 +98,10 @@ pub fn install_game(installer_path: &str, game_directory: &str) -> Result<(), In
         last_filename = filename;
     }
 
-    let mut new_file = File::create(last_filename).unwrap();
+    let mut temp_dir = std::env::temp_dir();
+    temp_dir.push(last_filename);
+
+    let mut new_file = File::create(temp_dir).unwrap();
 
     new_file.write_all(&installer_file[last_position + 33..installer_file.len() - 42])?;
 
