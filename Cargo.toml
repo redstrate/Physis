@@ -17,8 +17,8 @@ harness = false
 
 [dev-dependencies]
 walkdir = "2"
-hmac-sha512 = "1.1.2"
-criterion = "0.4.0"
+hmac-sha512 = "1"
+criterion = "0.4"
 
 [features]
 retail_game_testing = []
@@ -26,36 +26,36 @@ patch_testing = []
 
 [dependencies]
 # used for jamcrc implementation, should eventually move away from it
-crc = "3.0.0"
+crc = "3"
 
 # amazing binary parsing/writing library
-binrw = "0.10.0"
+binrw = "0.10"
 
 # used for zlib compression in sqpack files
-libz-sys = { version = "1.1.8", default-features = false }
+libz-sys = { version = "1.1", default-features = false }
 
 # nice to have features rust is lacking at the moment
-bitfield-struct = "0.1.7"
-paste = "1.0.7"
+bitfield-struct = "0.1"
+paste = "1"
 
 # needed for half-float support which FFXIV uses in it's model data
-half = "2.1.0"
+half = "2"
 
 # needed for havok xml parsing
-hard-xml = "1.13.0"
+hard-xml = "1"
 
 # needed for textools skel parsing
-serde_json = "1.0"
-serde = { version = "1.0", features = ["derive"] }
+serde_json = "1"
+serde = { version = "1", features = ["derive"] }
 
 # needed for file info (fiin)
-sha1_smol = "1.0.0"
+sha1_smol = "1"
 
 # needed for deconstructing skeleton pose matrices
-glam = "0.21.3"
+glam = "0.21"
 
 # needed for c-style bitflags used in some formats (such as tex files)
 bitflags = "1.3"
 
 # needed for dxt/bc decompression
-texpresso = "2.0.1"
+texpresso = "2"
