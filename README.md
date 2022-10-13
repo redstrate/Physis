@@ -43,6 +43,22 @@ Some tests and benchmarks require the environment variable `FFXIV_GAME_DIR` to b
 since they require a legitimate copy of the retail game data. These tests can be turned on via the `retail_game_testing`
 feature.
 
+### Game Patch Testing
+
+Patching is an extremely sensitive operation since it is not easily reversible if done wrong. Repairing the game files
+is also an option, but it's time-consuming and not yet implemented in physis. To prevent regressions in patching the
+game, I have set up a testing bed for cross-checking our implementation with others. Currently, this is limited to XIVLauncher's implementation,
+but I will eventually adopt a way to test the retail patch installer as well.
+
+1. Enable the `patch_testing` feature.
+2. Set a couple of environment variables:
+   * `FFXIV_PATCH_DIR` is the directory of patches to install. It should be structured as `$FFXIV_PATCH_DIR/game/D2017.07.11.0000.0001.patch`.
+   * `FFXIV_XIV_LAUNCHER_PATCHER` should be the path to the patcher executable. If you're running on Linux, we will handle running Wine for you.
+   * `FFXIV_INSTALLER` is the path to the installer executable. This will be installed using the usual InstallShield emulation physis already includes.
+
+As you can see, you must have the previous patches downloaded first as well as the installer before running the tests.
+This is left up to the developer to figure out how to download them legally.
+
 ## Contributing & Support
 
 The best way you can help is by [monetarily supporting me](https://redstrate.com/about/) or by submitting patches to help fix bugs or add functionality!

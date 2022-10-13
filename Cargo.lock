@@ -311,6 +311,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "hmac-sha512"
+version = "1.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a928b002dff1780b7fa21056991d395770ab9359154b8c1724c4d0511dad0a65"
+
+[[package]]
 name = "indexmap"
 version = "1.9.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -464,12 +470,14 @@ dependencies = [
  "glam",
  "half 2.1.0",
  "hard-xml",
+ "hmac-sha512",
  "libz-sys",
  "paste",
  "serde",
  "serde_json",
  "sha1_smol",
  "texpresso",
+ "walkdir",
 ]
 
 [[package]]

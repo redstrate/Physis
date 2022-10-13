@@ -16,10 +16,13 @@ name = "physis_benchmark"
 harness = false
 
 [dev-dependencies]
+walkdir = "2"
+hmac-sha512 = "1.1.2"
 criterion = "0.4.0"
 
 [features]
 retail_game_testing = []
+patch_testing = []
 
 [dependencies]
 # used for jamcrc implementation, should eventually move away from it
