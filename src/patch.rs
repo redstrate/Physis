@@ -390,7 +390,7 @@ impl From<binrw::Error> for PatchError {
 }
 
 /// Applies a boot or a game patch to the specified _data_dir_.
-pub(crate) fn apply_patch(data_dir: &str, patch_path: &str) -> Result<(), PatchError> {
+pub fn apply_patch(data_dir: &str, patch_path: &str) -> Result<(), PatchError> {
     let mut file = File::open(patch_path)?;
 
     PatchHeader::read(&mut file)?;
