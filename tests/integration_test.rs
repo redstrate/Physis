@@ -4,7 +4,7 @@ use std::env;
 use std::process::Command;
 use physis::installer::install_game;
 use physis::patch::apply_patch;
-use walkdir::{DirEntry, WalkDir};
+use walkdir::WalkDir;
 
 #[test]
 #[cfg_attr(not(feature = "retail_game_testing"), ignore)]

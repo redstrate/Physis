@@ -424,7 +424,7 @@ impl DatFile {
 
                 self.file.seek(SeekFrom::Start(original_pos)).ok()?;
 
-                let mut options = ReadOptions::new(Endian::Little);
+                let options = ReadOptions::new(Endian::Little);
                 running_block_total += i16::read_options(&mut self.file, &options, ()).ok()? as u64;
             }
         }

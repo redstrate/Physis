@@ -407,7 +407,7 @@ impl MDL {
                             ))
                             .ok()?;
 
-                        let mut options = ReadOptions::new(Endian::Little);
+                        let options = ReadOptions::new(Endian::Little);
 
                         match element.vertex_usage {
                             VertexUsage::Position => {
@@ -461,7 +461,7 @@ impl MDL {
                 let mut indices: Vec<u16> =
                     Vec::with_capacity(model.meshes[j as usize].index_count as usize);
                 for _ in 0..model.meshes[j as usize].index_count {
-                    let mut options = ReadOptions::new(Endian::Little);
+                    let options = ReadOptions::new(Endian::Little);
                     indices.push(<u16 as BinRead>::read_options(&mut cursor, &options, ()).unwrap());
                 }
 
