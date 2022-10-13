@@ -90,6 +90,13 @@ pub fn get_race_id(race: Race, subrace: Subrace, gender: Gender) -> Option<i32> 
     Some(internal_race::convert_to_internal(race, subrace, gender).unwrap() as i32)
 }
 
+pub fn build_skeleton_path(race: Race, subrace: Subrace, gender: Gender) -> String {
+    format!(
+        "chara/human/c{0:04}/skeleton/base/b0001/skl_c{0:04}b0001.sklb",
+        get_race_id(race, subrace, gender).unwrap()
+    )
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
