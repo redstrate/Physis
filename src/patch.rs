@@ -137,39 +137,10 @@ enum SqpkOperation {
     FileOperation(SqpkFileOperationData),
     #[br(magic = b'H')]
     HeaderUpdate(SqpkHeaderUpdateData),
-    #[br(magic = b'I')]
-    IndexAddDelete(SqpkIndexData),
     #[br(magic = b'X')]
     PatchInfo(SqpkPatchInfo),
     #[br(magic = b'T')]
     TargetInfo(SqpkTargetInfo),
-}
-
-#[derive(BinRead, PartialEq, Debug)]
-enum SqpkIndexCommand {
-    #[br(magic = b'A')]
-    Add,
-    #[br(magic = b'D')]
-    Delete,
-}
-
-#[derive(BinRead, PartialEq, Debug)]
-#[br(big)]
-struct SqpkIndexData {
-    command: SqpkIndexCommand,
-
-    #[br(map = | x: u8 | x != 0)]
-    #[br(pad_after = 1)]
-    is_synonym: bool,
-
-    main_id: u16,
-    sub_id: u16,
-    file_id: u32,
-
-    file_hash: u64,
-
-    block_offset: u32,
-    block_number: u32,
 }
 
 #[derive(BinRead, PartialEq, Debug)]
@@ -578,11 +549,8 @@ pub fn apply_patch(data_dir: &str, patch_path: &str) -> Result<(), PatchError> {
                             }
                         }
                     }
-                    SqpkOperation::IndexAddDelete(_) => {
-                        println!("PATCH: NOP IndexAddDelete");
-                    },
                     SqpkOperation::PatchInfo(_) => {
-                        println!("PATCH: NOP PatchInfo");
+                        // Currently, there's nothing we need from PatchInfo. Intentional NOP.
                     }
                     SqpkOperation::TargetInfo(new_target_info) => {
                         target_info = Some(new_target_info);
@@ -590,10 +558,10 @@ pub fn apply_patch(data_dir: &str, patch_path: &str) -> Result<(), PatchError> {
                 }
             }
             ChunkType::FileHeader(_) => {
-                println!("PATCH: NOP FileHeader");
+                // Currently there's nothing very useful in the FileHeader, so it's an intentional NOP.
             }
             ChunkType::ApplyOption(_) => {
-                println!("PATCH: NOP ApplyOption");
+                // Currently, IgnoreMissing and IgnoreOldMismatch is not used in XIVQuickLauncher either. This stays as an intentional NOP.
             }
             ChunkType::AddDirectory(_) => {
                 println!("PATCH: NOP AddDirectory");
