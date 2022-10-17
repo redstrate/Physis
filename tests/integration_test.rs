@@ -146,5 +146,11 @@ fn test_patching() {
     let xivlauncher_files = fill_dir_hash(&xivlauncher_dir);
     let physis_files = fill_dir_hash(&physis_dir);
 
+    for file in xivlauncher_files.keys() {
+        if xivlauncher_files[file] != physis_files[file] {
+            println!("{} does not match!", file);
+        }
+    }
+
     assert_eq!(physis_files, xivlauncher_files);
 }
