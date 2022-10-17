@@ -111,7 +111,11 @@ pub fn install_game(installer_path: &str, game_directory: &str) -> Result<(), In
     // set unshield to shut up
     unsafe { unshield_set_log_level(0) };
 
-    let unshield = unsafe { unshield_open(CStr::from_bytes_with_nul(b"data1.cab\0").unwrap().as_ptr()) };
+    let mut temp_dir = std::env::temp_dir();
+    temp_dir.push("data1.cab");
+    let temp_dir_string = temp_dir.to_str().unwrap();
+
+    let unshield = unsafe { unshield_open(CString::new(temp_dir_string).unwrap().as_ptr()) };
     let file_count = unsafe { unshield_file_count(unshield) };
 
     for i in 0..file_count {
