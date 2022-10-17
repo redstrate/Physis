@@ -1,7 +1,7 @@
 use crate::gamedata::MemoryBuffer;
 use crate::model::ModelFileHeader;
 use crate::sqpack::read_data_block;
-use binrw::{binrw, Endian, ReadOptions};
+use binrw::{BinReaderExt, binrw};
 use binrw::BinRead;
 use binrw::BinWrite;
 use std::io::Write;
@@ -424,8 +424,7 @@ impl DatFile {
 
                 self.file.seek(SeekFrom::Start(original_pos)).ok()?;
 
-                let options = ReadOptions::new(Endian::Little);
-                running_block_total += i16::read_options(&mut self.file, &options, ()).ok()? as u64;
+                running_block_total += self.file.read_le::<i16>().ok()? as u64;
             }
         }
 

@@ -1,5 +1,5 @@
 use crate::gamedata::MemoryBuffer;
-use binrw::{Endian, ReadOptions};
+use binrw::BinReaderExt;
 use binrw::binrw;
 use binrw::BinRead;
 use half::f16;
@@ -409,40 +409,26 @@ impl MDL {
                             ))
                             .ok()?;
 
-                        let options = ReadOptions::new(Endian::Little);
-
                         match element.vertex_usage {
                             VertexUsage::Position => {
-                                vertices[k as usize].position =
-                                    <[f32; 3]>::read_options(&mut cursor, &options, ()).unwrap();
+                                vertices[k as usize].position = cursor.read_le::<[f32; 3]>().ok()?;
                             }
                             VertexUsage::BlendWeights => {
-                                vertices[k as usize].bone_weight =
-                                    <[f32; 4]>::read_options(&mut cursor, &options, ()).unwrap();
+                                vertices[k as usize].bone_weight = cursor.read_le::<[f32; 4]>().ok()?;
                             }
                             VertexUsage::BlendIndices => {
-                                vertices[k as usize].bone_id =
-                                    <[u8; 4]>::read(&mut cursor).unwrap();
+                                vertices[k as usize].bone_id = cursor.read_le::<[u8; 4]>().ok()?;
                             }
                             VertexUsage::Normal => {
                                 // TODO: normals are assumed to be half4
-                                vertices[k as usize].normal[0] =
-                                    f16::from_bits(<u16 as BinRead>::read_options(&mut cursor, &options, ()).unwrap())
-                                        .to_f32();
-                                vertices[k as usize].normal[1] =
-                                    f16::from_bits(<u16 as BinRead>::read_options(&mut cursor, &options, ()).unwrap())
-                                        .to_f32();
-                                vertices[k as usize].normal[2] =
-                                    f16::from_bits(<u16 as BinRead>::read_options(&mut cursor, &options, ()).unwrap())
-                                        .to_f32();
+                                for i in 0..3 {
+                                    vertices[k as usize].normal[i] = f16::from_bits(cursor.read_le::<u16>().ok()?).to_f32();
+                                }
                             }
                             VertexUsage::UV => {
-                                vertices[k as usize].uv[0] =
-                                    f16::from_bits(<u16 as BinRead>::read_options(&mut cursor, &options, ()).unwrap())
-                                        .to_f32();
-                                vertices[k as usize].uv[1] =
-                                    f16::from_bits(<u16 as BinRead>::read_options(&mut cursor, &options, ()).unwrap())
-                                        .to_f32();
+                                for i in 0..2 {
+                                    vertices[k as usize].uv[i] = f16::from_bits(cursor.read_le::<u16>().ok()?).to_f32();
+                                }
                             }
                             VertexUsage::Tangent2 => {}
                             VertexUsage::Tangent1 => {}
@@ -463,8 +449,7 @@ impl MDL {
                 let mut indices: Vec<u16> =
                     Vec::with_capacity(model.meshes[j as usize].index_count as usize);
                 for _ in 0..model.meshes[j as usize].index_count {
-                    let options = ReadOptions::new(Endian::Little);
-                    indices.push(<u16 as BinRead>::read_options(&mut cursor, &options, ()).unwrap());
+                    indices.push(cursor.read_le::<u16>().ok()?);
                 }
 
                 parts.push(Part { vertices, indices });

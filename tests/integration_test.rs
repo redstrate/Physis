@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 use physis::index;
 use std::env;
-use std::path::Path;
 use std::process::Command;
 use hmac_sha512::Hash;
 use physis::installer::install_game;
@@ -58,7 +57,7 @@ fn fill_dir_hash(game_dir: &str) -> HashMap<String, [u8; 64]> {
         .for_each(|x| {
             let file = std::fs::read(x.path()).unwrap();
 
-            let mut hash = hmac_sha512::Hash::new();
+            let mut hash = Hash::new();
             hash.update(&file);
             let sha = hash.finalize();
 
