@@ -34,7 +34,7 @@ fn test_gamedata_extract() {
 fn make_temp_install_dir(name: &str) -> String {
     let installer_exe = env::var("FFXIV_INSTALLER").unwrap();
 
-    let mut game_dir = env::temp_dir();
+    let mut game_dir = env::home_dir().unwrap();
     game_dir.push(name);
 
     if std::fs::read_dir(&game_dir).ok().is_some() {
@@ -114,12 +114,29 @@ fn test_patching() {
         physis_install_patch(&physis_dir, "boot", patch);
     }
 
-    let game_patches = ["game/D2017.07.11.0000.0001.patch",
+    let game_patches =
+        ["game/H2017.06.06.0000.0001a.patch",
+        "game/H2017.06.06.0000.0001b.patch",
+        "game/H2017.06.06.0000.0001c.patch",
+        "game/H2017.06.06.0000.0001d.patch",
+        "game/H2017.06.06.0000.0001e.patch",
+        "game/H2017.06.06.0000.0001f.patch",
+        "game/H2017.06.06.0000.0001g.patch",
+        "game/H2017.06.06.0000.0001h.patch",
+        "game/H2017.06.06.0000.0001i.patch",
+        "game/H2017.06.06.0000.0001j.patch",
+        "game/H2017.06.06.0000.0001k.patch",
+        "game/H2017.06.06.0000.0001l.patch",
+        "game/H2017.06.06.0000.0001m.patch",
+        "game/H2017.06.06.0000.0001n.patch",
+        "game/D2017.07.11.0000.0001.patch",
         "game/D2017.09.24.0000.0001.patch"];
 
     println!("Boot patching is now complete. Now running game patching...");
 
     for patch in game_patches {
+        println!("Installing {}...", patch);
+
         xivlauncher_install_patch(&xivlauncher_dir, "game", patch);
         physis_install_patch(&physis_dir, "game", patch);
     }
