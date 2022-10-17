@@ -536,13 +536,13 @@ pub fn apply_patch(data_dir: &str, patch_path: &str) -> Result<(), PatchError> {
                         new_file.write_all(&*header.header_data)?;
                     }
                     SqpkOperation::FileOperation(fop) => {
+                        let file_path = format!("{}/{}", data_dir, fop.path);
+                        let (parent_directory, _) = file_path.rsplit_once('/').unwrap();
+
                         match fop.operation {
                             SqpkFileOperation::AddFile => {
-                                let new_path = data_dir.to_owned() + "/" + &fop.path;
-
-                                let (left, _) = new_path.rsplit_once('/').unwrap();
-
-                                fs::create_dir_all(left)?;
+                                // TODO: we should not be handling this here, probably
+                                fs::create_dir_all(&parent_directory)?;
 
                                 // reverse reading crc32
                                 file.seek(SeekFrom::Current(-4))?;
@@ -558,7 +558,7 @@ pub fn apply_patch(data_dir: &str, patch_path: &str) -> Result<(), PatchError> {
 
                                 // now apply the file!
                                 let mut new_file =
-                                    OpenOptions::new().write(true).create(true).open(new_path)?;
+                                    OpenOptions::new().write(true).create(true).open(file_path)?;
 
                                 if fop.offset == 0 {
                                     new_file.set_len(0)?;
@@ -568,15 +568,13 @@ pub fn apply_patch(data_dir: &str, patch_path: &str) -> Result<(), PatchError> {
                                 new_file.write_all(&data)?;
                             }
                             SqpkFileOperation::DeleteFile => {
-                                let new_path = data_dir.to_owned() + "/" + &fop.path;
-
-                                fs::remove_file(new_path.as_str())?;
+                                fs::remove_file(file_path.as_str())?;
                             }
                             SqpkFileOperation::RemoveAll => {
                                 println!("PATCH: NOP RemoveAll");
                             }
                             SqpkFileOperation::MakeDirTree => {
-                                println!("PATCH: NOP MakeDirTree");
+                                fs::create_dir_all(parent_directory)?;
                             }
                         }
                     }
