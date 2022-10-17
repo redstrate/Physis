@@ -380,6 +380,7 @@ pub enum PatchError {
 }
 
 impl From<std::io::Error> for PatchError {
+    // TODO: implement specific PatchErrors for stuff like out of storage space. invalidpatchfile is a bad name for this
     fn from(_: std::io::Error) -> Self {
         PatchError::InvalidPatchFile
     }
