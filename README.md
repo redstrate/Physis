@@ -53,11 +53,15 @@ but I will eventually adopt a way to test the retail patch installer as well.
 1. Enable the `patch_testing` feature.
 2. Set a couple of environment variables:
    * `FFXIV_PATCH_DIR` is the directory of patches to install. It should be structured as `$FFXIV_PATCH_DIR/game/D2017.07.11.0000.0001.patch`.
-   * `FFXIV_XIV_LAUNCHER_PATCHER` should be the path to the patcher executable. If you're running on Linux, we will handle running Wine for you.
+   * `FFXIV_XIV_LAUNCHER_PATCHER` should be the path to the XIVLauncher patcher executable. If you're running on Linux, we will handle running Wine for you.
    * `FFXIV_INSTALLER` is the path to the installer executable. This will be installed using the usual InstallShield emulation physis already includes.
 
 As you can see, you must have the previous patches downloaded first as well as the installer before running the tests.
 This is left up to the developer to figure out how to download them legally.
+
+By default, this test creates the `game_test` and `game_test_xivlauncher` folders in your `$HOME` and does not
+delete them on exit, in case you want to check on the results. You may want to remove these folders as they
+are full game installations and take up a considerable amount of space.
 
 ## Contributing & Support
 
