@@ -191,6 +191,8 @@ enum SqpkFileOperation {
     RemoveAll,
     #[br(magic = b'D')]
     DeleteFile,
+    #[br(magic = b'M')]
+    MakeDirTree
 }
 
 #[derive(BinRead, PartialEq, Debug)]
@@ -270,9 +272,12 @@ struct SqpkFileOperationData {
 
     offset: i64,
     file_size: u64,
+
     #[br(temp)]
     path_length: u32,
-    expansion_id: u32,
+
+    #[br(pad_after = 2)]
+    expansion_id: u16,
 
     #[br(count = path_length)]
     #[br(map = | x: Vec < u8 > | String::from_utf8(x[..x.len() - 1].to_vec()).unwrap())]
@@ -555,6 +560,10 @@ pub fn apply_patch(data_dir: &str, patch_path: &str) -> Result<(), PatchError> {
                                 let mut new_file =
                                     OpenOptions::new().write(true).create(true).open(new_path)?;
 
+                                if fop.offset == 0 {
+                                    new_file.set_len(0)?;
+                                }
+
                                 new_file.seek(SeekFrom::Start(fop.offset as u64))?;
                                 new_file.write_all(&data)?;
                             }
@@ -565,6 +574,9 @@ pub fn apply_patch(data_dir: &str, patch_path: &str) -> Result<(), PatchError> {
                             }
                             SqpkFileOperation::RemoveAll => {
                                 println!("PATCH: NOP RemoveAll");
+                            }
+                            SqpkFileOperation::MakeDirTree => {
+                                println!("PATCH: NOP MakeDirTree");
                             }
                         }
                     }
