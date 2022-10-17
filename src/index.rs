@@ -1,6 +1,6 @@
 use binrw::binrw;
 use binrw::BinRead;
-use bitfield_struct::bitfield;
+use modular_bitfield::prelude::*;
 use std::io::SeekFrom;
 
 #[binrw]
@@ -31,18 +31,13 @@ pub struct SqPackIndexHeader {
     index_data_size: u32,
 }
 
-#[bitfield(u32)]
+#[bitfield]
 #[binrw]
-#[br(map = | x: u32 | Self::from(x))]
+#[br(map = Self::from_bytes)]
 pub struct IndexHashBitfield {
-    #[bits(1)]
-    pub size: u32,
-
-    #[bits(3)]
-    pub data_file_id: u32,
-
-    #[bits(28)]
-    pub offset: u32,
+    pub size: B1,
+    pub data_file_id: B3,
+    pub offset: B28,
 }
 
 #[binrw]
