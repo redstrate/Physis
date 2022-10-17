@@ -113,9 +113,9 @@ pub fn install_game(installer_path: &str, game_directory: &str) -> Result<(), In
 
     let mut temp_dir = std::env::temp_dir();
     temp_dir.push("data1.cab");
-    let temp_dir_string = temp_dir.to_str().unwrap();
+    let temp_dir_string = CString::new(temp_dir.to_str().unwrap())?;
 
-    let unshield = unsafe { unshield_open(CString::new(temp_dir_string).unwrap().as_ptr()) };
+    let unshield = unsafe { unshield_open(temp_dir_string.as_ptr()) };
     let file_count = unsafe { unshield_file_count(unshield) };
 
     for i in 0..file_count {
