@@ -130,7 +130,11 @@ fn test_patching() {
         "game/H2017.06.06.0000.0001m.patch",
         "game/H2017.06.06.0000.0001n.patch",
         "game/D2017.07.11.0000.0001.patch",
-        "game/D2017.09.24.0000.0001.patch"];
+        "game/D2017.09.24.0000.0001.patch",
+        "ex1/H2017.06.01.0000.0001a.patch",
+        "ex1/H2017.06.01.0000.0001b.patch",
+        "ex1/H2017.06.01.0000.0001c.patch",
+        "ex1/H2017.06.01.0000.0001d.patch"];
 
     println!("Boot patching is now complete. Now running game patching...");
 
