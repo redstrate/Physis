@@ -340,10 +340,14 @@ fn write_empty_file_block_at(
     Ok(())
 }
 
-fn get_expansion_folder(sub_id: u16) -> String {
+fn get_expansion_folder_sub(sub_id: u16) -> String {
     let expansion_id = sub_id >> 8;
 
-    match expansion_id {
+    get_expansion_folder(expansion_id)
+}
+
+fn get_expansion_folder(id: u16) -> String {
+    match id {
         0 => "ffxiv".to_string(),
         n => format!("ex{}", n),
     }
@@ -385,7 +389,7 @@ pub fn apply_patch(data_dir: &str, patch_path: &str) -> Result<(), PatchError> {
                 get_platform_string(&target_info.platform),
                 file_id
             );
-            let path: PathBuf = [data_dir, "sqpack", &get_expansion_folder(sub_id), &filename]
+            let path: PathBuf = [data_dir, "sqpack", &get_expansion_folder_sub(sub_id), &filename]
                 .iter()
                 .collect();
 
@@ -406,7 +410,7 @@ pub fn apply_patch(data_dir: &str, patch_path: &str) -> Result<(), PatchError> {
                 filename += &*format!("{}", file_id);
             }
 
-            let path: PathBuf = [data_dir, "sqpack", &get_expansion_folder(sub_id), &filename]
+            let path: PathBuf = [data_dir, "sqpack", &get_expansion_folder_sub(sub_id), &filename]
                 .iter()
                 .collect();
 
@@ -512,7 +516,6 @@ pub fn apply_patch(data_dir: &str, patch_path: &str) -> Result<(), PatchError> {
 
                         match fop.operation {
                             SqpkFileOperation::AddFile => {
-                                // TODO: we should not be handling this here, probably
                                 fs::create_dir_all(&parent_directory)?;
 
                                 // reverse reading crc32
@@ -542,7 +545,13 @@ pub fn apply_patch(data_dir: &str, patch_path: &str) -> Result<(), PatchError> {
                                 fs::remove_file(file_path.as_str())?;
                             }
                             SqpkFileOperation::RemoveAll => {
-                                println!("PATCH: NOP RemoveAll");
+                                let path: PathBuf = [data_dir, "sqpack", &get_expansion_folder(fop.expansion_id)]
+                                    .iter()
+                                    .collect();
+
+                                if fs::read_dir(&path).is_ok() {
+                                    fs::remove_dir_all(&path)?;
+                                }
                             }
                             SqpkFileOperation::MakeDirTree => {
                                 fs::create_dir_all(parent_directory)?;
