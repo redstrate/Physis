@@ -111,4 +111,12 @@ mod tests {
             "chara/equipment/e0000/model/c0101e0000_top.mdl"
         );
     }
+
+    #[test]
+    fn test_deconstruct() {
+        assert_eq!(
+            deconstruct_equipment_path("c0101e0000_top.mdl"),
+            Some((0, Slot::Body))
+        );
+    }
 }
