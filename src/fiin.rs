@@ -1,8 +1,9 @@
 use crate::gamedata::MemoryBuffer;
-use binrw::binrw;
+use binrw::{binrw, BinrwNamedArgs, NullString};
 use binrw::BinRead;
 use std::fs::read;
 use std::io::Cursor;
+use std::ffi::CStr;
 
 #[binrw]
 #[brw(magic = b"FileInfo")]
@@ -10,7 +11,6 @@ use std::io::Cursor;
 #[brw(little)]
 pub struct FileInfo {
     #[brw(pad_before = 16)]
-    #[br(ignore)]
     #[bw(calc = 1024)]
     unknown: i32,
 
@@ -20,24 +20,24 @@ pub struct FileInfo {
 
     #[brw(pad_before = 992)]
     #[br(count = entries_size / 96)]
-    entries: Vec<FIINEntry>,
+    pub entries: Vec<FIINEntry>,
 }
 
 #[binrw]
 #[derive(Debug)]
 pub struct FIINEntry {
-    file_size: i32,
+    pub file_size: i32,
 
     #[brw(pad_before = 4)]
     #[br(count = 64)]
-    #[br(map = | x: Vec < u8 > | String::from_utf8(x).unwrap())]
-    #[bw(map = | x : &String | x.as_bytes().to_vec())]
     #[bw(pad_size_to = 64)]
-    file_name: String,
+    #[bw(map = |x : &String | x.as_bytes())]
+    #[br(map = | x: Vec<u8> | String::from_utf8(x).unwrap().trim_matches(char::from(0)).to_string())]
+    pub file_name: String,
 
     #[br(count = 24)]
     #[bw(pad_size_to = 24)]
-    sha1: Vec<u8>,
+    pub sha1: Vec<u8>,
 }
 
 impl FileInfo {
@@ -52,7 +52,7 @@ impl FileInfo {
     /// hashes.
     ///
     /// The new FileInfo structure can then be serialized back into retail-compatible form.
-    pub fn new(file_names: Vec<&str>) -> Option<FileInfo> {
+    pub fn new(file_names: &[&str]) -> Option<FileInfo> {
         let mut entries = vec![];
 
         for name in file_names {
@@ -68,3 +68,31 @@ impl FileInfo {
         Some(FileInfo { entries })
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::fs::read;
+    use std::path::PathBuf;
+    use crate::fiin::FileInfo;
+
+    fn common_setup() -> FileInfo {
+        let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        d.push("resources/tests");
+        d.push("test.fiin");
+
+        FileInfo::from_existing(&read(d).unwrap()).unwrap()
+    }
+
+    #[test]
+    fn basic_parsing() {
+        let fiin = common_setup();
+
+        assert_eq!(fiin.entries[0].file_name,
+                   "test.txt");
+
+        assert_eq!(fiin.entries[1].file_name,
+                   "test.exl");
+    }
+}
+

@@ -1,11 +1,13 @@
 use std::collections::HashMap;
 use physis::index;
 use std::env;
+use std::fs::read;
 use std::process::Command;
 use hmac_sha512::Hash;
 use physis::installer::install_game;
 use physis::patch::apply_patch;
 use walkdir::WalkDir;
+use physis::fiin::FileInfo;
 
 #[test]
 #[cfg_attr(not(feature = "retail_game_testing"), ignore)]
@@ -28,6 +30,20 @@ fn test_gamedata_extract() {
     gamedata.reload_repositories();
 
     assert!(gamedata.extract("exd/root.exl").is_some());
+}
+
+#[test]
+#[cfg_attr(not(feature = "retail_game_testing"), ignore)]
+fn test_fiin() {
+    let game_dir = env::var("FFXIV_GAME_DIR").unwrap();
+
+    let fiin_path = format!("{game_dir}/boot/fileinfo.fiin");
+    let fiin = FileInfo::from_existing(&read(fiin_path).unwrap()).unwrap();
+
+    assert_eq!(fiin.entries[0].file_name,
+               "steam_api.dll");
+    assert_eq!(fiin.entries[1].file_name,
+               "steam_api64.dll");
 }
 
 fn make_temp_install_dir(name: &str) -> String {
