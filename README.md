@@ -3,13 +3,16 @@
 [![Crates.io](https://img.shields.io/crates/v/physis)](https://crates.io/crates/physis)
 [![builds.sr.ht status](https://builds.sr.ht/~redstrate/physis.svg)](https://builds.sr.ht/~redstrate/physis?)
 
-Framework for interacting with FFXIV data, and successor to [libxiv](https://git.sr.ht/~redstrate/libxiv). This intended for 
-developers writing modding tools, launchers and other programs.
+Physis is a framework for interacting with FFXIV data. Designed for reading (and writing) the relevant game formats of
+FFXIV, as well as making documentation readily accessible for other developers hoping to do the same. Although this
+library works best as a Rust crate, [libphysis](https://git.sr.ht/~redstrate/libphysis) is a C API wrapper designed for
+other languages.
 
 ## Goals
-* Make it extremely easy for people to tinker around with game data. 
+* Make it easy for people to tinker around with game data. 
+* Documenting game formats for other people to develop their own libraries and applications for.
 * Parsing data should be safe, and unit tested vigorously.
-* Minimal dependencies ;-) All dependencies are also checked by `cargo deny`.
+* Aim to have minimal dependencies, and those dependencies should be checked via `cargo deny`.
 
 ## Features
 
@@ -24,29 +27,52 @@ developers writing modding tools, launchers and other programs.
   * Havok Packfile/TexTool skeletons
   * Textures
   * Materials
+  * and more!
 
 ## Usage
 
-**Note:** The API will not be stable until 1.0.
+**Warning:** The API will not be truly stable until 1.0. However, the API is stable between patch versions.
 
-If you intend to use this in a Rust project, you can simply include this crate directly. You can view the documentation at [docs.xiv.zone](https://docs.xiv.zone/docs/physis)!
+If you intend to use this in your Rust project, you can simply include this crate directly.
+
+```
+[dependencies]
+physis = "0.1"
+```
+
+You can view the documentation at [docs.xiv.zone](https://docs.xiv.zone/docs/physis)! It's automatically updated as new
+commits are pushed to the main branch.
 
 For other use in languages I maintain [libphysis](https://git.sr.ht/~redstrate/libphysis), which is a C wrapper
-around the same functionality. This isn't for show, I actually use these bindings in [other projects](https://git.sr.ht/~redstrate/astra).
+around the same functionality. I use these bindings in [other projects](https://git.sr.ht/~redstrate/astra).
   
 ## Development
 
-If you're interested to see how these formats work in more detail, see [xiv.dev](https://xiv.dev/) and [docs.xiv.zone](https://docs.xiv.zone)!
-They explain the file formats in more detail, but I also encourage reading the library code as well if you can.
+If you're interested to see how these formats work in more detail, see [xiv.dev](https://xiv.dev/) and
+[docs.xiv.zone](https://docs.xiv.zone)! They explain the file formats in more detail, but I also encourage reading the
+ibrary code as well if you can.
 
-Some tests and benchmarks require the environment variable `FFXIV_GAME_DIR` to be set. By default, these are disabled
+### Testing
+
+One of the main goals of Physis is to avoid accidental regressions, this is especially important when handling game
+data that might take hours to redownload.
+
+#### Unit Testing
+
+There are a set of basic unit tests you can run via `cargo test`. You can also find the relevant test resources in `resources/tests`.
+This does **NOT** contain copyrighted material, but actually fake game data created by physis itself. These tests are
+run automatically by the CI.
+
+#### Retail Testing
+
+There are some tests and benchmarks require the environment variable `FFXIV_GAME_DIR` to be set. By default, these are disabled
 since they require a legitimate copy of the retail game data. These tests can be turned on via the `retail_game_testing`
 feature.
 
-### Game Patch Testing
+#### Patch Testing
 
 Patching is an extremely sensitive operation since it is not easily reversible if done wrong. Repairing the game files
-is also an option, but it's time-consuming and not yet implemented in physis. To prevent regressions in patching the
+is an option, but it's time-consuming and not yet implemented in physis. To prevent regressions in patching the
 game, I have set up a testing bed for cross-checking our implementation with others. Currently, this is limited to XIVLauncher's implementation,
 but I will eventually adopt a way to test the retail patch installer as well.
 
@@ -59,10 +85,21 @@ but I will eventually adopt a way to test the retail patch installer as well.
 As you can see, you must have the previous patches downloaded first as well as the installer before running the tests.
 This is left up to the developer to figure out how to download them legally.
 
-By default, this test creates the `game_test` and `game_test_xivlauncher` folders in your `$HOME` and does not
+**Note:** These tests create the `game_test` and `game_test_xivlauncher` folders in `$HOME` and does not
 delete them on exit, in case you want to check on the results. You may want to remove these folders as they
 are full game installations and take up a considerable amount of space.
 
+#### Semver and Dependency Checks
+
+Even though package management in Rust is easier, it's a double edged sword. I try to prevent getting carried away
+from including crates - but the ones we do include, have to get checked often. I use `cargo deny` to check my
+dependencies for mismatched versions, deprecation warnings, updates and more. This is also run on the CI!
+
+Making sure that the library is semver-compliant is also important, and I use `cargo semver` for this task. Currently
+it's not on the CI, but it will be added soon. This is to ensure the API does not break when moving between patch
+versions.
+
 ## Contributing & Support
 
-The best way you can help is by [monetarily supporting me](https://redstrate.com/about/) or by submitting patches to help fix bugs or add functionality!
+The best way you can help is by [monetarily supporting me](https://redstrate.com/about/) or by submitting patches to
+help fix bugs or add functionality.
