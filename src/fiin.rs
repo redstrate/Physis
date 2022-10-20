@@ -1,9 +1,9 @@
 use crate::gamedata::MemoryBuffer;
-use binrw::{binrw, BinrwNamedArgs, NullString};
 use binrw::BinRead;
+use binrw::{binrw, BinrwNamedArgs, NullString};
+use std::ffi::CStr;
 use std::fs::read;
 use std::io::Cursor;
-use std::ffi::CStr;
 
 #[binrw]
 #[brw(magic = b"FileInfo")]
@@ -72,9 +72,9 @@ impl FileInfo {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::fiin::FileInfo;
     use std::fs::read;
     use std::path::PathBuf;
-    use crate::fiin::FileInfo;
 
     fn common_setup() -> FileInfo {
         let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
@@ -88,11 +88,8 @@ mod tests {
     fn basic_parsing() {
         let fiin = common_setup();
 
-        assert_eq!(fiin.entries[0].file_name,
-                   "test.txt");
+        assert_eq!(fiin.entries[0].file_name, "test.txt");
 
-        assert_eq!(fiin.entries[1].file_name,
-                   "test.exl");
+        assert_eq!(fiin.entries[1].file_name, "test.exl");
     }
 }
-

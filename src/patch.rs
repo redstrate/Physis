@@ -163,7 +163,7 @@ enum SqpkFileOperation {
     #[br(magic = b'D')]
     DeleteFile,
     #[br(magic = b'M')]
-    MakeDirTree
+    MakeDirTree,
 }
 
 #[derive(BinRead, PartialEq, Debug)]
@@ -389,9 +389,14 @@ pub fn apply_patch(data_dir: &str, patch_path: &str) -> Result<(), PatchError> {
                 get_platform_string(&target_info.platform),
                 file_id
             );
-            let path: PathBuf = [data_dir, "sqpack", &get_expansion_folder_sub(sub_id), &filename]
-                .iter()
-                .collect();
+            let path: PathBuf = [
+                data_dir,
+                "sqpack",
+                &get_expansion_folder_sub(sub_id),
+                &filename,
+            ]
+            .iter()
+            .collect();
 
             path.to_str().unwrap().to_string()
         };
@@ -410,9 +415,14 @@ pub fn apply_patch(data_dir: &str, patch_path: &str) -> Result<(), PatchError> {
                 filename += &*format!("{}", file_id);
             }
 
-            let path: PathBuf = [data_dir, "sqpack", &get_expansion_folder_sub(sub_id), &filename]
-                .iter()
-                .collect();
+            let path: PathBuf = [
+                data_dir,
+                "sqpack",
+                &get_expansion_folder_sub(sub_id),
+                &filename,
+            ]
+            .iter()
+            .collect();
 
             path.to_str().unwrap().to_string()
         };
@@ -531,8 +541,10 @@ pub fn apply_patch(data_dir: &str, patch_path: &str) -> Result<(), PatchError> {
                                 file.seek(SeekFrom::Current(4))?;
 
                                 // now apply the file!
-                                let mut new_file =
-                                    OpenOptions::new().write(true).create(true).open(file_path)?;
+                                let mut new_file = OpenOptions::new()
+                                    .write(true)
+                                    .create(true)
+                                    .open(file_path)?;
 
                                 if fop.offset == 0 {
                                     new_file.set_len(0)?;
@@ -545,9 +557,10 @@ pub fn apply_patch(data_dir: &str, patch_path: &str) -> Result<(), PatchError> {
                                 fs::remove_file(file_path.as_str())?;
                             }
                             SqpkFileOperation::RemoveAll => {
-                                let path: PathBuf = [data_dir, "sqpack", &get_expansion_folder(fop.expansion_id)]
-                                    .iter()
-                                    .collect();
+                                let path: PathBuf =
+                                    [data_dir, "sqpack", &get_expansion_folder(fop.expansion_id)]
+                                        .iter()
+                                        .collect();
 
                                 if fs::read_dir(&path).is_ok() {
                                     fs::remove_dir_all(&path)?;
@@ -574,10 +587,10 @@ pub fn apply_patch(data_dir: &str, patch_path: &str) -> Result<(), PatchError> {
             }
             ChunkType::AddDirectory(_) => {
                 println!("PATCH: NOP AddDirectory");
-            },
+            }
             ChunkType::DeleteDirectory(_) => {
                 println!("PATCH: NOP DeleteDirectory");
-            },
+            }
             ChunkType::EndOfFile => {
                 return Ok(());
             }

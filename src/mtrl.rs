@@ -1,5 +1,5 @@
 use crate::gamedata::MemoryBuffer;
-use binrw::{BinRead, binrw};
+use binrw::{binrw, BinRead};
 use std::io::Cursor;
 
 #[binrw]

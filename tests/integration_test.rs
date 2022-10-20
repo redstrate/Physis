@@ -1,13 +1,13 @@
-use std::collections::HashMap;
+use hmac_sha512::Hash;
+use physis::fiin::FileInfo;
 use physis::index;
+use physis::installer::install_game;
+use physis::patch::apply_patch;
+use std::collections::HashMap;
 use std::env;
 use std::fs::read;
 use std::process::Command;
-use hmac_sha512::Hash;
-use physis::installer::install_game;
-use physis::patch::apply_patch;
 use walkdir::WalkDir;
-use physis::fiin::FileInfo;
 
 #[test]
 #[cfg_attr(not(feature = "retail_game_testing"), ignore)]
@@ -40,10 +40,8 @@ fn test_fiin() {
     let fiin_path = format!("{game_dir}/boot/fileinfo.fiin");
     let fiin = FileInfo::from_existing(&read(fiin_path).unwrap()).unwrap();
 
-    assert_eq!(fiin.entries[0].file_name,
-               "steam_api.dll");
-    assert_eq!(fiin.entries[1].file_name,
-               "steam_api64.dll");
+    assert_eq!(fiin.entries[0].file_name, "steam_api.dll");
+    assert_eq!(fiin.entries[1].file_name, "steam_api64.dll");
 }
 
 fn make_temp_install_dir(name: &str) -> String {
@@ -58,13 +56,15 @@ fn make_temp_install_dir(name: &str) -> String {
 
     std::fs::create_dir_all(&game_dir).unwrap();
 
-    install_game(&installer_exe, game_dir.as_path().to_str().unwrap()).ok().unwrap();
+    install_game(&installer_exe, game_dir.as_path().to_str().unwrap())
+        .ok()
+        .unwrap();
 
     game_dir.as_path().to_str().unwrap().parse().unwrap()
 }
 
 fn fill_dir_hash(game_dir: &str) -> HashMap<String, [u8; 64]> {
-    let mut file_hashes : HashMap<String, [u8; 64]> = HashMap::new();
+    let mut file_hashes: HashMap<String, [u8; 64]> = HashMap::new();
 
     WalkDir::new(game_dir)
         .into_iter()
@@ -81,12 +81,12 @@ fn fill_dir_hash(game_dir: &str) -> HashMap<String, [u8; 64]> {
             rel_path = rel_path.strip_prefix(game_dir).unwrap();
 
             file_hashes.insert(rel_path.to_str().unwrap().to_string(), sha);
-    });
+        });
 
     file_hashes
 }
 
-fn physis_install_patch(game_directory: &str, data_directory: &str, patch_name : &str) {
+fn physis_install_patch(game_directory: &str, data_directory: &str, patch_name: &str) {
     let patch_dir = env::var("FFXIV_PATCH_DIR").unwrap();
 
     let patch_path = format!("{}/{}", patch_dir, &patch_name);
@@ -95,7 +95,7 @@ fn physis_install_patch(game_directory: &str, data_directory: &str, patch_name :
     apply_patch(&data_dir, &patch_path).unwrap();
 }
 
-fn xivlauncher_install_patch(game_directory: &str, data_directory: &str, patch_name : &str) {
+fn xivlauncher_install_patch(game_directory: &str, data_directory: &str, patch_name: &str) {
     let patch_dir = env::var("FFXIV_PATCH_DIR").unwrap();
     let patcher_exe = env::var("FFXIV_XIV_LAUNCHER_PATCHER").unwrap();
 
@@ -104,10 +104,7 @@ fn xivlauncher_install_patch(game_directory: &str, data_directory: &str, patch_n
 
     // TODO: check for windows systems
     Command::new("/usr/bin/wine")
-        .args([&patcher_exe,
-            "install",
-            &patch_path,
-            &game_dir])
+        .args([&patcher_exe, "install", &patch_path, &game_dir])
         .output()
         .unwrap();
 }
@@ -120,8 +117,10 @@ fn test_patching() {
     let physis_dir = make_temp_install_dir("game_test");
     let xivlauncher_dir = make_temp_install_dir("game_test_xivlauncher");
 
-    let boot_patches = ["boot/2022.03.25.0000.0001.patch",
-        "boot/2022.08.05.0000.0001.patch"];
+    let boot_patches = [
+        "boot/2022.03.25.0000.0001.patch",
+        "boot/2022.08.05.0000.0001.patch",
+    ];
 
     println!("The game installation is now complete. Now running boot patching...");
     for patch in boot_patches {
@@ -129,8 +128,8 @@ fn test_patching() {
         physis_install_patch(&physis_dir, "boot", patch);
     }
 
-    let game_patches =
-        ["game/H2017.06.06.0000.0001a.patch",
+    let game_patches = [
+        "game/H2017.06.06.0000.0001a.patch",
         "game/H2017.06.06.0000.0001b.patch",
         "game/H2017.06.06.0000.0001c.patch",
         "game/H2017.06.06.0000.0001d.patch",
@@ -149,7 +148,8 @@ fn test_patching() {
         "ex1/H2017.06.01.0000.0001a.patch",
         "ex1/H2017.06.01.0000.0001b.patch",
         "ex1/H2017.06.01.0000.0001c.patch",
-        "ex1/H2017.06.01.0000.0001d.patch"];
+        "ex1/H2017.06.01.0000.0001d.patch",
+    ];
 
     println!("Boot patching is now complete. Now running game patching...");
 

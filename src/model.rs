@@ -1,7 +1,7 @@
 use crate::gamedata::MemoryBuffer;
-use binrw::BinReaderExt;
 use binrw::binrw;
 use binrw::BinRead;
+use binrw::BinReaderExt;
 use half::f16;
 use std::io::{Cursor, Seek, SeekFrom};
 
@@ -411,10 +411,12 @@ impl MDL {
 
                         match element.vertex_usage {
                             VertexUsage::Position => {
-                                vertices[k as usize].position = cursor.read_le::<[f32; 3]>().ok()?;
+                                vertices[k as usize].position =
+                                    cursor.read_le::<[f32; 3]>().ok()?;
                             }
                             VertexUsage::BlendWeights => {
-                                vertices[k as usize].bone_weight = cursor.read_le::<[f32; 4]>().ok()?;
+                                vertices[k as usize].bone_weight =
+                                    cursor.read_le::<[f32; 4]>().ok()?;
                             }
                             VertexUsage::BlendIndices => {
                                 vertices[k as usize].bone_id = cursor.read_le::<[u8; 4]>().ok()?;
@@ -422,12 +424,14 @@ impl MDL {
                             VertexUsage::Normal => {
                                 // TODO: normals are assumed to be half4
                                 for i in 0..3 {
-                                    vertices[k as usize].normal[i] = f16::from_bits(cursor.read_le::<u16>().ok()?).to_f32();
+                                    vertices[k as usize].normal[i] =
+                                        f16::from_bits(cursor.read_le::<u16>().ok()?).to_f32();
                                 }
                             }
                             VertexUsage::UV => {
                                 for i in 0..2 {
-                                    vertices[k as usize].uv[i] = f16::from_bits(cursor.read_le::<u16>().ok()?).to_f32();
+                                    vertices[k as usize].uv[i] =
+                                        f16::from_bits(cursor.read_le::<u16>().ok()?).to_f32();
                                 }
                             }
                             VertexUsage::Tangent2 => {}

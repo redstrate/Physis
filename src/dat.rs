@@ -1,9 +1,9 @@
 use crate::gamedata::MemoryBuffer;
 use crate::model::ModelFileHeader;
 use crate::sqpack::read_data_block;
-use binrw::{BinReaderExt, binrw};
 use binrw::BinRead;
 use binrw::BinWrite;
+use binrw::{binrw, BinReaderExt};
 use std::io::Write;
 use std::io::{Cursor, Read, Seek, SeekFrom};
 
