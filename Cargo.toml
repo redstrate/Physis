@@ -57,7 +57,7 @@ serde = { version = "1", features = ["derive"] }
 sha1_smol = "1"
 
 # needed for deconstructing skeleton pose matrices
-glam = "0.21"
+glam = "0.22"
 
 # needed for c-style bitflags used in some formats (such as tex files)
 bitflags = "1.3"
