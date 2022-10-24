@@ -67,3 +67,5 @@ pub mod tex;
 
 /// Reading material files (MTRL)
 pub mod mtrl;
+
+mod crc;

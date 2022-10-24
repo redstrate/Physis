@@ -25,15 +25,14 @@ libunshield = "1.4"
 walkdir = "2"
 hmac-sha512 = "1"
 criterion = "0.4"
+# used for testing our jamcrc implementation
+crc = "3"
 
 [features]
 retail_game_testing = []
 patch_testing = []
 
 [dependencies]
-# used for jamcrc implementation, should eventually move away from it
-crc = "3"
-
 # amazing binary parsing/writing library
 binrw = "0.10"
 
