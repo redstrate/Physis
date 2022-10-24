@@ -1,6 +1,6 @@
 [package]
 name = "physis"
-version = "0.1.1"
+version = "0.1.2"
 authors = ["Joshua Goins <josh@redstrate.com>"]
 edition = "2021"
 description = "Interact with XIV game data."
@@ -14,6 +14,12 @@ readme = "README.md"
 [[bench]]
 name = "physis_benchmark"
 harness = false
+
+[build-dependencies]
+system-deps = "6"
+
+[package.metadata.system-deps]
+libunshield = "1.4"
 
 [dev-dependencies]
 walkdir = "2"
