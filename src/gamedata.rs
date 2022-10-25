@@ -1,4 +1,4 @@
-use crate::common::Language;
+use crate::common::{Language, read_version};
 use crate::dat::DatFile;
 use crate::exd::EXD;
 use crate::exh::EXH;
@@ -29,6 +29,16 @@ fn is_valid(path: &str) -> bool {
     }
 
     true
+}
+
+#[derive(Debug)]
+pub enum RepairAction {
+    VersionFileMissing,
+    VersionFileCanRestore
+}
+
+pub enum RepairError<'a> {
+    FailedRepair(&'a Repository)
 }
 
 pub type MemoryBuffer = Vec<u8>;
@@ -228,6 +238,94 @@ impl GameData {
 
     pub fn apply_patch(&self, patch_path: &str) -> Result<(), PatchError> {
         apply_patch(&self.game_directory, patch_path)
+    }
+
+    /// Detects whether or not the game files need a repair, right now it only checks for invalid
+    /// version files.
+    /// If the repair is needed, a list of invalid repositories is given.
+    pub fn needs_repair(&self) -> Option<Vec<(&Repository, RepairAction)>> {
+        let mut repositories : Vec<(&Repository, RepairAction)> = Vec::new();
+        for repository in &self.repositories {
+            if repository.version.is_none() {
+                // Check to see if a .bck file is created, as we might be able to use that
+                let ver_bak_path: PathBuf = [
+                    self.game_directory.clone(),
+                    "sqpack".to_string(),
+                    repository.name.clone(),
+                    format!("{}.bck", repository.name),
+                ]
+                    .iter()
+                    .collect();
+
+                let repair_action = if read_version(&ver_bak_path).is_some() {
+                    RepairAction::VersionFileCanRestore
+                } else {
+                    RepairAction::VersionFileMissing
+                };
+
+                repositories.push((repository, repair_action));
+            }
+        }
+
+        if repositories.is_empty() {
+            None
+        } else {
+            Some(repositories)
+        }
+    }
+
+    /// Performs the repair, assuming any damaging effects it may have
+    /// Returns true only if all actions were taken are successful.
+    /// NOTE: This is a destructive operation, especially for InvalidVersion errors.
+    pub fn perform_repair<'a>(&self, repositories: &Vec<(&'a Repository, RepairAction)>) -> Result<(), RepairError<'a>> {
+        for (repository, action) in repositories {
+            let ver_path: PathBuf = [
+                self.game_directory.clone(),
+                "sqpack".to_string(),
+                repository.name.clone(),
+                format!("{}.ver", repository.name),
+            ]
+                .iter()
+                .collect();
+
+            let new_version : String = match action {
+                RepairAction::VersionFileMissing => {
+                    let repo_path: PathBuf = [
+                        self.game_directory.clone(),
+                        "sqpack".to_string(),
+                        repository.name.clone()
+                    ]
+                        .iter()
+                        .collect();
+
+                    std::fs::remove_dir_all(&repo_path).ok()
+                        .ok_or(RepairError::FailedRepair(repository))?;
+
+                    std::fs::create_dir_all(&repo_path).ok()
+                        .ok_or(RepairError::FailedRepair(repository))?;
+
+                     "2012.01.01.0000.0000".to_string() // TODO: is this correct for expansions?
+                }
+                RepairAction::VersionFileCanRestore => {
+                    let ver_bak_path: PathBuf = [
+                        self.game_directory.clone(),
+                        "sqpack".to_string(),
+                        repository.name.clone(),
+                        format!("{}.bck", repository.name),
+                    ]
+                        .iter()
+                        .collect();
+
+                    read_version(&ver_bak_path)
+                        .ok_or(RepairError::FailedRepair(repository))?
+                }
+            };
+
+            std::fs::write(&ver_path, new_version).ok()
+                .ok_or(RepairError::FailedRepair(repository))?;
+        }
+
+        Ok(())
     }
 }
 

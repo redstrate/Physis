@@ -1,3 +1,5 @@
+use std::fs;
+use std::path::Path;
 use binrw::binrw;
 
 #[binrw]
@@ -42,4 +44,9 @@ pub fn get_language_code(lang: &Language) -> &'static str {
 #[derive(Debug, PartialEq, Eq)]
 pub enum Region {
     Global = -1, // TODO: find patch codes for other regions :-)
+}
+
+/// Reads a version file.
+pub fn read_version(p: &Path) -> Option<String> {
+    fs::read_to_string(p).ok()
 }

@@ -3,6 +3,7 @@ use std::cmp::Ordering;
 use std::cmp::Ordering::{Greater, Less};
 use std::fs;
 use std::path::{Path, PathBuf};
+use crate::common::read_version;
 
 /// The type of repository, discerning game data from expansion data.
 #[derive(Debug, PartialEq, Eq, Copy, Clone)]
@@ -26,7 +27,7 @@ pub struct Repository {
     /// The type of repository, such as "base game" or "expansion".
     pub repo_type: RepositoryType,
     /// The version of the game data.
-    pub version: String,
+    pub version: Option<String>,
 }
 
 impl Eq for Repository {}
@@ -57,10 +58,6 @@ impl PartialOrd for Repository {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.cmp(other))
     }
-}
-
-fn read_version(p: &Path) -> Option<String> {
-    fs::read_to_string(p).ok()
 }
 
 /// This refers to the specific root directory a file is located in.
@@ -155,14 +152,10 @@ impl Repository {
             read_version(d.as_path())
         };
 
-        if version == None {
-            return None;
-        }
-
         Some(Repository {
             name,
             repo_type,
-            version: version.unwrap(),
+            version,
         })
     }
 
