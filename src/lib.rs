@@ -19,6 +19,7 @@ mod compression;
 mod dat;
 
 /// Reading model (MDL) files.
+#[cfg(feature = "visual_data")]
 pub mod model;
 
 /// All of the races in Eorzea in a nice enum package.
@@ -45,6 +46,7 @@ pub mod blowfish;
 mod blowfish_constants;
 
 /// Initializing a new retail game install from the official retail installer. No execution required!
+#[cfg(feature = "game_install")]
 pub mod installer;
 
 /// Reading Excel header files (EXH).
@@ -54,6 +56,7 @@ pub mod exh;
 pub mod exd;
 
 /// Reading Havok XML sidecar files.
+#[cfg(feature = "visual_data")]
 pub mod skeleton;
 
 /// Reading file into files (FIIN).
@@ -63,9 +66,11 @@ pub mod fiin;
 pub mod log;
 
 /// Reading textures (TEX).
+#[cfg(feature = "visual_data")]
 pub mod tex;
 
 /// Reading material files (MTRL)
+#[cfg(feature = "visual_data")]
 pub mod mtrl;
 
 mod crc;

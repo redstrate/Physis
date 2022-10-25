@@ -19,18 +19,33 @@ harness = false
 system-deps = "6"
 
 [package.metadata.system-deps]
-libunshield = "1.4"
+libunshield = { version = "1.4", feature = "game_install" }
 
 [dev-dependencies]
+# used for patch install checking
 walkdir = "2"
 hmac-sha512 = "1"
+
+# used while rust doesn't have native benchmarking capability
 criterion = "0.4"
+
 # used for testing our jamcrc implementation
 crc = "3"
 
 [features]
+default = ["visual_data"]
+
+# enables game install support using unshield (only supported on Linux and macOS)
+game_install = []
+
+# enables support for extracting visual data, such as models, textures, materials, etc
+# this enables a whole bunch of dependencies!
+# tip: can be safely turned off for launchers and other tools that simply need to extract the bare minimum of data
+visual_data = ["dep:half", "dep:hard-xml", "dep:serde_json", "dep:serde", "dep:glam", "dep:bitflags", "dep:texpresso"]
+
+# testing only features
 retail_game_testing = []
-patch_testing = []
+patch_testing = ["game_install"]
 
 [dependencies]
 # amazing binary parsing/writing library
@@ -44,20 +59,20 @@ bitfield-struct = "0.1"
 paste = "1"
 
 # needed for half-float support which FFXIV uses in it's model data
-half = "2"
+half = { version = "2", optional = true }
 
 # needed for havok xml parsing
-hard-xml = "1"
+hard-xml = { version = "1", optional = true }
 
 # needed for textools skel parsing
-serde_json = "1"
-serde = { version = "1", features = ["derive"] }
+serde_json = { version = "1", optional = true }
+serde = { version = "1", optional = true, features = ["derive"] }
 
 # needed for deconstructing skeleton pose matrices
-glam = "0.22"
+glam = { version = "0.22", optional = true }
 
 # needed for c-style bitflags used in some formats (such as tex files)
-bitflags = "1.3"
+bitflags = { version = "1.3", optional = true }
 
 # needed for dxt/bc decompression
-texpresso = "2"
+texpresso = { version = "2", optional = true }

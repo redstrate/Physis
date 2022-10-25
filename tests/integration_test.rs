@@ -1,7 +1,6 @@
 use hmac_sha512::Hash;
 use physis::fiin::FileInfo;
 use physis::index;
-use physis::installer::install_game;
 use physis::patch::apply_patch;
 use std::collections::HashMap;
 use std::env;
@@ -44,7 +43,10 @@ fn test_fiin() {
     assert_eq!(fiin.entries[1].file_name, "steam_api64.dll");
 }
 
+#[cfg(feature = "patch_testing")]
 fn make_temp_install_dir(name: &str) -> String {
+    use physis::installer::install_game;
+
     let installer_exe = env::var("FFXIV_INSTALLER").unwrap();
 
     let mut game_dir = env::home_dir().unwrap();
@@ -63,6 +65,7 @@ fn make_temp_install_dir(name: &str) -> String {
     game_dir.as_path().to_str().unwrap().parse().unwrap()
 }
 
+#[cfg(feature = "patch_testing")]
 fn fill_dir_hash(game_dir: &str) -> HashMap<String, [u8; 64]> {
     let mut file_hashes: HashMap<String, [u8; 64]> = HashMap::new();
 
@@ -86,6 +89,7 @@ fn fill_dir_hash(game_dir: &str) -> HashMap<String, [u8; 64]> {
     file_hashes
 }
 
+#[cfg(feature = "patch_testing")]
 fn physis_install_patch(game_directory: &str, data_directory: &str, patch_name: &str) {
     let patch_dir = env::var("FFXIV_PATCH_DIR").unwrap();
 
@@ -95,6 +99,7 @@ fn physis_install_patch(game_directory: &str, data_directory: &str, patch_name: 
     apply_patch(&data_dir, &patch_path).unwrap();
 }
 
+#[cfg(feature = "patch_testing")]
 fn xivlauncher_install_patch(game_directory: &str, data_directory: &str, patch_name: &str) {
     let patch_dir = env::var("FFXIV_PATCH_DIR").unwrap();
     let patcher_exe = env::var("FFXIV_XIV_LAUNCHER_PATCHER").unwrap();
@@ -110,7 +115,7 @@ fn xivlauncher_install_patch(game_directory: &str, data_directory: &str, patch_n
 }
 
 #[test]
-#[cfg_attr(not(feature = "patch_testing"), ignore)]
+#[cfg(feature = "patch_testing")]
 fn test_patching() {
     println!("Beginning game installation...");
 
