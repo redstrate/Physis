@@ -241,13 +241,6 @@ impl Sha1 {
         rv
     }
 
-    /// Resets the hash object to it's initial state.
-    pub fn reset(&mut self) {
-        self.state = DEFAULT_STATE;
-        self.len = 0;
-        self.blocks.len = 0;
-    }
-
     /// Update hash with input data.
     pub fn update(&mut self, data: &[u8]) {
         let len = &mut self.len;
