@@ -1,5 +1,5 @@
 pub struct JAMCRC {
-    table: [u32; 256]
+    table: [u32; 256],
 }
 
 impl JAMCRC {
@@ -24,13 +24,11 @@ impl JAMCRC {
             i += 1;
         }
 
-        Self {
-            table
-        }
+        Self { table }
     }
 
     pub(crate) fn checksum(&self, bytes: &[u8]) -> u32 {
-        let mut c : u32 = 0xFFFFFFFF;
+        let mut c: u32 = 0xFFFFFFFF;
         for byte in bytes {
             c = self.table[((c ^ *byte as u32) & 0xFF) as usize] ^ (c >> 8);
         }
@@ -53,11 +51,10 @@ mod tests {
 
         const JAMCR: Crc<u32> = Crc::<u32>::new(&CRC_32_JAMCRC);
 
-        let bytes : [u8; 9] = [1, 1, 2, 4, 5, 6, 12, 12, 12];
+        let bytes: [u8; 9] = [1, 1, 2, 4, 5, 6, 12, 12, 12];
 
-        const crc : JAMCRC = JAMCRC::new();
+        const crc: JAMCRC = JAMCRC::new();
 
-        assert_eq!(JAMCR.checksum(&bytes),
-            crc.checksum(&bytes))
+        assert_eq!(JAMCR.checksum(&bytes), crc.checksum(&bytes))
     }
 }

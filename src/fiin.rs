@@ -1,10 +1,10 @@
 use crate::gamedata::MemoryBuffer;
+use crate::sha1::Sha1;
 use binrw::BinRead;
 use binrw::{binrw, BinrwNamedArgs, NullString};
 use std::ffi::CStr;
 use std::fs::read;
 use std::io::Cursor;
-use crate::sha1::Sha1;
 
 #[binrw]
 #[brw(magic = b"FileInfo")]

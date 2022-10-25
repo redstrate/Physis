@@ -338,8 +338,8 @@ impl Digest {
 
 impl Blocks {
     fn input<F>(&mut self, mut input: &[u8], mut f: F)
-        where
-            F: FnMut(&[u8; 64]),
+    where
+        F: FnMut(&[u8; 64]),
     {
         if self.len > 0 {
             let len = self.len as usize;

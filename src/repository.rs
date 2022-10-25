@@ -1,9 +1,9 @@
+use crate::common::read_version;
 use crate::repository::RepositoryType::{Base, Expansion};
 use std::cmp::Ordering;
 use std::cmp::Ordering::{Greater, Less};
 use std::fs;
 use std::path::{Path, PathBuf};
-use crate::common::read_version;
 
 /// The type of repository, discerning game data from expansion data.
 #[derive(Debug, PartialEq, Eq, Copy, Clone)]

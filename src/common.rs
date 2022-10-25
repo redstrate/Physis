@@ -1,6 +1,6 @@
+use binrw::binrw;
 use std::fs;
 use std::path::Path;
-use binrw::binrw;
 
 #[binrw]
 #[brw(repr(u8))]
