@@ -53,9 +53,6 @@ hard-xml = "1"
 serde_json = "1"
 serde = { version = "1", features = ["derive"] }
 
-# needed for file info (fiin)
-sha1_smol = "1"
-
 # needed for deconstructing skeleton pose matrices
 glam = "0.22"
 

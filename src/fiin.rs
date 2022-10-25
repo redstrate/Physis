@@ -4,6 +4,7 @@ use binrw::{binrw, BinrwNamedArgs, NullString};
 use std::ffi::CStr;
 use std::fs::read;
 use std::io::Cursor;
+use crate::sha1::Sha1;
 
 #[binrw]
 #[brw(magic = b"FileInfo")]
@@ -61,7 +62,7 @@ impl FileInfo {
             entries.push(FIINEntry {
                 file_size: file.len() as i32,
                 file_name: name.to_string(),
-                sha1: sha1_smol::Sha1::from(file).digest().bytes().to_vec(),
+                sha1: Sha1::from(file).digest().bytes().to_vec(),
             });
         }
 

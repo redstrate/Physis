@@ -69,3 +69,4 @@ pub mod tex;
 pub mod mtrl;
 
 mod crc;
+mod sha1;
