@@ -103,3 +103,11 @@ versions.
 
 The best way you can help is by [monetarily supporting me](https://redstrate.com/about/) or by submitting patches to
 help fix bugs or add functionality.
+
+## Credits
+- [goatcorp](https://goatcorp.github.io) (XIVQuickLauncher, docs.xiv.dev, and even more)
+- [Ioncannon](http://ffxivexplorer.fragmenterworks.com/research.php) (FFXIV Data Explorer) for the first documenting the file formats
+- [binrw team](https://binrw.rs) for an awesome Rust library!
+- [sha1-smol](https://github.com/mitsuhiko/sha1-smol) for a dependency-free SHA1 implementation
+
+And everyone else who writes FFXIV tools!
