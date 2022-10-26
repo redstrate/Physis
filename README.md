@@ -95,8 +95,7 @@ Even though package management in Rust is easier, it's a double edged sword. I t
 from including crates - but the ones we do include, have to get checked often. I use `cargo deny` to check my
 dependencies for mismatched versions, deprecation warnings, updates and more. This is also run on the CI!
 
-Making sure that the library is semver-compliant is also important, and I use `cargo semver` for this task. Currently
-it's not on the CI, but it will be added soon. This is to ensure the API does not break when moving between patch
+Making sure that the library is semver-compliant is also important, and I use `cargo semver` for this task. This is to ensure the API does not break when moving between patch
 versions.
 
 ## Contributing & Support

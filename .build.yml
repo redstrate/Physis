@@ -17,9 +17,16 @@ tasks:
   - check: |
       cd physis
       cargo check
+  - clippy: |
+      cd physis
+      cargo clippy
   - test: |
       cd physis
       cargo test
   - deny-check: |
       cd physis
       cargo deny check
+  - semver-checks: |-
+      cd physis
+      cargo install cargo-semver-checks
+      cargo semver-checks check-release
