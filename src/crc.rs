@@ -1,8 +1,8 @@
-pub struct JAMCRC {
+pub struct Jamcrc {
     table: [u32; 256],
 }
 
-impl JAMCRC {
+impl Jamcrc {
     pub(crate) const fn new() -> Self {
         let mut table: [u32; 256] = [0u32; 256];
 
@@ -40,21 +40,17 @@ impl JAMCRC {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::fiin::FileInfo;
-    use std::fs::read;
-    use std::path::PathBuf;
 
     #[test]
-    fn basic_parsing() {
+    fn check_library() {
         use crc::{Crc, CRC_32_JAMCRC};
-        use std::io::{Read, Seek, SeekFrom};
 
         const JAMCR: Crc<u32> = Crc::<u32>::new(&CRC_32_JAMCRC);
 
         let bytes: [u8; 9] = [1, 1, 2, 4, 5, 6, 12, 12, 12];
 
-        const crc: JAMCRC = JAMCRC::new();
+        const CRC: Jamcrc = Jamcrc::new();
 
-        assert_eq!(JAMCR.checksum(&bytes), crc.checksum(&bytes))
+        assert_eq!(JAMCR.checksum(&bytes), CRC.checksum(&bytes))
     }
 }

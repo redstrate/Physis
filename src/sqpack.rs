@@ -1,10 +1,10 @@
 use crate::compression::no_header_decompress;
-use crate::crc::JAMCRC;
+use crate::crc::Jamcrc;
 use crate::dat::{BlockHeader, CompressionMode};
 use binrw::BinRead;
 use std::io::{Read, Seek, SeekFrom};
 
-const CRC: JAMCRC = JAMCRC::new();
+const CRC: Jamcrc = Jamcrc::new();
 
 /// Calculates a hash for `index` files from a game path.
 pub fn calculate_hash(path: &str) -> u64 {

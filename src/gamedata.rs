@@ -175,7 +175,7 @@ impl GameData {
         let slice = index_file.entries.iter().find(|s| s.hash == hash);
         match slice {
             Some(entry) => {
-                let mut dat_file = self.get_dat_file(path, entry.bitfield.data_file_id().into())?;
+                let mut dat_file = self.get_dat_file(path, entry.bitfield.data_file_id())?;
 
                 dat_file.read_from_offset(entry.bitfield.offset())
             }
@@ -301,11 +301,11 @@ impl GameData {
                     .iter()
                     .collect();
 
-                    std::fs::remove_dir_all(&repo_path)
+                    fs::remove_dir_all(&repo_path)
                         .ok()
                         .ok_or(RepairError::FailedRepair(repository))?;
 
-                    std::fs::create_dir_all(&repo_path)
+                    fs::create_dir_all(&repo_path)
                         .ok()
                         .ok_or(RepairError::FailedRepair(repository))?;
 
@@ -325,7 +325,7 @@ impl GameData {
                 }
             };
 
-            std::fs::write(&ver_path, new_version)
+            fs::write(&ver_path, new_version)
                 .ok()
                 .ok_or(RepairError::FailedRepair(repository))?;
         }

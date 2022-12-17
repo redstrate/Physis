@@ -24,12 +24,12 @@ pub trait SimdExt {
     fn simd_eq(self, rhs: Self) -> Self;
 }
 
-impl SimdExt for fake::u32x4 {
+impl SimdExt for u32x4 {
     fn simd_eq(self, rhs: Self) -> Self {
         if self == rhs {
-            fake::u32x4(0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff)
+            u32x4(0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff)
         } else {
-            fake::u32x4(0, 0, 0, 0)
+            u32x4(0, 0, 0, 0)
         }
     }
 }
@@ -204,7 +204,7 @@ const DEFAULT_STATE: Sha1State = Sha1State {
 #[inline(always)]
 fn as_block(input: &[u8]) -> &[u8; 64] {
     unsafe {
-        assert!(input.len() == 64);
+        assert_eq!(input.len(), 64);
         let arr: &[u8; 64] = &*(input.as_ptr() as *const [u8; 64]);
         arr
     }
@@ -663,9 +663,8 @@ impl str::FromStr for Digest {
         }
         let mut rv: Digest = Default::default();
         for idx in 0..5 {
-            rv.data.state[idx] =
-                r#try!(u32::from_str_radix(&s[idx * 8..idx * 8 + 8], 16)
-                    .map_err(|_| DigestParseError(())));
+            rv.data.state[idx] = u32::from_str_radix(&s[idx * 8..idx * 8 + 8], 16)
+                .map_err(|_| DigestParseError(()))?;
         }
         Ok(rv)
     }
@@ -674,7 +673,7 @@ impl str::FromStr for Digest {
 impl fmt::Display for Digest {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         for i in self.data.state.iter() {
-            r#try!(write!(f, "{:08x}", i));
+            write!(f, "{:08x}", i)?;
         }
         Ok(())
     }

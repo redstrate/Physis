@@ -1,7 +1,7 @@
 use crate::gamedata::MemoryBuffer;
 use crate::sha1::Sha1;
-use binrw::BinRead;
 use binrw::binrw;
+use binrw::BinRead;
 use std::fs::read;
 use std::io::Cursor;
 
@@ -71,7 +71,6 @@ impl FileInfo {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use crate::fiin::FileInfo;
     use std::fs::read;
     use std::path::PathBuf;
