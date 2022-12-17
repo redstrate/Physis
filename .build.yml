@@ -9,11 +9,11 @@ sources:
 secrets:
   - b748582a-5d31-4fe8-94d6-4a63035e97aa
 tasks:
-  - update-docs: |
-      cd physis
-      cargo doc --release --no-deps
-      echo "StrictHostKeyChecking=no" >> ~/.ssh/config
-      rsync -Wvr target/doc/ deploy@ryne.moe:/var/ryne/sync/physis-docs
+  #- update-docs: |
+  #    cd physis
+  #    cargo doc --release --no-deps
+  #    echo "StrictHostKeyChecking=no" >> ~/.ssh/config
+  #    rsync -Wvr target/doc/ deploy@ryne.moe:/var/ryne/sync/physis-docs
   - check: |
       cd physis
       cargo check
@@ -28,5 +28,5 @@ tasks:
       cargo deny check
   - semver-checks: |-
       cd physis
-      cargo install cargo-semver-checks
+      cargo install --locked cargo-semver-checks
       cargo semver-checks check-release
