@@ -92,7 +92,7 @@ impl Texture {
         cursor.read_exact(src.as_mut_slice()).ok()?;
 
         let mut dst: Vec<u8> =
-            vec![0u8; (header.width as usize * header.height as usize * 4) as usize];
+            vec![0u8; header.width as usize * header.height as usize * 4];
 
         match header.format {
             TextureFormat::B8G8R8A8 => {

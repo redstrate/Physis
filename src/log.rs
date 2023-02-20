@@ -87,7 +87,7 @@ impl ChatLog {
 
             // TODO: handle the coloring properly, in some way
             entry.message = String::from_utf8_lossy(
-                &*buffer[cursor.position() as usize..new_last_offset as usize].to_vec(),
+                &buffer[cursor.position() as usize..new_last_offset as usize],
             )
             .to_string();
 

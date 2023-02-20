@@ -449,7 +449,7 @@ pub fn apply_patch(data_dir: &str, patch_path: &str) -> Result<(), PatchError> {
 
                         new_file.seek(SeekFrom::Start(add.block_offset as u64))?;
 
-                        new_file.write_all(&*add.block_data)?;
+                        new_file.write_all(&add.block_data)?;
 
                         wipe(&new_file, add.block_delete_number)?;
                     }
@@ -518,7 +518,7 @@ pub fn apply_patch(data_dir: &str, patch_path: &str) -> Result<(), PatchError> {
                             new_file.seek(SeekFrom::Start(1024))?;
                         }
 
-                        new_file.write_all(&*header.header_data)?;
+                        new_file.write_all(&header.header_data)?;
                     }
                     SqpkOperation::FileOperation(fop) => {
                         let file_path = format!("{}/{}", data_dir, fop.path);
@@ -526,7 +526,7 @@ pub fn apply_patch(data_dir: &str, patch_path: &str) -> Result<(), PatchError> {
 
                         match fop.operation {
                             SqpkFileOperation::AddFile => {
-                                fs::create_dir_all(&parent_directory)?;
+                                fs::create_dir_all(parent_directory)?;
 
                                 // reverse reading crc32
                                 file.seek(SeekFrom::Current(-4))?;

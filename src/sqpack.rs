@@ -61,7 +61,7 @@ pub fn read_data_block_patch<T: Read + Seek>(mut buf: T) -> Option<Vec<u8>> {
             let compressed_length: usize =
                 ((compressed_length as usize + 143) & 0xFFFFFF80) - (block_header.size as usize);
 
-            let mut compressed_data: Vec<u8> = vec![0; compressed_length as usize];
+            let mut compressed_data: Vec<u8> = vec![0; compressed_length];
             buf.read_exact(&mut compressed_data).ok()?;
 
             let mut decompressed_data: Vec<u8> = vec![0; decompressed_length as usize];
@@ -78,7 +78,7 @@ pub fn read_data_block_patch<T: Read + Seek>(mut buf: T) -> Option<Vec<u8>> {
             buf.read_exact(&mut local_data).ok()?;
 
             buf.seek(SeekFrom::Current(
-                (new_file_size as usize - block_header.size as usize - file_size as usize) as i64,
+                (new_file_size - block_header.size as usize - file_size as usize) as i64,
             ))
             .ok()?;
 

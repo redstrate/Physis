@@ -325,7 +325,7 @@ impl GameData {
                 }
             };
 
-            fs::write(&ver_path, new_version)
+            fs::write(ver_path, new_version)
                 .ok()
                 .ok_or(RepairError::FailedRepair(repository))?;
         }

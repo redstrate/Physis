@@ -284,7 +284,7 @@ impl DatFile {
 
                 self.file
                     .seek(SeekFrom::Start(
-                        last_pos + (compressed_block_sizes[current_block as usize] as u64),
+                        last_pos + (compressed_block_sizes[current_block] as u64),
                     ))
                     .ok()?;
                 current_block += 1;

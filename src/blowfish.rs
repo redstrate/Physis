@@ -22,7 +22,7 @@ impl Blowfish {
         for i in 0..ROUNDS + 2 {
             let mut data = 0u32;
             for _ in 0..4 {
-                data = (data << 8) | (key[j as usize] as u32);
+                data = (data << 8) | (key[j] as u32);
                 j += 1;
 
                 if j >= (KEYBITS as usize) {

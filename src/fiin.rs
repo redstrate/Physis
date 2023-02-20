@@ -56,7 +56,7 @@ impl FileInfo {
         let mut entries = vec![];
 
         for name in file_names {
-            let file = &read(&name).expect("Cannot read file.");
+            let file = &read(name).expect("Cannot read file.");
 
             entries.push(FIINEntry {
                 file_size: file.len() as i32,
