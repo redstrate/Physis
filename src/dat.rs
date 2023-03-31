@@ -39,15 +39,13 @@ struct TextureLodBlock {
     block_count: u32,
 }
 
-#[binrw]
-pub struct ModelMemorySizes<
-    T: 'static
-        + binrw::BinRead<Args = ()>
-        + binrw::BinWrite<Args = ()>
-        + Default
-        + std::ops::AddAssign
-        + Copy,
-> {
+pub trait AnyNumberType<'a>: BinRead<Args<'a> = ()> + BinWrite<Args<'a> = ()> + std::ops::AddAssign + Copy + Default + 'static {}
+
+impl<'a, T> AnyNumberType<'a> for T where T: BinRead<Args<'a> = ()> + BinWrite<Args<'a> = ()> + std::ops::AddAssign + Copy + Default + 'static {}
+
+#[derive(BinRead, BinWrite)]
+pub struct ModelMemorySizes<T: for <'a> AnyNumberType<'a>>
+{
     pub stack_size: T,
     pub runtime_size: T,
 
@@ -56,14 +54,7 @@ pub struct ModelMemorySizes<
     pub index_buffer_size: [T; 3],
 }
 
-impl<
-        T: 'static
-            + binrw::BinRead<Args = ()>
-            + binrw::BinWrite<Args = ()>
-            + Default
-            + std::ops::AddAssign
-            + Copy,
-    > ModelMemorySizes<T>
+impl<T: for<'a> AnyNumberType<'a>> ModelMemorySizes<T>
 {
     pub fn total(&self) -> T {
         let mut total: T = T::default();

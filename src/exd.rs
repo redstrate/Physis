@@ -2,7 +2,7 @@ use crate::common::Language;
 use crate::exh::{ColumnDataType, ExcelColumnDefinition, ExcelDataPagination, EXH};
 use crate::gamedata::MemoryBuffer;
 use binrw::binrw;
-use binrw::{BinRead, Endian, ReadOptions};
+use binrw::{BinRead, Endian};
 use std::io::{Cursor, Seek, SeekFrom};
 
 #[binrw]
@@ -65,15 +65,13 @@ pub struct ExcelRow {
 }
 
 impl EXD {
-    fn read_data_raw<Z: BinRead>(cursor: &mut Cursor<&MemoryBuffer>) -> Option<Z>
-    where
-        <Z as BinRead>::Args: Default,
+    fn read_data_raw<Z: BinRead<Args<'static> = ()>>(cursor: &mut Cursor<&MemoryBuffer>) -> Option<Z>
     {
         Some(
             Z::read_options(
                 cursor,
-                &ReadOptions::new(Endian::Big),
-                <Z as BinRead>::Args::default(),
+                Endian::Big,
+                (),
             )
             .unwrap(),
         )
