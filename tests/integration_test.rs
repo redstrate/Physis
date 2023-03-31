@@ -1,12 +1,7 @@
-use hmac_sha512::Hash;
 use physis::fiin::FileInfo;
 use physis::index;
-use physis::patch::apply_patch;
-use std::collections::HashMap;
 use std::env;
 use std::fs::read;
-use std::process::Command;
-use walkdir::WalkDir;
 
 #[test]
 #[cfg_attr(not(feature = "retail_game_testing"), ignore)]
