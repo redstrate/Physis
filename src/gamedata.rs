@@ -37,6 +37,7 @@ pub enum RepairAction {
     VersionFileCanRestore,
 }
 
+#[derive(Debug)]
 pub enum RepairError<'a> {
     FailedRepair(&'a Repository),
 }
