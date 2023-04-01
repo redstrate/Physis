@@ -313,6 +313,7 @@ pub struct Vertex {
 pub struct Part {
     pub vertices: Vec<Vertex>,
     pub indices: Vec<u16>,
+    pub material_index: u16
 }
 
 pub struct Lod {
@@ -399,6 +400,7 @@ impl MDL {
             {
                 let declaration = &vertex_declarations[j as usize];
                 let vertex_count = model.meshes[j as usize].vertex_count;
+                let material_index = model.meshes[j as usize].material_index;
 
                 let default_vertex = Vertex {
                     position: [0.0; 3],
@@ -472,7 +474,7 @@ impl MDL {
                     indices.push(cursor.read_le::<u16>().ok()?);
                 }
 
-                parts.push(Part { vertices, indices });
+                parts.push(Part { vertices, indices, material_index });
             }
 
             lods.push(Lod { parts });
