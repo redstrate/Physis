@@ -96,10 +96,10 @@ struct MaterialData {
     color_sets: Vec<ColorSet>,
 
     #[br(count = file_header.string_table_size)]
+    #[br(pad_after = file_header.additional_data_size)]
     strings: Vec<u8>,
 
     #[br(if(file_header.data_set_size > 0))]
-    #[br(pad_before = file_header.additional_data_size)]
     color_set_info: Option<ColorSetInfo>,
 
     #[br(if(file_header.data_set_size > 512))]
