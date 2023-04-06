@@ -81,6 +81,7 @@ impl Texture {
         for i in 0..size - 1 {
             texture_data_size[i] = header.offset_to_surface[i + 1] - header.offset_to_surface[i];
         }
+
         texture_data_size[size - 1] =
             (buffer.len() - header.offset_to_surface[size - 1] as usize) as u32;
 
@@ -91,14 +92,18 @@ impl Texture {
         let mut src = vec![0u8; texture_data_size.iter().sum::<u32>() as usize];
         cursor.read_exact(src.as_mut_slice()).ok()?;
 
-        let mut dst: Vec<u8> =
-            vec![0u8; header.width as usize * header.height as usize * 4];
+        let mut dst;
 
         match header.format {
             TextureFormat::B8G8R8A8 => {
+                dst =
+                    vec![0u8; texture_data_size.iter().sum::<u32>() as usize];
+
                 dst.copy_from_slice(&src);
             }
             TextureFormat::BC1 => {
+                dst = vec![0u8; header.width as usize * header.height as usize * 4];
+
                 let format = Format::Bc1;
                 format.decompress(
                     &src,
@@ -108,6 +113,8 @@ impl Texture {
                 );
             }
             TextureFormat::BC5 => {
+                dst = vec![0u8; header.width as usize * header.height as usize * 4];
+
                 let format = Format::Bc3;
                 format.decompress(
                     &src,
