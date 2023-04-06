@@ -10,6 +10,7 @@ use crate::sqpack::calculate_hash;
 use std::fs;
 use std::fs::DirEntry;
 use std::path::PathBuf;
+use tracing::{debug, error, info, span, warn, Level};
 
 /// Framework for operating on game data.
 pub struct GameData {
@@ -59,6 +60,8 @@ impl GameData {
     /// GameData::from_existing("$FFXIV/game");
     /// ```
     pub fn from_existing(directory: &str) -> Option<GameData> {
+        debug!(directory, "Loading game directory");
+
         match is_valid(directory) {
             true => Some(Self {
                 game_directory: String::from(directory),
@@ -94,6 +97,8 @@ impl GameData {
             .collect();
 
         for repository_path in repository_paths {
+            debug!(repository_path=repository_path.path().to_str(), "Found repository");
+
             self.repositories
                 .push(Repository::from_existing(repository_path.path().to_str().unwrap()).unwrap());
         }
@@ -169,6 +174,8 @@ impl GameData {
     /// file.write(data.as_slice()).unwrap();
     /// ```
     pub fn extract(&self, path: &str) -> Option<MemoryBuffer> {
+        debug!(file=path, "Extracting file");
+
         let hash = calculate_hash(path);
 
         let index_file = self.get_index_file(path)?;
