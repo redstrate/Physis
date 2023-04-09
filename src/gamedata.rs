@@ -252,7 +252,7 @@ impl GameData {
             EXD::calculate_filename(name, language, &exh.pages[page])
         );
 
-        let exd_file = self.extract(&exd_path).unwrap();
+        let exd_file = self.extract(&exd_path)?;
 
         EXD::from_existing(exh, &exd_file)
     }
