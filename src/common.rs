@@ -5,6 +5,7 @@ use std::path::Path;
 #[binrw]
 #[brw(repr(u8))]
 #[repr(u8)]
+#[derive(Copy, Clone)]
 /// The language the game data is written for.
 pub enum Language {
     /// Used for data that is language-agnostic, such as item data.
