@@ -227,6 +227,19 @@ impl GameData {
         None
     }
 
+    pub fn get_all_sheet_names(&self) -> Option<Vec<String>> {
+        let root_exl_file = self.extract("exd/root.exl")?;
+
+        let root_exl = EXL::from_existing(&root_exl_file)?;
+
+        let mut names = vec![];
+        for (row, _) in root_exl.entries {
+            names.push(row);
+        }
+
+        Some(names)
+    }
+
     pub fn read_excel_sheet(
         &self,
         name: &str,
