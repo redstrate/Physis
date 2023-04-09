@@ -18,7 +18,7 @@ pub struct EXHHeader {
 
     #[br(pad_before = 6)]
     #[br(pad_after = 8)]
-    pub(crate) row_count: u32,
+    pub row_count: u32,
 }
 
 #[binread]
@@ -58,7 +58,7 @@ pub struct ExcelColumnDefinition {
 #[allow(dead_code)]
 pub struct ExcelDataPagination {
     pub start_id: u32,
-    row_count: u32,
+    pub row_count: u32,
 }
 
 #[binread]
@@ -74,7 +74,7 @@ pub struct EXH {
     pub pages: Vec<ExcelDataPagination>,
 
     #[br(count = header.language_count)]
-    languages: Vec<Language>,
+    pub languages: Vec<Language>,
 }
 
 impl EXH {
