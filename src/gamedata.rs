@@ -8,7 +8,7 @@ use crate::patch::{apply_patch, PatchError};
 use crate::repository::{string_to_category, Category, Repository};
 use crate::sqpack::calculate_hash;
 use std::fs;
-use std::fs::DirEntry;
+use std::fs::{DirEntry, ReadDir};
 use std::path::PathBuf;
 use tracing::{debug, error, info, span, warn, Level};
 
@@ -88,26 +88,35 @@ impl GameData {
         self.repositories.clear();
 
         let mut d = PathBuf::from(self.game_directory.as_str());
+
+        // add initial ffxiv directory
+        if let Some(base_repository) = Repository::from_existing_base(d.to_str().unwrap()) {
+            self.repositories.push(base_repository);
+        }
+
+        // add expansions
         d.push("sqpack");
 
-        let repository_paths: Vec<DirEntry> = fs::read_dir(d.as_path())
-            .unwrap()
-            .filter_map(Result::ok)
-            .filter(|s| s.file_type().unwrap().is_dir())
-            .collect();
+        if let Ok(repository_paths) = fs::read_dir(d.as_path()) {
+            let repository_paths : ReadDir = repository_paths;
 
-        for repository_path in repository_paths {
-            debug!(repository_path=repository_path.path().to_str(), "Found repository");
+            let repository_paths : Vec<DirEntry> = repository_paths
+                .filter_map(Result::ok)
+                .filter(|s| s.file_type().unwrap().is_dir())
+                .collect();
 
-            self.repositories
-                .push(Repository::from_existing(repository_path.path().to_str().unwrap()).unwrap());
+            for repository_path in repository_paths {
+                if let Some(expansion_repository) =Repository::from_existing(repository_path.path().to_str().unwrap()) {
+                    self.repositories.push(expansion_repository);
+                }
+            }
         }
 
         self.repositories.sort();
     }
 
     fn get_index_file(&self, path: &str) -> Option<IndexFile> {
-        let (repository, category) = self.parse_repository_category(path).unwrap();
+        let (repository, category) = self.parse_repository_category(path)?;
 
         let index_path: PathBuf = [
             self.game_directory.clone(),

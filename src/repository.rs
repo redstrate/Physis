@@ -137,6 +137,11 @@ impl Repository {
             }
         };
 
+        // use from_existing_base instead
+        if repo_type == Base {
+            return None
+        }
+
         let version = if repo_type == Base {
             let mut d = PathBuf::from(dir);
             d.pop();
@@ -156,6 +161,29 @@ impl Repository {
             repo_type,
             version,
         })
+    }
+
+    pub fn from_existing_base(dir: &str) -> Option<Repository> {
+        let path = Path::new(dir);
+        if path.metadata().is_err() {
+            return None;
+        }
+
+        let name = String::from(path.file_stem().unwrap().to_str().unwrap());
+
+        let mut d = PathBuf::from(dir);
+        d.push("ffxivgame.ver");
+
+        let version = read_version(d.as_path());
+        if version != None {
+            Some(Repository {
+                name,
+                repo_type: Base,
+                version,
+            })
+        } else {
+            None
+        }
     }
 
     fn expansion(&self) -> i32 {
