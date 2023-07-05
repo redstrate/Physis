@@ -1,5 +1,5 @@
 use crate::gamedata::MemoryBuffer;
-use binrw::binrw;
+use binrw::{BinResult, binrw};
 use binrw::BinRead;
 use binrw::BinReaderExt;
 use half::f16;
@@ -429,27 +429,56 @@ impl MDL {
 
                         match element.vertex_usage {
                             VertexUsage::Position => {
-                                vertices[k as usize].position =
-                                    cursor.read_le::<[f32; 3]>().ok()?;
+                                match element.vertex_type {
+                                    VertexType::Half4 => {
+                                        vertices[k as usize].position.clone_from_slice(&MDL::read_half4(&mut cursor).unwrap()[0..3]);
+                                    }
+                                    VertexType::Single3 => {
+                                        vertices[k as usize].position = MDL::read_single3(&mut cursor).unwrap();
+                                    }
+                                    _ => {
+                                        panic!("Unexpected vertex type for position: {:#?}", element.vertex_type);
+                                    }
+                                }
                             }
                             VertexUsage::BlendWeights => {
-                                vertices[k as usize].bone_weight =
-                                    cursor.read_le::<[f32; 4]>().ok()?;
+                                match element.vertex_type {
+                                    VertexType::ByteFloat4 => {
+                                        vertices[k as usize].bone_weight = MDL::read_byte_float4(&mut cursor).unwrap();
+                                    }
+                                    _ => {
+                                        panic!("Unexpected vertex type for blendweight: {:#?}", element.vertex_type);
+                                    }
+                                }
                             }
                             VertexUsage::BlendIndices => {
-                                vertices[k as usize].bone_id = cursor.read_le::<[u8; 4]>().ok()?;
+                                match element.vertex_type {
+                                    VertexType::UInt => {
+                                        vertices[k as usize].bone_id = MDL::read_uint(&mut cursor).unwrap();
+                                    }
+                                    _ => {
+                                        panic!("Unexpected vertex type for blendindice: {:#?}", element.vertex_type);
+                                    }
+                                }
                             }
                             VertexUsage::Normal => {
-                                // TODO: normals are assumed to be half4
-                                for i in 0..3 {
-                                    vertices[k as usize].normal[i] =
-                                        f16::from_bits(cursor.read_le::<u16>().ok()?).to_f32();
+                                match element.vertex_type {
+                                    VertexType::Half4 => {
+                                        vertices[k as usize].normal.clone_from_slice(&MDL::read_half4(&mut cursor).unwrap()[0..3]);
+                                    }
+                                    _ => {
+                                        panic!("Unexpected vertex type for normal: {:#?}", element.vertex_type);
+                                    }
                                 }
                             }
                             VertexUsage::UV => {
-                                for i in 0..2 {
-                                    vertices[k as usize].uv[i] =
-                                        f16::from_bits(cursor.read_le::<u16>().ok()?).to_f32();
+                                match element.vertex_type {
+                                    VertexType::Half4 => {
+                                        vertices[k as usize].uv.clone_from_slice(&MDL::read_half4(&mut cursor).unwrap()[0..2]);
+                                    }
+                                    _ => {
+                                        panic!("Unexpected vertex type for uv: {:#?}", element.vertex_type);
+                                    }
                                 }
                             }
                             VertexUsage::Tangent2 => {}
@@ -485,5 +514,32 @@ impl MDL {
             affected_bone_names,
             material_names
         })
+    }
+
+    fn read_byte_float4(cursor: &mut Cursor<&MemoryBuffer>) -> Option<[f32; 4]> {
+        let mut arr: [f32; 4] = [0.0; 4];
+        for i in 0..4 {
+            arr[i] = f32::from(cursor.read_le::<u8>().ok()?) / 255.0;
+        }
+
+        Some(arr)
+    }
+
+    fn read_half4(cursor: &mut Cursor<&MemoryBuffer>) -> Option<[f32; 4]> {
+        let mut arr: [f32; 4] = [0.0; 4];
+
+        for i in 0..3 {
+            arr[i] = f16::from_bits(cursor.read_le::<u16>().ok()?).to_f32();
+        }
+
+        Some(arr)
+    }
+
+    fn read_uint(cursor: &mut Cursor<&MemoryBuffer>) -> BinResult<[u8; 4]> {
+        cursor.read_le::<[u8; 4]>()
+    }
+
+    fn read_single3(cursor: &mut Cursor<&MemoryBuffer>) -> BinResult<[f32; 3]> {
+        cursor.read_le::<[f32; 3]>()
     }
 }
