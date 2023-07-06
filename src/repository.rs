@@ -169,15 +169,13 @@ impl Repository {
             return None;
         }
 
-        let name = String::from(path.file_stem().unwrap().to_str().unwrap());
-
         let mut d = PathBuf::from(dir);
         d.push("ffxivgame.ver");
 
         let version = read_version(d.as_path());
         if version != None {
             Some(Repository {
-                name,
+                name: "ffxiv".parse().unwrap(),
                 repo_type: Base,
                 version,
             })
