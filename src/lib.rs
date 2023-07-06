@@ -73,5 +73,8 @@ pub mod tex;
 #[cfg(feature = "visual_data")]
 pub mod mtrl;
 
+/// Reading character parameter files (CMP)
+pub mod cmp;
+
 mod crc;
 mod sha1;
