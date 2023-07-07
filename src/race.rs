@@ -44,6 +44,8 @@ pub enum Race {
 }
 
 mod internal_race {
+    use paste::paste;
+
     use crate::define_race_enum;
     use crate::race::Gender;
     use crate::race::Gender::*;
@@ -51,7 +53,6 @@ mod internal_race {
     use crate::race::Race::*;
     use crate::race::Subrace;
     use crate::race::Subrace::*;
-    use paste::paste;
 
     define_race_enum! {
         pub enum RaceTest {
@@ -97,10 +98,24 @@ pub fn build_skeleton_path(race: Race, subrace: Subrace, gender: Gender) -> Stri
     )
 }
 
+pub fn get_supported_subraces(race: Race) -> [Subrace; 2] {
+    match race {
+        Race::Hyur => [Subrace::Midlander, Subrace::Highlander],
+        Race::Elezen => [Subrace::Wildwood, Subrace::Duskwight],
+        Race::Lalafell => [Subrace::Plainsfolk, Subrace::Dunesfolk],
+        Race::Miqote => [Subrace::Seeker, Subrace::Keeper],
+        Race::Roegadyn => [Subrace::SeaWolf, Subrace::Hellsguard],
+        Race::AuRa => [Subrace::Raen, Subrace::Xaela],
+        Race::Hrothgar => [Subrace::Hellion, Subrace::Lost],
+        Race::Viera => [Subrace::Raen, Subrace::Veena]
+    }
+}
+
 #[cfg(test)]
 mod tests {
-    use super::*;
     use crate::race::internal_race::{convert_to_internal, RaceTest};
+
+    use super::*;
 
     #[test]
     fn test_convert_to_internal() {
