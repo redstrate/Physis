@@ -90,6 +90,63 @@ pub fn build_equipment_path(
     )
 }
 
+#[repr(u8)]
+#[derive(Clone, Copy)]
+pub enum CharacterCategory {
+    Body,
+    Hair,
+    Face,
+    Tail,
+    Ear
+}
+
+pub fn get_character_category_path(category: CharacterCategory) -> &'static str {
+    match category {
+        CharacterCategory::Body => "body",
+        CharacterCategory::Hair => "hair",
+        CharacterCategory::Face => "face",
+        CharacterCategory::Tail => "tail",
+        CharacterCategory::Ear => "zear"
+    }
+}
+
+pub fn get_character_category_abbreviation(category: CharacterCategory) -> &'static str {
+    match category {
+        CharacterCategory::Body => "top",
+        CharacterCategory::Hair => "hir",
+        CharacterCategory::Face => "fac",
+        CharacterCategory::Tail => "til",
+        CharacterCategory::Ear => "ear"
+    }
+}
+
+pub fn get_character_category_prefix(category: CharacterCategory) -> &'static str {
+    match category {
+        CharacterCategory::Body => "b",
+        CharacterCategory::Hair => "h",
+        CharacterCategory::Face => "f",
+        CharacterCategory::Tail => "t",
+        CharacterCategory::Ear => "e"
+    }
+}
+
+/// Builds a game path to the equipment specified.
+pub fn build_character_path(
+    category: CharacterCategory,
+    body_ver: i32,
+    race: Race,
+    subrace: Subrace,
+    gender: Gender
+) -> String {
+    let category_path = get_character_category_path(category);
+    let race_id = get_race_id(race, subrace, gender).unwrap();
+    let category_abbreviation = get_character_category_abbreviation(category);
+    let category_prefix = get_character_category_prefix(category);
+    format!(
+        "chara/human/c{race_id:04}/obj/{category_path}/{category_prefix}{body_ver:04}/model/c{race_id:04}{category_prefix}{body_ver:04}_{category_abbreviation}.mdl"
+    )
+}
+
 pub fn deconstruct_equipment_path(path: &str) -> Option<(i32, Slot)> {
     let model_id = &path[6..10];
     let slot_name = &path[11..14];
