@@ -76,5 +76,8 @@ pub mod mtrl;
 /// Reading character parameter files (CMP)
 pub mod cmp;
 
+/// Reading character save datas files (DAT)
+pub mod chardat;
+
 mod crc;
 mod sha1;
