@@ -466,6 +466,9 @@ impl MDL {
                                     VertexType::Half4 => {
                                         vertices[k as usize].normal.clone_from_slice(&MDL::read_half4(&mut cursor).unwrap()[0..3]);
                                     }
+                                    VertexType::Single3 => {
+                                        vertices[k as usize].normal = MDL::read_single3(&mut cursor).unwrap();
+                                    }
                                     _ => {
                                         panic!("Unexpected vertex type for normal: {:#?}", element.vertex_type);
                                     }
@@ -475,6 +478,9 @@ impl MDL {
                                 match element.vertex_type {
                                     VertexType::Half4 => {
                                         vertices[k as usize].uv.clone_from_slice(&MDL::read_half4(&mut cursor).unwrap()[0..2]);
+                                    }
+                                    VertexType::Single4 => {
+                                        vertices[k as usize].uv.clone_from_slice(&MDL::read_single4(&mut cursor).unwrap()[0..2]);
                                     }
                                     _ => {
                                         panic!("Unexpected vertex type for uv: {:#?}", element.vertex_type);
@@ -541,5 +547,9 @@ impl MDL {
 
     fn read_single3(cursor: &mut Cursor<&MemoryBuffer>) -> BinResult<[f32; 3]> {
         cursor.read_le::<[f32; 3]>()
+    }
+
+    fn read_single4(cursor: &mut Cursor<&MemoryBuffer>) -> BinResult<[f32; 4]> {
+        cursor.read_le::<[f32; 4]>()
     }
 }
