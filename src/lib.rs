@@ -81,3 +81,5 @@ pub mod chardat;
 
 mod crc;
 mod sha1;
+
+pub const PHYSIS_VERSION: &str = env!("CARGO_PKG_VERSION");
