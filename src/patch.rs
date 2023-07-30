@@ -141,6 +141,8 @@ enum SqpkOperation {
     PatchInfo(SqpkPatchInfo),
     #[br(magic = b'T')]
     TargetInfo(SqpkTargetInfo),
+    #[br(magic = b'I')]
+    Index(SqpkIndex)
 }
 
 #[derive(BinRead, PartialEq, Debug)]
@@ -286,6 +288,30 @@ struct SqpkTargetInfo {
     #[br(little)]
     #[br(pad_after = 96)]
     seek_count: u64,
+}
+
+#[binread]
+#[derive(PartialEq, Debug)]
+enum SqpkIndexCommand {
+    #[br(magic = b'A')]
+    Add,
+    #[br(magic = b'D')]
+    Delete,
+}
+
+#[derive(BinRead, PartialEq, Debug)]
+#[br(big)]
+struct SqpkIndex {
+    command: SqpkIndexCommand,
+    #[br(map = | x : u8 | x == 1)]
+    is_synonym: bool,
+
+    #[br(pad_before = 1)]
+    file_hash: u64,
+
+    block_offset: u32,
+    #[br(pad_after = 8)] // data?
+    block_number: u32
 }
 
 #[derive(BinRead, PartialEq, Debug)]
@@ -576,6 +602,9 @@ pub fn apply_patch(data_dir: &str, patch_path: &str) -> Result<(), PatchError> {
                     }
                     SqpkOperation::TargetInfo(new_target_info) => {
                         target_info = Some(new_target_info);
+                    }
+                    SqpkOperation::Index(_) => {
+                        // Currently, there's nothing we need from Index command. Intentional NOP.
                     }
                 }
             }
