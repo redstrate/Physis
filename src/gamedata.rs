@@ -10,7 +10,7 @@ use crate::sqpack::calculate_hash;
 use std::fs;
 use std::fs::{DirEntry, ReadDir};
 use std::path::PathBuf;
-use tracing::{debug, error, info, span, warn, Level};
+use tracing::debug;
 
 /// Framework for operating on game data.
 pub struct GameData {

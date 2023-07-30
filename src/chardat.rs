@@ -1,10 +1,7 @@
 use crate::gamedata::MemoryBuffer;
-use crate::sha1::Sha1;
-use binrw::{binread, binrw};
+use binrw::binread;
 use binrw::BinRead;
-use std::fs::read;
-use std::io::{Cursor, Seek, SeekFrom};
-use std::ops::Sub;
+use std::io::Cursor;
 use crate::race::{Gender, Race, Subrace};
 
 fn convert_dat_race(x: u8) -> Race {

@@ -1,8 +1,6 @@
 use crate::gamedata::MemoryBuffer;
-use crate::sha1::Sha1;
-use binrw::{binread, binrw};
+use binrw::binrw;
 use binrw::BinRead;
-use std::fs::read;
 use std::io::{Cursor, Seek, SeekFrom};
 
 #[binrw]
@@ -41,14 +39,14 @@ impl CMP {
     pub fn from_existing(buffer: &MemoryBuffer) -> Option<CMP> {
         let mut cursor = Cursor::new(buffer);
 
-        cursor.seek(SeekFrom::Start(0x2a800));
+        cursor.seek(SeekFrom::Start(0x2a800)).unwrap();
 
         let rem = buffer.len() - cursor.position() as usize;
         let entries = rem / std::mem::size_of::<RacialScalingParameters>();
 
         let mut parameters = vec![];
 
-        for i in 0..entries {
+        for _ in 0..entries {
             parameters.push(RacialScalingParameters::read(&mut cursor).unwrap());
         }
 
