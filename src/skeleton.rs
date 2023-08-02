@@ -1,6 +1,32 @@
+use binrw::{binread, until_eof};
 use crate::gamedata::MemoryBuffer;
 use glam::Mat4;
 use hard_xml::XmlRead;
+
+#[binread]
+struct SKLB_v1 {
+    unk_offset: i16,
+    havok_offset: i16
+}
+
+#[binread]
+struct SKLB_v2 {
+    unk_offset: i32,
+    havok_offset: i32
+}
+
+#[binread]
+#[br(magic = 0x736B6C62i32)]
+struct SKLB {
+    version_one: i16,
+    version_two: i16,
+    havok_offset: i32,
+
+    #[br(count = havok_offset)]
+    raw_header: Vec<u8>,
+    #[br(parse_with = until_eof)]
+    raw_data: Vec<u8>
+}
 
 #[derive(Debug)]
 pub struct Bone {
