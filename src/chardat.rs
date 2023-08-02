@@ -1,5 +1,5 @@
 use crate::gamedata::MemoryBuffer;
-use binrw::binread;
+use binrw::binrw;
 use binrw::BinRead;
 use std::io::Cursor;
 use crate::race::{Gender, Race, Subrace};
@@ -18,11 +18,31 @@ fn convert_dat_race(x: u8) -> Race {
     }
 }
 
+fn convert_race_dat(race: &Race) -> u8 {
+    match race {
+        Race::Hyur => 1,
+        Race::Elezen => 2,
+        Race::Lalafell => 3,
+        Race::Miqote => 4,
+        Race::Roegadyn => 5,
+        Race::AuRa => 6,
+        Race::Hrothgar => 7,
+        Race::Viera => 8
+    }
+}
+
 fn convert_dat_gender(x: u8) -> Gender {
     match x {
         0 => Gender::Male,
         1 => Gender::Female,
         _ => Gender::Male
+    }
+}
+
+fn convert_gender_dat(gender: &Gender) -> u8 {
+    match gender {
+        Gender::Male => 0,
+        Gender::Female => 1,
     }
 }
 
@@ -48,7 +68,28 @@ fn convert_dat_subrace(x: u8) -> Subrace {
     }
 }
 
-#[binread]
+fn convert_subrace_dat(subrace: &Subrace) -> u8 {
+    match subrace {
+        Subrace::Midlander => 1,
+        Subrace::Highlander => 2,
+        Subrace::Wildwood => 3,
+        Subrace::Duskwight => 4,
+        Subrace::Plainsfolk => 5,
+        Subrace::Dunesfolk => 6,
+        Subrace::Seeker => 7,
+        Subrace::Keeper => 8,
+        Subrace:: SeaWolf => 9,
+        Subrace::Hellsguard => 10,
+        Subrace::Raen => 11,
+        Subrace::Xaela => 12,
+        Subrace::Hellion => 13,
+        Subrace::Lost => 14,
+        Subrace::Rava => 15,
+        Subrace::Veena => 16
+    }
+}
+
+#[binrw]
 #[br(little)]
 #[repr(C)]
 #[br(magic = 0x2013FF14u32)]
@@ -59,16 +100,20 @@ pub struct CharDat { // version 4
     pub checksum: u32,
 
     #[br(map = | x: u8 | convert_dat_race(x) )]
+    #[bw(map = | race: &Race | convert_race_dat(race) )]
     pub race: Race,
     #[br(map = | x: u8 | convert_dat_gender(x) )]
+    #[bw(map = | gender: &Gender | convert_gender_dat(gender) )]
     pub gender: Gender,
     pub age: u8, // Normal = 1, Old = 3, Young = 4
     pub height: u8,
     #[br(map = | x: u8 | convert_dat_subrace(x) )]
+    #[bw(map = | subrace: &Subrace | convert_subrace_dat(subrace) )]
     pub subrace: Subrace,
     pub head: u8,
     pub hair: u8,
     #[br(map = | x: u8 | x != 0 )]
+    #[bw(map = | x: &bool | if *x { 1u8 } else { 0u8 } )]
     pub enable_highlights: bool,
     pub skin_tone: u8,
     pub right_eye_color: u8,
