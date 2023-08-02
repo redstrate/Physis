@@ -269,8 +269,8 @@ enum PlatformId {
 fn get_platform_string(id: &PlatformId) -> &'static str {
     match &id {
         PlatformId::Windows => "win32",
-        PlatformId::PS3 => "ps3", // TODO: lol are these even correct? i have no idea
-        PlatformId::PS4 => "ps4",
+        PlatformId::PS3 => "ps3.d",
+        PlatformId::PS4 => "ps4.d",
     }
 }
 
