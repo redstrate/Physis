@@ -79,6 +79,9 @@ pub mod cmp;
 /// Reading character save datas files (DAT)
 pub mod chardat;
 
+/// Reading config files (CFG)
+pub mod cfg;
+
 mod crc;
 mod sha1;
 
