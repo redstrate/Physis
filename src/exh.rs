@@ -1,17 +1,17 @@
 use crate::common::Language;
 use crate::gamedata::MemoryBuffer;
-use binrw::binread;
+use binrw::binrw;
 use binrw::BinRead;
 use std::io::Cursor;
 
-#[binread]
-#[br(magic = b"EXHF")]
-#[br(big)]
+#[binrw]
+#[brw(magic = b"EXHF")]
+#[brw(big)]
 #[allow(dead_code)]
 pub struct EXHHeader {
     version: u16,
 
-    pub(crate) data_offset: u16,
+    pub data_offset: u16,
     column_count: u16,
     page_count: u16,
     language_count: u16,
@@ -21,8 +21,8 @@ pub struct EXHHeader {
     pub row_count: u32,
 }
 
-#[binread]
-#[br(repr(u16))]
+#[binrw]
+#[brw(repr(u16))]
 pub enum ColumnDataType {
     String = 0x0,
     Bool = 0x1,
@@ -46,23 +46,23 @@ pub enum ColumnDataType {
     PackedBool7 = 0x20,
 }
 
-#[binread]
-#[br(big)]
+#[binrw]
+#[brw(big)]
 pub struct ExcelColumnDefinition {
     pub data_type: ColumnDataType,
     pub offset: u16,
 }
 
-#[binread]
-#[br(big)]
+#[binrw]
+#[brw(big)]
 #[allow(dead_code)]
 pub struct ExcelDataPagination {
     pub start_id: u32,
     pub row_count: u32,
 }
 
-#[binread]
-#[br(big)]
+#[binrw]
+#[brw(big)]
 #[allow(dead_code)]
 pub struct EXH {
     pub header: EXHHeader,
