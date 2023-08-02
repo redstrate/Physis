@@ -1,6 +1,6 @@
 use crate::gamedata::MemoryBuffer;
 use std::collections::HashMap;
-use std::io::{BufRead, BufReader, Cursor};
+use std::io::{BufRead, BufReader, BufWriter, Cursor, Write};
 
 /// Represents an Excel List.
 pub struct EXL {
@@ -38,6 +38,23 @@ impl EXL {
         }
 
         Some(exl)
+    }
+
+    pub fn write_to_buffer(&self) -> Option<MemoryBuffer> {
+        let mut buffer = MemoryBuffer::new();
+
+        {
+            let cursor = Cursor::new(&mut buffer);
+            let mut writer = BufWriter::new(cursor);
+
+            writer.write(format!("EXLT,{}", self.version).as_ref());
+
+            for entry in &self.entries {
+                writer.write(format!("\n{},{}", entry.0, entry.1).as_ref());
+            }
+        }
+
+        Some(buffer)
     }
 
     /// Checks whether or not the list contains a key.
@@ -89,5 +106,18 @@ mod tests {
 
         // should be case-sensitive
         assert!(!exl.contains("foo"));
+    }
+
+    #[test]
+    fn test_write() {
+        let existing_exl = common_setup();
+
+        let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        d.push("resources/tests");
+        d.push("test.exl");
+
+        let exl = read(d).unwrap();
+
+        assert_eq!(existing_exl.write_to_buffer().unwrap(), exl);
     }
 }
