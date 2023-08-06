@@ -64,6 +64,8 @@ mod flate2_zallocation {
 }
 
 pub fn no_header_decompress(in_data: &mut [u8], out_data: &mut [u8]) -> bool {
+    use crate::compression::flate2_zallocation::{zalloc, zfree};
+
     unsafe {
         let mut strm = z_stream {
             next_in: null_mut(),
