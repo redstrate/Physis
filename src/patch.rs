@@ -1,13 +1,18 @@
-use crate::common::Region;
-use crate::sqpack::read_data_block_patch;
-use binrw::binread;
-use binrw::binrw;
-use binrw::BinRead;
+// SPDX-FileCopyrightText: 2023 Joshua Goins <josh@redstrate.com>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 use core::cmp::min;
 use std::fs;
 use std::fs::{File, OpenOptions};
 use std::io::{Seek, SeekFrom, Write};
 use std::path::PathBuf;
+
+use binrw::binread;
+use binrw::BinRead;
+use binrw::binrw;
+
+use crate::common::Region;
+use crate::sqpack::read_data_block_patch;
 
 #[binread]
 #[derive(Debug)]

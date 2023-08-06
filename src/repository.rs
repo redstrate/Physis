@@ -1,8 +1,12 @@
-use crate::common::read_version;
-use crate::repository::RepositoryType::{Base, Expansion};
+// SPDX-FileCopyrightText: 2023 Joshua Goins <josh@redstrate.com>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 use std::cmp::Ordering;
 use std::cmp::Ordering::{Greater, Less};
 use std::path::{Path, PathBuf};
+
+use crate::common::read_version;
+use crate::repository::RepositoryType::{Base, Expansion};
 
 /// The type of repository, discerning game data from expansion data.
 #[derive(Debug, PartialEq, Eq, Copy, Clone)]

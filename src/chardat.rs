@@ -1,7 +1,12 @@
-use crate::gamedata::MemoryBuffer;
-use binrw::binrw;
-use binrw::BinRead;
+// SPDX-FileCopyrightText: 2023 Joshua Goins <josh@redstrate.com>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 use std::io::Cursor;
+
+use binrw::BinRead;
+use binrw::binrw;
+
+use crate::gamedata::MemoryBuffer;
 use crate::race::{Gender, Race, Subrace};
 
 fn convert_dat_race(x: u8) -> Race {

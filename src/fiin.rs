@@ -1,9 +1,14 @@
-use crate::gamedata::MemoryBuffer;
-use crate::sha1::Sha1;
-use binrw::binrw;
-use binrw::BinRead;
+// SPDX-FileCopyrightText: 2023 Joshua Goins <josh@redstrate.com>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 use std::fs::read;
 use std::io::Cursor;
+
+use binrw::BinRead;
+use binrw::binrw;
+
+use crate::gamedata::MemoryBuffer;
+use crate::sha1::Sha1;
 
 #[binrw]
 #[brw(magic = b"FileInfo")]
@@ -71,9 +76,10 @@ impl FileInfo {
 
 #[cfg(test)]
 mod tests {
-    use crate::fiin::FileInfo;
     use std::fs::read;
     use std::path::PathBuf;
+
+    use crate::fiin::FileInfo;
 
     fn common_setup() -> FileInfo {
         let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));

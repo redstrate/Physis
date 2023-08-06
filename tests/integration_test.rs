@@ -1,7 +1,11 @@
-use physis::fiin::FileInfo;
-use physis::index;
+// SPDX-FileCopyrightText: 2023 Joshua Goins <josh@redstrate.com>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 use std::env;
 use std::fs::read;
+
+use physis::fiin::FileInfo;
+use physis::index;
 
 #[test]
 #[cfg_attr(not(feature = "retail_game_testing"), ignore)]

@@ -1,6 +1,10 @@
-use crate::patch::{apply_patch, PatchError};
+// SPDX-FileCopyrightText: 2023 Joshua Goins <josh@redstrate.com>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 use std::fs;
 use std::path::PathBuf;
+
+use crate::patch::{apply_patch, PatchError};
 
 /// Boot data for FFXIV.
 pub struct BootData {

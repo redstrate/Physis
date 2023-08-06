@@ -1,6 +1,10 @@
-use binrw::binrw;
+// SPDX-FileCopyrightText: 2023 Joshua Goins <josh@redstrate.com>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 use std::fs;
 use std::path::Path;
+
+use binrw::binrw;
 
 #[binrw]
 #[brw(repr(u8))]

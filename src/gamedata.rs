@@ -1,16 +1,21 @@
-use crate::common::{read_version, Language};
+// SPDX-FileCopyrightText: 2023 Joshua Goins <josh@redstrate.com>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
+use std::fs;
+use std::fs::{DirEntry, ReadDir};
+use std::path::PathBuf;
+
+use tracing::debug;
+
+use crate::common::{Language, read_version};
 use crate::dat::DatFile;
 use crate::exd::EXD;
 use crate::exh::EXH;
 use crate::exl::EXL;
 use crate::index::IndexFile;
 use crate::patch::{apply_patch, PatchError};
-use crate::repository::{string_to_category, Category, Repository};
+use crate::repository::{Category, Repository, string_to_category};
 use crate::sqpack::calculate_hash;
-use std::fs;
-use std::fs::{DirEntry, ReadDir};
-use std::path::PathBuf;
-use tracing::debug;
 
 /// Framework for operating on game data.
 pub struct GameData {
@@ -366,8 +371,9 @@ impl GameData {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use crate::repository::Category::EXD;
+
+    use super::*;
 
     fn common_setup_data() -> GameData {
         let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));

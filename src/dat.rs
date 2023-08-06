@@ -1,11 +1,16 @@
+// SPDX-FileCopyrightText: 2023 Joshua Goins <josh@redstrate.com>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
+use std::io::{Cursor, Read, Seek, SeekFrom};
+use std::io::Write;
+
+use binrw::{BinReaderExt, binrw};
+use binrw::BinRead;
+use binrw::BinWrite;
+
 use crate::gamedata::MemoryBuffer;
 use crate::model::ModelFileHeader;
 use crate::sqpack::read_data_block;
-use binrw::BinRead;
-use binrw::BinWrite;
-use binrw::{binrw, BinReaderExt};
-use std::io::Write;
-use std::io::{Cursor, Read, Seek, SeekFrom};
 
 #[binrw]
 #[brw(repr = i32)]

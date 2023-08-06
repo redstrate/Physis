@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2023 Joshua Goins <josh@redstrate.com>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 #[derive(PartialEq, Eq, Debug)]
 #[repr(u8)]
 /// Gender of the character.

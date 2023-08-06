@@ -1,7 +1,11 @@
+// SPDX-FileCopyrightText: 2023 Joshua Goins <josh@redstrate.com>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 use binrw::{binread, until_eof};
-use crate::gamedata::MemoryBuffer;
 use glam::Mat4;
 use hard_xml::XmlRead;
+
+use crate::gamedata::MemoryBuffer;
 
 #[binread]
 struct SKLB_v1 {

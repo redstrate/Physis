@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2023 Joshua Goins <josh@redstrate.com>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 /// Creates a enum list of combined race identifiers. For example, (Hyur, Midlander, Male) becomes a new variant called HyurMidlanderMale.
 #[macro_export]
 macro_rules! define_race_enum {

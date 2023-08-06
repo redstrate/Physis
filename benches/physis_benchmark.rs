@@ -1,6 +1,11 @@
-use criterion::{criterion_group, criterion_main, Criterion};
-use physis::sqpack::calculate_hash;
+// SPDX-FileCopyrightText: 2023 Joshua Goins <josh@redstrate.com>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 use std::env;
+
+use criterion::{Criterion, criterion_group, criterion_main};
+
+use physis::sqpack::calculate_hash;
 
 fn reload_repos() {
     let game_dir = env::var("FFXIV_GAME_DIR").unwrap();

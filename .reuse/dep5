@@ -1,0 +1,12 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: Astra
+Upstream-Contact: Joshua Goins <josh@redstrate.com>
+Source: https://git.sr.ht/~redstrate/physis
+
+Files: README.md .build.yml deny.toml Cargo.toml resources/*
+Copyright: Joshua Goins <josh@redstrate.com>
+License: CC0-1.0
+
+Files: docs/*
+Copyright: Joshua Goins <josh@redstrate.com>
+License: CC-BY-SA-4.0

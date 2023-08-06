@@ -1,8 +1,13 @@
+// SPDX-FileCopyrightText: 2023 Joshua Goins <josh@redstrate.com>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
+use std::io::{Read, Seek, SeekFrom};
+
+use binrw::BinRead;
+
 use crate::compression::no_header_decompress;
 use crate::crc::Jamcrc;
 use crate::dat::{BlockHeader, CompressionMode};
-use binrw::BinRead;
-use std::io::{Read, Seek, SeekFrom};
 
 const CRC: Jamcrc = Jamcrc::new();
 

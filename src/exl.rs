@@ -1,6 +1,10 @@
-use crate::gamedata::MemoryBuffer;
+// SPDX-FileCopyrightText: 2023 Joshua Goins <josh@redstrate.com>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 use std::collections::HashMap;
 use std::io::{BufRead, BufReader, BufWriter, Cursor, Write};
+
+use crate::gamedata::MemoryBuffer;
 
 /// Represents an Excel List.
 pub struct EXL {
@@ -79,9 +83,10 @@ impl EXL {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use std::fs::read;
     use std::path::PathBuf;
+
+    use super::*;
 
     fn common_setup() -> EXL {
         let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));

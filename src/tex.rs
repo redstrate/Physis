@@ -1,10 +1,15 @@
-use crate::gamedata::MemoryBuffer;
-use binrw::binrw;
-use binrw::BinRead;
-use bitflags::bitflags;
+// SPDX-FileCopyrightText: 2023 Joshua Goins <josh@redstrate.com>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 use std::cmp::min;
 use std::io::{Cursor, Read, Seek, SeekFrom};
+
+use binrw::BinRead;
+use binrw::binrw;
+use bitflags::bitflags;
 use texpresso::Format;
+
+use crate::gamedata::MemoryBuffer;
 
 // Attributes and Format are adapted from Lumina (https://github.com/NotAdam/Lumina/blob/master/src/Lumina/Data/Files/TexFile.cs)
 bitflags! {

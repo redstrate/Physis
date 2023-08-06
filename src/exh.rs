@@ -1,8 +1,13 @@
+// SPDX-FileCopyrightText: 2023 Joshua Goins <josh@redstrate.com>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
+use std::io::Cursor;
+
+use binrw::BinRead;
+use binrw::binrw;
+
 use crate::common::Language;
 use crate::gamedata::MemoryBuffer;
-use binrw::binrw;
-use binrw::BinRead;
-use std::io::Cursor;
 
 #[binrw]
 #[brw(magic = b"EXHF")]

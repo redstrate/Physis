@@ -1,5 +1,9 @@
-use crate::blowfish_constants::{BLOWFISH_P, BLOWFISH_S};
+// SPDX-FileCopyrightText: 2023 Joshua Goins <josh@redstrate.com>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 use std::io::{Cursor, Write};
+
+use crate::blowfish_constants::{BLOWFISH_P, BLOWFISH_S};
 
 const ROUNDS: usize = 16;
 const KEYBITS: u32 = 64u32 >> 3;

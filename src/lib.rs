@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2023 Joshua Goins <josh@redstrate.com>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 extern crate core;
 
 /// Reading and writing game data repositories, such as "ffxiv" and "ex1", and so on.

@@ -4,6 +4,7 @@ packages:
   - cargo-deny
   - unshield
   - rsync
+  - reuse
 sources:
   - https://git.sr.ht/~redstrate/physis
 secrets:
@@ -14,6 +15,9 @@ tasks:
       cargo doc --release --no-deps
       echo "StrictHostKeyChecking=no" >> ~/.ssh/config
       rsync -e 'ssh -p 38901' -Wvr target/doc/ deploy@ryne.moe:/srv/http/physis-docs
+  - reuse: |
+      cd physis
+      reuse lint
   - check: |
       cd physis
       cargo check

@@ -1,5 +1,9 @@
-use libz_sys::*;
+// SPDX-FileCopyrightText: 2023 Joshua Goins <josh@redstrate.com>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 use std::ptr::null_mut;
+
+use libz_sys::*;
 
 // This module's functions are licensed under MIT from https://github.com/rust-lang/flate2-rs
 mod flate2_zallocation {
@@ -60,9 +64,6 @@ mod flate2_zallocation {
 }
 
 pub fn no_header_decompress(in_data: &mut [u8], out_data: &mut [u8]) -> bool {
-    use crate::compression::flate2_zallocation::zalloc;
-    use crate::compression::flate2_zallocation::zfree;
-
     unsafe {
         let mut strm = z_stream {
             next_in: null_mut(),

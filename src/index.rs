@@ -1,7 +1,11 @@
-use binrw::binrw;
-use binrw::BinRead;
-use bitfield_struct::bitfield;
+// SPDX-FileCopyrightText: 2023 Joshua Goins <josh@redstrate.com>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 use std::io::SeekFrom;
+
+use binrw::BinRead;
+use binrw::binrw;
+use bitfield_struct::bitfield;
 
 #[binrw]
 #[brw(repr = u8)]

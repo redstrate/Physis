@@ -1,5 +1,6 @@
-// Modified sha1-smol crate (https://github.com/mitsuhiko/sha1-smol) revised for vendored use in physis
-// Originally written by Armin Ronacher, Koka El Kiwi licensed under BSD-3
+// SPDX-FileCopyrightText: Armin Ronacher, Koka El Kiwi
+// SPDX-License-Identifier: BSD-3-Clause
+// SPDX-FileNotice: Modified sha1-smol crate (https://github.com/mitsuhiko/sha1-smol) revised for vendored use in physis
 // TODO: remove some extra bits, since we usually only consume digests once
 
 //! A minimal implementation of SHA1 for rust.

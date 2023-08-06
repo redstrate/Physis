@@ -1,6 +1,11 @@
-use crate::gamedata::MemoryBuffer;
-use binrw::{binrw, BinRead};
+// SPDX-FileCopyrightText: 2023 Joshua Goins <josh@redstrate.com>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 use std::io::Cursor;
+
+use binrw::{BinRead, binrw};
+
+use crate::gamedata::MemoryBuffer;
 
 #[binrw]
 #[derive(Debug)]
