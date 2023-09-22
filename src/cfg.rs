@@ -7,20 +7,26 @@ use std::io::{BufRead, BufReader, BufWriter, Cursor, Write};
 use crate::cfg;
 use crate::gamedata::MemoryBuffer;
 
+/// Represents a collection of keys, mapped to their values.
 #[derive(Debug)]
-pub struct CFGSetting {
+pub struct ConfigMap {
+    /// A map of setting name to value.
     pub keys: HashMap<String, String>,
 }
 
+/// Represents a config file, which is made up of categories and settings. Categories may have zero to one settings.
 #[derive(Debug)]
-pub struct CFG {
+pub struct ConfigFile {
+    /// The categories present in this config file.
     pub categories: Vec<String>,
-    pub settings: HashMap<String, CFGSetting>,
+    /// A mapping of category to keys.
+    pub settings: HashMap<String, ConfigMap>,
 }
 
-impl CFG {
-    pub fn from_existing(buffer: &MemoryBuffer) -> Option<CFG> {
-        let mut cfg = CFG {
+impl ConfigFile {
+    /// Parses an existing config file.
+    pub fn from_existing(buffer: &MemoryBuffer) -> Option<ConfigFile> {
+        let mut cfg = ConfigFile {
             categories: Vec::new(),
             settings: HashMap::new()
         };
@@ -34,7 +40,6 @@ impl CFG {
             // now parse the line!
 
             let unwrap = line.unwrap();
-            println!("{}", unwrap);
             if !unwrap.is_empty() {
                 if unwrap.contains('<') || unwrap.contains('>') {
                     let name = &unwrap[1..unwrap.len() - 1];
@@ -44,7 +49,7 @@ impl CFG {
                 } else {
                     let parts = unwrap.split_once('\t').unwrap();
                     if !cfg.settings.contains_key(&current_category.clone().unwrap()) {
-                        cfg.settings.insert(current_category.clone().unwrap(), cfg::CFGSetting{ keys: HashMap::new() });
+                        cfg.settings.insert(current_category.clone().unwrap(), cfg::ConfigMap{ keys: HashMap::new() });
                     }
 
                     cfg.settings.get_mut(&current_category.clone().unwrap()).unwrap().keys.insert(parts.0.to_string(), parts.1.to_string());
@@ -55,6 +60,7 @@ impl CFG {
         Some(cfg)
     }
 
+    /// Writes an existing config file to a buffer.
     pub fn write_to_buffer(&self) -> Option<MemoryBuffer> {
         let mut buffer = MemoryBuffer::new();
 

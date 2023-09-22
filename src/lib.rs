@@ -86,7 +86,7 @@ pub mod cmp;
 /// Reading character save datas files (DAT)
 pub mod chardat;
 
-/// Reading config files (CFG)
+/// Reading and writing the plaintext config files (CFG) used by the game to store most of it's configuration.
 pub mod cfg;
 
 mod crc;
