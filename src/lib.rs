@@ -92,4 +92,5 @@ pub mod cfg;
 mod crc;
 mod sha1;
 
+#[doc(hidden)]
 pub const PHYSIS_VERSION: &str = env!("CARGO_PKG_VERSION");
