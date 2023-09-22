@@ -10,7 +10,7 @@ use binrw::binrw;
 #[brw(repr(u8))]
 #[repr(u8)]
 #[derive(Copy, Clone)]
-/// The language the game data is written for.
+/// The language the game data is written for. Some of these languages are supported in the Global region.
 pub enum Language {
     /// Used for data that is language-agnostic, such as item data.
     None,
@@ -44,10 +44,12 @@ pub fn get_language_code(lang: &Language) -> &'static str {
     }
 }
 
+/// The region of the game. Used to denote the region a patch is meant for.
 #[binrw]
 #[brw(repr = i16)]
 #[derive(Debug, PartialEq, Eq)]
 pub enum Region {
+    /// The global region.
     Global = -1, // TODO: find patch codes for other regions :-)
 }
 

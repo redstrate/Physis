@@ -34,7 +34,7 @@ pub mod exl;
 /// Reading equipment and equipment-related data.
 pub mod equipment;
 
-/// Common structures used by other modules.
+/// Common structures, enumerations and functions used by many modules.
 pub mod common;
 
 /// Methods for installing game and boot patches.
