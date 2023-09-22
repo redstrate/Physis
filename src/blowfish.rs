@@ -15,12 +15,12 @@ const KEYBITS: u32 = 64u32 >> 3;
 /// ```
 /// # use physis::blowfish::Blowfish;
 /// let key = b"abcdefgh";
-/// let data = b"foobar";
+/// let data = b"foobar  ";
 ///
 /// let fish = Blowfish::new(key);
 /// let encrypted = fish.encrypt(data).unwrap();
 /// let decrypted = fish.decrypt(&encrypted).unwrap();
-/// # assert!(data == decrypted)
+/// # assert_eq!(data, &decrypted[..])
 /// ```
 pub struct Blowfish {
     p: [u32; 18],
