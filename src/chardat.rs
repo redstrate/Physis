@@ -1,9 +1,9 @@
 // SPDX-FileCopyrightText: 2023 Joshua Goins <josh@redstrate.com>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-use std::io::Cursor;
+use std::io::{BufWriter, Cursor};
 
-use binrw::BinRead;
+use binrw::{BinRead, BinWrite};
 use binrw::binrw;
 
 use crate::gamedata::MemoryBuffer;
@@ -149,5 +149,19 @@ impl CharDat {
         let mut cursor = Cursor::new(buffer);
 
         Some(CharDat::read(&mut cursor).ok()?)
+    }
+
+    // Writes a new dat file
+    pub fn write_to_buffer(&self) -> Option<MemoryBuffer> {
+        let mut buffer = MemoryBuffer::new();
+
+        {
+            let cursor = Cursor::new(&mut buffer);
+            let mut writer = BufWriter::new(cursor);
+
+            self.write_le(&mut writer).unwrap();
+        }
+
+        Some(buffer)
     }
 }
