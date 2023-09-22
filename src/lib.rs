@@ -76,6 +76,10 @@ pub mod tex;
 #[cfg(feature = "visual_data")]
 pub mod mtrl;
 
+/// Reading shader packages (SHPK)
+#[cfg(feature = "visual_data")]
+pub mod shpk;
+
 /// Reading character parameter files (CMP)
 pub mod cmp;
 
