@@ -8,7 +8,20 @@ use crate::blowfish_constants::{BLOWFISH_P, BLOWFISH_S};
 const ROUNDS: usize = 16;
 const KEYBITS: u32 = 64u32 >> 3;
 
-/// Implementation of the Blowfish block cipher, specialized for encrypting and decrypting SqexArg.
+/// Implementation of the Blowfish block cipher, specialized for encrypting and decrypting SqexArg - the technique used to encrypt game arguments by the launcher.
+///
+/// # Example
+///
+/// ```
+/// # use physis::blowfish::Blowfish;
+/// let key = b"abcdefgh";
+/// let data = b"foobar";
+///
+/// let fish = Blowfish::new(key);
+/// let encrypted = fish.encrypt(data).unwrap();
+/// let decrypted = fish.decrypt(&encrypted).unwrap();
+/// # assert!(data == decrypted)
+/// ```
 pub struct Blowfish {
     p: [u32; 18],
     s: [[u32; 256]; 4],

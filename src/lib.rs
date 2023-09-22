@@ -43,7 +43,7 @@ pub mod patch;
 #[macro_use]
 mod macros;
 
-/// Implementation of the Blowfish ECB block cipher used by the retail client.
+/// Implementation of the Blowfish ECB block cipher used by the retail client. It's used to encrypt arguments in the launcher, to prevent login token snooping.
 pub mod blowfish;
 
 mod blowfish_constants;
