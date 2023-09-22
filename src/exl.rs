@@ -12,7 +12,7 @@ pub struct EXL {
     pub version: i32,
 
     /// The entries of the list.
-    pub entries: HashMap<String, i32>,
+    pub entries: Vec<(String, i32)>,
 }
 
 impl EXL {
@@ -20,7 +20,7 @@ impl EXL {
     pub fn from_existing(buffer: &MemoryBuffer) -> Option<EXL> {
         let mut exl = Self {
             version: 0,
-            entries: HashMap::new(),
+            entries: Vec::new(),
         };
 
         let cursor = Cursor::new(buffer);
@@ -37,7 +37,7 @@ impl EXL {
             if name == "EXLT" {
                 exl.version = parsed_value;
             } else {
-                exl.entries.insert(name.parse().unwrap(), parsed_value);
+                exl.entries.push((name.parse().unwrap(), parsed_value));
             }
         }
 
@@ -51,10 +51,10 @@ impl EXL {
             let cursor = Cursor::new(&mut buffer);
             let mut writer = BufWriter::new(cursor);
 
-            writer.write(format!("EXLT,{}", self.version).as_ref());
+            writer.write_all(format!("EXLT,{}", self.version).as_ref()).ok()?;
 
-            for entry in &self.entries {
-                writer.write(format!("\n{},{}", entry.0, entry.1).as_ref());
+            for (key, value) in &self.entries {
+                writer.write_all(format!("\n{key},{value}").as_ref()).ok()?;
             }
         }
 
@@ -77,7 +77,7 @@ impl EXL {
     /// exl.contains("Foo");
     /// ```
     pub fn contains(&self, key: &str) -> bool {
-        self.entries.contains_key(key)
+        self.entries.iter().any(|t| t.0 == key)
     }
 }
 
@@ -122,6 +122,10 @@ mod tests {
         d.push("test.exl");
 
         let exl = read(d).unwrap();
+
+        let mut out = std::io::stdout();
+        out.write_all(&existing_exl.write_to_buffer().unwrap());
+        out.flush();
 
         assert_eq!(existing_exl.write_to_buffer().unwrap(), exl);
     }
