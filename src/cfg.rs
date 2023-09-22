@@ -48,9 +48,7 @@ impl ConfigFile {
                     cfg.categories.push(String::from(name));
                 } else {
                     let parts = unwrap.split_once('\t').unwrap();
-                    if !cfg.settings.contains_key(&current_category.clone().unwrap()) {
-                        cfg.settings.insert(current_category.clone().unwrap(), cfg::ConfigMap{ keys: HashMap::new() });
-                    }
+                    cfg.settings.entry(current_category.clone().unwrap()).or_insert_with(|| cfg::ConfigMap{ keys: HashMap::new() });
 
                     cfg.settings.get_mut(&current_category.clone().unwrap()).unwrap().keys.insert(parts.0.to_string(), parts.1.to_string());
                 }
@@ -69,15 +67,15 @@ impl ConfigFile {
             let mut writer = BufWriter::new(cursor);
 
             for category in &self.categories {
-                writer.write(format!("\n<{}>", category).as_ref());
+                writer.write_all(format!("\n<{}>", category).as_ref()).ok()?;
 
                 if self.settings.contains_key(category) {
                     for key in &self.settings[category].keys {
-                        writer.write(format!("\n{}\t{}", key.0, key.1).as_ref());
+                        writer.write_all(format!("\n{}\t{}", key.0, key.1).as_ref()).ok()?;
                     }
                 }
 
-                writer.write(b"\n");
+                writer.write_all(b"\n").ok()?;
             }
         }
 

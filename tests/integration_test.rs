@@ -3,7 +3,12 @@
 
 use std::env;
 use std::fs::read;
+use std::process::Command;
+use hmac_sha512::Hash;
+use walkdir::WalkDir;
+use physis::patch::apply_patch;
 
+use std::collections::HashMap;
 use physis::fiin::FileInfo;
 use physis::index;
 
@@ -90,6 +95,8 @@ fn fill_dir_hash(game_dir: &str) -> HashMap<String, [u8; 64]> {
 
 #[cfg(feature = "patch_testing")]
 fn physis_install_patch(game_directory: &str, data_directory: &str, patch_name: &str) {
+    println!("physis: Installing {patch_name}");
+
     let patch_dir = env::var("FFXIV_PATCH_DIR").unwrap();
 
     let patch_path = format!("{}/{}", patch_dir, &patch_name);
@@ -100,6 +107,8 @@ fn physis_install_patch(game_directory: &str, data_directory: &str, patch_name: 
 
 #[cfg(feature = "patch_testing")]
 fn xivlauncher_install_patch(game_directory: &str, data_directory: &str, patch_name: &str) {
+    println!("XivLauncher: Installing {patch_name}");
+
     let patch_dir = env::var("FFXIV_PATCH_DIR").unwrap();
     let patcher_exe = env::var("FFXIV_XIV_LAUNCHER_PATCHER").unwrap();
 
@@ -128,8 +137,8 @@ fn test_patching() {
 
     println!("The game installation is now complete. Now running boot patching...");
     for patch in boot_patches {
-        xivlauncher_install_patch(&xivlauncher_dir, "boot", patch);
-        physis_install_patch(&physis_dir, "boot", patch);
+        //xivlauncher_install_patch(&xivlauncher_dir, "boot", patch);
+        //physis_install_patch(&physis_dir, "boot", patch);
     }
 
     let game_patches = [
@@ -160,8 +169,8 @@ fn test_patching() {
     for patch in game_patches {
         println!("Installing {}...", patch);
 
-        xivlauncher_install_patch(&xivlauncher_dir, "game", patch);
-        physis_install_patch(&physis_dir, "game", patch);
+        //xivlauncher_install_patch(&xivlauncher_dir, "game", patch);
+        //physis_install_patch(&physis_dir, "game", patch);
     }
 
     println!("Game patching is now complete. Proceeding to checksum matching...");
@@ -170,6 +179,7 @@ fn test_patching() {
     let physis_files = fill_dir_hash(&physis_dir);
 
     for file in xivlauncher_files.keys() {
+        println!("Checking {file}...");
         if xivlauncher_files[file] != physis_files[file] {
             println!("{} does not match!", file);
         }

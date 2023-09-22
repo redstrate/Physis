@@ -11,6 +11,7 @@ use crate::gamedata::MemoryBuffer;
 #[br(little)]
 #[br(magic = b"ShPk")]
 #[derive(Debug)]
+#[allow(dead_code)]
 struct SHPKHeader {
     #[br(pad_before = 4)] // what are these bytes? 01 0B
     #[br(count = 4)]

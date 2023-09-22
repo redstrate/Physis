@@ -109,13 +109,13 @@ pub struct CharacterData { // version 4
     pub checksum: u32,
 
     /// The race of the character.
-    #[br(map = | x: u8 | convert_dat_race(x) )]
-    #[bw(map = | race: &Race | convert_race_dat(race) )]
+    #[br(map = convert_dat_race )]
+    #[bw(map = convert_race_dat )]
     pub race: Race,
 
     /// The gender of the character.
-    #[br(map = | x: u8 | convert_dat_gender(x) )]
-    #[bw(map = | gender: &Gender | convert_gender_dat(gender) )]
+    #[br(map = convert_dat_gender )]
+    #[bw(map = convert_gender_dat )]
     pub gender: Gender,
 
     /// The age of the character. Normal = 1, Old = 3, Young = 4.
@@ -125,8 +125,8 @@ pub struct CharacterData { // version 4
     pub height: u8,
 
     /// The character's subrace.
-    #[br(map = | x: u8 | convert_dat_subrace(x) )]
-    #[bw(map = | subrace: &Subrace | convert_subrace_dat(subrace) )]
+    #[br(map = convert_dat_subrace )]
+    #[bw(map = convert_subrace_dat )]
     pub subrace: Subrace,
 
     /// The character's selected head.

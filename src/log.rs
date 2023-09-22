@@ -60,7 +60,7 @@ pub struct ChatLogEntry {
 
     #[br(temp)]
     #[bw(calc = 1)]
-    garbage: u32,
+    _garbage: u32,
 
     #[brw(ignore)]
     message: String,

@@ -197,7 +197,7 @@ impl GameData {
         let slice = index_file.entries.iter().find(|s| s.hash == hash);
         match slice {
             Some(entry) => {
-                let mut dat_file = self.get_dat_file(path, entry.bitfield.data_file_id())?;
+                let mut dat_file = self.get_dat_file(path, entry.bitfield.data_file_id().into())?;
 
                 dat_file.read_from_offset(entry.bitfield.offset())
             }

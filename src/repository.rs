@@ -177,7 +177,7 @@ impl Repository {
         d.push("ffxivgame.ver");
 
         let version = read_version(d.as_path());
-        if version != None {
+        if version.is_some() {
             Some(Repository {
                 name: "ffxiv".parse().unwrap(),
                 repo_type: Base,

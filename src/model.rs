@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 use std::io::{Cursor, Seek, SeekFrom, Write};
-use std::ptr::write;
 
 use binrw::{BinResult, binrw, BinWrite, BinWriterExt};
 use binrw::BinRead;
@@ -570,7 +569,7 @@ impl MDL {
                         for element in &declaration.elements {
                             cursor
                                 .seek(SeekFrom::Start(
-                                    (self.model_data.lods[l as usize].vertex_data_offset
+                                    (self.model_data.lods[l].vertex_data_offset
                                         + self.model_data.meshes[part.mesh_index as usize].vertex_buffer_offsets
                                         [element.stream as usize]
                                         + element.offset as u32
@@ -650,7 +649,7 @@ impl MDL {
 
                     cursor
                         .seek(SeekFrom::Start(
-                            (self.file_header.index_offsets[i as usize]
+                            (self.file_header.index_offsets[i]
                                 + (self.model_data.meshes[part.mesh_index as usize].start_index * 2))
                                 as u64,
                         ))
@@ -667,22 +666,21 @@ impl MDL {
     }
 
     fn read_byte_float4(cursor: &mut Cursor<&MemoryBuffer>) -> Option<[f32; 4]> {
-        let mut arr: [f32; 4] = [0.0; 4];
-        for i in 0..4 {
-            arr[i] = f32::from(cursor.read_le::<u8>().ok()?) / 255.0;
-        }
-
-        Some(arr)
+        Some([
+            f32::from(cursor.read_le::<u8>().ok()?) / 255.0,
+            f32::from(cursor.read_le::<u8>().ok()?) / 255.0,
+            f32::from(cursor.read_le::<u8>().ok()?) / 255.0,
+            f32::from(cursor.read_le::<u8>().ok()?) / 255.0
+        ])
     }
 
     fn read_half4(cursor: &mut Cursor<&MemoryBuffer>) -> Option<[f32; 4]> {
-        let mut arr: [f32; 4] = [0.0; 4];
-
-        for i in 0..3 {
-            arr[i] = f16::from_bits(cursor.read_le::<u16>().ok()?).to_f32();
-        }
-
-        Some(arr)
+        Some([
+             f16::from_bits(cursor.read_le::<u16>().ok()?).to_f32(),
+             f16::from_bits(cursor.read_le::<u16>().ok()?).to_f32(),
+             f16::from_bits(cursor.read_le::<u16>().ok()?).to_f32(),
+             f16::from_bits(cursor.read_le::<u16>().ok()?).to_f32()
+        ])
     }
 
     fn read_uint(cursor: &mut Cursor<&MemoryBuffer>) -> BinResult<[u8; 4]> {
@@ -711,9 +709,7 @@ impl MDL {
 
     fn pad_slice<const N: usize>(small_slice: &[f32; N]) -> [f32; 4] {
         let mut bigger_slice: [f32; 4] = [0.0, 0.0, 0.0, 0.0];
-        for i in 0..N {
-            bigger_slice[i] = small_slice[i];
-        }
-        return bigger_slice;
+        bigger_slice[..N].copy_from_slice(&small_slice[..N]);
+        bigger_slice
     }
 }

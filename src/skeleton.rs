@@ -1,20 +1,25 @@
 // SPDX-FileCopyrightText: 2023 Joshua Goins <josh@redstrate.com>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-use binrw::{binread, until_eof};
+#![allow(unused)]
+#![allow(clippy::needless_late_init)]
+#![allow(clippy::upper_case_acronyms)]
+
+use binrw::{binread};
+use binrw::helpers::until_eof;
 use glam::Mat4;
 use hard_xml::XmlRead;
 
 use crate::gamedata::MemoryBuffer;
 
 #[binread]
-struct SKLB_v1 {
+struct SklbV1 {
     unk_offset: i16,
     havok_offset: i16
 }
 
 #[binread]
-struct SKLB_v2 {
+struct SklbV2 {
     unk_offset: i32,
     havok_offset: i32
 }

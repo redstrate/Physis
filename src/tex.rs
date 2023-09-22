@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: 2023 Joshua Goins <josh@redstrate.com>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+#![allow(clippy::needless_range_loop)]
+
 use std::cmp::min;
 use std::io::{Cursor, Read, Seek, SeekFrom};
 

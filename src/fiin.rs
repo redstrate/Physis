@@ -17,7 +17,7 @@ use crate::sha1::Sha1;
 pub struct FileInfo {
     #[brw(pad_before = 16)]
     #[bw(calc = 1024)]
-    unknown: i32,
+    _unknown: i32,
 
     #[br(temp)]
     #[bw(calc = (entries.len() * 96) as i32)]
