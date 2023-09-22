@@ -4,7 +4,7 @@
 use std::io::{Cursor, Seek, SeekFrom, Write};
 use std::ptr::write;
 
-use binrw::{BinResult, binrw, BinWrite};
+use binrw::{BinResult, binrw, BinWrite, BinWriterExt};
 use binrw::BinRead;
 use binrw::BinReaderExt;
 use half::f16;
@@ -317,6 +317,7 @@ pub struct Vertex {
 }
 
 pub struct Part {
+    mesh_index: u16,
     pub vertices: Vec<Vertex>,
     pub indices: Vec<u16>,
     pub material_index: u16
@@ -432,7 +433,7 @@ impl MDL {
                                     + model.meshes[j as usize].vertex_buffer_offsets
                                         [element.stream as usize]
                                     + element.offset as u32
-                                    + model.meshes[i as usize].vertex_buffer_strides
+                                    + model.meshes[j as usize].vertex_buffer_strides // TODO: is j really correct? this might fix the broken LoDs
                                         [element.stream as usize]
                                         as u32
                                         * k as u32) as u64,
@@ -521,7 +522,7 @@ impl MDL {
                     indices.push(cursor.read_le::<u16>().ok()?);
                 }
 
-                parts.push(Part { vertices, indices, material_index });
+                parts.push(Part { mesh_index: j, vertices, indices, material_index });
             }
 
             lods.push(Lod { parts });
@@ -560,6 +561,106 @@ impl MDL {
             }
 
             self.model_data.write(&mut cursor).ok()?;
+
+            for (l, lod) in self.lods.iter().enumerate() {
+                for (i, part) in lod.parts.iter().enumerate() {
+                    for (k, vert) in part.vertices.iter().enumerate() {
+                        let declaration = &self.vertex_declarations[i];
+
+                        for element in &declaration.elements {
+                            cursor
+                                .seek(SeekFrom::Start(
+                                    (self.model_data.lods[l as usize].vertex_data_offset
+                                        + self.model_data.meshes[part.mesh_index as usize].vertex_buffer_offsets
+                                        [element.stream as usize]
+                                        + element.offset as u32
+                                        + self.model_data.meshes[part.mesh_index as usize].vertex_buffer_strides
+                                        [element.stream as usize]
+                                        as u32
+                                        * k as u32) as u64,
+                                ))
+                                .ok()?;
+
+                            match element.vertex_usage {
+                                VertexUsage::Position => {
+                                    match element.vertex_type {
+                                        VertexType::Half4 => {
+                                            MDL::write_single4(&mut cursor, &MDL::pad_slice(&vert.position)).ok()?;
+                                        }
+                                        VertexType::Single3 => {
+                                            MDL::write_single3(&mut cursor, &vert.position).ok()?;
+                                        }
+                                        _ => {
+                                            panic!("Unexpected vertex type for position: {:#?}", element.vertex_type);
+                                        }
+                                    }
+                                }
+                                VertexUsage::BlendWeights => {
+                                    match element.vertex_type {
+                                        VertexType::ByteFloat4 => {
+                                            MDL::write_single4(&mut cursor, &vert.bone_weight).ok()?;
+                                        }
+                                        _ => {
+                                            panic!("Unexpected vertex type for blendweight: {:#?}", element.vertex_type);
+                                        }
+                                    }
+                                }
+                                VertexUsage::BlendIndices => {
+                                    match element.vertex_type {
+                                        VertexType::UInt => {
+                                            MDL::write_uint(&mut cursor, &vert.bone_id).ok()?;
+                                        }
+                                        _ => {
+                                            panic!("Unexpected vertex type for blendindice: {:#?}", element.vertex_type);
+                                        }
+                                    }
+                                }
+                                VertexUsage::Normal => {
+                                    match element.vertex_type {
+                                        VertexType::Half4 => {
+                                            MDL::write_single4(&mut cursor, &MDL::pad_slice(&vert.normal)).ok()?;
+                                        }
+                                        VertexType::Single3 => {
+                                            MDL::write_single3(&mut cursor, &vert.normal).ok()?;
+                                        }
+                                        _ => {
+                                            panic!("Unexpected vertex type for normal: {:#?}", element.vertex_type);
+                                        }
+                                    }
+                                }
+                                VertexUsage::UV => {
+                                    match element.vertex_type {
+                                        VertexType::Half4 => {
+                                            //MDL::write_half4(&mut cursor, &MDL::pad_slice(&vert.uv)).ok()?;
+                                        }
+                                        VertexType::Single4 => {
+                                            MDL::write_single4(&mut cursor, &MDL::pad_slice(&vert.uv)).ok()?;
+                                        }
+                                        _ => {
+                                            panic!("Unexpected vertex type for uv: {:#?}", element.vertex_type);
+                                        }
+                                    }
+                                }
+                                VertexUsage::Tangent2 => {}
+                                VertexUsage::Tangent1 => {}
+                                VertexUsage::Color => {}
+                            }
+                        }
+                    }
+
+                    cursor
+                        .seek(SeekFrom::Start(
+                            (self.file_header.index_offsets[i as usize]
+                                + (self.model_data.meshes[part.mesh_index as usize].start_index * 2))
+                                as u64,
+                        ))
+                        .ok()?;
+
+                    for indice in &part.indices {
+                        cursor.write_le(&indice).ok()?;
+                    }
+                }
+            }
         }
 
         Some(buffer)
@@ -588,11 +689,31 @@ impl MDL {
         cursor.read_le::<[u8; 4]>()
     }
 
+    fn write_uint<T: BinWriterExt>(cursor: &mut T, vec: &[u8; 4]) -> BinResult<()> {
+        cursor.write_le(vec)
+    }
+
     fn read_single3(cursor: &mut Cursor<&MemoryBuffer>) -> BinResult<[f32; 3]> {
         cursor.read_le::<[f32; 3]>()
     }
 
+    fn write_single3<T: BinWriterExt>(cursor: &mut T, vec: &[f32; 3]) -> BinResult<()> {
+        cursor.write_le(vec)
+    }
+
     fn read_single4(cursor: &mut Cursor<&MemoryBuffer>) -> BinResult<[f32; 4]> {
         cursor.read_le::<[f32; 4]>()
+    }
+
+    fn write_single4<T: BinWriterExt>(cursor: &mut T, vec: &[f32; 4]) -> BinResult<()> {
+        cursor.write_le(vec)
+    }
+
+    fn pad_slice<const N: usize>(small_slice: &[f32; N]) -> [f32; 4] {
+        let mut bigger_slice: [f32; 4] = [0.0, 0.0, 0.0, 0.0];
+        for i in 0..N {
+            bigger_slice[i] = small_slice[i];
+        }
+        return bigger_slice;
     }
 }
