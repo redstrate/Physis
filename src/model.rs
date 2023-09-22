@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2023 Joshua Goins <josh@redstrate.com>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-use std::io::{Cursor, Seek, SeekFrom};
+use std::io::{Cursor, Seek, SeekFrom, Write};
 use std::ptr::write;
 
 use binrw::{BinResult, binrw, BinWrite};
@@ -301,7 +301,7 @@ struct VertexElement {
     offset: u8,
     vertex_type: VertexType,
     vertex_usage: VertexUsage,
-    #[br(pad_after = 3)]
+    #[brw(pad_after = 3)]
     usage_index: u8,
 }
 
@@ -326,8 +326,15 @@ pub struct Lod {
     pub parts: Vec<Part>,
 }
 
+#[derive(Clone)]
+struct VertexDeclaration {
+    elements: Vec<VertexElement>,
+}
+
 pub struct MDL {
     file_header: ModelFileHeader,
+    vertex_declarations: Vec<VertexDeclaration>,
+    model_data: ModelData,
 
     pub lods: Vec<Lod>,
     pub affected_bone_names: Vec<String>,
@@ -338,11 +345,6 @@ impl MDL {
     pub fn from_existing(buffer: &MemoryBuffer) -> Option<MDL> {
         let mut cursor = Cursor::new(buffer);
         let model_file_header = ModelFileHeader::read(&mut cursor).unwrap();
-
-        #[derive(Clone)]
-        struct VertexDeclaration {
-            elements: Vec<VertexElement>,
-        }
 
         let mut vertex_declarations: Vec<VertexDeclaration> =
             vec![
@@ -370,7 +372,8 @@ impl MDL {
 
         let mut affected_bone_names = vec![];
 
-        for mut offset in model.bone_name_offsets {
+        for offset in &model.bone_name_offsets {
+            let mut offset = *offset;
             let mut string = String::new();
 
             let mut next_char = model.header.strings[offset as usize] as char;
@@ -385,7 +388,8 @@ impl MDL {
 
         let mut material_names = vec![];
 
-        for mut offset in model.material_name_offsets {
+        for offset in &model.material_name_offsets {
+            let mut offset = *offset;
             let mut string = String::new();
 
             let mut next_char = model.header.strings[offset as usize] as char;
@@ -525,6 +529,8 @@ impl MDL {
 
         Some(MDL {
             file_header: model_file_header,
+            vertex_declarations,
+            model_data: model,
             lods,
             affected_bone_names,
             material_names
@@ -537,7 +543,23 @@ impl MDL {
         {
             let mut cursor = Cursor::new(&mut buffer);
 
-            self.file_header.write(&mut cursor).unwrap();
+            // write file header
+            self.file_header.write(&mut cursor).ok()?;
+
+            // write vertex declarations
+            for declaration in &self.vertex_declarations {
+                for element in &declaration.elements {
+                    element.write(&mut cursor).ok()?;
+                }
+
+                cursor.write_all(&[255u8]).ok()?;
+
+                // We don't have a +1 here like we do in read, because writing the EOF (255) pushes our cursor forward.
+                let to_seek = 17 * 8 - (declaration.elements.len()) * 8;
+                cursor.seek(SeekFrom::Current(to_seek as i64)).ok()?;
+            }
+
+            self.model_data.write(&mut cursor).ok()?;
         }
 
         Some(buffer)
