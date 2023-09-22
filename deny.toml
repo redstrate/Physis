@@ -20,9 +20,9 @@ confidence-threshold = 0.8
 multiple-versions = "deny"
 wildcards = "warn"
 highlight = "all"
-skip = [
-    # currently ciborium dep from criterion is still dependent on half v1 for some reason. since this is dev dependency, i don't care :-)
-    { name = "half", version = "=1.8.2"}
+skip-tree = [
+    # I HATE CRITERION AAAAAAAA
+    { name = "criterion" }
 ]
 
 [sources]
