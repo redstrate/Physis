@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 use std::io::{Cursor, Seek, SeekFrom};
+use std::ptr::write;
 
-use binrw::{BinResult, binrw};
+use binrw::{BinResult, binrw, BinWrite};
 use binrw::BinRead;
 use binrw::BinReaderExt;
 use half::f16;
@@ -40,7 +41,7 @@ pub struct ModelFileHeader {
 
 #[binrw]
 #[brw(repr = u8)]
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 enum ModelFlags1 {
     DustOcclusionEnabled = 0x80,
     SnowOcclusionEnabled = 0x40,
@@ -54,7 +55,7 @@ enum ModelFlags1 {
 
 #[binrw]
 #[brw(repr = u8)]
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 enum ModelFlags2 {
     None = 0x0,
     Unknown2 = 0x80,
@@ -68,7 +69,7 @@ enum ModelFlags2 {
 }
 
 #[binrw]
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 #[allow(dead_code)]
 pub struct ModelHeader {
     #[br(pad_after = 2)]
@@ -113,7 +114,7 @@ pub struct ModelHeader {
 }
 
 #[binrw]
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 #[allow(dead_code)]
 struct MeshLod {
     mesh_index: u16,
@@ -148,7 +149,7 @@ struct MeshLod {
 }
 
 #[binrw]
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 #[allow(dead_code)]
 struct Mesh {
     #[br(pad_after = 2)]
@@ -169,7 +170,7 @@ struct Mesh {
 }
 
 #[binrw]
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 #[allow(dead_code)]
 struct Submesh {
     index_offset: i32,
@@ -182,7 +183,7 @@ struct Submesh {
 }
 
 #[binrw]
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 #[allow(dead_code)]
 struct BoneTable {
     bone_indices: [u16; 64],
@@ -192,7 +193,7 @@ struct BoneTable {
 }
 
 #[binrw]
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 #[allow(dead_code)]
 struct BoundingBox {
     min: [f32; 4],
@@ -200,7 +201,7 @@ struct BoundingBox {
 }
 
 #[binrw]
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 #[allow(dead_code)]
 #[brw(little)]
 struct ModelData {
@@ -255,7 +256,7 @@ struct ModelData {
 }
 
 #[binrw]
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 #[allow(dead_code)]
 struct ElementId {
     element_id: u32,
@@ -326,6 +327,8 @@ pub struct Lod {
 }
 
 pub struct MDL {
+    file_header: ModelFileHeader,
+
     pub lods: Vec<Lod>,
     pub affected_bone_names: Vec<String>,
     pub material_names: Vec<String>
@@ -521,10 +524,23 @@ impl MDL {
         }
 
         Some(MDL {
+            file_header: model_file_header,
             lods,
             affected_bone_names,
             material_names
         })
+    }
+
+    pub fn write_to_buffer(&self) -> Option<MemoryBuffer> {
+        let mut buffer = MemoryBuffer::new();
+
+        {
+            let mut cursor = Cursor::new(&mut buffer);
+
+            self.file_header.write(&mut cursor).unwrap();
+        }
+
+        Some(buffer)
     }
 
     fn read_byte_float4(cursor: &mut Cursor<&MemoryBuffer>) -> Option<[f32; 4]> {
