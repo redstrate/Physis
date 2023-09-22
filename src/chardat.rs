@@ -94,64 +94,120 @@ fn convert_subrace_dat(subrace: &Subrace) -> u8 {
     }
 }
 
+/// Represents the several options that make up a character data file (DAT) which is used by the game's character creation system to save and load presets.
 #[binrw]
 #[br(little)]
 #[repr(C)]
 #[br(magic = 0x2013FF14u32)]
 #[derive(Debug)]
-pub struct CharDat { // version 4
+pub struct CharacterData { // version 4
+    /// The version of the character data, the only supported version right now is 4.
     pub version: u32,
+
+    /// The checksum of the data fields.
     #[br(pad_after = 4)]
     pub checksum: u32,
 
+    /// The race of the character.
     #[br(map = | x: u8 | convert_dat_race(x) )]
     #[bw(map = | race: &Race | convert_race_dat(race) )]
     pub race: Race,
+
+    /// The gender of the character.
     #[br(map = | x: u8 | convert_dat_gender(x) )]
     #[bw(map = | gender: &Gender | convert_gender_dat(gender) )]
     pub gender: Gender,
-    pub age: u8, // Normal = 1, Old = 3, Young = 4
+
+    /// The age of the character. Normal = 1, Old = 3, Young = 4.
+    pub age: u8,
+
+    /// The height of the character.
     pub height: u8,
+
+    /// The character's subrace.
     #[br(map = | x: u8 | convert_dat_subrace(x) )]
     #[bw(map = | subrace: &Subrace | convert_subrace_dat(subrace) )]
     pub subrace: Subrace,
+
+    /// The character's selected head.
     pub head: u8,
+
+    /// The character's selected hair.
     pub hair: u8,
+
+    /// If hair highlights are enabled for this character.
     #[br(map = | x: u8 | x != 0 )]
     #[bw(map = | x: &bool | if *x { 1u8 } else { 0u8 } )]
     pub enable_highlights: bool,
+
+    /// The character's skin tone.
     pub skin_tone: u8,
+
+    /// The character's right eye color.
     pub right_eye_color: u8,
+
+    /// The character's hair color.
     pub hair_tone: u8,
+
+    /// The color of the hair highlights.
     pub highlights: u8,
+
+    /// The selected facial features.
     pub facial_features: u8,
+
+    /// If the character has limbal eyes.
     pub limbal_eyes: u8,
+
+    /// The character's selected eyebrows.
     pub eyebrows: u8,
+
+    /// The character's left eye color.
     pub left_eye_color: u8,
+
+    /// The character's selected eyes.
     pub eyes: u8,
+
+    /// The character's selected nose.
     pub nose: u8,
+
+    /// The character's selected jaw.
     pub jaw: u8,
+
+    /// The character's selected mouth.
     pub mouth: u8,
+
+    /// The character's selected pattern.
     pub lips_tone_fur_pattern: u8,
+
+    /// The character's selected tail.
     pub tail: u8,
+
+    /// The character's choice of face paint.
     pub face_paint: u8,
+
+    /// The size of the character's bust.
     pub bust: u8,
+
+    /// The color of the face paint.
     pub face_paint_color: u8,
+
+    /// The character's chosen voice.
     pub voice: u8,
 
+    /// The timestamp when the preset was created.
     #[br(pad_before = 1)]
     pub timestamp: [u8; 4]
 }
 
-impl CharDat {
-    /// Parses an existing dat file.
-    pub fn from_existing(buffer: &MemoryBuffer) -> Option<CharDat> {
+impl CharacterData {
+    /// Parses existing character data.
+    pub fn from_existing(buffer: &MemoryBuffer) -> Option<CharacterData> {
         let mut cursor = Cursor::new(buffer);
 
-        Some(CharDat::read(&mut cursor).ok()?)
+        CharacterData::read(&mut cursor).ok()
     }
 
-    // Writes a new dat file
+    /// Write existing character data to a buffer.
     pub fn write_to_buffer(&self) -> Option<MemoryBuffer> {
         let mut buffer = MemoryBuffer::new();
 

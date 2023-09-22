@@ -83,7 +83,7 @@ pub mod shpk;
 /// Reading character parameter files (CMP)
 pub mod cmp;
 
-/// Reading character save datas files (DAT)
+/// Reading and writing character data files (DAT) which are used in the character creator to save presets.
 pub mod chardat;
 
 /// Reading and writing the plaintext config files (CFG) used by the game to store most of it's configuration.
