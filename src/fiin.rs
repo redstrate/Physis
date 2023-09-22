@@ -4,7 +4,7 @@
 use std::fs::read;
 use std::io::Cursor;
 
-use binrw::BinRead;
+use binrw::{BinRead, BinWrite};
 use binrw::binrw;
 
 use crate::gamedata::MemoryBuffer;
@@ -50,6 +50,17 @@ impl FileInfo {
     pub fn from_existing(buffer: &MemoryBuffer) -> Option<FileInfo> {
         let mut cursor = Cursor::new(buffer);
         FileInfo::read(&mut cursor).ok()
+    }
+
+    pub fn write_to_buffer(&self) -> Option<MemoryBuffer> {
+        let mut buffer = MemoryBuffer::new();
+
+        {
+            let mut cursor = Cursor::new(&mut buffer);
+            self.write(&mut cursor).ok()?;
+        }
+
+        Some(buffer)
     }
 
     /// Creates a new FileInfo structure from a list of filenames. These filenames must be present in
