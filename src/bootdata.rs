@@ -6,10 +6,11 @@ use std::path::PathBuf;
 
 use crate::patch::{apply_patch, PatchError};
 
-/// Boot data for FFXIV.
+/// Represents the boot data for FFXIV, which is located under the "boot" directory.
 pub struct BootData {
     path: String,
 
+    /// The current version of the boot data, e.g. "2012.01.01.0000.0000".
     pub version: String,
 }
 
@@ -49,6 +50,7 @@ impl BootData {
         }
     }
 
+    /// Applies the patch to boot data and returns any errors it encounters. This function will not update the version in the BootData struct.
     pub fn apply_patch(&self, patch_path: &str) -> Result<(), PatchError> {
         apply_patch(&self.path, patch_path)
     }

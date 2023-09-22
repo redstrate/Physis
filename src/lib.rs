@@ -9,7 +9,7 @@ pub mod gamedata;
 /// Parsing game repositories, such as "ffxiv", "ex1" and their version information.
 pub mod repository;
 
-/// Reading and writing the boot data repository.
+/// Handling and updating data in the "boot" directory, which contains the launcher files.
 pub mod bootdata;
 
 /// Common methods and structures relating to the SqPack data format.
