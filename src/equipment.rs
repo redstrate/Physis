@@ -150,6 +150,36 @@ pub fn build_character_path(
     )
 }
 
+/// Builds a material path for a specific gear
+pub fn build_gear_material_path(gear_id: i32, gear_version: i32, material_name: &str) -> String {
+    format!("chara/equipment/e{gear_id:04}/material/v{gear_version:04}{material_name}")
+}
+
+/// Builds a skin material path for a character
+pub fn build_skin_material_path(race_code: i32, body_code: i32, material_name: &str) -> String {
+    format!("chara/human/c{race_code:04}/obj/body/b{body_code:04}/material/v0001{material_name}")
+}
+
+/// Builds a face material path for a character
+pub fn build_face_material_path(race_code: i32, face_code: i32, material_name: &str) -> String {
+    format!("chara/human/c{race_code:04}/obj/face/f{face_code:04}/material{material_name}")
+}
+
+/// Builds a hair material path for a character
+pub fn build_hair_material_path(race_code: i32, hair_code: i32, material_name: &str) -> String {
+    format!("chara/human/c{race_code:04}/obj/hair/h{hair_code:04}/material/v0001{material_name}")
+}
+
+/// Builds a ear material path for a character
+pub fn build_ear_material_path(race_code: i32, ear_code: i32, material_name: &str) -> String {
+    format!("chara/human/c{race_code:04}/obj/ear/e{ear_code:04}/material/v0001{material_name}")
+}
+
+/// Builds a tail material path for a character
+pub fn build_tail_material_path(race_code: i32, tail_code: i32, material_name: &str) -> String {
+    format!("chara/human/c{race_code:04}/obj/tail/t{tail_code:04}/material/v0001{material_name}")
+}
+
 pub fn deconstruct_equipment_path(path: &str) -> Option<(i32, Slot)> {
     let model_id = &path[6..10];
     let slot_name = &path[11..14];
