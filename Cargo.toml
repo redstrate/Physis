@@ -1,6 +1,6 @@
 [package]
 name = "physis"
-version = "0.1.4"
+version = "0.2.0"
 authors = ["Joshua Goins <josh@redstrate.com>"]
 edition = "2021"
 description = "Interact with XIV game data."
@@ -49,12 +49,12 @@ patch_testing = ["game_install"]
 
 [dependencies]
 # amazing binary parsing/writing library
-binrw = "0.12"
+binrw = { version = "0.12.0", features = ["std"], default-features = false }
 
-tracing = "0.1.37"
+tracing = { version = "0.1.37", features = ["std"], default-features = false }
 
 # used for zlib compression in sqpack files
-libz-sys = { version = "1.1", default-features = false }
+libz-sys = { version = "1.1"  }
 
 # nice to have features rust is lacking at the moment
 modular-bitfield = "0.11"
