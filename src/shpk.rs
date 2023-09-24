@@ -1,11 +1,51 @@
 // SPDX-FileCopyrightText: 2023 Joshua Goins <josh@redstrate.com>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-use std::io::{Cursor, Seek, SeekFrom};
+use std::io::{Cursor, Read, Seek, SeekFrom};
 
-use binrw::{BinRead, binread, BinReaderExt};
+use binrw::{BinRead, binread};
 
 use crate::gamedata::MemoryBuffer;
+
+#[binread]
+#[br(little)]
+#[derive(Debug)]
+#[allow(unused)]
+struct ParameterHeader {
+    id: i32,
+    name_offset: i32,
+    #[br(pad_after = 8)]
+    name_length: i32
+}
+
+#[binread]
+#[br(little)]
+#[derive(Debug)]
+#[allow(unused)]
+struct ShaderParameterReference {
+    #[br(pad_after = 12)]
+    id: i32
+}
+
+#[binread]
+#[br(little)]
+#[derive(Debug)]
+#[allow(unused)]
+struct ShaderHeader {
+    #[br(dbg)]
+    data_offset: i32,
+    data_length: i32,
+
+    num_scalar: i16,
+    #[br(pad_after = 4)]
+    num_resource: i16,
+
+    #[br(count = num_scalar)]
+    #[br(dbg)]
+    scalar_parameters: Vec<ShaderParameterReference>,
+    #[br(count = num_resource)]
+    resource_parameters: Vec<ShaderParameterReference>,
+}
 
 #[binread]
 #[br(little)]
@@ -24,9 +64,24 @@ struct SHPKHeader {
     shader_data_offset: i32,
     parameter_list_offset: i32,
     vertex_shader_count: i32,
+    #[br(dbg)]
     pixel_shader_count: i32,
+
+    #[br(pad_before = 4)]
+    #[br(dbg)]
+    c1: i32,
+
+    // 8 bytes...
+    #[br(dbg)]
     scalar_parameter_count: i32,
-    resource_parameter_count: i32
+    resource_parameter_count: i32,
+
+    #[br(pad_before = 24)]
+    #[br(dbg)]
+    #[br(count = vertex_shader_count)]
+    vertex_shader_headers: Vec<ShaderHeader>,
+    #[br(count = pixel_shader_count)]
+    pixel_shader_headers: Vec<ShaderHeader>
 }
 
 pub struct Shader {
@@ -41,41 +96,48 @@ pub struct ShaderPackage {
 impl ShaderPackage {
     pub fn from_existing(buffer: &MemoryBuffer) -> Option<ShaderPackage> {
         let mut cursor = Cursor::new(buffer);
-        let header = SHPKHeader::read(&mut cursor).ok()?;
+        let header = SHPKHeader::read(&mut cursor).unwrap();
 
-        // start of shader data
-        cursor.seek(SeekFrom::Start(header.shader_data_offset as u64 + 12)).ok()?;
+        println!("{:#?}", header);
+        println!("before parameter cursor: {}", cursor.position());
 
-        let mut vertex_shaders: Vec<Shader> = Vec::new();
-        let mut pixel_shaders: Vec<Shader> = Vec::new();
+        // shader parameters
+        cursor.seek(SeekFrom::Current((header.c1 as u64 * 0x08) as i64)).ok()?;
+        println!("cursor: {}", cursor.position());
 
-        let mut buffer: Vec<u8> = Vec::new();
-        let eof_magic = 1128421444u32;
-
-        while vertex_shaders.len() < header.vertex_shader_count as usize {
-            let word = cursor.read_le::<u32>().unwrap();
-
-            if word == eof_magic && !buffer.is_empty() {
-                vertex_shaders.push(Shader {
-                    bytecode: buffer.clone()
-                });
-                buffer.clear();
-            } else {
-                buffer.extend_from_slice(word.to_le_bytes().as_slice());
-            }
+        for _ in 0..header.scalar_parameter_count {
+            let header = ParameterHeader::read_le(&mut cursor);
+            println!("{:#?}", header);
         }
 
-        while pixel_shaders.len() < header.pixel_shader_count as usize {
-            let word = cursor.read_le::<u32>().unwrap();
+        for _ in 0..header.resource_parameter_count {
+            let header = ParameterHeader::read_le(&mut cursor);
+            println!("{:#?}", header);
+        }
 
-            if word == eof_magic && !buffer.is_empty() || cursor.position() == header.parameter_list_offset as u64 {
-                pixel_shaders.push(Shader {
-                    bytecode: buffer.clone()
-                });
-                buffer.clear();
-            } else {
-                buffer.extend_from_slice(word.to_le_bytes().as_slice());
-            }
+        // shader bytecode
+        let mut vertex_shaders: Vec<Shader> = Vec::new();
+        for header in header.vertex_shader_headers {
+            cursor.seek(SeekFrom::Start(header.data_offset as u64)).ok()?;
+
+            let mut bytecode = vec![0u8; header.data_length as usize];
+            cursor.read_exact(bytecode.as_mut_slice()).ok()?;
+
+            vertex_shaders.push(Shader {
+                bytecode
+            });
+        }
+
+        let mut pixel_shaders: Vec<Shader> = Vec::new();
+        for header in header.pixel_shader_headers {
+            cursor.seek(SeekFrom::Start(header.data_offset as u64)).ok()?;
+
+            let mut bytecode = vec![0u8; header.data_length as usize];
+            cursor.read_exact(bytecode.as_mut_slice()).ok()?;
+
+            pixel_shaders.push(Shader {
+                bytecode
+            });
         }
 
         Some(ShaderPackage {
