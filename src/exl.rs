@@ -123,8 +123,8 @@ mod tests {
         let exl = read(d).unwrap();
 
         let mut out = std::io::stdout();
-        out.write_all(&existing_exl.write_to_buffer().unwrap());
-        out.flush();
+        out.write_all(&existing_exl.write_to_buffer().unwrap()).unwrap();
+        out.flush().unwrap();
 
         assert_eq!(existing_exl.write_to_buffer().unwrap(), exl);
     }
