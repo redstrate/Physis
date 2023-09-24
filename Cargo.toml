@@ -11,6 +11,9 @@ keywords = ["ffxiv", "modding"]
 documentation = "https://docs.xiv.zone/docs/physis/"
 readme = "README.md"
 
+[profile.release]
+lto = true
+
 [[bench]]
 name = "physis_benchmark"
 harness = false
