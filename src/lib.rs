@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: 2023 Joshua Goins <josh@redstrate.com>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+//! Crate for reading and writing the file formats used by FFXIV.
+
 extern crate core;
 
 /// Reading and writing game data repositories, such as "ffxiv" and "ex1", and so on.
