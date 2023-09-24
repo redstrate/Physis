@@ -9,6 +9,7 @@ use binrw::BinRead;
 use binrw::BinWrite;
 
 use crate::gamedata::MemoryBuffer;
+#[cfg(feature = "visual_data")]
 use crate::model::ModelFileHeader;
 use crate::sqpack::read_data_block;
 
@@ -202,7 +203,17 @@ impl DatFile {
         match file_info.file_type {
             FileType::Empty => None,
             FileType::Standard => self.read_standard_file(offset, &file_info),
-            FileType::Model => self.read_model_file(offset, &file_info),
+            FileType::Model => {
+                #[cfg(feature = "visual_data")]
+                {
+                    self.read_model_file(offset, &file_info)
+                }
+
+                #[cfg(not(feature = "visual_data"))]
+                {
+                    panic!("Tried to extract a model without the visual_data feature enabled!")
+                }
+            },
             FileType::Texture => self.read_texture_file(offset, &file_info),
         }
     }
@@ -235,6 +246,7 @@ impl DatFile {
     }
 
     /// Reads a model file block.
+    #[cfg(feature = "visual_data")]
     fn read_model_file(&mut self, offset: u64, file_info: &FileInfo) -> Option<MemoryBuffer> {
         let mut buffer = Cursor::new(Vec::new());
 
