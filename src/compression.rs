@@ -64,6 +64,8 @@ mod flate2_zallocation {
 }
 
 pub fn no_header_decompress(in_data: &mut [u8], out_data: &mut [u8]) -> bool {
+    // thanks for not somehow detecting this?
+    #[allow(unused_imports)]
     use crate::compression::flate2_zallocation::{zalloc, zfree};
 
     unsafe {

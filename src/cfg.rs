@@ -4,7 +4,6 @@
 use std::collections::HashMap;
 use std::io::{BufRead, BufReader, BufWriter, Cursor, Write};
 
-use crate::cfg;
 use crate::gamedata::MemoryBuffer;
 
 /// Represents a collection of keys, mapped to their values.
@@ -48,7 +47,7 @@ impl ConfigFile {
                     cfg.categories.push(String::from(name));
                 } else {
                     let parts = unwrap.split_once('\t').unwrap();
-                    cfg.settings.entry(current_category.clone().unwrap()).or_insert_with(|| cfg::ConfigMap{ keys: HashMap::new() });
+                    cfg.settings.entry(current_category.clone().unwrap()).or_insert_with(|| ConfigMap{ keys: HashMap::new() });
 
                     cfg.settings.get_mut(&current_category.clone().unwrap()).unwrap().keys.insert(parts.0.to_string(), parts.1.to_string());
                 }
