@@ -181,12 +181,12 @@ struct SqpkAddData {
     sub_id: u16,
     file_id: u32,
 
-    #[br(map = | x : i32 | x << 7 )]
-    block_offset: i32,
-    #[br(map = | x : i32 | x << 7 )]
-    block_number: i32,
-    #[br(map = | x : i32 | x << 7 )]
-    block_delete_number: i32,
+    #[br(map = | x : u32 | x << 7 )]
+    block_offset: u32,
+    #[br(map = | x : u32 | x << 7 )]
+    block_number: u32,
+    #[br(map = | x : u32 | x << 7 )]
+    block_delete_number: u32,
 
     #[br(count = block_number)]
     block_data: Vec<u8>,
@@ -200,10 +200,10 @@ struct SqpkDeleteData {
     sub_id: u16,
     file_id: u32,
 
-    #[br(map = | x : i32 | x << 7 )]
-    block_offset: i32,
+    #[br(map = | x : u32 | x << 7 )]
+    block_offset: u32,
     #[br(pad_after = 4)]
-    block_number: i32,
+    block_number: u32,
 }
 
 #[binread]
@@ -249,7 +249,7 @@ struct SqpkFileOperationData {
     operation: SqpkFileOperation,
 
     offset: i64,
-    file_size: u64,
+    file_size: i64,
 
     #[br(temp)]
     path_length: u32,
@@ -328,10 +328,10 @@ struct SqpkChunk {
 
 const WIPE_BUFFER: [u8; 1 << 16] = [0; 1 << 16];
 
-fn wipe(mut file: &File, length: i32) -> Result<(), PatchError> {
-    let mut length = length;
+fn wipe(mut file: &File, length: u32) -> Result<(), PatchError> {
+    let mut length: usize = length as usize;
     while length > 0 {
-        let num_bytes = min(WIPE_BUFFER.len() as i32, length);
+        let num_bytes = min(WIPE_BUFFER.len(), length as usize);
         file.write_all(&WIPE_BUFFER[0..num_bytes as usize])?;
         length -= num_bytes;
     }
@@ -339,15 +339,15 @@ fn wipe(mut file: &File, length: i32) -> Result<(), PatchError> {
     Ok(())
 }
 
-fn wipe_from_offset(mut file: &File, length: i32, offset: i32) -> Result<(), PatchError> {
+fn wipe_from_offset(mut file: &File, length: u32, offset: u32) -> Result<(), PatchError> {
     file.seek(SeekFrom::Start(offset as u64))?;
     wipe(file, length)
 }
 
 fn write_empty_file_block_at(
     mut file: &File,
-    offset: i32,
-    block_number: i32,
+    offset: u32,
+    block_number: u32,
 ) -> Result<(), PatchError> {
     wipe_from_offset(file, block_number << 7, offset)?;
 
@@ -362,7 +362,7 @@ fn write_empty_file_block_at(
     let file_size: i32 = 0;
     file.write_all(file_size.to_le_bytes().as_slice())?;
 
-    let num_blocks: i32 = block_number - 1;
+    let num_blocks: i32 = (block_number - 1).try_into().unwrap();
     file.write_all(num_blocks.to_le_bytes().as_slice())?;
 
     let used_blocks: i32 = 0;
