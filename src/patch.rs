@@ -248,8 +248,8 @@ struct SqpkFileOperationData {
     #[br(pad_after = 2)]
     operation: SqpkFileOperation,
 
-    offset: i64,
-    file_size: i64,
+    offset: u64,
+    file_size: u64,
 
     #[br(temp)]
     path_length: u32,
@@ -285,7 +285,7 @@ struct SqpkTargetInfo {
     #[br(pad_before = 3)]
     platform: PlatformId,
     region: Region,
-    #[br(map = | x : i16 | x == 1)]
+    #[br(map = | x : u16 | x == 1)]
     is_debug: bool,
     version: u16,
     #[br(little)]
