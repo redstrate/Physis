@@ -48,7 +48,7 @@ pub struct IndexHashBitfield {
 
 #[binrw]
 pub struct IndexHashTableEntry {
-    pub(crate) hash: u64,
+    pub hash: u64,
     #[br(pad_after = 4)]
     pub(crate) bitfield: IndexHashBitfield,
 }
