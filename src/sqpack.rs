@@ -11,6 +11,13 @@ use crate::dat::{BlockHeader, CompressionMode};
 
 const CRC: Jamcrc = Jamcrc::new();
 
+/// Calculates a partial hash for a given path
+pub fn calculate_partial_hash(path: &str) -> u32 {
+    let lowercase = path.to_lowercase();
+
+    CRC.checksum(lowercase.as_bytes())
+}
+
 /// Calculates a hash for `index` files from a game path.
 pub fn calculate_hash(path: &str) -> u64 {
     let lowercase = path.to_lowercase();
