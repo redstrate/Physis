@@ -91,6 +91,13 @@ pub mod chardat;
 /// Reading and writing the plaintext config files (CFG) used by the game to store most of it's configuration.
 pub mod cfg;
 
+#[cfg(feature = "visual_data")]
+mod havok;
+
+/// Reading bone deform matrices.
+#[cfg(feature = "visual_data")]
+pub mod pbd;
+
 mod crc;
 mod sha1;
 

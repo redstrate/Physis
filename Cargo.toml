@@ -44,7 +44,7 @@ game_install = []
 # enables support for extracting visual data, such as models, textures, materials, etc
 # this enables a whole bunch of dependencies!
 # tip: can be safely turned off for launchers and other tools that simply need to extract the bare minimum of data
-visual_data = ["dep:half", "dep:hard-xml", "dep:serde_json", "dep:serde", "dep:glam", "dep:bitflags", "dep:texpresso"]
+visual_data = ["dep:half", "dep:glam", "dep:bitflags", "dep:texpresso"]
 
 # testing only features
 retail_game_testing = []
@@ -65,13 +65,6 @@ paste = "1"
 
 # needed for half-float support which FFXIV uses in it's model data
 half = { version = "2", optional = true }
-
-# needed for havok xml parsing
-hard-xml = { version = "1", optional = true }
-
-# needed for textools skel parsing
-serde_json = { version = "1", optional = true }
-serde = { version = "1", optional = true, features = ["derive"] }
 
 # needed for deconstructing skeleton pose matrices
 glam = { version = "0.24.1", optional = true }
