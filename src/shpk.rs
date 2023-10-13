@@ -32,7 +32,6 @@ struct ShaderParameterReference {
 #[derive(Debug)]
 #[allow(unused)]
 struct ShaderHeader {
-    #[br(dbg)]
     data_offset: i32,
     data_length: i32,
 
@@ -41,7 +40,6 @@ struct ShaderHeader {
     num_resource: i16,
 
     #[br(count = num_scalar)]
-    #[br(dbg)]
     scalar_parameters: Vec<ShaderParameterReference>,
     #[br(count = num_resource)]
     resource_parameters: Vec<ShaderParameterReference>,
@@ -64,20 +62,16 @@ struct SHPKHeader {
     shader_data_offset: i32,
     parameter_list_offset: i32,
     vertex_shader_count: i32,
-    #[br(dbg)]
     pixel_shader_count: i32,
 
     #[br(pad_before = 4)]
-    #[br(dbg)]
     c1: i32,
 
     // 8 bytes...
-    #[br(dbg)]
     scalar_parameter_count: i32,
     resource_parameter_count: i32,
 
     #[br(pad_before = 24)]
-    #[br(dbg)]
     #[br(count = vertex_shader_count)]
     vertex_shader_headers: Vec<ShaderHeader>,
     #[br(count = pixel_shader_count)]
@@ -96,29 +90,23 @@ pub struct ShaderPackage {
 impl ShaderPackage {
     pub fn from_existing(buffer: &MemoryBuffer) -> Option<ShaderPackage> {
         let mut cursor = Cursor::new(buffer);
-        let header = SHPKHeader::read(&mut cursor).unwrap();
-
-        println!("{:#?}", header);
-        println!("before parameter cursor: {}", cursor.position());
+        let shpk_header = SHPKHeader::read(&mut cursor).unwrap();
 
         // shader parameters
-        cursor.seek(SeekFrom::Current((header.c1 as u64 * 0x08) as i64)).ok()?;
-        println!("cursor: {}", cursor.position());
+        cursor.seek(SeekFrom::Current((shpk_header.c1 as u64 * 0x08) as i64)).ok()?;
 
-        for _ in 0..header.scalar_parameter_count {
+        for _ in 0..shpk_header.scalar_parameter_count {
             let header = ParameterHeader::read_le(&mut cursor);
-            println!("{:#?}", header);
         }
 
-        for _ in 0..header.resource_parameter_count {
+        for _ in 0..shpk_header.resource_parameter_count {
             let header = ParameterHeader::read_le(&mut cursor);
-            println!("{:#?}", header);
         }
 
         // shader bytecode
         let mut vertex_shaders: Vec<Shader> = Vec::new();
-        for header in header.vertex_shader_headers {
-            cursor.seek(SeekFrom::Start(header.data_offset as u64)).ok()?;
+        for header in shpk_header.vertex_shader_headers {
+            cursor.seek(SeekFrom::Start((shpk_header.shader_data_offset + header.data_offset + 8) as u64)).ok()?;
 
             let mut bytecode = vec![0u8; header.data_length as usize];
             cursor.read_exact(bytecode.as_mut_slice()).ok()?;
@@ -129,8 +117,8 @@ impl ShaderPackage {
         }
 
         let mut pixel_shaders: Vec<Shader> = Vec::new();
-        for header in header.pixel_shader_headers {
-            cursor.seek(SeekFrom::Start(header.data_offset as u64)).ok()?;
+        for header in shpk_header.pixel_shader_headers {
+            cursor.seek(SeekFrom::Start((shpk_header.shader_data_offset + header.data_offset) as u64)).ok()?;
 
             let mut bytecode = vec![0u8; header.data_length as usize];
             cursor.read_exact(bytecode.as_mut_slice()).ok()?;
