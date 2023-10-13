@@ -5,8 +5,7 @@ use std::io::{Cursor, Seek, SeekFrom};
 
 use binrw::BinRead;
 use binrw::binrw;
-
-use crate::gamedata::MemoryBuffer;
+use crate::ByteSpan;
 
 #[binrw]
 #[br(little)]
@@ -41,7 +40,7 @@ pub struct CMP {
 
 impl CMP {
     /// Parses an existing FIIN file.
-    pub fn from_existing(buffer: &MemoryBuffer) -> Option<CMP> {
+    pub fn from_existing(buffer: ByteSpan) -> Option<CMP> {
         let mut cursor = Cursor::new(buffer);
 
         cursor.seek(SeekFrom::Start(0x2a800)).unwrap();

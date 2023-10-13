@@ -2,8 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 use std::io::{BufRead, BufReader, BufWriter, Cursor, Write};
-
-use crate::gamedata::MemoryBuffer;
+use crate::{ByteBuffer, ByteSpan};
 
 /// Represents an Excel List.
 pub struct EXL {
@@ -16,7 +15,7 @@ pub struct EXL {
 
 impl EXL {
     /// Initializes `EXL` from an existing list.
-    pub fn from_existing(buffer: &MemoryBuffer) -> Option<EXL> {
+    pub fn from_existing(buffer: ByteSpan) -> Option<EXL> {
         let mut exl = Self {
             version: 0,
             entries: Vec::new(),
@@ -43,8 +42,8 @@ impl EXL {
         Some(exl)
     }
 
-    pub fn write_to_buffer(&self) -> Option<MemoryBuffer> {
-        let mut buffer = MemoryBuffer::new();
+    pub fn write_to_buffer(&self) -> Option<ByteBuffer> {
+        let mut buffer = ByteBuffer::new();
 
         {
             let cursor = Cursor::new(&mut buffer);

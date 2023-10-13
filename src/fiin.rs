@@ -6,8 +6,8 @@ use std::io::Cursor;
 
 use binrw::{BinRead, BinWrite};
 use binrw::binrw;
+use crate::{ByteBuffer, ByteSpan};
 
-use crate::gamedata::MemoryBuffer;
 use crate::sha1::Sha1;
 
 #[binrw]
@@ -47,13 +47,13 @@ pub struct FIINEntry {
 
 impl FileInfo {
     /// Parses an existing FIIN file.
-    pub fn from_existing(buffer: &MemoryBuffer) -> Option<FileInfo> {
+    pub fn from_existing(buffer: ByteSpan) -> Option<FileInfo> {
         let mut cursor = Cursor::new(buffer);
         FileInfo::read(&mut cursor).ok()
     }
 
-    pub fn write_to_buffer(&self) -> Option<MemoryBuffer> {
-        let mut buffer = MemoryBuffer::new();
+    pub fn write_to_buffer(&self) -> Option<ByteBuffer> {
+        let mut buffer = ByteBuffer::new();
 
         {
             let mut cursor = Cursor::new(&mut buffer);

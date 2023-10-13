@@ -10,8 +10,7 @@ use binrw::BinRead;
 use binrw::binrw;
 use bitflags::bitflags;
 use texpresso::Format;
-
-use crate::gamedata::MemoryBuffer;
+use crate::ByteSpan;
 
 // Attributes and Format are adapted from Lumina (https://github.com/NotAdam/Lumina/blob/master/src/Lumina/Data/Files/TexFile.cs)
 bitflags! {
@@ -77,7 +76,7 @@ pub struct Texture {
 }
 
 impl Texture {
-    pub fn from_existing(buffer: &MemoryBuffer) -> Option<Texture> {
+    pub fn from_existing(buffer: ByteSpan) -> Option<Texture> {
         let mut cursor = Cursor::new(buffer);
         let header = TexHeader::read(&mut cursor).unwrap();
 

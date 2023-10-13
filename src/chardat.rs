@@ -5,8 +5,8 @@ use std::io::{BufWriter, Cursor};
 
 use binrw::{BinRead, BinWrite};
 use binrw::binrw;
+use crate::{ByteBuffer, ByteSpan};
 
-use crate::gamedata::MemoryBuffer;
 use crate::race::{Gender, Race, Subrace};
 
 fn convert_dat_race(x: u8) -> Race {
@@ -201,15 +201,15 @@ pub struct CharacterData { // version 4
 
 impl CharacterData {
     /// Parses existing character data.
-    pub fn from_existing(buffer: &MemoryBuffer) -> Option<CharacterData> {
+    pub fn from_existing(buffer: ByteSpan) -> Option<CharacterData> {
         let mut cursor = Cursor::new(buffer);
 
         CharacterData::read(&mut cursor).ok()
     }
 
     /// Write existing character data to a buffer.
-    pub fn write_to_buffer(&self) -> Option<MemoryBuffer> {
-        let mut buffer = MemoryBuffer::new();
+    pub fn write_to_buffer(&self) -> Option<ByteBuffer> {
+        let mut buffer = ByteBuffer::new();
 
         {
             let cursor = Cursor::new(&mut buffer);

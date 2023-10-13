@@ -4,8 +4,7 @@
 use std::io::{Cursor, Read, Seek, SeekFrom};
 
 use binrw::{BinRead, binread};
-
-use crate::gamedata::MemoryBuffer;
+use crate::ByteSpan;
 
 #[binread]
 #[br(little)]
@@ -88,7 +87,7 @@ pub struct ShaderPackage {
 }
 
 impl ShaderPackage {
-    pub fn from_existing(buffer: &MemoryBuffer) -> Option<ShaderPackage> {
+    pub fn from_existing(buffer: ByteSpan) -> Option<ShaderPackage> {
         let mut cursor = Cursor::new(buffer);
         let shpk_header = SHPKHeader::read(&mut cursor).unwrap();
 

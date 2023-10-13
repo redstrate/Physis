@@ -4,8 +4,7 @@
 use std::io::Cursor;
 
 use binrw::{BinRead, binrw};
-
-use crate::gamedata::MemoryBuffer;
+use crate::ByteSpan;
 
 #[binrw]
 #[derive(Debug)]
@@ -128,7 +127,7 @@ pub struct Material {
 }
 
 impl Material {
-    pub fn from_existing(buffer: &MemoryBuffer) -> Option<Material> {
+    pub fn from_existing(buffer: ByteSpan) -> Option<Material> {
         let mut cursor = Cursor::new(buffer);
         let mat_data = MaterialData::read(&mut cursor).ok()?;
 

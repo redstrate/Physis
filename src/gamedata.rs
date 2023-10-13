@@ -13,6 +13,7 @@ use crate::exd::EXD;
 use crate::exh::EXH;
 use crate::exl::EXL;
 use crate::index::IndexFile;
+use crate::ByteBuffer;
 use crate::patch::{apply_patch, PatchError};
 use crate::repository::{Category, Repository, string_to_category};
 use crate::sqpack::calculate_hash;
@@ -47,8 +48,6 @@ pub enum RepairAction {
 pub enum RepairError<'a> {
     FailedRepair(&'a Repository),
 }
-
-pub type MemoryBuffer = Vec<u8>;
 
 impl GameData {
     /// Read game data from an existing game installation.
@@ -187,7 +186,7 @@ impl GameData {
     /// let mut file = std::fs::File::create("root.exl").unwrap();
     /// file.write(data.as_slice()).unwrap();
     /// ```
-    pub fn extract(&self, path: &str) -> Option<MemoryBuffer> {
+    pub fn extract(&self, path: &str) -> Option<ByteBuffer> {
         debug!(file=path, "Extracting file");
 
         let hash = calculate_hash(path);

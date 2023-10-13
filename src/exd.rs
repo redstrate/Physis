@@ -8,7 +8,7 @@ use binrw::binrw;
 
 use crate::common::Language;
 use crate::exh::{ColumnDataType, ExcelColumnDefinition, ExcelDataPagination, EXH};
-use crate::gamedata::MemoryBuffer;
+use crate::ByteSpan;
 
 #[binrw]
 #[brw(magic = b"EXDF")]
@@ -70,7 +70,7 @@ pub struct ExcelRow {
 }
 
 impl EXD {
-    fn read_data_raw<Z: BinRead<Args<'static> = ()>>(cursor: &mut Cursor<&MemoryBuffer>) -> Option<Z>
+    fn read_data_raw<Z: BinRead<Args<'static> = ()>>(cursor: &mut Cursor<ByteSpan>) -> Option<Z>
     {
         Some(
             Z::read_options(
@@ -83,7 +83,7 @@ impl EXD {
     }
 
     fn read_column(
-        cursor: &mut Cursor<&MemoryBuffer>,
+        cursor: &mut Cursor<ByteSpan>,
         exh: &EXH,
         offset: u32,
         column: &ExcelColumnDefinition,
@@ -149,7 +149,7 @@ impl EXD {
         }
     }
 
-    pub fn from_existing(exh: &EXH, buffer: &MemoryBuffer) -> Option<EXD> {
+    pub fn from_existing(exh: &EXH, buffer: ByteSpan) -> Option<EXD> {
         let mut cursor = Cursor::new(buffer);
         let mut exd = EXD::read(&mut cursor).ok()?;
 

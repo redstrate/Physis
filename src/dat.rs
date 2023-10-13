@@ -7,8 +7,8 @@ use std::io::Write;
 use binrw::{BinReaderExt, binrw};
 use binrw::BinRead;
 use binrw::BinWrite;
+use crate::ByteBuffer;
 
-use crate::gamedata::MemoryBuffer;
 #[cfg(feature = "visual_data")]
 use crate::model::ModelFileHeader;
 use crate::sqpack::read_data_block;
@@ -191,7 +191,7 @@ impl DatFile {
     /// by the function.
     ///
     /// If the block of data is successfully parsed, it returns the file data - otherwise is None.
-    pub fn read_from_offset(&mut self, offset: u32) -> Option<MemoryBuffer> {
+    pub fn read_from_offset(&mut self, offset: u32) -> Option<ByteBuffer> {
         let offset = (offset * 0x80) as u64;
 
         self.file
@@ -219,7 +219,7 @@ impl DatFile {
     }
 
     /// Reads a standard file block.
-    fn read_standard_file(&mut self, offset: u64, file_info: &FileInfo) -> Option<MemoryBuffer> {
+    fn read_standard_file(&mut self, offset: u64, file_info: &FileInfo) -> Option<ByteBuffer> {
         let standard_file_info = file_info.standard_info.as_ref().unwrap();
 
         let mut blocks: Vec<Block> = Vec::with_capacity(standard_file_info.num_blocks as usize);
@@ -247,7 +247,7 @@ impl DatFile {
 
     /// Reads a model file block.
     #[cfg(feature = "visual_data")]
-    fn read_model_file(&mut self, offset: u64, file_info: &FileInfo) -> Option<MemoryBuffer> {
+    fn read_model_file(&mut self, offset: u64, file_info: &FileInfo) -> Option<ByteBuffer> {
         let mut buffer = Cursor::new(Vec::new());
 
         let model_file_info = file_info.model_info.as_ref().unwrap();
@@ -397,7 +397,7 @@ impl DatFile {
     }
 
     /// Reads a texture file block.
-    fn read_texture_file(&mut self, offset: u64, file_info: &FileInfo) -> Option<MemoryBuffer> {
+    fn read_texture_file(&mut self, offset: u64, file_info: &FileInfo) -> Option<ByteBuffer> {
         let mut data: Vec<u8> = Vec::with_capacity(file_info.file_size as usize);
 
         let texture_file_info = file_info.texture_info.as_ref().unwrap();

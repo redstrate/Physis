@@ -3,8 +3,7 @@
 
 use std::collections::HashMap;
 use std::io::{BufRead, BufReader, BufWriter, Cursor, Write};
-
-use crate::gamedata::MemoryBuffer;
+use crate::{ByteBuffer, ByteSpan};
 
 /// Represents a collection of keys, mapped to their values.
 #[derive(Debug)]
@@ -24,7 +23,7 @@ pub struct ConfigFile {
 
 impl ConfigFile {
     /// Parses an existing config file.
-    pub fn from_existing(buffer: &MemoryBuffer) -> Option<ConfigFile> {
+    pub fn from_existing(buffer: ByteSpan) -> Option<ConfigFile> {
         let mut cfg = ConfigFile {
             categories: Vec::new(),
             settings: HashMap::new()
@@ -55,8 +54,8 @@ impl ConfigFile {
     }
 
     /// Writes an existing config file to a buffer.
-    pub fn write_to_buffer(&self) -> Option<MemoryBuffer> {
-        let mut buffer = MemoryBuffer::new();
+    pub fn write_to_buffer(&self) -> Option<ByteBuffer> {
+        let mut buffer = ByteBuffer::new();
 
         {
             let cursor = Cursor::new(&mut buffer);
@@ -128,7 +127,7 @@ mod tests {
         ConfigFile::from_existing(&read(d).unwrap()).unwrap()
     }
 
-    fn common_setup_modified() -> MemoryBuffer {
+    fn common_setup_modified() -> ByteBuffer {
         let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
         d.push("resources/tests");
         d.push("FFXIV.modified.cfg");

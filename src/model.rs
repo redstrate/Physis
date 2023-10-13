@@ -7,8 +7,7 @@ use binrw::{BinResult, binrw, BinWrite, BinWriterExt};
 use binrw::BinRead;
 use binrw::BinReaderExt;
 use half::f16;
-
-use crate::gamedata::MemoryBuffer;
+use crate::{ByteBuffer, ByteSpan};
 
 #[binrw]
 #[derive(Debug)]
@@ -342,7 +341,7 @@ pub struct MDL {
 }
 
 impl MDL {
-    pub fn from_existing(buffer: &MemoryBuffer) -> Option<MDL> {
+    pub fn from_existing(buffer: ByteSpan) -> Option<MDL> {
         let mut cursor = Cursor::new(buffer);
         let model_file_header = ModelFileHeader::read(&mut cursor).unwrap();
 
@@ -537,8 +536,8 @@ impl MDL {
         })
     }
 
-    pub fn write_to_buffer(&self) -> Option<MemoryBuffer> {
-        let mut buffer = MemoryBuffer::new();
+    pub fn write_to_buffer(&self) -> Option<ByteBuffer> {
+        let mut buffer = ByteBuffer::new();
 
         {
             let mut cursor = Cursor::new(&mut buffer);
@@ -665,7 +664,7 @@ impl MDL {
         Some(buffer)
     }
 
-    fn read_byte_float4(cursor: &mut Cursor<&MemoryBuffer>) -> Option<[f32; 4]> {
+    fn read_byte_float4(cursor: &mut Cursor<ByteSpan>) -> Option<[f32; 4]> {
         Some([
             f32::from(cursor.read_le::<u8>().ok()?) / 255.0,
             f32::from(cursor.read_le::<u8>().ok()?) / 255.0,
@@ -674,7 +673,7 @@ impl MDL {
         ])
     }
 
-    fn read_half4(cursor: &mut Cursor<&MemoryBuffer>) -> Option<[f32; 4]> {
+    fn read_half4(cursor: &mut Cursor<ByteSpan>) -> Option<[f32; 4]> {
         Some([
              f16::from_bits(cursor.read_le::<u16>().ok()?).to_f32(),
              f16::from_bits(cursor.read_le::<u16>().ok()?).to_f32(),
@@ -683,7 +682,7 @@ impl MDL {
         ])
     }
 
-    fn read_uint(cursor: &mut Cursor<&MemoryBuffer>) -> BinResult<[u8; 4]> {
+    fn read_uint(cursor: &mut Cursor<ByteSpan>) -> BinResult<[u8; 4]> {
         cursor.read_le::<[u8; 4]>()
     }
 
@@ -691,7 +690,7 @@ impl MDL {
         cursor.write_le(vec)
     }
 
-    fn read_single3(cursor: &mut Cursor<&MemoryBuffer>) -> BinResult<[f32; 3]> {
+    fn read_single3(cursor: &mut Cursor<ByteSpan>) -> BinResult<[f32; 3]> {
         cursor.read_le::<[f32; 3]>()
     }
 
@@ -699,7 +698,7 @@ impl MDL {
         cursor.write_le(vec)
     }
 
-    fn read_single4(cursor: &mut Cursor<&MemoryBuffer>) -> BinResult<[f32; 4]> {
+    fn read_single4(cursor: &mut Cursor<ByteSpan>) -> BinResult<[f32; 4]> {
         cursor.read_le::<[f32; 4]>()
     }
 

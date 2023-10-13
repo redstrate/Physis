@@ -10,8 +10,8 @@ use binrw::{binread, BinRead};
 use binrw::helpers::until_eof;
 use glam::Mat4;
 
-use crate::gamedata::MemoryBuffer;
 use crate::havok::{HavokAnimationContainer, HavokBinaryTagFileReader};
+use crate::ByteSpan;
 
 #[binread]
 #[br(little)]
@@ -69,7 +69,7 @@ pub struct Skeleton {
 }
 
 impl Skeleton {
-    pub fn from_existing(buffer: &MemoryBuffer) -> Option<Skeleton> {
+    pub fn from_existing(buffer: ByteSpan) -> Option<Skeleton> {
         let mut cursor = Cursor::new(buffer);
 
         let sklb = SKLB::read(&mut cursor).unwrap();

@@ -5,8 +5,7 @@ use std::io::{Cursor, Seek, SeekFrom};
 
 use binrw::BinRead;
 use binrw::binrw;
-
-use crate::gamedata::MemoryBuffer;
+use crate::ByteSpan;
 
 #[binrw]
 #[allow(dead_code)]
@@ -73,7 +72,7 @@ pub struct ChatLog {
 }
 
 impl ChatLog {
-    pub fn from_existing(buffer: &MemoryBuffer) -> Option<ChatLog> {
+    pub fn from_existing(buffer: ByteSpan) -> Option<ChatLog> {
         let mut cursor = Cursor::new(buffer);
 
         let header = ChatLogHeader::read(&mut cursor).expect("Cannot parse header.");

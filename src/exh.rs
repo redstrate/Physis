@@ -7,7 +7,7 @@ use binrw::BinRead;
 use binrw::binrw;
 
 use crate::common::Language;
-use crate::gamedata::MemoryBuffer;
+use crate::ByteSpan;
 
 #[binrw]
 #[brw(magic = b"EXHF")]
@@ -83,7 +83,7 @@ pub struct EXH {
 }
 
 impl EXH {
-    pub fn from_existing(buffer: &MemoryBuffer) -> Option<EXH> {
+    pub fn from_existing(buffer: ByteSpan) -> Option<EXH> {
         EXH::read(&mut Cursor::new(&buffer)).ok()
     }
 }

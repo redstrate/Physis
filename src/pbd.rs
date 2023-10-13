@@ -5,8 +5,7 @@ use std::io::{Cursor, Seek, SeekFrom};
 
 use binrw::{BinRead, BinReaderExt, BinWrite};
 use binrw::binrw;
-
-use crate::gamedata::MemoryBuffer;
+use crate::ByteSpan;
 
 #[binrw]
 #[derive(Debug)]
@@ -59,11 +58,11 @@ pub struct PreBoneDeformMatrices {
 }
 
 impl PreBoneDeformer {
-    pub fn from_existing(buffer: &MemoryBuffer) -> Option<PreBoneDeformer> {
+    pub fn from_existing(buffer: ByteSpan) -> Option<PreBoneDeformer> {
         let mut cursor = Cursor::new(buffer);
         let mut header = PreBoneDeformerHeader::read(&mut cursor).ok()?;
 
-        header.raw_data = buffer.clone();
+        header.raw_data = buffer.to_vec();
 
         Some(PreBoneDeformer {
             header
