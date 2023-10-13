@@ -79,8 +79,8 @@ impl ConfigFile {
     }
 
     pub fn has_key(&self, select_key: &str) -> bool {
-        for (category, keys) in &self.settings {
-            for (key, value) in &keys.keys {
+        for (_, keys) in &self.settings {
+            for (key, _) in &keys.keys {
                 if select_key == key {
                     return true;
                 }
@@ -91,7 +91,7 @@ impl ConfigFile {
     }
 
     pub fn has_category(&self, select_category: &str) -> bool {
-        for (category, keys) in &self.settings {
+        for (category, _) in &self.settings {
             if select_category == category {
                 return true;
             }
@@ -101,7 +101,7 @@ impl ConfigFile {
     }
 
     pub fn set_value(&mut self, select_key: &str, new_value: &str) {
-        for (category, keys) in &mut self.settings {
+        for (_, keys) in &mut self.settings {
             for (key, value) in &mut keys.keys {
                 if select_key == key {
                     *value = new_value.to_string();
@@ -114,7 +114,7 @@ impl ConfigFile {
 
 #[cfg(test)]
 mod tests {
-    use std::fs::{read, write};
+    use std::fs::read;
     use std::path::PathBuf;
 
     use super::*;

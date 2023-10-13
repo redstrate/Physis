@@ -3,7 +3,7 @@
 
 use std::io::{Cursor, Seek, SeekFrom};
 
-use binrw::{BinRead, BinReaderExt, BinWrite};
+use binrw::{BinRead, BinReaderExt};
 use binrw::binrw;
 use crate::ByteSpan;
 
@@ -86,22 +86,22 @@ impl PreBoneDeformer {
         let mut cursor = Cursor::new(&self.header.raw_data);
 
         loop {
-            cursor.seek(SeekFrom::Start(item.data_offset as u64));
+            cursor.seek(SeekFrom::Start(item.data_offset as u64)).ok()?;
             let bone_name_count = cursor.read_le::<u32>().unwrap() as usize;
 
             let string_offsets_base = item.data_offset as usize + core::mem::size_of::<u32>();
 
-            cursor.seek(SeekFrom::Start(string_offsets_base as u64));
+            cursor.seek(SeekFrom::Start(string_offsets_base as u64)).ok()?;
             let mut strings_offset = vec![];
-            for i in 0..bone_name_count {
+            for _ in 0..bone_name_count {
                 strings_offset.push(cursor.read_le::<u16>().unwrap());
             }
 
             let matrices_base = string_offsets_base + (bone_name_count + bone_name_count % 2) * 2;
-            cursor.seek(SeekFrom::Start(matrices_base as u64));
+            cursor.seek(SeekFrom::Start(matrices_base as u64)).ok()?;
 
             let mut matrices = vec![];
-            for i in 0..bone_name_count {
+            for _ in 0..bone_name_count {
                 matrices.push(cursor.read_le::<[f32; 12]>().unwrap());
             }
 
@@ -110,7 +110,7 @@ impl PreBoneDeformer {
 
                 let mut string = String::new();
 
-                cursor.seek(SeekFrom::Start(string_offset as u64));
+                cursor.seek(SeekFrom::Start(string_offset as u64)).ok()?;
                 let mut next_char = cursor.read_le::<u8>().unwrap() as char;
                 while next_char != '\0' {
                     string.push(next_char);

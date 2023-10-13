@@ -95,11 +95,11 @@ impl ShaderPackage {
         cursor.seek(SeekFrom::Current((shpk_header.c1 as u64 * 0x08) as i64)).ok()?;
 
         for _ in 0..shpk_header.scalar_parameter_count {
-            let header = ParameterHeader::read_le(&mut cursor);
+            let _ = ParameterHeader::read_le(&mut cursor).ok()?;
         }
 
         for _ in 0..shpk_header.resource_parameter_count {
-            let header = ParameterHeader::read_le(&mut cursor);
+            let _ = ParameterHeader::read_le(&mut cursor).ok()?;
         }
 
         // shader bytecode
