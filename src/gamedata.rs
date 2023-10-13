@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2023 Joshua Goins <josh@redstrate.com>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+use std::collections::HashMap;
 use std::fs;
 use std::fs::{DirEntry, ReadDir};
 use std::path::PathBuf;
@@ -25,6 +26,8 @@ pub struct GameData {
 
     /// Repositories in the game directory.
     pub repositories: Vec<Repository>,
+
+    index_files: HashMap<String, IndexFile>
 }
 
 fn is_valid(path: &str) -> bool {
@@ -70,6 +73,7 @@ impl GameData {
             true => Some(Self {
                 game_directory: String::from(directory),
                 repositories: vec![],
+                index_files: HashMap::new()
             }),
             false => {
                 println!("Game data is not valid!");
@@ -119,21 +123,6 @@ impl GameData {
         self.repositories.sort();
     }
 
-    fn get_index_file(&self, path: &str) -> Option<IndexFile> {
-        let (repository, category) = self.parse_repository_category(path)?;
-
-        let index_path: PathBuf = [
-            self.game_directory.clone(),
-            "sqpack".to_string(),
-            repository.name.clone(),
-            repository.index_filename(category),
-        ]
-        .iter()
-        .collect();
-
-        IndexFile::from_existing(index_path.to_str()?)
-    }
-
     fn get_dat_file(&self, path: &str, data_file_id: u32) -> Option<DatFile> {
         let (repository, category) = self.parse_repository_category(path).unwrap();
 
@@ -162,11 +151,13 @@ impl GameData {
     ///     println!("Oh noes!");
     /// }
     /// ```
-    pub fn exists(&self, path: &str) -> bool {
+    pub fn exists(&mut self, path: &str) -> bool {
         let hash = calculate_hash(path);
+        let index_path = self.get_index_filename(path);
 
+        self.cache_index_file(&index_path);
         let index_file = self
-            .get_index_file(path)
+            .get_index_file(&index_path)
             .expect("Failed to find index file.");
 
         index_file.entries.iter().any(|s| s.hash == hash)
@@ -186,12 +177,14 @@ impl GameData {
     /// let mut file = std::fs::File::create("root.exl").unwrap();
     /// file.write(data.as_slice()).unwrap();
     /// ```
-    pub fn extract(&self, path: &str) -> Option<ByteBuffer> {
+    pub fn extract(&mut self, path: &str) -> Option<ByteBuffer> {
         debug!(file=path, "Extracting file");
 
         let hash = calculate_hash(path);
+        let index_path = self.get_index_filename(path);
 
-        let index_file = self.get_index_file(path)?;
+        self.cache_index_file(&index_path);
+        let index_file = self.get_index_file(&index_path)?;
 
         let slice = index_file.entries.iter().find(|s| s.hash == hash);
         match slice {
@@ -222,7 +215,22 @@ impl GameData {
         Some((&self.repositories[0], string_to_category(tokens[0])?))
     }
 
-    pub fn read_excel_sheet_header(&self, name: &str) -> Option<EXH> {
+    fn get_index_filename(&self, path: &str) -> String {
+        let (repository, category) = self.parse_repository_category(path).unwrap();
+
+        let index_path: PathBuf = [
+            &self.game_directory,
+            "sqpack",
+            &repository.name,
+            &repository.index_filename(category),
+        ]
+            .iter()
+            .collect();
+
+        index_path.into_os_string().into_string().unwrap()
+    }
+
+    pub fn read_excel_sheet_header(&mut self, name: &str) -> Option<EXH> {
         let root_exl_file = self.extract("exd/root.exl")?;
 
         let root_exl = EXL::from_existing(&root_exl_file)?;
@@ -240,7 +248,7 @@ impl GameData {
         None
     }
 
-    pub fn get_all_sheet_names(&self) -> Option<Vec<String>> {
+    pub fn get_all_sheet_names(&mut self) -> Option<Vec<String>> {
         let root_exl_file = self.extract("exd/root.exl")?;
 
         let root_exl = EXL::from_existing(&root_exl_file)?;
@@ -254,7 +262,7 @@ impl GameData {
     }
 
     pub fn read_excel_sheet(
-        &self,
+        &mut self,
         name: &str,
         exh: &EXH,
         language: Language,
@@ -365,6 +373,16 @@ impl GameData {
         }
 
         Ok(())
+    }
+
+    fn cache_index_file(&mut self, filename: &str)  {
+        if !self.index_files.contains_key(filename) {
+            self.index_files.insert(filename.to_string(), IndexFile::from_existing(filename).unwrap());
+        }
+    }
+
+    fn get_index_file(&self, filename: &str) -> Option<&IndexFile> {
+        self.index_files.get(filename)
     }
 }
 

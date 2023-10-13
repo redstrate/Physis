@@ -23,7 +23,7 @@ pub enum RepositoryType {
 
 /// Encapsulates a directory of game data, such as "ex1". This data is also versioned.
 /// This handles calculating the correct dat and index filenames, mainly for `GameData`.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Repository {
     /// The folder name, such as "ex1".
     pub name: String,
@@ -65,7 +65,7 @@ impl PartialOrd for Repository {
 
 /// This refers to the specific root directory a file is located in.
 /// This is a fixed list of directories, and all of them are known.
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Copy, Clone)]
 pub enum Category {
     /// Common files such as game fonts, and other data that doesn't really fit anywhere else.
     Common,
