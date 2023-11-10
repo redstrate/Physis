@@ -377,7 +377,9 @@ impl GameData {
 
     fn cache_index_file(&mut self, filename: &str)  {
         if !self.index_files.contains_key(filename) {
-            self.index_files.insert(filename.to_string(), IndexFile::from_existing(filename).unwrap());
+            if let Some(index_file) = IndexFile::from_existing(filename) {
+                self.index_files.insert(filename.to_string(), index_file);
+            }
         }
     }
 
