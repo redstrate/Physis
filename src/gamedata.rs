@@ -6,7 +6,7 @@ use std::fs;
 use std::fs::{DirEntry, ReadDir};
 use std::path::PathBuf;
 
-use tracing::debug;
+use tracing::{debug, warn};
 
 use crate::common::{Language, read_version};
 use crate::dat::DatFile;
@@ -34,7 +34,7 @@ fn is_valid(path: &str) -> bool {
     let d = PathBuf::from(path);
 
     if fs::metadata(d.as_path()).is_err() {
-        println!("Failed game directory.");
+        warn!("Game directory not found.");
         return false;
     }
 
@@ -76,7 +76,7 @@ impl GameData {
                 index_files: HashMap::new()
             }),
             false => {
-                println!("Game data is not valid!");
+                warn!("Game data is not valid!");
                 None
             }
         }

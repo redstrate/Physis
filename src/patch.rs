@@ -10,6 +10,7 @@ use std::path::PathBuf;
 use binrw::binread;
 use binrw::BinRead;
 use binrw::binrw;
+use tracing::debug;
 
 use crate::common::Region;
 use crate::sqpack::read_data_block_patch;
@@ -620,10 +621,10 @@ pub fn apply_patch(data_dir: &str, patch_path: &str) -> Result<(), PatchError> {
                 // Currently, IgnoreMissing and IgnoreOldMismatch is not used in XIVQuickLauncher either. This stays as an intentional NOP.
             }
             ChunkType::AddDirectory(_) => {
-                println!("PATCH: NOP AddDirectory");
+                debug!("PATCH: NOP AddDirectory");
             }
             ChunkType::DeleteDirectory(_) => {
-                println!("PATCH: NOP DeleteDirectory");
+                debug!("PATCH: NOP DeleteDirectory");
             }
             ChunkType::EndOfFile => {
                 return Ok(());

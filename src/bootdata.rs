@@ -3,6 +3,7 @@
 
 use std::fs;
 use std::path::PathBuf;
+use tracing::warn;
 
 use crate::patch::{apply_patch, PatchError};
 
@@ -44,7 +45,7 @@ impl BootData {
                 version: fs::read_to_string(format!("{directory}/ffxivboot.ver")).unwrap(),
             }),
             false => {
-                println!("Boot data is not valid!");
+                warn!("Boot data is not valid!");
                 None
             }
         }
