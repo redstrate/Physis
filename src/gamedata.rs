@@ -156,11 +156,11 @@ impl GameData {
         let index_path = self.get_index_filename(path);
 
         self.cache_index_file(&index_path);
-        let index_file = self
-            .get_index_file(&index_path)
-            .expect("Failed to find index file.");
-
-        index_file.entries.iter().any(|s| s.hash == hash)
+        if let Some(index_file) = self.get_index_file(&index_path) {
+            index_file.entries.iter().any(|s| s.hash == hash)
+        } else {
+            false
+        }
     }
 
     /// Extracts the file located at `path`. This is returned as an in-memory buffer, and will usually
