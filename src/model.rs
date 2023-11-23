@@ -70,7 +70,7 @@ enum ModelFlags2 {
 #[derive(Debug, Clone)]
 #[allow(dead_code)]
 pub struct ModelHeader {
-    #[br(pad_after = 2)]
+    #[brw(pad_after = 2)]
     string_count: u16,
     string_size: u32,
 
@@ -96,18 +96,17 @@ pub struct ModelHeader {
     element_id_count: u16,
     terrain_shadow_mesh_count: u8,
 
-    #[br(err_context("radius = {}", radius))]
     flags2: ModelFlags2,
 
     model_clip_out_of_distance: f32,
     shadow_clip_out_of_distance: f32,
 
-    #[br(pad_before = 2)]
-    #[br(pad_after = 2)]
+    #[brw(pad_before = 2)]
+    #[brw(pad_after = 2)]
     terrain_shadow_submesh_count: u16,
 
     bg_change_material_index: u8,
-    #[br(pad_after = 12)]
+    #[brw(pad_after = 12)]
     bg_crest_change_material_index: u8,
 }
 
@@ -137,7 +136,7 @@ struct MeshLod {
     edge_geometry_size: u32,
     edge_geometry_data_offset: u32,
 
-    #[br(pad_after = 4)]
+    #[brw(pad_after = 4)]
     polygon_count: u32,
 
     vertex_buffer_size: u32,
@@ -150,7 +149,7 @@ struct MeshLod {
 #[derive(Debug, Clone)]
 #[allow(dead_code)]
 struct Mesh {
-    #[br(pad_after = 2)]
+    #[brw(pad_after = 2)]
     vertex_count: u16,
     index_count: u32,
 
@@ -186,7 +185,7 @@ struct Submesh {
 struct BoneTable {
     bone_indices: [u16; 64],
 
-    #[br(pad_after = 3)]
+    #[brw(pad_after = 3)]
     bone_count: u8,
 }
 
@@ -232,18 +231,16 @@ struct ModelData {
     bone_tables: Vec<BoneTable>,
 
     // TODO: implement shapes
-    #[br(temp)]
-    #[bw(ignore)]
     submesh_bone_map_size: u32,
 
     #[br(count = submesh_bone_map_size / 2, err_context("lods = {:#?}", lods))]
     submesh_bone_map: Vec<u16>,
 
-    #[br(temp)]
-    #[bw(ignore)]
+    // TODO: what actually is this?
     padding_amount: u8,
 
     #[br(pad_before = padding_amount)]
+    #[bw(pad_before = *padding_amount)]
     bounding_box: BoundingBox,
     model_bounding_box: BoundingBox,
     water_bounding_box: BoundingBox,
@@ -553,8 +550,8 @@ impl MDL {
 
                 cursor.write_all(&[255u8]).ok()?;
 
-                // We don't have a +1 here like we do in read, because writing the EOF (255) pushes our cursor forward.
-                let to_seek = 17 * 8 - (declaration.elements.len()) * 8;
+                // We have a -1 here like we do in read, because writing the EOF (255) pushes our cursor forward.
+                let to_seek = 17 * 8 - (declaration.elements.len()) * 8 - 1;
                 cursor.seek(SeekFrom::Current(to_seek as i64)).ok()?;
             }
 
@@ -562,9 +559,9 @@ impl MDL {
 
             for (l, lod) in self.lods.iter().enumerate() {
                 for (i, part) in lod.parts.iter().enumerate() {
-                    for (k, vert) in part.vertices.iter().enumerate() {
-                        let declaration = &self.vertex_declarations[i];
+                    let declaration = &self.vertex_declarations[part.mesh_index as usize];
 
+                    for (k, vert) in part.vertices.iter().enumerate() {
                         for element in &declaration.elements {
                             cursor
                                 .seek(SeekFrom::Start(
@@ -596,7 +593,7 @@ impl MDL {
                                 VertexUsage::BlendWeights => {
                                     match element.vertex_type {
                                         VertexType::ByteFloat4 => {
-                                            MDL::write_single4(&mut cursor, &vert.bone_weight).ok()?;
+                                            MDL::write_byte_float4(&mut cursor, &vert.bone_weight).ok()?;
                                         }
                                         _ => {
                                             panic!("Unexpected vertex type for blendweight: {:#?}", element.vertex_type);
@@ -616,7 +613,7 @@ impl MDL {
                                 VertexUsage::Normal => {
                                     match element.vertex_type {
                                         VertexType::Half4 => {
-                                            MDL::write_single4(&mut cursor, &MDL::pad_slice(&vert.normal)).ok()?;
+                                            MDL::write_half4(&mut cursor, &MDL::pad_slice(&vert.normal)).ok()?;
                                         }
                                         VertexType::Single3 => {
                                             MDL::write_single3(&mut cursor, &vert.normal).ok()?;
@@ -629,7 +626,7 @@ impl MDL {
                                 VertexUsage::UV => {
                                     match element.vertex_type {
                                         VertexType::Half4 => {
-                                            //MDL::write_half4(&mut cursor, &MDL::pad_slice(&vert.uv)).ok()?;
+                                            MDL::write_half4(&mut cursor, &MDL::pad_slice(&vert.uv)).ok()?;
                                         }
                                         VertexType::Single4 => {
                                             MDL::write_single4(&mut cursor, &MDL::pad_slice(&vert.uv)).ok()?;
@@ -648,14 +645,14 @@ impl MDL {
 
                     cursor
                         .seek(SeekFrom::Start(
-                            (self.file_header.index_offsets[i]
+                            (self.file_header.index_offsets[l]
                                 + (self.model_data.meshes[part.mesh_index as usize].start_index * 2))
                                 as u64,
                         ))
                         .ok()?;
 
                     for indice in &part.indices {
-                        cursor.write_le(&indice).ok()?;
+                        cursor.write_le::<u16>(&indice).ok()?;
                     }
                 }
             }
@@ -673,6 +670,14 @@ impl MDL {
         ])
     }
 
+    fn write_byte_float4<T: BinWriterExt>(cursor: &mut T, vec: &[f32; 4]) -> BinResult<()> {
+        cursor.write_le::<[u8; 4]>(&[
+            (vec[0] * 255.0) as u8,
+            (vec[1] * 255.0) as u8,
+            (vec[2] * 255.0) as u8,
+            (vec[3] * 255.0) as u8])
+    }
+
     fn read_half4(cursor: &mut Cursor<ByteSpan>) -> Option<[f32; 4]> {
         Some([
              f16::from_bits(cursor.read_le::<u16>().ok()?).to_f32(),
@@ -682,12 +687,20 @@ impl MDL {
         ])
     }
 
+    fn write_half4<T: BinWriterExt>(cursor: &mut T, vec: &[f32; 4]) -> BinResult<()> {
+        cursor.write_le::<[u16; 4]>(&[
+            f16::from_f32(vec[0]).to_bits(),
+            f16::from_f32(vec[1]).to_bits(),
+            f16::from_f32(vec[2]).to_bits(),
+            f16::from_f32(vec[3]).to_bits()])
+    }
+
     fn read_uint(cursor: &mut Cursor<ByteSpan>) -> BinResult<[u8; 4]> {
         cursor.read_le::<[u8; 4]>()
     }
 
     fn write_uint<T: BinWriterExt>(cursor: &mut T, vec: &[u8; 4]) -> BinResult<()> {
-        cursor.write_le(vec)
+        cursor.write_le::<[u8; 4]>(vec)
     }
 
     fn read_single3(cursor: &mut Cursor<ByteSpan>) -> BinResult<[f32; 3]> {
@@ -695,7 +708,7 @@ impl MDL {
     }
 
     fn write_single3<T: BinWriterExt>(cursor: &mut T, vec: &[f32; 3]) -> BinResult<()> {
-        cursor.write_le(vec)
+        cursor.write_le::<[f32; 3]>(vec)
     }
 
     fn read_single4(cursor: &mut Cursor<ByteSpan>) -> BinResult<[f32; 4]> {
@@ -703,7 +716,7 @@ impl MDL {
     }
 
     fn write_single4<T: BinWriterExt>(cursor: &mut T, vec: &[f32; 4]) -> BinResult<()> {
-        cursor.write_le(vec)
+        cursor.write_le::<[f32; 4]>(vec)
     }
 
     fn pad_slice<const N: usize>(small_slice: &[f32; N]) -> [f32; 4] {
