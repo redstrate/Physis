@@ -734,11 +734,6 @@ impl MDL {
     }
 
     fn read_byte_float4(cursor: &mut Cursor<ByteSpan>) -> Option<[f32; 4]> {
-        // TODO: hmmm
-        fn round(x: f32) -> f32 {
-            (x * 100.0).round() / 100.0
-        }
-
         Some([
             (f32::from(cursor.read_le::<u8>().ok()?) / 255.0),
             (f32::from(cursor.read_le::<u8>().ok()?) / 255.0),
