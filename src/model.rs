@@ -9,6 +9,11 @@ use binrw::BinReaderExt;
 use half::f16;
 use crate::{ByteBuffer, ByteSpan};
 
+// Maximum value of byte, used to divide and multiply floats in that space [0.0..1.0] to [0..255]
+const MAX_BYTE_FLOAT: f32 = u8::MAX as f32;
+// Marker for end of stream (0xFF)
+const END_OF_STREAM: u8 = 0xFF;
+
 #[binrw]
 #[derive(Debug)]
 #[brw(little)]
@@ -359,7 +364,7 @@ impl MDL {
 
                 element = VertexElement::read(&mut cursor).unwrap();
 
-                if element.stream == 255 {
+                if element.stream == END_OF_STREAM {
                     break;
                 }
             }
@@ -589,7 +594,7 @@ impl MDL {
                     element.write(&mut cursor).ok()?;
                 }
 
-                cursor.write_all(&[255u8]).ok()?;
+                cursor.write_all(&[END_OF_STREAM]).ok()?;
 
                 // We have a -1 here like we do in read, because writing the EOF (255) pushes our cursor forward.
                 let to_seek = 17 * 8 - (declaration.elements.len()) * 8 - 1;
@@ -599,7 +604,7 @@ impl MDL {
             self.model_data.write(&mut cursor).ok()?;
 
             for (l, lod) in self.lods.iter().enumerate() {
-                for (i, part) in lod.parts.iter().enumerate() {
+                for part in lod.parts.iter() {
                     let declaration = &self.vertex_declarations[part.mesh_index as usize];
 
                     for (k, vert) in part.vertices.iter().enumerate() {
@@ -724,7 +729,7 @@ impl MDL {
                         .ok()?;
 
                     for indice in &part.indices {
-                        cursor.write_le::<u16>(&indice).ok()?;
+                        cursor.write_le::<u16>(indice).ok()?;
                     }
                 }
             }
@@ -735,19 +740,19 @@ impl MDL {
 
     fn read_byte_float4(cursor: &mut Cursor<ByteSpan>) -> Option<[f32; 4]> {
         Some([
-            (f32::from(cursor.read_le::<u8>().ok()?) / 255.0),
-            (f32::from(cursor.read_le::<u8>().ok()?) / 255.0),
-            (f32::from(cursor.read_le::<u8>().ok()?) / 255.0),
-            (f32::from(cursor.read_le::<u8>().ok()?) / 255.0)
+            (f32::from(cursor.read_le::<u8>().ok()?) / MAX_BYTE_FLOAT),
+            (f32::from(cursor.read_le::<u8>().ok()?) / MAX_BYTE_FLOAT),
+            (f32::from(cursor.read_le::<u8>().ok()?) / MAX_BYTE_FLOAT),
+            (f32::from(cursor.read_le::<u8>().ok()?) / MAX_BYTE_FLOAT)
         ])
     }
 
     fn write_byte_float4<T: BinWriterExt>(cursor: &mut T, vec: &[f32; 4]) -> BinResult<()> {
         cursor.write_le::<[u8; 4]>(&[
-            (vec[0] * 255.0).round() as u8,
-            (vec[1] * 255.0).round() as u8,
-            (vec[2] * 255.0).round() as u8,
-            (vec[3] * 255.0).round() as u8])
+            (vec[0] * MAX_BYTE_FLOAT).round() as u8,
+            (vec[1] * MAX_BYTE_FLOAT).round() as u8,
+            (vec[2] * MAX_BYTE_FLOAT).round() as u8,
+            (vec[3] * MAX_BYTE_FLOAT).round() as u8])
     }
 
     fn read_half4(cursor: &mut Cursor<ByteSpan>) -> Option<[f32; 4]> {
