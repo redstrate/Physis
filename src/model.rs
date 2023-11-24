@@ -883,4 +883,12 @@ mod tests {
         let mut read_cursor = Cursor::new(v.as_slice());
         assert_eq!(MDL::read_single4(&mut read_cursor).unwrap(), a);
     }
+
+    #[test]
+    fn pad_slice() {
+        let a = [3.0, 0.0, -1.0];
+        let b = [3.0, 0.0, -1.0, 1.0];
+
+        assert_eq!(MDL::pad_slice(&a, 1.0), b);
+    }
 }
