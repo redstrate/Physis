@@ -719,8 +719,8 @@ impl MDL {
         cursor.write_le::<[f32; 4]>(vec)
     }
 
-    fn pad_slice<const N: usize>(small_slice: &[f32; N]) -> [f32; 4] {
-        let mut bigger_slice: [f32; 4] = [0.0, 0.0, 0.0, 0.0];
+    fn pad_slice<const N: usize>(small_slice: &[f32; N], fill: f32) -> [f32; 4] {
+        let mut bigger_slice: [f32; 4] = [fill, fill, fill, fill];
         bigger_slice[..N].copy_from_slice(&small_slice[..N]);
         bigger_slice
     }
