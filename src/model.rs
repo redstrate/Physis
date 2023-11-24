@@ -304,8 +304,12 @@ struct VertexElement {
 #[repr(C)]
 pub struct Vertex {
     pub position: [f32; 3],
-    pub uv: [f32; 2],
+    pub uv0: [f32; 2],
+    pub uv1: [f32; 2],
     pub normal: [f32; 3],
+    pub tangent1: [u8; 4],
+    pub tangent2: [u8; 4],
+    pub color: [f32; 4],
 
     pub bone_weight: [f32; 4],
     pub bone_id: [u8; 4],
@@ -412,8 +416,12 @@ impl MDL {
 
                 let default_vertex = Vertex {
                     position: [0.0; 3],
-                    uv: [0.0; 2],
+                    uv0: [0.0; 2],
+                    uv1: [0.0; 2],
                     normal: [0.0; 3],
+                    tangent1: [0u8; 4],
+                    tangent2: [0u8; 4],
+                    color: [0.0; 4],
                     bone_weight: [0.0; 4],
                     bone_id: [0u8; 4],
                 };
@@ -485,19 +493,52 @@ impl MDL {
                             VertexUsage::UV => {
                                 match element.vertex_type {
                                     VertexType::Half4 => {
-                                        vertices[k as usize].uv.clone_from_slice(&MDL::read_half4(&mut cursor).unwrap()[0..2]);
+                                        let combined = MDL::read_half4(&mut cursor).unwrap();
+
+                                        vertices[k as usize].uv0.clone_from_slice(&combined[0..2]);
+                                        vertices[k as usize].uv1.clone_from_slice(&combined[2..4]);
                                     }
                                     VertexType::Single4 => {
-                                        vertices[k as usize].uv.clone_from_slice(&MDL::read_single4(&mut cursor).unwrap()[0..2]);
+                                        let combined = MDL::read_single4(&mut cursor).unwrap();
+
+                                        vertices[k as usize].uv0.clone_from_slice(&combined[0..2]);
+                                        vertices[k as usize].uv1.clone_from_slice(&combined[2..4]);
                                     }
                                     _ => {
                                         panic!("Unexpected vertex type for uv: {:#?}", element.vertex_type);
                                     }
                                 }
                             }
-                            VertexUsage::Tangent2 => {}
-                            VertexUsage::Tangent1 => {}
-                            VertexUsage::Color => {}
+                            VertexUsage::Tangent2 => {
+                                match element.vertex_type {
+                                    VertexType::ByteFloat4 => {
+                                        vertices[k as usize].tangent2 = MDL::read_uint(&mut cursor).unwrap();
+                                    }
+                                    _ => {
+                                        panic!("Unexpected vertex type for tangent2: {:#?}", element.vertex_type);
+                                    }
+                                }
+                            }
+                            VertexUsage::Tangent1 => {
+                                match element.vertex_type {
+                                    VertexType::ByteFloat4 => {
+                                        vertices[k as usize].tangent1 = MDL::read_uint(&mut cursor).unwrap();
+                                    }
+                                    _ => {
+                                        panic!("Unexpected vertex type for tangent1: {:#?}", element.vertex_type);
+                                    }
+                                }
+                            }
+                            VertexUsage::Color => {
+                                match element.vertex_type {
+                                    VertexType::ByteFloat4 => {
+                                        vertices[k as usize].color = MDL::read_byte_float4(&mut cursor).unwrap();
+                                    }
+                                    _ => {
+                                        panic!("Unexpected vertex type for color: {:#?}", element.vertex_type);
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -580,7 +621,7 @@ impl MDL {
                                 VertexUsage::Position => {
                                     match element.vertex_type {
                                         VertexType::Half4 => {
-                                            MDL::write_single4(&mut cursor, &MDL::pad_slice(&vert.position)).ok()?;
+                                            MDL::write_single4(&mut cursor, &MDL::pad_slice(&vert.position, 1.0)).ok()?;
                                         }
                                         VertexType::Single3 => {
                                             MDL::write_single3(&mut cursor, &vert.position).ok()?;
@@ -613,7 +654,7 @@ impl MDL {
                                 VertexUsage::Normal => {
                                     match element.vertex_type {
                                         VertexType::Half4 => {
-                                            MDL::write_half4(&mut cursor, &MDL::pad_slice(&vert.normal)).ok()?;
+                                            MDL::write_half4(&mut cursor, &MDL::pad_slice(&vert.normal, 1.0)).ok()?;
                                         }
                                         VertexType::Single3 => {
                                             MDL::write_single3(&mut cursor, &vert.normal).ok()?;
@@ -626,19 +667,50 @@ impl MDL {
                                 VertexUsage::UV => {
                                     match element.vertex_type {
                                         VertexType::Half4 => {
-                                            MDL::write_half4(&mut cursor, &MDL::pad_slice(&vert.uv)).ok()?;
+                                            let combined = [vert.uv0[0], vert.uv0[1], vert.uv1[0], vert.uv1[1]];
+
+                                            MDL::write_half4(&mut cursor, &combined).ok()?;
                                         }
                                         VertexType::Single4 => {
-                                            MDL::write_single4(&mut cursor, &MDL::pad_slice(&vert.uv)).ok()?;
+                                            let combined = [vert.uv0[0], vert.uv0[1], vert.uv1[0], vert.uv1[1]];
+
+                                            MDL::write_single4(&mut cursor, &combined).ok()?;
                                         }
                                         _ => {
                                             panic!("Unexpected vertex type for uv: {:#?}", element.vertex_type);
                                         }
                                     }
                                 }
-                                VertexUsage::Tangent2 => {}
-                                VertexUsage::Tangent1 => {}
-                                VertexUsage::Color => {}
+                                VertexUsage::Tangent2 => {
+                                    match element.vertex_type {
+                                        VertexType::ByteFloat4 => {
+                                            MDL::write_uint(&mut cursor, &vert.tangent2).ok()?;
+                                        }
+                                        _ => {
+                                            panic!("Unexpected vertex type for tangent2: {:#?}", element.vertex_type);
+                                        }
+                                    }
+                                }
+                                VertexUsage::Tangent1 => {
+                                    match element.vertex_type {
+                                        VertexType::ByteFloat4 => {
+                                            MDL::write_uint(&mut cursor, &vert.tangent1).ok()?;
+                                        }
+                                        _ => {
+                                            panic!("Unexpected vertex type for tangent1: {:#?}", element.vertex_type);
+                                        }
+                                    }
+                                }
+                                VertexUsage::Color => {
+                                    match element.vertex_type {
+                                        VertexType::ByteFloat4 => {
+                                            MDL::write_byte_float4(&mut cursor, &vert.color).ok()?;
+                                        }
+                                        _ => {
+                                            panic!("Unexpected vertex type for color: {:#?}", element.vertex_type);
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
@@ -662,11 +734,16 @@ impl MDL {
     }
 
     fn read_byte_float4(cursor: &mut Cursor<ByteSpan>) -> Option<[f32; 4]> {
+        // TODO: hmmm
+        fn round(x: f32) -> f32 {
+            (x * 100.0).round() / 100.0
+        }
+
         Some([
-            f32::from(cursor.read_le::<u8>().ok()?) / 255.0,
-            f32::from(cursor.read_le::<u8>().ok()?) / 255.0,
-            f32::from(cursor.read_le::<u8>().ok()?) / 255.0,
-            f32::from(cursor.read_le::<u8>().ok()?) / 255.0
+            round(f32::from(cursor.read_le::<u8>().ok()?) / 255.0),
+            round(f32::from(cursor.read_le::<u8>().ok()?) / 255.0),
+            round(f32::from(cursor.read_le::<u8>().ok()?) / 255.0),
+            round(f32::from(cursor.read_le::<u8>().ok()?) / 255.0)
         ])
     }
 
