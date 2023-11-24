@@ -728,9 +728,7 @@ impl MDL {
                         ))
                         .ok()?;
 
-                    for indice in &part.indices {
-                        cursor.write_le::<u16>(indice).ok()?;
-                    }
+                    cursor.write_le(&part.indices).ok()?;
                 }
             }
         }
