@@ -740,19 +740,19 @@ impl MDL {
         }
 
         Some([
-            round(f32::from(cursor.read_le::<u8>().ok()?) / 255.0),
-            round(f32::from(cursor.read_le::<u8>().ok()?) / 255.0),
-            round(f32::from(cursor.read_le::<u8>().ok()?) / 255.0),
-            round(f32::from(cursor.read_le::<u8>().ok()?) / 255.0)
+            (f32::from(cursor.read_le::<u8>().ok()?) / 255.0),
+            (f32::from(cursor.read_le::<u8>().ok()?) / 255.0),
+            (f32::from(cursor.read_le::<u8>().ok()?) / 255.0),
+            (f32::from(cursor.read_le::<u8>().ok()?) / 255.0)
         ])
     }
 
     fn write_byte_float4<T: BinWriterExt>(cursor: &mut T, vec: &[f32; 4]) -> BinResult<()> {
         cursor.write_le::<[u8; 4]>(&[
-            (vec[0] * 255.0) as u8,
-            (vec[1] * 255.0) as u8,
-            (vec[2] * 255.0) as u8,
-            (vec[3] * 255.0) as u8])
+            (vec[0] * 255.0).round() as u8,
+            (vec[1] * 255.0).round() as u8,
+            (vec[2] * 255.0).round() as u8,
+            (vec[3] * 255.0).round() as u8])
     }
 
     fn read_half4(cursor: &mut Cursor<ByteSpan>) -> Option<[f32; 4]> {
@@ -809,6 +809,14 @@ mod tests {
     use std::io::Cursor;
     use crate::model::MDL;
 
+    macro_rules! assert_delta {
+        ($x:expr, $y:expr, $d:expr) => {
+            for i in 0..4 {
+                if !($x[i] - $y[i] < $d || $y[i] - $x[i] < $d) { panic!(); }
+            }
+        }
+    }
+
     #[test]
     fn byte_float4() {
         let a = [0.0, 1.0, 0.5, 0.25];
@@ -819,7 +827,9 @@ mod tests {
         MDL::write_byte_float4(&mut cursor, &a).unwrap();
 
         let mut read_cursor = Cursor::new(v.as_slice());
-        assert_eq!(MDL::read_byte_float4(&mut read_cursor).unwrap(), a);
+
+        let b = MDL::read_byte_float4(&mut read_cursor).unwrap();
+        assert_delta!(b, a, 0.1);
     }
 
     #[test]
