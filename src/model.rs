@@ -725,3 +725,75 @@ impl MDL {
         bigger_slice
     }
 }
+
+
+#[cfg(test)]
+mod tests {
+    use std::io::Cursor;
+    use crate::model::MDL;
+
+    #[test]
+    fn byte_float4() {
+        let a = [0.0, 1.0, 0.5, 0.25];
+
+        let mut v = vec![];
+        let mut cursor = Cursor::new(&mut v);
+
+        MDL::write_byte_float4(&mut cursor, &a).unwrap();
+
+        let mut read_cursor = Cursor::new(v.as_slice());
+        assert_eq!(MDL::read_byte_float4(&mut read_cursor).unwrap(), a);
+    }
+
+    #[test]
+    fn half4() {
+        let a = [0.0, 1.0, 0.5, 0.25];
+
+        let mut v = vec![];
+        let mut cursor = Cursor::new(&mut v);
+
+        MDL::write_half4(&mut cursor, &a).unwrap();
+
+        let mut read_cursor = Cursor::new(v.as_slice());
+        assert_eq!(MDL::read_half4(&mut read_cursor).unwrap(), a);
+    }
+
+    #[test]
+    fn uint() {
+        let a = [5u8, 0u8, 3u8, 15u8];
+
+        let mut v = vec![];
+        let mut cursor = Cursor::new(&mut v);
+
+        MDL::write_uint(&mut cursor, &a).unwrap();
+
+        let mut read_cursor = Cursor::new(v.as_slice());
+        assert_eq!(MDL::read_uint(&mut read_cursor).unwrap(), a);
+    }
+
+    #[test]
+    fn single3() {
+        let a = [3.0, 0.0, -1.0];
+
+        let mut v = vec![];
+        let mut cursor = Cursor::new(&mut v);
+
+        MDL::write_single3(&mut cursor, &a).unwrap();
+
+        let mut read_cursor = Cursor::new(v.as_slice());
+        assert_eq!(MDL::read_single3(&mut read_cursor).unwrap(), a);
+    }
+
+    #[test]
+    fn single4() {
+        let a = [3.0, 0.0, -1.0, 12.0];
+
+        let mut v = vec![];
+        let mut cursor = Cursor::new(&mut v);
+
+        MDL::write_single4(&mut cursor, &a).unwrap();
+
+        let mut read_cursor = Cursor::new(v.as_slice());
+        assert_eq!(MDL::read_single4(&mut read_cursor).unwrap(), a);
+    }
+}
