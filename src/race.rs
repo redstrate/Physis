@@ -94,6 +94,7 @@ pub fn get_race_id(race: Race, subrace: Subrace, gender: Gender) -> Option<i32> 
     Some(internal_race::convert_to_internal(race, subrace, gender).unwrap() as i32)
 }
 
+/// Builds the path to the skeleton (sklb) file for a given `race`, `subrace` and `gender`.
 pub fn build_skeleton_path(race: Race, subrace: Subrace, gender: Gender) -> String {
     format!(
         "chara/human/c{0:04}/skeleton/base/b0001/skl_c{0:04}b0001.sklb",
@@ -101,6 +102,7 @@ pub fn build_skeleton_path(race: Race, subrace: Subrace, gender: Gender) -> Stri
     )
 }
 
+/// Returns the two subraces associated with a given `race`. For example, `Hyur` would return `[Midlander, Highlander]`.
 pub fn get_supported_subraces(race: Race) -> [Subrace; 2] {
     match race {
         Race::Hyur => [Subrace::Midlander, Subrace::Highlander],
