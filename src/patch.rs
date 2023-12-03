@@ -386,8 +386,11 @@ fn get_expansion_folder(id: u16) -> String {
 }
 
 #[derive(Debug)]
+/// Errors emitted in the patching process
 pub enum PatchError {
+    /// Failed to read parts of the file
     InvalidPatchFile,
+    /// Failed to parse the patch format
     ParseError,
 }
 
