@@ -3,10 +3,7 @@
 [![Crates.io](https://img.shields.io/crates/v/physis)](https://crates.io/crates/physis)
 [![builds.sr.ht status](https://builds.sr.ht/~redstrate/physis.svg)](https://builds.sr.ht/~redstrate/physis?)
 
-Physis is a framework for interacting with FFXIV data. Designed for reading (and writing) the relevant game formats of
-FFXIV, as well as making documentation readily accessible for other developers hoping to do the same. Although this
-library works best as a Rust crate, [libphysis](https://git.sr.ht/~redstrate/libphysis) is a C API wrapper designed for
-other languages.
+Physis is a framework for interacting with FFXIV data. It can read and write lots of game formats, and is designed for tooling to be built on top of it. Even though this library works best with Rust, [libphysis](https://git.sr.ht/~redstrate/libphysis) is a C API wrapper designed for interfacing through other languages.
 
 ## Goals
 * Make it easy for people to tinker around with game data. 
@@ -55,7 +52,7 @@ ibrary code as well if you can.
 ### Testing
 
 One of the main goals of Physis is to avoid accidental regressions, this is especially important when handling game
-data that might take hours to redownload.
+data that might take hours to download.
 
 #### Unit Testing
 
@@ -91,7 +88,7 @@ are full game installations and take up a considerable amount of space.
 
 #### Semver and Dependency Checks
 
-Even though package management in Rust is easier, it's a double edged sword. I try to prevent getting carried away
+Even though package management in Rust is easier, it's a double-edged sword. I try to prevent getting carried away
 from including crates - but the ones we do include, have to get checked often. I use `cargo deny` to check my
 dependencies for mismatched versions, deprecation warnings, updates and more. This is also run on the CI!
 
@@ -110,3 +107,9 @@ help fix bugs or add functionality.
 - [sha1-smol](https://github.com/mitsuhiko/sha1-smol) for a dependency-free SHA1 implementation
 
 And everyone else who writes FFXIV tools!
+
+## License
+
+![GPLv3](https://www.gnu.org/graphics/gplv3-127x51.png)
+
+This project is licensed under the GNU General Public License 3. Some parts of the code or assets may be licensed differently, refer to the REUSE metadata.
