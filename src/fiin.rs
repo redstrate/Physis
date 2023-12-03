@@ -14,6 +14,7 @@ use crate::sha1::Sha1;
 #[brw(magic = b"FileInfo")]
 #[derive(Debug)]
 #[brw(little)]
+/// File info, which contains SHA1 of one or more files
 pub struct FileInfo {
     #[brw(pad_before = 16)]
     #[bw(calc = 1024)]
@@ -25,14 +26,18 @@ pub struct FileInfo {
 
     #[brw(pad_before = 992)]
     #[br(count = entries_size / 96)]
+    /// File info entries
     pub entries: Vec<FIINEntry>,
 }
 
 #[binrw]
 #[derive(Debug)]
+/// A file info entry
 pub struct FIINEntry {
+    /// File size (in bytes)
     pub file_size: i32,
 
+    /// The file name
     #[brw(pad_before = 4)]
     #[br(count = 64)]
     #[bw(pad_size_to = 64)]
@@ -40,6 +45,7 @@ pub struct FIINEntry {
     #[br(map = | x: Vec<u8> | String::from_utf8(x).unwrap().trim_matches(char::from(0)).to_string())]
     pub file_name: String,
 
+    /// SHA1 of the file
     #[br(count = 24)]
     #[bw(pad_size_to = 24)]
     pub sha1: Vec<u8>,
@@ -52,6 +58,7 @@ impl FileInfo {
         FileInfo::read(&mut cursor).ok()
     }
 
+    /// Writes file info into a new file
     pub fn write_to_buffer(&self) -> Option<ByteBuffer> {
         let mut buffer = ByteBuffer::new();
 

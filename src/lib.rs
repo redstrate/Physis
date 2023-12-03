@@ -70,7 +70,7 @@ pub mod exd;
 #[cfg(feature = "visual_data")]
 pub mod skeleton;
 
-/// Reading file into files (FIIN).
+/// Reading file info files (FIIN).
 pub mod fiin;
 
 /// Reading and writing chat logs (LOG).
