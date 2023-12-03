@@ -70,12 +70,16 @@ struct TexHeader {
 }
 
 pub struct Texture {
+    /// Width of the texture in pixels
     pub width: u32,
+    /// Height of the texture in pixels
     pub height: u32,
+    /// Raw RGBA data
     pub rgba: Vec<u8>,
 }
 
 impl Texture {
+    /// Reads an existing TEX file
     pub fn from_existing(buffer: ByteSpan) -> Option<Texture> {
         let mut cursor = Cursor::new(buffer);
         let header = TexHeader::read(&mut cursor).unwrap();
