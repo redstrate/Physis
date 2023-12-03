@@ -41,14 +41,19 @@ fn is_valid(path: &str) -> bool {
     true
 }
 
+/// Possible actions to repair game files
 #[derive(Debug)]
 pub enum RepairAction {
+    /// Indicates a version file is missing for a repository
     VersionFileMissing,
+    /// The version file is missing, but it can be restored via a backup
     VersionFileCanRestore,
 }
 
 #[derive(Debug)]
+/// Possible errors emitted through the repair process
 pub enum RepairError<'a> {
+    /// Failed to repair a repository
     FailedRepair(&'a Repository),
 }
 
@@ -230,6 +235,7 @@ impl GameData {
         index_path.into_os_string().into_string().unwrap()
     }
 
+    /// Read an excel sheet by name (e.g. "Achievement")
     pub fn read_excel_sheet_header(&mut self, name: &str) -> Option<EXH> {
         let root_exl_file = self.extract("exd/root.exl")?;
 
@@ -248,6 +254,7 @@ impl GameData {
         None
     }
 
+    /// Returns all known sheet names listed in the root list
     pub fn get_all_sheet_names(&mut self) -> Option<Vec<String>> {
         let root_exl_file = self.extract("exd/root.exl")?;
 
@@ -261,6 +268,7 @@ impl GameData {
         Some(names)
     }
 
+    /// Read an excel sheet
     pub fn read_excel_sheet(
         &mut self,
         name: &str,
@@ -278,6 +286,7 @@ impl GameData {
         EXD::from_existing(exh, &exd_file)
     }
 
+    /// Applies the patch to game data and returns any errors it encounters. This function will not update the version in the GameData struct.
     pub fn apply_patch(&self, patch_path: &str) -> Result<(), PatchError> {
         apply_patch(&self.game_directory, patch_path)
     }
