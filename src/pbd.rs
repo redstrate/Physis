@@ -48,16 +48,20 @@ pub struct PreBoneDeformer {
 
 #[derive(Debug)]
 pub struct PreBoneDeformBone {
+    /// Name of the affected bone
     pub name: String,
+    /// The deform matrix
     pub deform: [f32; 12]
 }
 
 #[derive(Debug)]
 pub struct PreBoneDeformMatrices {
+    /// The prebone deform bones
     pub bones: Vec<PreBoneDeformBone>
 }
 
 impl PreBoneDeformer {
+    /// Reads an existing PBD file
     pub fn from_existing(buffer: ByteSpan) -> Option<PreBoneDeformer> {
         let mut cursor = Cursor::new(buffer);
         let mut header = PreBoneDeformerHeader::read(&mut cursor).ok()?;
@@ -69,6 +73,7 @@ impl PreBoneDeformer {
         })
     }
 
+    /// Calculates the deform matrices between two races
     pub fn get_deform_matrices(&self, from_body_id: u16, to_body_id: u16) -> Option<PreBoneDeformMatrices> {
         if from_body_id == to_body_id {
             return None;
