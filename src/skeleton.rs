@@ -55,20 +55,27 @@ struct SKLB {
 
 #[derive(Debug)]
 pub struct Bone {
+    /// Name of the bone
     pub name: String,
+    /// Index of the parent bone in the Skeleton's `bones` vector
     pub parent_index: i32,
 
+    /// Position of the bone
     pub position: [f32; 3],
+    /// Rotation quanternion of the bone
     pub rotation: [f32; 4],
+    /// Scale of the bone
     pub scale: [f32; 3],
 }
 
 #[derive(Debug)]
 pub struct Skeleton {
+    /// Bones of this skeleton
     pub bones: Vec<Bone>,
 }
 
 impl Skeleton {
+    /// Reads an existing SKLB file
     pub fn from_existing(buffer: ByteSpan) -> Option<Skeleton> {
         let mut cursor = Cursor::new(buffer);
 
