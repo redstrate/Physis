@@ -332,8 +332,8 @@ const WIPE_BUFFER: [u8; 1 << 16] = [0; 1 << 16];
 fn wipe(mut file: &File, length: u32) -> Result<(), PatchError> {
     let mut length: usize = length as usize;
     while length > 0 {
-        let num_bytes = min(WIPE_BUFFER.len(), length as usize);
-        file.write_all(&WIPE_BUFFER[0..num_bytes as usize])?;
+        let num_bytes = min(WIPE_BUFFER.len(), length);
+        file.write_all(&WIPE_BUFFER[0..num_bytes])?;
         length -= num_bytes;
     }
 
@@ -585,7 +585,7 @@ pub fn apply_patch(data_dir: &str, patch_path: &str) -> Result<(), PatchError> {
                                     new_file.set_len(0)?;
                                 }
 
-                                new_file.seek(SeekFrom::Start(fop.offset as u64))?;
+                                new_file.seek(SeekFrom::Start(fop.offset))?;
                                 new_file.write_all(&data)?;
                             }
                             SqpkFileOperation::DeleteFile => {

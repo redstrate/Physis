@@ -80,8 +80,8 @@ impl ConfigFile {
 
     /// Checks if the CFG contains a key named `select_key`
     pub fn has_key(&self, select_key: &str) -> bool {
-        for (_, keys) in &self.settings {
-            for (key, _) in &keys.keys {
+        for map in self.settings.values() {
+            for (key, _) in &map.keys {
                 if select_key == key {
                     return true;
                 }
@@ -93,7 +93,7 @@ impl ConfigFile {
 
     /// Checks if the CFG contains a category named `select_category`
     pub fn has_category(&self, select_category: &str) -> bool {
-        for (category, _) in &self.settings {
+        for category in self.settings.keys() {
             if select_category == category {
                 return true;
             }
@@ -104,7 +104,7 @@ impl ConfigFile {
 
     /// Sets the value to `new_value` of `select_key`
     pub fn set_value(&mut self, select_key: &str, new_value: &str) {
-        for (_, keys) in &mut self.settings {
+        for keys in self.settings.values_mut() {
             for (key, value) in &mut keys.keys {
                 if select_key == key {
                     *value = new_value.to_string();

@@ -85,8 +85,7 @@ impl Texture {
         let header = TexHeader::read(&mut cursor).unwrap();
 
         // TODO: Adapted from Lumina, but this really can be written better...
-        let mut texture_data_size = vec![];
-        texture_data_size.resize(min(13, header.mip_levels as usize), 0);
+        let mut texture_data_size = vec![0; min(13, header.mip_levels as usize)];
         let size = texture_data_size.len();
         for i in 0..size - 1 {
             texture_data_size[i] = header.offset_to_surface[i + 1] - header.offset_to_surface[i];
