@@ -10,7 +10,7 @@ use crate::ByteSpan;
 #[binrw]
 #[allow(dead_code)]
 #[brw(little)]
-pub struct ChatLogHeader {
+struct ChatLogHeader {
     content_size: u32,
     file_size: u32,
 
