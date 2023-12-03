@@ -83,7 +83,7 @@ impl<'a> HavokBinaryTagFileReader<'a> {
             match tag_type {
                 HavokTagType::FileInfo => {
                     self.file_version = self.read_packed_int() as u8;
-                    assert!(self.file_version == 3, "Unimplemented version");
+                    assert_eq!(self.file_version, 3, "Unimplemented version");
                     self.remembered_objects
                         .push(Arc::new(RefCell::new(HavokObject::new(self.remembered_types[0].clone(), HashMap::new()))))
                 }

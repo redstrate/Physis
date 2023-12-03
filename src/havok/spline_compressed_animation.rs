@@ -558,6 +558,10 @@ impl HavokSplineCompressedAnimation {
 }
 
 impl HavokAnimation for HavokSplineCompressedAnimation {
+    fn duration(&self) -> f32 {
+        self.duration
+    }
+
     fn sample(&self, time: f32) -> Vec<HavokTransform> {
         let frame_float = ((time / 1000.) / self.duration) * (self.num_frames as f32 - 1.);
         let frame = frame_float as usize;
@@ -587,9 +591,5 @@ impl HavokAnimation for HavokSplineCompressedAnimation {
         }
 
         result
-    }
-
-    fn duration(&self) -> f32 {
-        self.duration
     }
 }

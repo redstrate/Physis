@@ -38,11 +38,11 @@ crc = "3"
 [features]
 default = ["visual_data"]
 
-# enables game install support using unshield (only supported on Linux and macOS)
+# enables game installation support using unshield (only supported on Linux and macOS)
 game_install = []
 
-# enables support for extracting visual data, such as models, textures, materials, etc
-# this enables a whole bunch of dependencies!
+# enables support for extracting visual data, such as models, textures, materials, etc.
+# this enables a bunch of dependencies!
 # tip: can be safely turned off for launchers and other tools that simply need to extract the bare minimum of data
 visual_data = ["dep:half", "dep:glam", "dep:bitflags", "dep:texpresso"]
 
@@ -63,7 +63,7 @@ libz-sys = { version = "1.1"  }
 modular-bitfield = "0.11"
 paste = "1"
 
-# needed for half-float support which FFXIV uses in it's model data
+# needed for half-float support which FFXIV uses in its model data
 half = { version = "2", optional = true }
 
 # needed for deconstructing skeleton pose matrices
