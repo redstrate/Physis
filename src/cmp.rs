@@ -12,34 +12,49 @@ use crate::ByteSpan;
 #[repr(C)]
 #[derive(Debug, Clone, Copy)]
 pub struct RacialScalingParameters {
+    /// Male minimum height
     pub male_min_size: f32,
+    /// Male maximum height
     pub male_max_size: f32,
 
+    /// Male minimum tail size
     pub male_min_tail: f32,
+    /// Male maximum tail size
     pub male_max_tail: f32,
 
+    /// Female minimum height
     pub female_min_size: f32,
+    /// Female maximum height
     pub female_max_size: f32,
 
+    /// Female minimum tail size
     pub female_min_tail: f32,
+    /// Female maximum tail size
     pub female_max_tail: f32,
 
+    /// Minimum bust size on the X-axis
     pub bust_min_x: f32,
+    /// Minimum bust size on the Y-axis
     pub bust_min_y: f32,
+    /// Minimum bust size on the Z-axis
     pub bust_min_z: f32,
 
+    /// Maximum bust size on the X-axis
     pub bust_max_x: f32,
+    /// Maximum bust size on the Y-axis
     pub bust_max_y: f32,
+    /// Maximum bust size on the Z-axis
     pub bust_max_z: f32
 }
 
 #[derive(Debug)]
 pub struct CMP {
+    /// The racial scaling parameters
     pub parameters: Vec<RacialScalingParameters>
 }
 
 impl CMP {
-    /// Parses an existing FIIN file.
+    /// Parses an existing CMP file.
     pub fn from_existing(buffer: ByteSpan) -> Option<CMP> {
         let mut cursor = Cursor::new(buffer);
 
