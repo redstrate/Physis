@@ -21,7 +21,7 @@ pub struct ChatLogHeader {
 #[binrw]
 #[brw(repr = u8)]
 #[derive(Debug)]
-enum EventFilter {
+pub enum EventFilter {
     SystemMessages = 3,
     Unknown = 20,
     ProgressionMessage = 64,
@@ -35,7 +35,7 @@ enum EventFilter {
 #[binrw]
 #[derive(Debug)]
 #[brw(repr = u8)]
-enum EventChannel {
+pub enum EventChannel {
     System = 0,
     ServerAnnouncement = 3,
     Unknown1 = 50,
@@ -52,26 +52,32 @@ enum EventChannel {
 #[derive(Debug)]
 #[allow(dead_code)]
 #[brw(little)]
+/// Represents an entry in the chat log
 pub struct ChatLogEntry {
     timestamp: u32,
-    filter: EventFilter,
-    channel: EventChannel,
+    /// The event filter
+    pub filter: EventFilter,
+    /// The event channel
+    pub channel: EventChannel,
 
     #[br(temp)]
     #[bw(calc = 1)]
     _garbage: u32,
 
+    /// The message
     #[brw(ignore)]
-    message: String,
+    pub message: String,
 }
 
 #[derive(Debug)]
 #[allow(dead_code)]
+/// Chat log, which contains previously recorded messages from other players
 pub struct ChatLog {
-    entries: Vec<ChatLogEntry>,
+    pub entries: Vec<ChatLogEntry>,
 }
 
 impl ChatLog {
+    /// Reads an existing LOG file
     pub fn from_existing(buffer: ByteSpan) -> Option<ChatLog> {
         let mut cursor = Cursor::new(buffer);
 
