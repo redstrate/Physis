@@ -78,15 +78,19 @@ struct SHPKHeader {
 }
 
 pub struct Shader {
+    /// The HLSL bytecode of this shader. The DX level used varies.
     pub bytecode: Vec<u8>
 }
 
 pub struct ShaderPackage {
+    /// The vertex shaders in this package
     pub vertex_shaders: Vec<Shader>,
+    /// The pixel (fragment) shaders in this package
     pub pixel_shaders: Vec<Shader>
 }
 
 impl ShaderPackage {
+    /// Reads an existing SHPK file
     pub fn from_existing(buffer: ByteSpan) -> Option<ShaderPackage> {
         let mut cursor = Cursor::new(buffer);
         let shpk_header = SHPKHeader::read(&mut cursor).unwrap();
