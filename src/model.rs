@@ -305,7 +305,7 @@ struct VertexElement {
     usage_index: u8,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Copy)]
 #[repr(C)]
 pub struct Vertex {
     pub position: [f32; 3],
@@ -577,6 +577,13 @@ impl MDL {
             affected_bone_names,
             material_names
         })
+    }
+
+    pub fn replace_vertices(&mut self, lod_index: usize, part_index: usize, vertices: &[Vertex], indices: &[u16]) {
+        let part = &mut self.lods[lod_index].parts[part_index];
+
+        part.vertices.copy_from_slice(vertices);
+        part.indices.copy_from_slice(indices);
     }
 
     pub fn write_to_buffer(&self) -> Option<ByteBuffer> {
