@@ -582,8 +582,12 @@ impl MDL {
     pub fn replace_vertices(&mut self, lod_index: usize, part_index: usize, vertices: &[Vertex], indices: &[u16]) {
         let part = &mut self.lods[lod_index].parts[part_index];
 
-        part.vertices.copy_from_slice(vertices);
-        part.indices.copy_from_slice(indices);
+        part.vertices = Vec::from(vertices);
+        part.indices = Vec::from(indices);
+
+        // Update vertex count in header
+        self.model_data.meshes[part.mesh_index as usize].vertex_count = part.vertices.len() as u16;
+        self.model_data.meshes[part.mesh_index as usize].index_count = part.indices.len() as u16 as u32;
     }
 
     pub fn write_to_buffer(&self) -> Option<ByteBuffer> {
