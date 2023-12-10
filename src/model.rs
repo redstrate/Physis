@@ -340,6 +340,7 @@ pub struct MDL {
     file_header: ModelFileHeader,
     vertex_declarations: Vec<VertexDeclaration>,
     model_data: ModelData,
+    header_offset: u64,
 
     pub lods: Vec<Lod>,
     pub affected_bone_names: Vec<String>,
@@ -573,6 +574,7 @@ impl MDL {
             file_header: model_file_header,
             vertex_declarations,
             model_data: model,
+            header_offset,
             lods,
             affected_bone_names,
             material_names
@@ -588,6 +590,63 @@ impl MDL {
         // Update vertex count in header
         self.model_data.meshes[part.mesh_index as usize].vertex_count = part.vertices.len() as u16;
         self.model_data.meshes[part.mesh_index as usize].index_count = part.indices.len() as u16 as u32;
+
+        // update values
+        for i in 0..self.file_header.lod_count {
+            let mut vertex_offset = 0;
+
+            for j in self.model_data.lods[i as usize].mesh_index
+                ..self.model_data.lods[i as usize].mesh_index + self.model_data.lods[i as usize].mesh_count
+            {
+                let mesh = &mut self.model_data.meshes[j as usize];
+
+                for i in 0..mesh.vertex_stream_count as usize {
+                    mesh.vertex_buffer_offsets[i] = vertex_offset;
+                    vertex_offset += mesh.vertex_count as u32 * mesh.vertex_buffer_strides[i] as u32;
+                }
+            }
+        }
+
+        for lod in &mut self.model_data.lods {
+            let mut total_vertex_buffer_size = 0;
+
+            // still slightly off?
+            for j in lod.mesh_index
+                ..lod.mesh_index + lod.mesh_count
+            {
+                let vertex_count = self.model_data.meshes[j as usize].vertex_count;
+
+                let mut total_vertex_stride: u32 = 0;
+                for i in 0..self.model_data.meshes[j as usize].vertex_stream_count as usize {
+                    total_vertex_stride += self.model_data.meshes[j as usize].vertex_buffer_strides[i] as u32;
+                }
+
+                total_vertex_buffer_size += vertex_count as u32 * total_vertex_stride;
+            }
+
+            lod.vertex_buffer_size = total_vertex_buffer_size; // sizeof Vertex
+        }
+
+        // update lod values
+        let mut data_offset = self.header_offset as u32;
+
+        for lod in &mut self.model_data.lods {
+            lod.vertex_data_offset = data_offset;
+
+            data_offset = lod.vertex_data_offset + lod.vertex_buffer_size;
+
+            lod.index_data_offset = data_offset;
+
+            data_offset = lod.index_data_offset + lod.index_buffer_size;
+        }
+
+        for i in 0..self.lods.len() {
+            self.file_header.vertex_buffer_size[i] = self.model_data.lods[i].vertex_buffer_size;
+        }
+
+        for i in 0..self.lods.len() {
+            self.file_header.vertex_offsets[i] = self.model_data.lods[i].vertex_data_offset;
+        }
     }
 
     pub fn write_to_buffer(&self) -> Option<ByteBuffer> {
