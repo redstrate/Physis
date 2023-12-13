@@ -5,6 +5,7 @@ packages:
   - unshield
   - rsync
   - reuse
+  - cmake
 sources:
   - https://git.sr.ht/~redstrate/physis
 secrets:
