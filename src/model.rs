@@ -1,16 +1,14 @@
 // SPDX-FileCopyrightText: 2023 Joshua Goins <josh@redstrate.com>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-use std::io::{Cursor, Seek, SeekFrom, Write};
+use std::io::{Cursor, Seek, SeekFrom};
 use std::mem::size_of;
 
-use binrw::{BinResult, binrw, BinWrite, BinWriterExt};
+use binrw::{binrw, BinWrite, BinWriterExt};
 use binrw::BinRead;
 use binrw::BinReaderExt;
 use crate::{ByteBuffer, ByteSpan};
-
-// Marker for end of stream (0xFF)
-const END_OF_STREAM: u8 = 0xFF;
+use crate::model_vertex_declarations::{vertex_element_parser, vertex_element_writer, VertexDeclaration, VertexType, VertexUsage};
 
 #[binrw]
 #[derive(Debug)]
@@ -267,46 +265,6 @@ struct ElementId {
     rotate: [f32; 3],
 }
 
-#[binrw]
-#[brw(repr = u8)]
-#[derive(Copy, Clone, Debug, PartialEq)]
-enum VertexType {
-    Invalid = 0,
-    Single3 = 2,
-    Single4 = 3,
-    UInt = 5,
-    ByteFloat4 = 8,
-    Half2 = 13,
-    Half4 = 14,
-}
-
-#[binrw]
-#[brw(repr = u8)]
-#[derive(Copy, Clone, Debug)]
-enum VertexUsage {
-    Position = 0,
-    BlendWeights = 1,
-    BlendIndices = 2,
-    Normal = 3,
-    UV = 4,
-    Tangent2 = 5,
-    Tangent1 = 6,
-    Color = 7,
-}
-
-#[binrw]
-#[derive(Copy, Clone, Debug)]
-#[allow(dead_code)]
-#[brw(little)]
-pub struct VertexElement {
-    stream: u8,
-    offset: u8,
-    vertex_type: VertexType,
-    vertex_usage: VertexUsage,
-    #[brw(pad_after = 3)]
-    usage_index: u8,
-}
-
 #[derive(Clone, Copy)]
 #[repr(C)]
 pub struct Vertex {
@@ -340,58 +298,6 @@ pub struct Part {
 
 pub struct Lod {
     pub parts: Vec<Part>,
-}
-
-#[binrw::parser(reader, endian)]
-fn vertex_element_parser(count: u16) -> BinResult<Vec<VertexDeclaration>> {
-    let mut vertex_declarations: Vec<VertexDeclaration> =
-        vec![
-            VertexDeclaration { elements: vec![] };
-            count.into()
-        ];
-    for declaration in &mut vertex_declarations {
-        let mut element = VertexElement::read_options(reader, endian, ()).unwrap();
-
-        loop {
-            declaration.elements.push(element);
-
-            element = VertexElement::read_options(reader, endian, ())?;
-
-            if element.stream == END_OF_STREAM {
-                break;
-            }
-        }
-
-        let to_seek = 17 * 8 - (declaration.elements.len() + 1) * 8;
-        reader.seek(SeekFrom::Current(to_seek as i64))?;
-    }
-
-    Ok(vertex_declarations)
-}
-
-#[binrw::writer(writer, endian)]
-fn vertex_element_writer(
-    declarations: &Vec<VertexDeclaration>,
-) -> BinResult<()> {
-    // write vertex declarations
-    for declaration in declarations {
-        for element in &declaration.elements {
-            element.write_options(writer, endian, ())?;
-        }
-
-        writer.write_all(&[END_OF_STREAM])?;
-
-        // We have a -1 here like we do in read, because writing the EOF (255) pushes our cursor forward.
-        let to_seek = 17 * 8 - (declaration.elements.len()) * 8 - 1;
-        writer.seek(SeekFrom::Current(to_seek as i64))?;
-    }
-
-    Ok(())
-}
-
-#[derive(Clone, Debug)]
-pub struct VertexDeclaration {
-    pub elements: Vec<VertexElement>,
 }
 
 pub struct MDL {
