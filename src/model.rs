@@ -4,14 +4,11 @@
 use std::io::{Cursor, Seek, SeekFrom, Write};
 use std::mem::size_of;
 
-use binrw::{BinResult, binrw, BinWrite, BinWriterExt};
+use binrw::{binrw, BinWrite, BinWriterExt};
 use binrw::BinRead;
 use binrw::BinReaderExt;
-use half::f16;
 use crate::{ByteBuffer, ByteSpan};
 
-// Maximum value of byte, used to divide and multiply floats in that space [0.0..1.0] to [0..255]
-const MAX_BYTE_FLOAT: f32 = u8::MAX as f32;
 // Marker for end of stream (0xFF)
 const END_OF_STREAM: u8 = 0xFF;
 
@@ -449,12 +446,12 @@ impl MDL {
                             .seek(SeekFrom::Start(
                                 (model.lods[i as usize].vertex_data_offset
                                     + model.meshes[j as usize].vertex_buffer_offsets
-                                        [element.stream as usize]
+                                    [element.stream as usize]
                                     + element.offset as u32
                                     + model.meshes[j as usize].vertex_buffer_strides
-                                        [element.stream as usize]
-                                        as u32
-                                        * k as u32) as u64,
+                                    [element.stream as usize]
+                                    as u32
+                                    * k as u32) as u64,
                             ))
                             .ok()?;
 
@@ -674,25 +671,25 @@ impl MDL {
                 + 4 //StringSize
                 + self.model_data.header.string_size
                 + 56 //ModelHeader
-                + ( self.model_data.element_ids.len() as u32 * 32 )
-                + ( 3 * 60 ) // 3 Lods
+                + (self.model_data.element_ids.len() as u32 * 32)
+                + (3 * 60) // 3 Lods
                 //+ ( /*file.ModelHeader.ExtraLodEnabled ? 40*/ 0 )
-        + self.model_data.meshes.len() as u32 * 36
-        + self.model_data.attribute_name_offsets.len() as u32 * size_of::<u32>() as u32
-        + self.model_data.header.terrain_shadow_mesh_count as u32 * 20
-        + self.model_data.header.submesh_count as u32 * 16
-        + self.model_data.header.terrain_shadow_submesh_count as u32 * 10
-        + self.model_data.material_name_offsets.len() as u32 * size_of::<u32>() as u32
-        + self.model_data.bone_name_offsets.len() as u32 * size_of::<u32>() as u32
-        + self.model_data.bone_tables.len() as u32 * 132
-        + self.model_data.header.shape_count as u32 * 16
-        + self.model_data.header.shape_mesh_count as u32 * 12
-        + self.model_data.header.shape_value_count as u32 * 4
-        + 4 // SubmeshBoneMapSize
-        + self.model_data.submesh_bone_map.len() as u32 * 2
-        + 8          // PaddingAmount and Padding
-        + ( 4 * 32 ) // 4 BoundingBoxes
-        + ( self.model_data.header.bone_count as u32 * 32 );
+                + self.model_data.meshes.len() as u32 * 36
+                + self.model_data.attribute_name_offsets.len() as u32 * size_of::<u32>() as u32
+                + self.model_data.header.terrain_shadow_mesh_count as u32 * 20
+                + self.model_data.header.submesh_count as u32 * 16
+                + self.model_data.header.terrain_shadow_submesh_count as u32 * 10
+                + self.model_data.material_name_offsets.len() as u32 * size_of::<u32>() as u32
+                + self.model_data.bone_name_offsets.len() as u32 * size_of::<u32>() as u32
+                + self.model_data.bone_tables.len() as u32 * 132
+                + self.model_data.header.shape_count as u32 * 16
+                + self.model_data.header.shape_mesh_count as u32 * 12
+                + self.model_data.header.shape_value_count as u32 * 4
+                + 4 // SubmeshBoneMapSize
+                + self.model_data.submesh_bone_map.len() as u32 * 2
+                + 8          // PaddingAmount and Padding
+                + (4 * 32) // 4 BoundingBoxes
+                + (self.model_data.header.bone_count as u32 * 32);
 
         let mut vertex_offset = self.file_header.runtime_size
             + size_of::<ModelFileHeader>() as u32
@@ -762,12 +759,12 @@ impl MDL {
                                 .seek(SeekFrom::Start(
                                     (self.model_data.lods[l].vertex_data_offset
                                         + self.model_data.meshes[part.mesh_index as usize].vertex_buffer_offsets
-                                            [element.stream as usize]
+                                        [element.stream as usize]
                                         + element.offset as u32
                                         + self.model_data.meshes[part.mesh_index as usize].vertex_buffer_strides
-                                            [element.stream as usize]
-                                            as u32
-                                            * k as u32) as u64,
+                                        [element.stream as usize]
+                                        as u32
+                                        * k as u32) as u64,
                                 ))
                                 .ok()?;
 
@@ -883,159 +880,5 @@ impl MDL {
         }
 
         Some(buffer)
-    }
-
-    fn read_byte_float4(cursor: &mut Cursor<ByteSpan>) -> Option<[f32; 4]> {
-        Some([
-            (f32::from(cursor.read_le::<u8>().ok()?) / MAX_BYTE_FLOAT),
-            (f32::from(cursor.read_le::<u8>().ok()?) / MAX_BYTE_FLOAT),
-            (f32::from(cursor.read_le::<u8>().ok()?) / MAX_BYTE_FLOAT),
-            (f32::from(cursor.read_le::<u8>().ok()?) / MAX_BYTE_FLOAT)
-        ])
-    }
-
-    fn write_byte_float4<T: BinWriterExt>(cursor: &mut T, vec: &[f32; 4]) -> BinResult<()> {
-        cursor.write_le::<[u8; 4]>(&[
-            (vec[0] * MAX_BYTE_FLOAT).round() as u8,
-            (vec[1] * MAX_BYTE_FLOAT).round() as u8,
-            (vec[2] * MAX_BYTE_FLOAT).round() as u8,
-            (vec[3] * MAX_BYTE_FLOAT).round() as u8])
-    }
-
-    fn read_half4(cursor: &mut Cursor<ByteSpan>) -> Option<[f32; 4]> {
-        Some([
-             f16::from_bits(cursor.read_le::<u16>().ok()?).to_f32(),
-             f16::from_bits(cursor.read_le::<u16>().ok()?).to_f32(),
-             f16::from_bits(cursor.read_le::<u16>().ok()?).to_f32(),
-             f16::from_bits(cursor.read_le::<u16>().ok()?).to_f32()
-        ])
-    }
-
-    fn write_half4<T: BinWriterExt>(cursor: &mut T, vec: &[f32; 4]) -> BinResult<()> {
-        cursor.write_le::<[u16; 4]>(&[
-            f16::from_f32(vec[0]).to_bits(),
-            f16::from_f32(vec[1]).to_bits(),
-            f16::from_f32(vec[2]).to_bits(),
-            f16::from_f32(vec[3]).to_bits()])
-    }
-
-    fn read_uint(cursor: &mut Cursor<ByteSpan>) -> BinResult<[u8; 4]> {
-        cursor.read_le::<[u8; 4]>()
-    }
-
-    fn write_uint<T: BinWriterExt>(cursor: &mut T, vec: &[u8; 4]) -> BinResult<()> {
-        cursor.write_le::<[u8; 4]>(vec)
-    }
-
-    fn read_single3(cursor: &mut Cursor<ByteSpan>) -> BinResult<[f32; 3]> {
-        cursor.read_le::<[f32; 3]>()
-    }
-
-    fn write_single3<T: BinWriterExt>(cursor: &mut T, vec: &[f32; 3]) -> BinResult<()> {
-        cursor.write_le::<[f32; 3]>(vec)
-    }
-
-    fn read_single4(cursor: &mut Cursor<ByteSpan>) -> BinResult<[f32; 4]> {
-        cursor.read_le::<[f32; 4]>()
-    }
-
-    fn write_single4<T: BinWriterExt>(cursor: &mut T, vec: &[f32; 4]) -> BinResult<()> {
-        cursor.write_le::<[f32; 4]>(vec)
-    }
-
-    fn pad_slice<const N: usize>(small_slice: &[f32; N], fill: f32) -> [f32; 4] {
-        let mut bigger_slice: [f32; 4] = [fill, fill, fill, fill];
-        bigger_slice[..N].copy_from_slice(&small_slice[..N]);
-        bigger_slice
-    }
-}
-
-
-#[cfg(test)]
-mod tests {
-    use std::io::Cursor;
-    use crate::model::MDL;
-
-    macro_rules! assert_delta {
-        ($x:expr, $y:expr, $d:expr) => {
-            for i in 0..4 {
-                if !($x[i] - $y[i] < $d || $y[i] - $x[i] < $d) { panic!(); }
-            }
-        }
-    }
-
-    #[test]
-    fn byte_float4() {
-        let a = [0.0, 1.0, 0.5, 0.25];
-
-        let mut v = vec![];
-        let mut cursor = Cursor::new(&mut v);
-
-        MDL::write_byte_float4(&mut cursor, &a).unwrap();
-
-        let mut read_cursor = Cursor::new(v.as_slice());
-
-        let b = MDL::read_byte_float4(&mut read_cursor).unwrap();
-        assert_delta!(b, a, 0.1);
-    }
-
-    #[test]
-    fn half4() {
-        let a = [0.0, 1.0, 0.5, 0.25];
-
-        let mut v = vec![];
-        let mut cursor = Cursor::new(&mut v);
-
-        MDL::write_half4(&mut cursor, &a).unwrap();
-
-        let mut read_cursor = Cursor::new(v.as_slice());
-        assert_eq!(MDL::read_half4(&mut read_cursor).unwrap(), a);
-    }
-
-    #[test]
-    fn uint() {
-        let a = [5u8, 0u8, 3u8, 15u8];
-
-        let mut v = vec![];
-        let mut cursor = Cursor::new(&mut v);
-
-        MDL::write_uint(&mut cursor, &a).unwrap();
-
-        let mut read_cursor = Cursor::new(v.as_slice());
-        assert_eq!(MDL::read_uint(&mut read_cursor).unwrap(), a);
-    }
-
-    #[test]
-    fn single3() {
-        let a = [3.0, 0.0, -1.0];
-
-        let mut v = vec![];
-        let mut cursor = Cursor::new(&mut v);
-
-        MDL::write_single3(&mut cursor, &a).unwrap();
-
-        let mut read_cursor = Cursor::new(v.as_slice());
-        assert_eq!(MDL::read_single3(&mut read_cursor).unwrap(), a);
-    }
-
-    #[test]
-    fn single4() {
-        let a = [3.0, 0.0, -1.0, 12.0];
-
-        let mut v = vec![];
-        let mut cursor = Cursor::new(&mut v);
-
-        MDL::write_single4(&mut cursor, &a).unwrap();
-
-        let mut read_cursor = Cursor::new(v.as_slice());
-        assert_eq!(MDL::read_single4(&mut read_cursor).unwrap(), a);
-    }
-
-    #[test]
-    fn pad_slice() {
-        let a = [3.0, 0.0, -1.0];
-        let b = [3.0, 0.0, -1.0, 1.0];
-
-        assert_eq!(MDL::pad_slice(&a, 1.0), b);
     }
 }

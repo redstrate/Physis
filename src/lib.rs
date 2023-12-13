@@ -106,6 +106,7 @@ pub mod pbd;
 
 mod crc;
 mod sha1;
+mod model_file_operations;
 
 #[doc(hidden)]
 pub const PHYSIS_VERSION: &str = env!("CARGO_PKG_VERSION");
