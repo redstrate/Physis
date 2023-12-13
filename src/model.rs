@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 use std::io::{Cursor, Seek, SeekFrom, Write};
+use std::mem::size_of;
 
 use binrw::{BinResult, binrw, BinWrite, BinWriterExt};
 use binrw::BinRead;
@@ -560,7 +561,7 @@ impl MDL {
                 cursor
                     .seek(SeekFrom::Start(
                         (model_file_header.index_offsets[i as usize]
-                            + (model.meshes[j as usize].start_index * 2))
+                            + (model.meshes[j as usize].start_index * size_of::<u16>() as u32))
                             as u64,
                     ))
                     .ok()?;
@@ -651,7 +652,7 @@ impl MDL {
                 }
 
                 total_vertex_buffer_size += vertex_count as u32 * total_vertex_stride;
-                total_index_buffer_size += index_count * 2; // sizeof uint16, TODO: don't hardcode
+                total_index_buffer_size += index_count * size_of::<u16>() as u32;
             }
 
             // Unknown padding?
@@ -677,12 +678,12 @@ impl MDL {
                 + ( 3 * 60 ) // 3 Lods
                 //+ ( /*file.ModelHeader.ExtraLodEnabled ? 40*/ 0 )
         + self.model_data.meshes.len() as u32 * 36
-        + self.model_data.attribute_name_offsets.len() as u32 * 4
+        + self.model_data.attribute_name_offsets.len() as u32 * size_of::<u32>() as u32
         + self.model_data.header.terrain_shadow_mesh_count as u32 * 20
         + self.model_data.header.submesh_count as u32 * 16
         + self.model_data.header.terrain_shadow_submesh_count as u32 * 10
-        + self.model_data.material_name_offsets.len() as u32 * 4
-        + self.model_data.bone_name_offsets.len() as u32 * 4
+        + self.model_data.material_name_offsets.len() as u32 * size_of::<u32>() as u32
+        + self.model_data.bone_name_offsets.len() as u32 * size_of::<u32>() as u32
         + self.model_data.bone_tables.len() as u32 * 132
         + self.model_data.header.shape_count as u32 * 16
         + self.model_data.header.shape_mesh_count as u32 * 12
@@ -694,7 +695,7 @@ impl MDL {
         + ( self.model_data.header.bone_count as u32 * 32 );
 
         let mut vertex_offset = self.file_header.runtime_size
-            + 68 // model file header
+            + size_of::<ModelFileHeader>() as u32
             + self.file_header.stack_size;
 
         for lod in &mut self.model_data.lods {
@@ -871,7 +872,7 @@ impl MDL {
                     cursor
                         .seek(SeekFrom::Start(
                             (self.file_header.index_offsets[l]
-                                + (self.model_data.meshes[part.mesh_index as usize].start_index * 2))
+                                + (self.model_data.meshes[part.mesh_index as usize].start_index * size_of::<u16>() as u32))
                                 as u64,
                         ))
                         .ok()?;
