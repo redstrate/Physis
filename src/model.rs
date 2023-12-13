@@ -175,8 +175,8 @@ struct Mesh {
 #[derive(Debug, Clone)]
 #[allow(dead_code)]
 struct Submesh {
-    index_offset: i32,
-    index_count: i32,
+    index_offset: u32,
+    index_count: u32,
 
     attribute_index_mask: u32,
 
@@ -320,11 +320,20 @@ pub struct Vertex {
     pub bone_id: [u8; 4],
 }
 
+#[derive(Clone, Copy)]
+#[repr(C)]
+pub struct SubMesh {
+    submesh_index: usize,
+    pub index_count: u32,
+    pub index_offset: u32
+}
+
 pub struct Part {
     mesh_index: u16,
     pub vertices: Vec<Vertex>,
     pub indices: Vec<u16>,
-    pub material_index: u16
+    pub material_index: u16,
+    pub submeshes: Vec<SubMesh>
 }
 
 pub struct Lod {
@@ -340,7 +349,6 @@ pub struct MDL {
     file_header: ModelFileHeader,
     vertex_declarations: Vec<VertexDeclaration>,
     model_data: ModelData,
-    header_offset: u64,
 
     pub lods: Vec<Lod>,
     pub affected_bone_names: Vec<String>,
@@ -442,7 +450,7 @@ impl MDL {
                                     + model.meshes[j as usize].vertex_buffer_offsets
                                         [element.stream as usize]
                                     + element.offset as u32
-                                    + model.meshes[j as usize].vertex_buffer_strides // TODO: is j really correct? this might fix the broken LoDs
+                                    + model.meshes[j as usize].vertex_buffer_strides
                                         [element.stream as usize]
                                         as u32
                                         * k as u32) as u64,
@@ -564,7 +572,16 @@ impl MDL {
                     indices.push(cursor.read_le::<u16>().ok()?);
                 }
 
-                parts.push(Part { mesh_index: j, vertices, indices, material_index });
+                let mut submeshes: Vec<SubMesh> = Vec::with_capacity(model.meshes[j as usize].submesh_count as usize);
+                for i in 0..model.meshes[j as usize].submesh_count {
+                    submeshes.push(SubMesh {
+                        submesh_index: model.meshes[j as usize].submesh_index as usize + i as usize,
+                        index_count: model.submeshes[model.meshes[j as usize].submesh_index as usize + i as usize].index_count,
+                        index_offset: model.submeshes[model.meshes[j as usize].submesh_index as usize + i as usize].index_offset,
+                    });
+                }
+
+                parts.push(Part { mesh_index: j, vertices, indices, material_index, submeshes });
             }
 
             lods.push(Lod { parts });
@@ -574,31 +591,41 @@ impl MDL {
             file_header: model_file_header,
             vertex_declarations,
             model_data: model,
-            header_offset,
             lods,
             affected_bone_names,
             material_names
         })
     }
 
-    pub fn replace_vertices(&mut self, lod_index: usize, part_index: usize, vertices: &[Vertex], indices: &[u16]) {
+    pub fn replace_vertices(&mut self, lod_index: usize, part_index: usize, vertices: &[Vertex], indices: &[u16], submeshes: &[SubMesh]) {
         let part = &mut self.lods[lod_index].parts[part_index];
 
         part.vertices = Vec::from(vertices);
         part.indices = Vec::from(indices);
 
+        for (i, submesh) in part.submeshes.iter().enumerate() {
+            if i < submeshes.len() {
+                self.model_data.submeshes[submesh.submesh_index].index_offset = submeshes[i].index_offset;
+                self.model_data.submeshes[submesh.submesh_index].index_count = submeshes[i].index_count;
+            }
+        }
+
         // Update vertex count in header
         self.model_data.meshes[part.mesh_index as usize].vertex_count = part.vertices.len() as u16;
-        self.model_data.meshes[part.mesh_index as usize].index_count = part.indices.len() as u16 as u32;
+        self.model_data.meshes[part.mesh_index as usize].index_count = part.indices.len() as u32;
 
         // update values
         for i in 0..self.file_header.lod_count {
             let mut vertex_offset = 0;
+            let mut index_count = 0;
 
             for j in self.model_data.lods[i as usize].mesh_index
                 ..self.model_data.lods[i as usize].mesh_index + self.model_data.lods[i as usize].mesh_count
             {
                 let mesh = &mut self.model_data.meshes[j as usize];
+
+                mesh.start_index = index_count;
+                index_count += mesh.index_count;
 
                 for i in 0..mesh.vertex_stream_count as usize {
                     mesh.vertex_buffer_offsets[i] = vertex_offset;
@@ -609,12 +636,14 @@ impl MDL {
 
         for lod in &mut self.model_data.lods {
             let mut total_vertex_buffer_size = 0;
+            let mut total_index_buffer_size = 0;
 
             // still slightly off?
             for j in lod.mesh_index
                 ..lod.mesh_index + lod.mesh_count
             {
                 let vertex_count = self.model_data.meshes[j as usize].vertex_count;
+                let index_count = self.model_data.meshes[j as usize].index_count;
 
                 let mut total_vertex_stride: u32 = 0;
                 for i in 0..self.model_data.meshes[j as usize].vertex_stream_count as usize {
@@ -622,22 +651,63 @@ impl MDL {
                 }
 
                 total_vertex_buffer_size += vertex_count as u32 * total_vertex_stride;
+                total_index_buffer_size += index_count * 2; // sizeof uint16, TODO: don't hardcode
             }
 
-            lod.vertex_buffer_size = total_vertex_buffer_size; // sizeof Vertex
+            // Unknown padding?
+            let mut index_padding = 16 - total_index_buffer_size % 16;
+            if index_padding == 16 {
+                index_padding = 0;
+            }
+
+            lod.vertex_buffer_size = total_vertex_buffer_size;
+            lod.index_buffer_size = total_index_buffer_size + index_padding;
         }
 
         // update lod values
-        let mut data_offset = self.header_offset as u32;
+        // TODO: From Xande, need to be cleaned up :)
+        self.file_header.stack_size = self.file_header.vertex_declaration_count as u32 * 136;
+        self.file_header.runtime_size =
+            2   //StringCount
+                + 2 // Unknown
+                + 4 //StringSize
+                + self.model_data.header.string_size
+                + 56 //ModelHeader
+                + ( self.model_data.element_ids.len() as u32 * 32 )
+                + ( 3 * 60 ) // 3 Lods
+                //+ ( /*file.ModelHeader.ExtraLodEnabled ? 40*/ 0 )
+        + self.model_data.meshes.len() as u32 * 36
+        + self.model_data.attribute_name_offsets.len() as u32 * 4
+        + self.model_data.header.terrain_shadow_mesh_count as u32 * 20
+        + self.model_data.header.submesh_count as u32 * 16
+        + self.model_data.header.terrain_shadow_submesh_count as u32 * 10
+        + self.model_data.material_name_offsets.len() as u32 * 4
+        + self.model_data.bone_name_offsets.len() as u32 * 4
+        + self.model_data.bone_tables.len() as u32 * 132
+        + self.model_data.header.shape_count as u32 * 16
+        + self.model_data.header.shape_mesh_count as u32 * 12
+        + self.model_data.header.shape_value_count as u32 * 4
+        + 4 // SubmeshBoneMapSize
+        + self.model_data.submesh_bone_map.len() as u32 * 2
+        + 8          // PaddingAmount and Padding
+        + ( 4 * 32 ) // 4 BoundingBoxes
+        + ( self.model_data.header.bone_count as u32 * 32 );
+
+        let mut vertex_offset = self.file_header.runtime_size
+            + 68 // model file header
+            + self.file_header.stack_size;
 
         for lod in &mut self.model_data.lods {
-            lod.vertex_data_offset = data_offset;
+            lod.vertex_data_offset = vertex_offset;
 
-            data_offset = lod.vertex_data_offset + lod.vertex_buffer_size;
+            vertex_offset = lod.vertex_data_offset + lod.vertex_buffer_size;
 
-            lod.index_data_offset = data_offset;
+            lod.index_data_offset = vertex_offset;
 
-            data_offset = lod.index_data_offset + lod.index_buffer_size;
+            // dummy
+            lod.edge_geometry_data_offset = vertex_offset;
+
+            vertex_offset = lod.index_data_offset + lod.index_buffer_size;
         }
 
         for i in 0..self.lods.len() {
@@ -646,6 +716,14 @@ impl MDL {
 
         for i in 0..self.lods.len() {
             self.file_header.vertex_offsets[i] = self.model_data.lods[i].vertex_data_offset;
+        }
+
+        for i in 0..self.lods.len() {
+            self.file_header.index_buffer_size[i] = self.model_data.lods[i].index_buffer_size;
+        }
+
+        for i in 0..self.lods.len() {
+            self.file_header.index_offsets[i] = self.model_data.lods[i].index_data_offset;
         }
     }
 
@@ -683,12 +761,12 @@ impl MDL {
                                 .seek(SeekFrom::Start(
                                     (self.model_data.lods[l].vertex_data_offset
                                         + self.model_data.meshes[part.mesh_index as usize].vertex_buffer_offsets
-                                        [element.stream as usize]
+                                            [element.stream as usize]
                                         + element.offset as u32
                                         + self.model_data.meshes[part.mesh_index as usize].vertex_buffer_strides
-                                        [element.stream as usize]
-                                        as u32
-                                        * k as u32) as u64,
+                                            [element.stream as usize]
+                                            as u32
+                                            * k as u32) as u64,
                                 ))
                                 .ok()?;
 
