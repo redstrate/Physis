@@ -4,7 +4,7 @@
 use std::io::{Cursor, Seek, SeekFrom, Write};
 use std::mem::size_of;
 
-use binrw::{binrw, BinWrite, BinWriterExt};
+use binrw::{BinResult, binrw, BinWrite, BinWriterExt};
 use binrw::BinRead;
 use binrw::BinReaderExt;
 use crate::{ByteBuffer, ByteSpan};
@@ -16,7 +16,7 @@ const END_OF_STREAM: u8 = 0xFF;
 #[derive(Debug)]
 #[brw(little)]
 pub struct ModelFileHeader {
-    pub(crate) version: u32,
+    pub version: u32,
 
     pub stack_size: u32,
     pub runtime_size: u32,
@@ -38,6 +38,10 @@ pub struct ModelFileHeader {
     #[bw(map = | x: & bool | -> u8 { if * x { 1 } else { 0 } })]
     #[brw(pad_after = 1)]
     pub has_edge_geometry: bool,
+
+    #[br(args(vertex_declaration_count), parse_with = vertex_element_parser)]
+    #[bw(write_with = vertex_element_writer)]
+    pub vertex_declarations: Vec<VertexDeclaration>
 }
 
 #[binrw]
@@ -294,7 +298,7 @@ enum VertexUsage {
 #[derive(Copy, Clone, Debug)]
 #[allow(dead_code)]
 #[brw(little)]
-struct VertexElement {
+pub struct VertexElement {
     stream: u8,
     offset: u8,
     vertex_type: VertexType,
@@ -338,14 +342,60 @@ pub struct Lod {
     pub parts: Vec<Part>,
 }
 
-#[derive(Clone)]
-struct VertexDeclaration {
-    elements: Vec<VertexElement>,
+#[binrw::parser(reader, endian)]
+fn vertex_element_parser(count: u16) -> BinResult<Vec<VertexDeclaration>> {
+    let mut vertex_declarations: Vec<VertexDeclaration> =
+        vec![
+            VertexDeclaration { elements: vec![] };
+            count.into()
+        ];
+    for declaration in &mut vertex_declarations {
+        let mut element = VertexElement::read_options(reader, endian, ()).unwrap();
+
+        loop {
+            declaration.elements.push(element);
+
+            element = VertexElement::read_options(reader, endian, ())?;
+
+            if element.stream == END_OF_STREAM {
+                break;
+            }
+        }
+
+        let to_seek = 17 * 8 - (declaration.elements.len() + 1) * 8;
+        reader.seek(SeekFrom::Current(to_seek as i64))?;
+    }
+
+    Ok(vertex_declarations)
+}
+
+#[binrw::writer(writer, endian)]
+fn vertex_element_writer(
+    declarations: &Vec<VertexDeclaration>,
+) -> BinResult<()> {
+    // write vertex declarations
+    for declaration in declarations {
+        for element in &declaration.elements {
+            element.write_options(writer, endian, ())?;
+        }
+
+        writer.write_all(&[END_OF_STREAM])?;
+
+        // We have a -1 here like we do in read, because writing the EOF (255) pushes our cursor forward.
+        let to_seek = 17 * 8 - (declaration.elements.len()) * 8 - 1;
+        writer.seek(SeekFrom::Current(to_seek as i64))?;
+    }
+
+    Ok(())
+}
+
+#[derive(Clone, Debug)]
+pub struct VertexDeclaration {
+    pub elements: Vec<VertexElement>,
 }
 
 pub struct MDL {
     file_header: ModelFileHeader,
-    vertex_declarations: Vec<VertexDeclaration>,
     model_data: ModelData,
 
     pub lods: Vec<Lod>,
@@ -357,28 +407,6 @@ impl MDL {
     pub fn from_existing(buffer: ByteSpan) -> Option<MDL> {
         let mut cursor = Cursor::new(buffer);
         let model_file_header = ModelFileHeader::read(&mut cursor).unwrap();
-
-        let mut vertex_declarations: Vec<VertexDeclaration> =
-            vec![
-                VertexDeclaration { elements: vec![] };
-                model_file_header.vertex_declaration_count as usize
-            ];
-        for declaration in &mut vertex_declarations {
-            let mut element = VertexElement::read(&mut cursor).unwrap();
-
-            loop {
-                declaration.elements.push(element);
-
-                element = VertexElement::read(&mut cursor).unwrap();
-
-                if element.stream == END_OF_STREAM {
-                    break;
-                }
-            }
-
-            let to_seek = 17 * 8 - (declaration.elements.len() + 1) * 8;
-            cursor.seek(SeekFrom::Current(to_seek as i64)).ok()?;
-        }
 
         let model = ModelData::read(&mut cursor).unwrap();
 
@@ -422,7 +450,7 @@ impl MDL {
             for j in model.lods[i as usize].mesh_index
                 ..model.lods[i as usize].mesh_index + model.lods[i as usize].mesh_count
             {
-                let declaration = &vertex_declarations[j as usize];
+                let declaration = &model_file_header.vertex_declarations[j as usize];
                 let vertex_count = model.meshes[j as usize].vertex_count;
                 let material_index = model.meshes[j as usize].material_index;
 
@@ -587,7 +615,6 @@ impl MDL {
 
         Some(MDL {
             file_header: model_file_header,
-            vertex_declarations,
             model_data: model,
             lods,
             affected_bone_names,
@@ -734,24 +761,11 @@ impl MDL {
             // write file header
             self.file_header.write(&mut cursor).ok()?;
 
-            // write vertex declarations
-            for declaration in &self.vertex_declarations {
-                for element in &declaration.elements {
-                    element.write(&mut cursor).ok()?;
-                }
-
-                cursor.write_all(&[END_OF_STREAM]).ok()?;
-
-                // We have a -1 here like we do in read, because writing the EOF (255) pushes our cursor forward.
-                let to_seek = 17 * 8 - (declaration.elements.len()) * 8 - 1;
-                cursor.seek(SeekFrom::Current(to_seek as i64)).ok()?;
-            }
-
             self.model_data.write(&mut cursor).ok()?;
 
             for (l, lod) in self.lods.iter().enumerate() {
                 for part in lod.parts.iter() {
-                    let declaration = &self.vertex_declarations[part.mesh_index as usize];
+                    let declaration = &self.file_header.vertex_declarations[part.mesh_index as usize];
 
                     for (k, vert) in part.vertices.iter().enumerate() {
                         for element in &declaration.elements {
@@ -910,6 +924,7 @@ mod tests {
             lod_count: 0,
             index_buffer_streaming_enabled: false,
             has_edge_geometry: false,
+            vertex_declarations: Vec::new(),
         };
 
         assert_eq!(816, example_header.calculate_stack_size());
@@ -927,6 +942,7 @@ mod tests {
             lod_count: 0,
             index_buffer_streaming_enabled: false,
             has_edge_geometry: false,
+            vertex_declarations: Vec::new()
         };
 
         assert_eq!(272, example_header2.calculate_stack_size());

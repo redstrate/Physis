@@ -387,6 +387,7 @@ impl DatFile {
             lod_count: model_file_info.num_lods,
             index_buffer_streaming_enabled: model_file_info.index_buffer_streaming_enabled,
             has_edge_geometry: model_file_info.edge_geometry_enabled,
+            vertex_declarations: Vec::new()
         };
 
         buffer.seek(SeekFrom::Start(0)).ok()?;
