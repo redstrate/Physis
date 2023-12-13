@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: 2020 Inseok Lee
 // SPDX-License-Identifier: MIT
 
+#![allow(clippy::arc_with_non_send_sync)]
+
 use core::cell::RefCell;
 use std::collections::HashMap;
 use std::sync::Arc;
