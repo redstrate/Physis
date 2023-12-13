@@ -664,7 +664,7 @@ impl MDL {
 
         // update lod values
         // TODO: From Xande, need to be cleaned up :)
-        self.file_header.stack_size = self.file_header.vertex_declaration_count as u32 * 136;
+        self.file_header.stack_size = self.file_header.calculate_stack_size();
         self.file_header.runtime_size =
             2   //StringCount
                 + 2 // Unknown
@@ -880,5 +880,55 @@ impl MDL {
         }
 
         Some(buffer)
+    }
+}
+
+impl ModelFileHeader {
+    pub fn calculate_stack_size(&self) -> u32 {
+        // TODO: where does this magical 136 constant come from?
+        self.vertex_declaration_count as u32 * 136
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::io::Cursor;
+    use crate::model::{MDL, ModelFileHeader};
+
+    #[test]
+    fn test_stack_size() {
+        let example_header = ModelFileHeader {
+            version: 0,
+            stack_size: 0,
+            runtime_size: 0,
+            vertex_declaration_count: 6,
+            material_count: 0,
+            vertex_offsets: [0; 3],
+            index_offsets: [0; 3],
+            vertex_buffer_size: [0; 3],
+            index_buffer_size: [0; 3],
+            lod_count: 0,
+            index_buffer_streaming_enabled: false,
+            has_edge_geometry: false,
+        };
+
+        assert_eq!(816, example_header.calculate_stack_size());
+
+        let example_header2 = ModelFileHeader {
+            version: 0,
+            stack_size: 0,
+            runtime_size: 0,
+            vertex_declaration_count: 2,
+            material_count: 0,
+            vertex_offsets: [0; 3],
+            index_offsets: [0; 3],
+            vertex_buffer_size: [0; 3],
+            index_buffer_size: [0; 3],
+            lod_count: 0,
+            index_buffer_streaming_enabled: false,
+            has_edge_geometry: false,
+        };
+
+        assert_eq!(272, example_header2.calculate_stack_size());
     }
 }
