@@ -29,8 +29,8 @@ pub enum VertexUsage {
     BlendIndices = 2,
     Normal = 3,
     UV = 4,
-    Tangent2 = 5,
-    Tangent1 = 6,
+    Tangent = 5,
+    BiTangent = 6,
     Color = 7,
 }
 

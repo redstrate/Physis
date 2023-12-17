@@ -272,8 +272,8 @@ pub struct Vertex {
     pub uv0: [f32; 2],
     pub uv1: [f32; 2],
     pub normal: [f32; 3],
-    pub tangent1: [u8; 4],
-    pub tangent2: [u8; 4],
+    pub bitangent: [f32; 4],
+    //pub bitangent1: [f32; 4], // TODO: need to figure out what the heck this could be
     pub color: [f32; 4],
 
     pub bone_weight: [f32; 4],
@@ -365,8 +365,7 @@ impl MDL {
                     uv0: [0.0; 2],
                     uv1: [0.0; 2],
                     normal: [0.0; 3],
-                    tangent1: [0u8; 4],
-                    tangent2: [0u8; 4],
+                    bitangent: [0.0; 4],
                     color: [0.0; 4],
                     bone_weight: [0.0; 4],
                     bone_id: [0u8; 4],
@@ -455,23 +454,23 @@ impl MDL {
                                     }
                                 }
                             }
-                            VertexUsage::Tangent2 => {
+                            VertexUsage::BiTangent => {
                                 match element.vertex_type {
                                     VertexType::ByteFloat4 => {
-                                        vertices[k as usize].tangent2 = MDL::read_uint(&mut cursor).unwrap();
+                                        vertices[k as usize].bitangent = MDL::read_tangent(&mut cursor).unwrap();
                                     }
                                     _ => {
-                                        panic!("Unexpected vertex type for tangent2: {:#?}", element.vertex_type);
+                                        panic!("Unexpected vertex type for bitangent: {:#?}", element.vertex_type);
                                     }
                                 }
                             }
-                            VertexUsage::Tangent1 => {
+                            VertexUsage::Tangent => {
                                 match element.vertex_type {
-                                    VertexType::ByteFloat4 => {
-                                        vertices[k as usize].tangent1 = MDL::read_uint(&mut cursor).unwrap();
-                                    }
+                                    /*VertexType::ByteFloat4 => {
+                                        vertices[k as usize].bitangent0 = MDL::read_tangent(&mut cursor).unwrap();
+                                    }*/
                                     _ => {
-                                        panic!("Unexpected vertex type for tangent1: {:#?}", element.vertex_type);
+                                        panic!("Unexpected vertex type for tangent: {:#?}", element.vertex_type);
                                     }
                                 }
                             }
@@ -752,23 +751,23 @@ impl MDL {
                                         }
                                     }
                                 }
-                                VertexUsage::Tangent2 => {
+                                VertexUsage::BiTangent => {
                                     match element.vertex_type {
                                         VertexType::ByteFloat4 => {
-                                            MDL::write_uint(&mut cursor, &vert.tangent2).ok()?;
+                                            MDL::write_tangent(&mut cursor, &vert.bitangent).ok()?;
                                         }
                                         _ => {
-                                            panic!("Unexpected vertex type for tangent2: {:#?}", element.vertex_type);
+                                            panic!("Unexpected vertex type for bitangent: {:#?}", element.vertex_type);
                                         }
                                     }
                                 }
-                                VertexUsage::Tangent1 => {
+                                VertexUsage::Tangent => {
                                     match element.vertex_type {
-                                        VertexType::ByteFloat4 => {
-                                            MDL::write_uint(&mut cursor, &vert.tangent1).ok()?;
-                                        }
+                                        /*VertexType::ByteFloat4 => {
+                                            MDL::write_tangent(&mut cursor, &vert.binormal).ok()?;
+                                        }*/
                                         _ => {
-                                            panic!("Unexpected vertex type for tangent1: {:#?}", element.vertex_type);
+                                            panic!("Unexpected vertex type for tangent: {:#?}", element.vertex_type);
                                         }
                                     }
                                 }

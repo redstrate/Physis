@@ -28,6 +28,23 @@ impl MDL {
             (vec[3] * MAX_BYTE_FLOAT).round() as u8])
     }
 
+    pub(crate) fn read_tangent(cursor: &mut Cursor<ByteSpan>) -> Option<[f32; 4]> {
+        Some([
+            (f32::from(cursor.read_le::<u8>().ok()?) * 2.0 / MAX_BYTE_FLOAT - 1.0),
+            (f32::from(cursor.read_le::<u8>().ok()?) * 2.0 / MAX_BYTE_FLOAT - 1.0),
+            (f32::from(cursor.read_le::<u8>().ok()?) * 2.0 / MAX_BYTE_FLOAT - 1.0),
+            if (f32::from(cursor.read_le::<u8>().ok()?) * 2.0 / MAX_BYTE_FLOAT - 1.0) == 1.0 { 1.0 } else { -1.0 }
+        ])
+    }
+
+    pub(crate) fn write_tangent<T: BinWriterExt>(cursor: &mut T, vec: &[f32; 4]) -> BinResult<()> {
+        cursor.write_le::<[u8; 4]>(&[
+            ((vec[0] + 1.0) * (MAX_BYTE_FLOAT / 2.0)).round() as u8,
+            ((vec[1] + 1.0) * (MAX_BYTE_FLOAT / 2.0)).round() as u8,
+            ((vec[2] + 1.0) * (MAX_BYTE_FLOAT / 2.0)).round() as u8,
+            if vec[3] > 0.0 { 255 } else { 0 }]) // SqEx uses 0 as -1, not 1
+    }
+
     pub(crate) fn read_half4(cursor: &mut Cursor<ByteSpan>) -> Option<[f32; 4]> {
         Some([
             f16::from_bits(cursor.read_le::<u16>().ok()?).to_f32(),
@@ -155,6 +172,21 @@ mod tests {
         let mut read_cursor = Cursor::new(v.as_slice());
         assert_eq!(MDL::read_single4(&mut read_cursor).unwrap(), a);
     }
+
+    #[test]
+    fn tangent() {
+        let a = [1.0, 0.5, -0.5, 1.0];
+
+        let mut v = vec![];
+        let mut cursor = Cursor::new(&mut v);
+
+        MDL::write_tangent(&mut cursor, &a).unwrap();
+
+        let mut read_cursor = Cursor::new(v.as_slice());
+        let tangent = MDL::read_tangent(&mut read_cursor).unwrap();
+        assert_delta!(tangent, a, 0.001);
+    }
+
 
     #[test]
     fn pad_slice() {
