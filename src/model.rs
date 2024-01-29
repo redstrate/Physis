@@ -280,6 +280,21 @@ pub struct Vertex {
     pub bone_id: [u8; 4],
 }
 
+impl Default for Vertex {
+    fn default() -> Self {
+        Self {
+            position: [0.0; 3],
+            uv0: [0.0; 2],
+            uv1: [0.0; 2],
+            normal: [0.0; 3],
+            bitangent: [0.0; 4],
+            color: [0.0; 4],
+            bone_weight: [0.0; 4],
+            bone_id: [0u8; 4],
+        }
+    }
+}
+
 #[derive(Clone, Copy)]
 #[repr(C)]
 pub struct SubMesh {
@@ -360,18 +375,7 @@ impl MDL {
                 let vertex_count = model.meshes[j as usize].vertex_count;
                 let material_index = model.meshes[j as usize].material_index;
 
-                let default_vertex = Vertex {
-                    position: [0.0; 3],
-                    uv0: [0.0; 2],
-                    uv1: [0.0; 2],
-                    normal: [0.0; 3],
-                    bitangent: [0.0; 4],
-                    color: [0.0; 4],
-                    bone_weight: [0.0; 4],
-                    bone_id: [0u8; 4],
-                };
-
-                let mut vertices: Vec<Vertex> = vec![default_vertex; vertex_count as usize];
+                let mut vertices: Vec<Vertex> = vec![Vertex::default(); vertex_count as usize];
 
                 for k in 0..vertex_count {
                     for element in &declaration.elements {
