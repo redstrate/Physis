@@ -599,7 +599,6 @@ impl MDL {
         }
 
         // update lod values
-        // TODO: From Xande, need to be cleaned up :)
         self.file_header.stack_size = self.file_header.calculate_stack_size();
         self.file_header.runtime_size = self.model_data.calculate_runtime_size();
 
@@ -789,6 +788,7 @@ impl ModelFileHeader {
     }
 }
 
+// TODO: From Xande, need to be cleaned up :)
 impl ModelData {
     pub fn calculate_runtime_size(&self) -> u32 {
         2   //StringCount
