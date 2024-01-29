@@ -59,9 +59,9 @@ struct ColorSetDyeInfo {
 #[binrw]
 #[derive(Debug)]
 #[allow(dead_code)]
-struct ShaderKey {
-    category: u32,
-    value: u32,
+pub struct ShaderKey {
+    pub category: u32,
+    pub value: u32,
 }
 
 #[binrw]
@@ -73,11 +73,58 @@ struct Constant {
     value_size: u16,
 }
 
+// from https://github.com/NotAdam/Lumina/blob/master/src/Lumina/Data/Parsing/MtrlStructs.cs
+#[binrw]
+#[derive(Debug)]
+enum TextureUsage
+{
+    #[brw(magic = 0x88408C04u32)]
+    Sampler,
+    #[brw(magic = 0x213CB439u32)]
+    Sampler0,
+    #[brw(magic = 0x563B84AFu32)]
+    Sampler1,
+    #[brw(magic = 0xFEA0F3D2u32)]
+    SamplerCatchlight,
+    #[brw(magic = 0x1E6FEF9Cu32)]
+    SamplerColorMap0,
+    #[brw(magic = 0x6968DF0Au32)]
+    SamplerColorMap1,
+    #[brw(magic = 0x115306BEu32)]
+    SamplerDiffuse,
+    #[brw(magic = 0xF8D7957Au32)]
+    SamplerEnvMap,
+    #[brw(magic = 0x8A4E82B6u32)]
+    SamplerMask,
+    #[brw(magic = 0x0C5EC1F1u32)]
+    SamplerNormal,
+    #[brw(magic = 0xAAB4D9E9u32)]
+    SamplerNormalMap0,
+    #[brw(magic = 0xDDB3E97Fu32)]
+    SamplerNormalMap1,
+    #[brw(magic = 0x87F6474Du32)]
+    SamplerReflection,
+    #[brw(magic = 0x2B99E025u32)]
+    SamplerSpecular,
+    #[brw(magic = 0x1BBC2F12u32)]
+    SamplerSpecularMap0,
+    #[brw(magic = 0x6CBB1F84u32)]
+    SamplerSpecularMap1,
+    #[brw(magic = 0xE6321AFCu32)]
+    SamplerWaveMap,
+    #[brw(magic = 0x574E22D6u32)]
+    SamplerWaveletMap0,
+    #[brw(magic = 0x20491240u32)]
+    SamplerWaveletMap1,
+    #[brw(magic = 0x95E1F64Du32)]
+    SamplerWhitecapMap
+}
+
 #[binrw]
 #[derive(Debug)]
 #[allow(dead_code)]
 struct Sampler {
-    sampler_id: u32,
+    texture_usage: TextureUsage,
     flags: u32, // TODO: unknown
     #[br(pad_after = 3)]
     texture_index: u8,
@@ -123,13 +170,17 @@ struct MaterialData {
 
 #[derive(Debug)]
 pub struct Material {
+    pub shader_package_name: String,
     pub texture_paths: Vec<String>,
+    pub shader_keys: Vec<ShaderKey>
 }
 
 impl Material {
     pub fn from_existing(buffer: ByteSpan) -> Option<Material> {
         let mut cursor = Cursor::new(buffer);
         let mat_data = MaterialData::read(&mut cursor).ok()?;
+
+        println!("{:#?}", mat_data);
 
         let mut texture_paths = vec![];
 
@@ -149,6 +200,22 @@ impl Material {
             offset += 1;
         }
 
-        Some(Material { texture_paths })
+        // TODO: move to reusable function
+        let mut shader_package_name = String::new();
+
+        offset = mat_data.file_header.shader_package_name_offset as usize;
+
+        let mut next_char = mat_data.strings[offset] as char;
+        while next_char != '\0' {
+            shader_package_name.push(next_char);
+            offset += 1;
+            next_char = mat_data.strings[offset as usize] as char;
+        }
+
+        Some(Material {
+            shader_package_name,
+            texture_paths,
+            shader_keys: mat_data.shader_keys
+        })
     }
 }
