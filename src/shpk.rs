@@ -7,41 +7,115 @@ use binrw::{BinRead, binread};
 use crate::ByteSpan;
 
 #[binread]
-#[br(little)]
+#[br(little, import {
+    strings_offset: u32
+})]
 #[derive(Debug)]
 #[allow(unused)]
-struct ParameterHeader {
-    id: i32,
-    name_offset: i32,
-    #[br(pad_after = 8)]
-    name_length: i32
+pub struct ResourceParameter {
+    id: u32,
+    #[br(temp)]
+    local_string_offset: u32,
+    #[br(temp)]
+    string_length: u32,
+    pub slot: u16,
+    size: u16,
+
+    #[br(seek_before = SeekFrom::Start(strings_offset as u64 + local_string_offset as u64))]
+    #[br(count = string_length, map = | x: Vec<u8> | String::from_utf8(x).unwrap().trim_matches(char::from(0)).to_string())]
+    #[br(restore_position)]
+    pub name: String
 }
 
 #[binread]
-#[br(little)]
+#[br(little, import {
+    shader_data_offset: u32,
+    strings_offset: u32
+})]
 #[derive(Debug)]
 #[allow(unused)]
-struct ShaderParameterReference {
-    #[br(pad_after = 12)]
-    id: i32
+pub struct Shader {
+    data_offset: u32,
+    data_size: u32,
+
+    scalar_parameter_count: u16,
+    resource_parameter_count: u16,
+    uav_parameter_count: u16,
+
+    unknown1: u16,
+
+    #[br(args { count: scalar_parameter_count as usize, inner: ResourceParameterBinReadArgs { strings_offset }})]
+    pub scalar_parameters: Vec<ResourceParameter>,
+    #[br(args { count: resource_parameter_count as usize, inner: ResourceParameterBinReadArgs { strings_offset }})]
+    pub resource_parameters: Vec<ResourceParameter>,
+    #[br(args { count: uav_parameter_count as usize, inner: ResourceParameterBinReadArgs { strings_offset }})]
+    pub uav_parameters: Vec<ResourceParameter>,
+
+    /// The HLSL bytecode of this shader. The DX level used varies.
+    #[br(seek_before = SeekFrom::Start(shader_data_offset as u64 + data_offset as u64))]
+    #[br(count = data_size)]
+    #[br(restore_position)]
+    pub bytecode: Vec<u8>
 }
 
 #[binread]
-#[br(little)]
 #[derive(Debug)]
 #[allow(unused)]
-struct ShaderHeader {
-    data_offset: i32,
-    data_length: i32,
+pub struct MaterialParameter {
+    id: u32,
+    byte_offset: u16,
+    byte_size: u16
+}
 
-    num_scalar: i16,
-    #[br(pad_after = 4)]
-    num_resource: i16,
+#[binread]
+#[derive(Debug)]
+#[allow(unused)]
+pub struct Key {
+    id: u32,
+    default_value: u32
+}
 
-    #[br(count = num_scalar)]
-    scalar_parameters: Vec<ShaderParameterReference>,
-    #[br(count = num_resource)]
-    resource_parameters: Vec<ShaderParameterReference>,
+#[binread]
+#[repr(C)]
+#[derive(Debug, Clone, Copy)]
+#[allow(unused)]
+pub struct Pass {
+    id: u32,
+    vertex_shader: u32,
+    pixel_shader: u32
+}
+
+#[binread]
+#[derive(Debug)]
+#[allow(unused)]
+pub struct NodeAlias {
+    selector: u32,
+    node: u32
+}
+
+#[binread]
+#[br(little, import {
+    system_key_count: u32,
+    scene_key_count: u32,
+    material_key_count: u32,
+    subview_key_count: u32
+})]
+#[derive(Debug)]
+#[allow(unused)]
+pub struct Node {
+    pub selector: u32,
+    pub pass_count: u32,
+    pub pass_indices: [u8; 16],
+    #[br(count = system_key_count)]
+    pub system_keys: Vec<u32>,
+    #[br(count = scene_key_count)]
+    pub scene_keys: Vec<u32>,
+    #[br(count = material_key_count)]
+    pub material_keys: Vec<u32>,
+    #[br(count = subview_key_count)]
+    pub subview_keys: Vec<u32>,
+    #[br(count = pass_count, err_context("system_key_count = {}", material_key_count))]
+    pub passes: Vec<Pass>
 }
 
 #[binread]
@@ -49,91 +123,115 @@ struct ShaderHeader {
 #[br(magic = b"ShPk")]
 #[derive(Debug)]
 #[allow(dead_code)]
-struct SHPKHeader {
-    #[br(pad_before = 4)] // what are these bytes? 01 0B
+pub struct ShaderPackage {
+    version: u32,
+    // "DX9\0" or "DX11"
     #[br(count = 4)]
     #[bw(pad_size_to = 4)]
     #[bw(map = |x : &String | x.as_bytes())]
     #[br(map = | x: Vec<u8> | String::from_utf8(x).unwrap().trim_matches(char::from(0)).to_string())]
     format: String,
+    file_length: u32,
 
-    file_length: i32,
-    shader_data_offset: i32,
-    parameter_list_offset: i32,
-    vertex_shader_count: i32,
-    pixel_shader_count: i32,
+    shader_data_offset: u32,
+    strings_offset: u32,
+    vertex_shader_count: u32,
+    pixel_shader_count: u32,
 
-    #[br(pad_before = 4)]
-    c1: i32,
+    material_parameters_size: u32,
+    material_parameter_count: u32,
 
-    // 8 bytes...
-    scalar_parameter_count: i32,
-    resource_parameter_count: i32,
+    scalar_parameter_count: u32,
+    resource_parameter_count: u32,
+    uav_count: u32,
+    system_key_count: u32,
+    scene_key_count: u32,
+    material_key_count: u32,
+    node_count: u32,
+    node_alias_count: u32,
 
-    #[br(pad_before = 24)]
-    #[br(count = vertex_shader_count)]
-    vertex_shader_headers: Vec<ShaderHeader>,
-    #[br(count = pixel_shader_count)]
-    pixel_shader_headers: Vec<ShaderHeader>
-}
-
-pub struct Shader {
-    /// The HLSL bytecode of this shader. The DX level used varies.
-    pub bytecode: Vec<u8>
-}
-
-pub struct ShaderPackage {
-    /// The vertex shaders in this package
+    // TODO: dx9 needs 4 bytes of padding, dx11 is 8 (correct)
+    #[br(args { count: vertex_shader_count as usize, inner : ShaderBinReadArgs { shader_data_offset: shader_data_offset + 8, strings_offset }})]
     pub vertex_shaders: Vec<Shader>,
-    /// The pixel (fragment) shaders in this package
-    pub pixel_shaders: Vec<Shader>
+    #[br(args { count: pixel_shader_count as usize, inner: ShaderBinReadArgs { shader_data_offset, strings_offset } })]
+    pub pixel_shaders: Vec<Shader>,
+
+    #[br(count = material_parameter_count)]
+    material_parameters: Vec<MaterialParameter>,
+
+    #[br(args { count: scalar_parameter_count as usize, inner: ResourceParameterBinReadArgs { strings_offset }})]
+    scalar_parameters: Vec<ResourceParameter>,
+    #[br(args { count: resource_parameter_count as usize, inner: ResourceParameterBinReadArgs { strings_offset }})]
+    resource_parameters: Vec<ResourceParameter>,
+    #[br(args { count: uav_count as usize, inner: ResourceParameterBinReadArgs { strings_offset }})]
+    uav_parameters: Vec<ResourceParameter>,
+
+    #[br(count = system_key_count)]
+    system_keys: Vec<Key>,
+    #[br(count = scene_key_count)]
+    scene_keys: Vec<Key>,
+    #[br(count = material_key_count)]
+    material_keys: Vec<Key>,
+
+    sub_view_key1_default: u32,
+    sub_view_key2_default: u32,
+
+    #[br(args { count: node_count as usize, inner: NodeBinReadArgs { system_key_count, scene_key_count, material_key_count, subview_key_count: 2 }})]
+    nodes: Vec<Node>,
+
+    #[br(ignore)]
+    node_selectors: Vec<(u32, u32)>,
+
+    #[br(count = node_alias_count)]
+    node_aliases: Vec<NodeAlias>
 }
 
 impl ShaderPackage {
     /// Reads an existing SHPK file
     pub fn from_existing(buffer: ByteSpan) -> Option<ShaderPackage> {
         let mut cursor = Cursor::new(buffer);
-        let shpk_header = SHPKHeader::read(&mut cursor).unwrap();
+        let mut package = ShaderPackage::read(&mut cursor).unwrap();
 
-        // shader parameters
-        cursor.seek(SeekFrom::Current((shpk_header.c1 as u64 * 0x08) as i64)).ok()?;
-
-        for _ in 0..shpk_header.scalar_parameter_count {
-            let _ = ParameterHeader::read_le(&mut cursor).ok()?;
+        for (i, node) in package.nodes.iter().enumerate() {
+            package.node_selectors.push((node.selector, i as u32));
+        }
+        for alias in &package.node_aliases {
+            package.node_selectors.push((alias.selector, alias.node));
         }
 
-        for _ in 0..shpk_header.resource_parameter_count {
-            let _ = ParameterHeader::read_le(&mut cursor).ok()?;
+        println!("test: {:#?}", package.nodes);
+        println!("test: {:#?}", package.node_aliases);
+
+        Some(package)
+    }
+
+    pub fn find_node(&self, selector: u32) -> Option<&Node> {
+        for (sel, node) in &self.node_selectors {
+            if *sel == selector {
+                return Some(&self.nodes[*node as usize]);
+            }
         }
 
-        // shader bytecode
-        let mut vertex_shaders: Vec<Shader> = Vec::new();
-        for header in shpk_header.vertex_shader_headers {
-            cursor.seek(SeekFrom::Start((shpk_header.shader_data_offset + header.data_offset + 8) as u64)).ok()?;
+        None
+    }
 
-            let mut bytecode = vec![0u8; header.data_length as usize];
-            cursor.read_exact(bytecode.as_mut_slice()).ok()?;
+    pub fn build_selector_from_all_keys(system_keys: &[u32], scene_keys: &[u32], material_keys: &[u32], subview_keys: &[u32]) -> u32 {
+        Self::build_selector_from_keys(Self::build_selector(system_keys), Self::build_selector(scene_keys), Self::build_selector(material_keys), Self::build_selector(subview_keys))
+    }
 
-            vertex_shaders.push(Shader {
-                bytecode
-            });
+    pub fn build_selector_from_keys(system_key: u32, scene_key: u32, material_key: u32, subview_key: u32) -> u32 {
+        Self::build_selector(&[system_key, scene_key, material_key, subview_key])
+    }
+
+    pub fn build_selector(keys: &[u32]) -> u32 {
+        let mut selector: u32 = 0;
+        let mut multiplier: u32 = 1;
+
+        for key in keys {
+            selector = selector.wrapping_add(key.wrapping_mul(multiplier));
+            multiplier = multiplier.wrapping_mul(31);
         }
 
-        let mut pixel_shaders: Vec<Shader> = Vec::new();
-        for header in shpk_header.pixel_shader_headers {
-            cursor.seek(SeekFrom::Start((shpk_header.shader_data_offset + header.data_offset) as u64)).ok()?;
-
-            let mut bytecode = vec![0u8; header.data_length as usize];
-            cursor.read_exact(bytecode.as_mut_slice()).ok()?;
-
-            pixel_shaders.push(Shader {
-                bytecode
-            });
-        }
-
-        Some(ShaderPackage {
-            vertex_shaders,
-            pixel_shaders
-        })
+        selector
     }
 }
