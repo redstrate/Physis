@@ -672,7 +672,7 @@ impl MDL {
                                 VertexUsage::Position => {
                                     match element.vertex_type {
                                         VertexType::Half4 => {
-                                            MDL::write_single4(&mut cursor, &MDL::pad_slice(&vert.position, 1.0)).ok()?;
+                                            MDL::write_half4(&mut cursor, &MDL::pad_slice(&vert.position, 1.0)).ok()?;
                                         }
                                         VertexType::Single3 => {
                                             MDL::write_single3(&mut cursor, &vert.position).ok()?;
