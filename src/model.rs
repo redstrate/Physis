@@ -241,11 +241,13 @@ struct ModelData {
     #[br(count = submesh_bone_map_size / 2, err_context("lods = {:#?}", lods))]
     submesh_bone_map: Vec<u16>,
 
-    // TODO: what actually is this?
+    #[br(dbg)]
     padding_amount: u8,
 
-    #[br(pad_before = padding_amount)]
-    #[bw(pad_before = *padding_amount)]
+    // TODO: what actually is this? it's all zero
+    #[br(count = padding_amount)]
+    unknown_padding: Vec<u8>,
+
     bounding_box: BoundingBox,
     model_bounding_box: BoundingBox,
     water_bounding_box: BoundingBox,
