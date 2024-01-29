@@ -168,7 +168,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_encrypt() {
+    fn test_encrypt_decrypt() {
         let blowfish = Blowfish::new(b"test_case");
 
         let expected_encrypted = [63, 149, 97, 229, 5, 35, 46, 128, 194, 107, 69, 132, 85, 202, 2, 126];
