@@ -30,6 +30,29 @@ pub enum EventFilter {
     Unknown7 = 29,
     Unknown3 = 59,
     EnemyBattle = 170,
+    Unknown4 = 581,
+    Unknown8 = 43,
+    Unknown9 = 60,
+    Unknown10 = 61,
+    Unknown11 = 62,
+    Unknown12 = 58,
+    Unknown13 = 169,
+    Unknown14 = 175,
+    Unknown15 = 42,
+    Unknown16 = 171,
+    Unknown17 = 177,
+    Unknown18 = 174,
+    Unknown19 = 47,
+    Unknown20 = 176,
+    Unknown21 = 44,
+    Unknown22 = 173,
+    Unknown23 = 46,
+    Unknown24 = 10,
+    Unknown25 = 185,
+    Unknown26 = 190,
+    Unknown27 = 11,
+    Unknown28 = 70,
+    Unknown29 = 105,
 }
 
 #[binrw]
@@ -37,7 +60,9 @@ pub enum EventFilter {
 #[brw(repr = u8)]
 pub enum EventChannel {
     System = 0,
+    Unknown8 = 2,
     ServerAnnouncement = 3,
+    Unknown9 = 8,
     Unknown1 = 50,
     Unknown7 = 29,
     Others = 32,
@@ -46,6 +71,16 @@ pub enum EventChannel {
     NPCFriendly = 59,
     Unknown4 = 64,
     Unknown6 = 170,
+    Unknown10 = 10,
+    Unknown11 = 66,
+    Unknown12 = 44,
+    Unknown13 = 40,
+    Unknown14 = 42,
+    Unknown15 = 11,
+    Unknown16 = 67,
+    Unknown17 = 68,
+    Unknown18 = 34,
+    Unknown19 = 110,
 }
 
 #[binrw]
@@ -86,22 +121,28 @@ impl ChatLog {
         let content_offset = (8 + header.file_size * 4) as u64;
 
         // beginning of content offset
-        cursor.seek(SeekFrom::Start(content_offset)).ok()?;
+        //cursor.seek(SeekFrom::Start(content_offset)).ok()?;
 
         let mut entries = vec![];
 
-        for offset in header.offset_entries {
-            let new_last_offset = content_offset + offset as u64;
+        for (i, offset) in header.offset_entries.iter().enumerate() {
+            let new_last_offset = content_offset + *offset as u64;
+
+            cursor.seek(SeekFrom::Start(new_last_offset)).ok()?;
 
             let mut entry = ChatLogEntry::read(&mut cursor).expect("Unable to parse log message.");
 
+            let next_offset = if i + 1 == header.offset_entries.len() {
+                buffer.len()
+            } else {
+                (content_offset + header.offset_entries[i + 1] as u64) as usize
+            };
+
             // TODO: handle the coloring properly, in some way
             entry.message = String::from_utf8_lossy(
-                &buffer[cursor.position() as usize..new_last_offset as usize],
+                &buffer[cursor.position() as usize..next_offset],
             )
-            .to_string();
-
-            cursor.seek(SeekFrom::Start(new_last_offset)).ok()?;
+                .to_string();
 
             entries.push(entry);
         }
