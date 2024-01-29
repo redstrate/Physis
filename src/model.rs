@@ -597,31 +597,7 @@ impl MDL {
         // update lod values
         // TODO: From Xande, need to be cleaned up :)
         self.file_header.stack_size = self.file_header.calculate_stack_size();
-        self.file_header.runtime_size =
-            2   //StringCount
-                + 2 // Unknown
-                + 4 //StringSize
-                + self.model_data.header.string_size
-                + 56 //ModelHeader
-                + (self.model_data.element_ids.len() as u32 * 32)
-                + (3 * 60) // 3 Lods
-                //+ ( /*file.ModelHeader.ExtraLodEnabled ? 40*/ 0 )
-                + self.model_data.meshes.len() as u32 * 36
-                + self.model_data.attribute_name_offsets.len() as u32 * size_of::<u32>() as u32
-                + self.model_data.header.terrain_shadow_mesh_count as u32 * 20
-                + self.model_data.header.submesh_count as u32 * 16
-                + self.model_data.header.terrain_shadow_submesh_count as u32 * 10
-                + self.model_data.material_name_offsets.len() as u32 * size_of::<u32>() as u32
-                + self.model_data.bone_name_offsets.len() as u32 * size_of::<u32>() as u32
-                + self.model_data.bone_tables.len() as u32 * 132
-                + self.model_data.header.shape_count as u32 * 16
-                + self.model_data.header.shape_mesh_count as u32 * 12
-                + self.model_data.header.shape_value_count as u32 * 4
-                + 4 // SubmeshBoneMapSize
-                + self.model_data.submesh_bone_map.len() as u32 * 2
-                + 8          // PaddingAmount and Padding
-                + (4 * 32) // 4 BoundingBoxes
-                + (self.model_data.header.bone_count as u32 * 32);
+        self.file_header.runtime_size = self.model_data.calculate_runtime_size();
 
         let mut vertex_offset = self.file_header.runtime_size
             + size_of::<ModelFileHeader>() as u32
@@ -806,6 +782,35 @@ impl ModelFileHeader {
     pub fn calculate_stack_size(&self) -> u32 {
         // TODO: where does this magical 136 constant come from?
         self.vertex_declaration_count as u32 * 136
+    }
+}
+
+impl ModelData {
+    pub fn calculate_runtime_size(&self) -> u32 {
+        2   //StringCount
+        + 2 // Unknown
+        + 4 //StringSize
+        + self.header.string_size
+        + 56 //ModelHeader
+        + (self.element_ids.len() as u32 * 32)
+        + (3 * 60) // 3 Lods
+        //+ ( /*file.ModelHeader.ExtraLodEnabled ? 40*/ 0 )
+        + self.meshes.len() as u32 * 36
+        + self.attribute_name_offsets.len() as u32 * size_of::<u32>() as u32
+        + self.header.terrain_shadow_mesh_count as u32 * 20
+        + self.header.submesh_count as u32 * 16
+        + self.header.terrain_shadow_submesh_count as u32 * 10
+        + self.material_name_offsets.len() as u32 * size_of::<u32>() as u32
+        + self.bone_name_offsets.len() as u32 * size_of::<u32>() as u32
+        + self.bone_tables.len() as u32 * 132
+        + self.header.shape_count as u32 * 16
+        + self.header.shape_mesh_count as u32 * 12
+        + self.header.shape_value_count as u32 * 4
+        + 4 // SubmeshBoneMapSize
+        + self.submesh_bone_map.len() as u32 * 2
+        + 8          // PaddingAmount and Padding
+        + (4 * 32) // 4 BoundingBoxes
+        + (self.header.bone_count as u32 * 32)
     }
 }
 
