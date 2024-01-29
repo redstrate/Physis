@@ -705,7 +705,7 @@ impl MDL {
                                 VertexUsage::Normal => {
                                     match element.vertex_type {
                                         VertexType::Half4 => {
-                                            MDL::write_half4(&mut cursor, &MDL::pad_slice(&vert.normal, 1.0)).ok()?;
+                                            MDL::write_half4(&mut cursor, &MDL::pad_slice(&vert.normal, 0.0)).ok()?;
                                         }
                                         VertexType::Single3 => {
                                             MDL::write_single3(&mut cursor, &vert.normal).ok()?;
