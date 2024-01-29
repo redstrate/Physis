@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2023 Joshua Goins <josh@redstrate.com>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-use std::io::{Cursor, Read, Seek, SeekFrom};
+use std::io::{Cursor, SeekFrom};
 
 use binrw::{BinRead, binread};
 use crate::ByteSpan;
