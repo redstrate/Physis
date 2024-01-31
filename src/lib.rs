@@ -106,7 +106,11 @@ pub mod pbd;
 
 mod crc;
 mod sha1;
+
+#[cfg(feature = "visual_data")]
 mod model_file_operations;
+
+#[cfg(feature = "visual_data")]
 mod model_vertex_declarations;
 
 #[doc(hidden)]
