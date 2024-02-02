@@ -205,6 +205,30 @@ struct BoundingBox {
 #[binrw]
 #[derive(Debug, Clone)]
 #[allow(dead_code)]
+struct TerrainShadowMesh {
+    index_count: u32,
+    start_index: u32,
+    vertex_buffer_offset: u32,
+    vertex_count: u16,
+    submesh_index: u16,
+    submesh_count: u16,
+    vertex_buffer_stride: u8,
+    padding: u8
+}
+
+#[binrw]
+#[derive(Debug, Clone)]
+#[allow(dead_code)]
+struct TerrainShadowSubmesh {
+    index_offset: u32,
+    index_count: u32,
+    unknown1: u16,
+    unknown2: u16
+}
+
+#[binrw]
+#[derive(Debug, Clone)]
+#[allow(dead_code)]
 #[brw(little)]
 struct ModelData {
     header: ModelHeader,
@@ -219,13 +243,18 @@ struct ModelData {
     meshes: Vec<Mesh>,
 
     #[br(count = header.attribute_count)]
+
     attribute_name_offsets: Vec<u32>,
 
-    // TODO: implement terrain shadow meshes
+    #[br(count = header.terrain_shadow_mesh_count)]
+    terrain_shadow_meshes: Vec<TerrainShadowMesh>,
+
     #[br(count = header.submesh_count)]
     submeshes: Vec<Submesh>,
 
-    // TODO: implement terrain shadow submeshes
+    #[br(count = header.terrain_shadow_submesh_count)]
+    terrain_shadow_submeshes: Vec<TerrainShadowSubmesh>,
+
     #[br(count = header.material_count)]
     material_name_offsets: Vec<u32>,
 
@@ -241,7 +270,6 @@ struct ModelData {
     #[br(count = submesh_bone_map_size / 2, err_context("lods = {:#?}", lods))]
     submesh_bone_map: Vec<u16>,
 
-    #[br(dbg)]
     padding_amount: u8,
 
     // TODO: what actually is this? it's all zero
@@ -397,6 +425,9 @@ impl MDL {
                         match element.vertex_usage {
                             VertexUsage::Position => {
                                 match element.vertex_type {
+                                    VertexType::Single4 => {
+                                        vertices[k as usize].position.clone_from_slice(&MDL::read_single4(&mut cursor).unwrap()[0..3]);
+                                    }
                                     VertexType::Half4 => {
                                         vertices[k as usize].position.clone_from_slice(&MDL::read_half4(&mut cursor).unwrap()[0..3]);
                                     }
@@ -443,6 +474,12 @@ impl MDL {
                             }
                             VertexUsage::UV => {
                                 match element.vertex_type {
+                                    VertexType::ByteFloat4 => {
+                                        let combined = MDL::read_byte_float4(&mut cursor).unwrap();
+
+                                        vertices[k as usize].uv0.clone_from_slice(&combined[0..2]);
+                                        vertices[k as usize].uv1.clone_from_slice(&combined[2..4]);
+                                    }
                                     VertexType::Half4 => {
                                         let combined = MDL::read_half4(&mut cursor).unwrap();
 
@@ -454,6 +491,11 @@ impl MDL {
 
                                         vertices[k as usize].uv0.clone_from_slice(&combined[0..2]);
                                         vertices[k as usize].uv1.clone_from_slice(&combined[2..4]);
+                                    }
+                                    VertexType::Half2 => {
+                                        let combined = MDL::read_half2(&mut cursor).unwrap();
+
+                                        vertices[k as usize].uv0.clone_from_slice(&combined[0..2]);
                                     }
                                     _ => {
                                         panic!("Unexpected vertex type for uv: {:#?}", element.vertex_type);
@@ -472,9 +514,8 @@ impl MDL {
                             }
                             VertexUsage::Tangent => {
                                 match element.vertex_type {
-                                    /*VertexType::ByteFloat4 => {
-                                        vertices[k as usize].bitangent0 = MDL::read_tangent(&mut cursor).unwrap();
-                                    }*/
+                                    // Used for... terrain..?
+                                    VertexType::ByteFloat4 => {}
                                     _ => {
                                         panic!("Unexpected vertex type for tangent: {:#?}", element.vertex_type);
                                     }
