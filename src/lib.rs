@@ -113,5 +113,11 @@ mod model_file_operations;
 #[cfg(feature = "visual_data")]
 mod model_vertex_declarations;
 
+#[cfg(feature = "visual_data")]
+pub mod lgb;
+
+#[cfg(feature = "visual_data")]
+pub mod tera;
+
 #[doc(hidden)]
 pub const PHYSIS_VERSION: &str = env!("CARGO_PKG_VERSION");
