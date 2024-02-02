@@ -62,6 +62,19 @@ impl MDL {
             f16::from_f32(vec[3]).to_bits()])
     }
 
+    pub(crate) fn read_half2(cursor: &mut Cursor<ByteSpan>) -> Option<[f32; 2]> {
+        Some([
+            f16::from_bits(cursor.read_le::<u16>().ok()?).to_f32(),
+            f16::from_bits(cursor.read_le::<u16>().ok()?).to_f32()
+        ])
+    }
+
+    pub(crate) fn write_half2<T: BinWriterExt>(cursor: &mut T, vec: &[f32; 2]) -> BinResult<()> {
+        cursor.write_le::<[u16; 2]>(&[
+            f16::from_f32(vec[0]).to_bits(),
+            f16::from_f32(vec[1]).to_bits()])
+    }
+
     pub(crate) fn read_uint(cursor: &mut Cursor<ByteSpan>) -> BinResult<[u8; 4]> {
         cursor.read_le::<[u8; 4]>()
     }
@@ -135,6 +148,19 @@ mod tests {
     }
 
     #[test]
+    fn half2() {
+        let a = [0.0, 1.0];
+
+        let mut v = vec![];
+        let mut cursor = Cursor::new(&mut v);
+
+        MDL::write_half2(&mut cursor, &a).unwrap();
+
+        let mut read_cursor = Cursor::new(v.as_slice());
+        assert_eq!(MDL::read_half2(&mut read_cursor).unwrap(), a);
+    }
+
+    #[test]
     fn uint() {
         let a = [5u8, 0u8, 3u8, 15u8];
 
@@ -186,7 +212,6 @@ mod tests {
         let tangent = MDL::read_tangent(&mut read_cursor).unwrap();
         assert_delta!(tangent, a, 0.001);
     }
-
 
     #[test]
     fn pad_slice() {
