@@ -983,4 +983,28 @@ mod tests {
         assert_eq!(mdl.file_header, old_mdl.file_header);
         assert_eq!(mdl.model_data, old_mdl.model_data);
     }
+
+    #[test]
+    fn test_parsing() {
+        let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        d.push("resources/tests");
+        d.push("c0201e0038_top_zeroed.mdl");
+
+        let mut mdl = MDL::from_existing(&read(d).unwrap()).unwrap();
+
+        // file header
+        assert_eq!(mdl.file_header.version, 16777221);
+        assert_eq!(mdl.file_header.stack_size, 816);
+        assert_eq!(mdl.file_header.stack_size, mdl.file_header.calculate_stack_size());
+        assert_eq!(mdl.file_header.runtime_size, 12544);
+        assert_eq!(mdl.file_header.runtime_size, mdl.model_data.calculate_runtime_size());
+        assert_eq!(mdl.file_header.vertex_declaration_count, 6);
+        assert_eq!(mdl.file_header.material_count, 2);
+        assert_eq!(mdl.file_header.lod_count, 3);
+        assert_eq!(mdl.file_header.index_buffer_streaming_enabled, false);
+        assert_eq!(mdl.file_header.has_edge_geometry, false);
+
+        // model header
+        assert_eq!(mdl.model_data.header.radius, 1.5340779);
+    }
 }
