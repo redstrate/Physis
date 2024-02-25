@@ -3,6 +3,7 @@
 
 use std::io::SeekFrom;
 use binrw::{BinRead, BinResult, binrw, BinWrite};
+use crate::model::NUM_VERTICES;
 
 // Marker for end of stream (0xFF)
 const END_OF_STREAM: u8 = 0xFF;
@@ -75,7 +76,7 @@ pub(crate) fn vertex_element_parser(count: u16) -> BinResult<Vec<VertexDeclarati
             }
         }
 
-        let to_seek = 17 * 8 - (declaration.elements.len() + 1) * 8;
+        let to_seek = NUM_VERTICES as usize * 8 - (declaration.elements.len() + 1) * 8;
         reader.seek(SeekFrom::Current(to_seek as i64))?;
     }
 
@@ -92,10 +93,15 @@ pub(crate) fn vertex_element_writer(
             element.write_options(writer, endian, ())?;
         }
 
-        writer.write_all(&[END_OF_STREAM])?;
+        VertexElement {
+            stream: END_OF_STREAM,
+            offset: 0,
+            vertex_type: VertexType::Single1,
+            vertex_usage: VertexUsage::Position,
+            usage_index: 0
+        }.write_options(writer, endian, ())?;
 
-        // We have a -1 here like we do in read, because writing the EOF (255) pushes our cursor forward.
-        let to_seek = 17 * 8 - (declaration.elements.len()) * 8 - 1;
+        let to_seek = (NUM_VERTICES as usize - 1 - declaration.elements.len()) * 8;
         writer.seek(SeekFrom::Current(to_seek as i64))?;
     }
 

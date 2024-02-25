@@ -10,6 +10,8 @@ use binrw::BinReaderExt;
 use crate::{ByteBuffer, ByteSpan};
 use crate::model_vertex_declarations::{vertex_element_parser, VERTEX_ELEMENT_SIZE, vertex_element_writer, VertexDeclaration, VertexElement, VertexType, VertexUsage};
 
+pub const NUM_VERTICES: u32 = 17;
+
 #[binrw]
 #[derive(Debug)]
 #[brw(little)]
@@ -836,7 +838,6 @@ impl MDL {
 impl ModelFileHeader {
     pub fn calculate_stack_size(&self) -> u32 {
         // From https://github.com/Ottermandias/Penumbra.GameData/blob/44021b93e6901c84b739bbf4d1c6350f4486cdbf/Files/MdlFile.cs#L11
-        const NUM_VERTICES: u32 = 17;
         self.vertex_declaration_count as u32 * NUM_VERTICES * VERTEX_ELEMENT_SIZE as u32
     }
 }
