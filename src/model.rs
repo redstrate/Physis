@@ -107,13 +107,20 @@ pub struct ModelHeader {
     model_clip_out_of_distance: f32,
     shadow_clip_out_of_distance: f32,
 
-    #[brw(pad_before = 2)]
-    #[brw(pad_after = 2)]
+    unknown4: u16,
+
     terrain_shadow_submesh_count: u16,
 
+    unknown5: u8,
+
     bg_change_material_index: u8,
-    #[brw(pad_after = 12)]
     bg_crest_change_material_index: u8,
+
+    unknown6: u8,
+    unknown7: u16,
+    unknown8: u16,
+    #[brw(pad_after = 6)]
+    unknown9: u16
 }
 
 #[binrw]
