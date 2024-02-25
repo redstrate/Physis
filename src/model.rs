@@ -239,6 +239,32 @@ struct TerrainShadowSubmesh {
 #[binrw]
 #[derive(Debug, Clone)]
 #[allow(dead_code)]
+struct Shape {
+    string_offset: u32,
+    shape_mesh_start_index: [u16; 3],
+    shape_mesh_count: [u16; 3]
+}
+
+#[binrw]
+#[derive(Debug, Clone)]
+#[allow(dead_code)]
+struct ShapeMesh {
+    mesh_index_offset: u32,
+    shape_value_count: u32,
+    shape_value_offset: u32
+}
+
+#[binrw]
+#[derive(Debug, Clone)]
+#[allow(dead_code)]
+struct ShapeValue {
+    base_indices_index: u16,
+    replacing_vertex_index: u16
+}
+
+#[binrw]
+#[derive(Debug, Clone)]
+#[allow(dead_code)]
 #[br(import {file_header: &ModelFileHeader})]
 #[brw(little)]
 struct ModelData {
@@ -275,15 +301,21 @@ struct ModelData {
     #[br(count = header.bone_table_count)]
     bone_tables: Vec<BoneTable>,
 
-    // TODO: implement shapes
+    #[br(count = header.shape_count)]
+    shapes: Vec<Shape>,
+
+    #[br(count = header.shape_mesh_count)]
+    shape_meshes: Vec<ShapeMesh>,
+
+    #[br(count = header.shape_value_count)]
+    shape_values: Vec<ShapeValue>,
+
     submesh_bone_map_size: u32,
 
-    #[br(count = submesh_bone_map_size / 2, err_context("lods = {:#?}", lods))]
+    #[br(count = submesh_bone_map_size / 2)]
     submesh_bone_map: Vec<u16>,
 
     padding_amount: u8,
-
-    // TODO: what actually is this? it's all zero
     #[br(count = padding_amount)]
     unknown_padding: Vec<u8>,
 
@@ -866,7 +898,7 @@ impl ModelData {
         + self.header.shape_value_count as u32 * 4
         + 4 // SubmeshBoneMapSize
         + self.submesh_bone_map.len() as u32 * 2
-        + 8          // PaddingAmount and Padding
+        + self.padding_amount as u32 + 1          // PaddingAmount and Padding
         + (4 * 32) // 4 BoundingBoxes
         + (self.header.bone_count as u32 * 32)
     }
