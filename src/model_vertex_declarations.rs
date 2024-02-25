@@ -47,6 +47,8 @@ pub struct VertexElement {
     pub usage_index: u8,
 }
 
+pub const VERTEX_ELEMENT_SIZE: usize = std::mem::size_of::<VertexElement>() + 3;
+
 #[derive(Clone, Debug)]
 pub struct VertexDeclaration {
     pub elements: Vec<VertexElement>,

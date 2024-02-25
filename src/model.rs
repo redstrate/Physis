@@ -8,7 +8,7 @@ use binrw::{binrw, BinWrite, BinWriterExt};
 use binrw::BinRead;
 use binrw::BinReaderExt;
 use crate::{ByteBuffer, ByteSpan};
-use crate::model_vertex_declarations::{vertex_element_parser, vertex_element_writer, VertexDeclaration, VertexType, VertexUsage};
+use crate::model_vertex_declarations::{vertex_element_parser, VERTEX_ELEMENT_SIZE, vertex_element_writer, VertexDeclaration, VertexElement, VertexType, VertexUsage};
 
 #[binrw]
 #[derive(Debug)]
@@ -36,10 +36,6 @@ pub struct ModelFileHeader {
     #[bw(map = | x: & bool | -> u8 { if * x { 1 } else { 0 } })]
     #[brw(pad_after = 1)]
     pub has_edge_geometry: bool,
-
-    #[br(args(vertex_declaration_count), parse_with = vertex_element_parser)]
-    #[bw(write_with = vertex_element_writer)]
-    pub vertex_declarations: Vec<VertexDeclaration>
 }
 
 #[binrw]
@@ -73,8 +69,13 @@ enum ModelFlags2 {
 
 #[binrw]
 #[derive(Debug, Clone)]
+#[br(import { vertex_declaration_count: u16 })]
 #[allow(dead_code)]
 pub struct ModelHeader {
+    #[br(args(vertex_declaration_count), parse_with = vertex_element_parser)]
+    #[bw(write_with = vertex_element_writer)]
+    pub vertex_declarations: Vec<VertexDeclaration>,
+
     #[brw(pad_after = 2)]
     string_count: u16,
     string_size: u32,
@@ -229,8 +230,10 @@ struct TerrainShadowSubmesh {
 #[binrw]
 #[derive(Debug, Clone)]
 #[allow(dead_code)]
+#[br(import {file_header: &ModelFileHeader})]
 #[brw(little)]
 struct ModelData {
+    #[br(args { vertex_declaration_count: file_header.vertex_declaration_count })]
     header: ModelHeader,
 
     #[br(count = header.element_id_count)]
@@ -243,7 +246,6 @@ struct ModelData {
     meshes: Vec<Mesh>,
 
     #[br(count = header.attribute_count)]
-
     attribute_name_offsets: Vec<u32>,
 
     #[br(count = header.terrain_shadow_mesh_count)]
@@ -359,7 +361,7 @@ impl MDL {
         let mut cursor = Cursor::new(buffer);
         let model_file_header = ModelFileHeader::read(&mut cursor).unwrap();
 
-        let model = ModelData::read(&mut cursor).unwrap();
+        let model = ModelData::read_args(&mut cursor, binrw::args! { file_header: &model_file_header }).unwrap();
 
         let mut affected_bone_names = vec![];
 
@@ -401,7 +403,7 @@ impl MDL {
             for j in model.lods[i as usize].mesh_index
                 ..model.lods[i as usize].mesh_index + model.lods[i as usize].mesh_count
             {
-                let declaration = &model_file_header.vertex_declarations[j as usize];
+                let declaration = &model.header.vertex_declarations[j as usize];
                 let vertex_count = model.meshes[j as usize].vertex_count;
                 let material_index = model.meshes[j as usize].material_index;
 
@@ -692,7 +694,7 @@ impl MDL {
 
             for (l, lod) in self.lods.iter().enumerate() {
                 for part in lod.parts.iter() {
-                    let declaration = &self.file_header.vertex_declarations[part.mesh_index as usize];
+                    let declaration = &self.model_data.header.vertex_declarations[part.mesh_index as usize];
 
                     for (k, vert) in part.vertices.iter().enumerate() {
                         for element in &declaration.elements {
@@ -826,8 +828,9 @@ impl MDL {
 
 impl ModelFileHeader {
     pub fn calculate_stack_size(&self) -> u32 {
-        // TODO: where does this magical 136 constant come from?
-        self.vertex_declaration_count as u32 * 136
+        // From https://github.com/Ottermandias/Penumbra.GameData/blob/44021b93e6901c84b739bbf4d1c6350f4486cdbf/Files/MdlFile.cs#L11
+        const NUM_VERTICES: u32 = 17;
+        self.vertex_declaration_count as u32 * NUM_VERTICES * VERTEX_ELEMENT_SIZE as u32
     }
 }
 
@@ -864,7 +867,19 @@ impl ModelData {
 #[cfg(test)]
 mod tests {
     use std::io::Cursor;
+    use std::mem::size_of;
     use crate::model::{MDL, ModelFileHeader};
+    use crate::model_vertex_declarations::{VERTEX_ELEMENT_SIZE, VertexElement};
+
+    #[test]
+    fn test_file_header_size() {
+        assert_eq!(0x44, size_of::<ModelFileHeader>());
+    }
+
+    #[test]
+    fn test_vertex_element_size() {
+        assert_eq!(8, VERTEX_ELEMENT_SIZE);
+    }
 
     #[test]
     fn test_stack_size() {
@@ -881,7 +896,6 @@ mod tests {
             lod_count: 0,
             index_buffer_streaming_enabled: false,
             has_edge_geometry: false,
-            vertex_declarations: Vec::new(),
         };
 
         assert_eq!(816, example_header.calculate_stack_size());
@@ -899,7 +913,6 @@ mod tests {
             lod_count: 0,
             index_buffer_streaming_enabled: false,
             has_edge_geometry: false,
-            vertex_declarations: Vec::new()
         };
 
         assert_eq!(272, example_header2.calculate_stack_size());
