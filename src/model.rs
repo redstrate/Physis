@@ -13,7 +13,7 @@ use crate::model_vertex_declarations::{vertex_element_parser, VERTEX_ELEMENT_SIZ
 pub const NUM_VERTICES: u32 = 17;
 
 #[binrw]
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq)]
 #[brw(little)]
 pub struct ModelFileHeader {
     pub version: u32,
@@ -42,7 +42,7 @@ pub struct ModelFileHeader {
 
 #[binrw]
 #[brw(repr = u8)]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone,  PartialEq)]
 enum ModelFlags1 {
     DustOcclusionEnabled = 0x80,
     SnowOcclusionEnabled = 0x40,
@@ -56,7 +56,7 @@ enum ModelFlags1 {
 
 #[binrw]
 #[brw(repr = u8)]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 enum ModelFlags2 {
     None = 0x0,
     Unknown2 = 0x80,
@@ -70,7 +70,7 @@ enum ModelFlags2 {
 }
 
 #[binrw]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 #[br(import { vertex_declaration_count: u16 })]
 #[allow(dead_code)]
 pub struct ModelHeader {
@@ -126,7 +126,7 @@ pub struct ModelHeader {
 }
 
 #[binrw]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 #[allow(dead_code)]
 struct MeshLod {
     mesh_index: u16,
@@ -161,7 +161,7 @@ struct MeshLod {
 }
 
 #[binrw]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 #[allow(dead_code)]
 struct Mesh {
     #[brw(pad_after = 2)]
@@ -182,7 +182,7 @@ struct Mesh {
 }
 
 #[binrw]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 #[allow(dead_code)]
 struct Submesh {
     index_offset: u32,
@@ -195,7 +195,7 @@ struct Submesh {
 }
 
 #[binrw]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 #[allow(dead_code)]
 struct BoneTable {
     bone_indices: [u16; 64],
@@ -205,7 +205,7 @@ struct BoneTable {
 }
 
 #[binrw]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 #[allow(dead_code)]
 struct BoundingBox {
     min: [f32; 4],
@@ -213,7 +213,7 @@ struct BoundingBox {
 }
 
 #[binrw]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 #[allow(dead_code)]
 struct TerrainShadowMesh {
     index_count: u32,
@@ -227,7 +227,7 @@ struct TerrainShadowMesh {
 }
 
 #[binrw]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 #[allow(dead_code)]
 struct TerrainShadowSubmesh {
     index_offset: u32,
@@ -237,7 +237,7 @@ struct TerrainShadowSubmesh {
 }
 
 #[binrw]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 #[allow(dead_code)]
 struct Shape {
     string_offset: u32,
@@ -246,7 +246,7 @@ struct Shape {
 }
 
 #[binrw]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone,  PartialEq)]
 #[allow(dead_code)]
 struct ShapeMesh {
     mesh_index_offset: u32,
@@ -255,7 +255,7 @@ struct ShapeMesh {
 }
 
 #[binrw]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 #[allow(dead_code)]
 struct ShapeValue {
     base_indices_index: u16,
@@ -263,7 +263,7 @@ struct ShapeValue {
 }
 
 #[binrw]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 #[allow(dead_code)]
 #[br(import {file_header: &ModelFileHeader})]
 #[brw(little)]
@@ -329,7 +329,7 @@ struct ModelData {
 }
 
 #[binrw]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone,  PartialEq)]
 #[allow(dead_code)]
 struct ElementId {
     element_id: u32,
@@ -338,7 +338,7 @@ struct ElementId {
     rotate: [f32; 3],
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy,  PartialEq)]
 #[repr(C)]
 pub struct Vertex {
     pub position: [f32; 3],
@@ -376,6 +376,7 @@ pub struct SubMesh {
     pub index_offset: u32
 }
 
+#[derive(Clone)]
 pub struct Part {
     mesh_index: u16,
     pub vertices: Vec<Vertex>,
@@ -384,10 +385,12 @@ pub struct Part {
     pub submeshes: Vec<SubMesh>
 }
 
+#[derive(Clone)]
 pub struct Lod {
     pub parts: Vec<Part>,
 }
 
+#[derive(Clone)]
 pub struct MDL {
     file_header: ModelFileHeader,
     model_data: ModelData,
@@ -634,18 +637,20 @@ impl MDL {
         self.model_data.meshes[part.mesh_index as usize].vertex_count = part.vertices.len() as u16;
         self.model_data.meshes[part.mesh_index as usize].index_count = part.indices.len() as u32;
 
+        self.update_headers();
+    }
+
+    pub(crate) fn update_headers(&mut self) {
         // update values
         for i in 0..self.file_header.lod_count {
             let mut vertex_offset = 0;
-            let mut index_count = 0;
 
             for j in self.model_data.lods[i as usize].mesh_index
                 ..self.model_data.lods[i as usize].mesh_index + self.model_data.lods[i as usize].mesh_count
             {
                 let mesh = &mut self.model_data.meshes[j as usize];
 
-                mesh.start_index = index_count;
-                index_count += mesh.index_count;
+                mesh.start_index = self.model_data.submeshes[mesh.submesh_index as usize].index_offset;
 
                 for i in 0..mesh.vertex_stream_count as usize {
                     mesh.vertex_buffer_offsets[i] = vertex_offset;
@@ -674,14 +679,16 @@ impl MDL {
                 total_index_buffer_size += index_count * size_of::<u16>() as u32;
             }
 
-            // Unknown padding?
-            let mut index_padding = 16 - total_index_buffer_size % 16;
-            if index_padding == 16 {
-                index_padding = 0;
+            // TODO: this can definitely be written better
+            let mut index_padding = total_index_buffer_size % 16;
+            if index_padding == 0 {
+                index_padding = 16;
+            } else {
+                index_padding = 16 - index_padding;
             }
 
             lod.vertex_buffer_size = total_vertex_buffer_size;
-            lod.index_buffer_size = total_index_buffer_size + index_padding;
+            lod.index_buffer_size = total_index_buffer_size.wrapping_add(index_padding);
         }
 
         // update lod values
@@ -906,8 +913,11 @@ impl ModelData {
 
 #[cfg(test)]
 mod tests {
+    use std::fs::read;
     use std::io::Cursor;
     use std::mem::size_of;
+    use std::path::PathBuf;
+    use crate::dat::FileType::Model;
     use crate::model::{MDL, ModelFileHeader};
     use crate::model_vertex_declarations::{VERTEX_ELEMENT_SIZE, VertexElement};
 
@@ -956,5 +966,21 @@ mod tests {
         };
 
         assert_eq!(272, example_header2.calculate_stack_size());
+    }
+
+    #[test]
+    fn test_update_headers() {
+        let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        d.push("resources/tests");
+        d.push("c0201e0038_top_zeroed.mdl");
+
+        let mut mdl = MDL::from_existing(&read(d).unwrap()).unwrap();
+        let old_mdl = mdl.clone();
+
+        mdl.update_headers();
+
+        // There should be no changes
+        assert_eq!(mdl.file_header, old_mdl.file_header);
+        assert_eq!(mdl.model_data, old_mdl.model_data);
     }
 }

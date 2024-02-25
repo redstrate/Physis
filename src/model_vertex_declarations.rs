@@ -24,7 +24,7 @@ pub enum VertexType {
 
 #[binrw]
 #[brw(repr = u8)]
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub enum VertexUsage {
     Position = 0,
     BlendWeights = 1,
@@ -37,7 +37,7 @@ pub enum VertexUsage {
 }
 
 #[binrw]
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 #[allow(dead_code)]
 #[brw(little)]
 pub struct VertexElement {
@@ -51,7 +51,7 @@ pub struct VertexElement {
 
 pub const VERTEX_ELEMENT_SIZE: usize = std::mem::size_of::<VertexElement>() + 3;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct VertexDeclaration {
     pub elements: Vec<VertexElement>,
 }
