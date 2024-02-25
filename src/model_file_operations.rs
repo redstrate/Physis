@@ -75,11 +75,11 @@ impl MDL {
             f16::from_f32(vec[1]).to_bits()])
     }
 
-    pub(crate) fn read_uint(cursor: &mut Cursor<ByteSpan>) -> BinResult<[u8; 4]> {
+    pub(crate) fn read_byte4(cursor: &mut Cursor<ByteSpan>) -> BinResult<[u8; 4]> {
         cursor.read_le::<[u8; 4]>()
     }
 
-    pub(crate) fn write_uint<T: BinWriterExt>(cursor: &mut T, vec: &[u8; 4]) -> BinResult<()> {
+    pub(crate) fn write_byte4<T: BinWriterExt>(cursor: &mut T, vec: &[u8; 4]) -> BinResult<()> {
         cursor.write_le::<[u8; 4]>(vec)
     }
 
@@ -167,10 +167,10 @@ mod tests {
         let mut v = vec![];
         let mut cursor = Cursor::new(&mut v);
 
-        MDL::write_uint(&mut cursor, &a).unwrap();
+        MDL::write_byte4(&mut cursor, &a).unwrap();
 
         let mut read_cursor = Cursor::new(v.as_slice());
-        assert_eq!(MDL::read_uint(&mut read_cursor).unwrap(), a);
+        assert_eq!(MDL::read_byte4(&mut read_cursor).unwrap(), a);
     }
 
     #[test]

@@ -453,8 +453,8 @@ impl MDL {
                             }
                             VertexUsage::BlendIndices => {
                                 match element.vertex_type {
-                                    VertexType::UInt => {
-                                        vertices[k as usize].bone_id = MDL::read_uint(&mut cursor).unwrap();
+                                    VertexType::Byte4 => {
+                                        vertices[k as usize].bone_id = MDL::read_byte4(&mut cursor).unwrap();
                                     }
                                     _ => {
                                         panic!("Unexpected vertex type for blendindice: {:#?}", element.vertex_type);
@@ -737,8 +737,8 @@ impl MDL {
                                 }
                                 VertexUsage::BlendIndices => {
                                     match element.vertex_type {
-                                        VertexType::UInt => {
-                                            MDL::write_uint(&mut cursor, &vert.bone_id).ok()?;
+                                        VertexType::Byte4 => {
+                                            MDL::write_byte4(&mut cursor, &vert.bone_id).ok()?;
                                         }
                                         _ => {
                                             panic!("Unexpected vertex type for blendindice: {:#?}", element.vertex_type);

@@ -11,10 +11,11 @@ const END_OF_STREAM: u8 = 0xFF;
 #[brw(repr = u8)]
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub enum VertexType {
-    Invalid = 0,
+    Single1 = 0,
+    Single2 = 1,
     Single3 = 2,
     Single4 = 3,
-    UInt = 5,
+    Byte4 = 5,
     ByteFloat4 = 8,
     Half2 = 13,
     Half4 = 14,
