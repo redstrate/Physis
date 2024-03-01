@@ -376,6 +376,7 @@ pub struct SubMesh {
     pub index_offset: u32
 }
 
+/// Corresponds to a "Mesh" in an LOD
 #[derive(Clone)]
 pub struct Part {
     mesh_index: u16,
@@ -695,21 +696,26 @@ impl MDL {
         self.file_header.stack_size = self.file_header.calculate_stack_size();
         self.file_header.runtime_size = self.model_data.calculate_runtime_size();
 
-        let mut vertex_offset = self.file_header.runtime_size
+        let data_offset = self.file_header.runtime_size
             + size_of::<ModelFileHeader>() as u32
             + self.file_header.stack_size;
 
+        let mut overall_offset: u32 = 0;
+
         for lod in &mut self.model_data.lods {
-            lod.vertex_data_offset = vertex_offset;
+            // vertex
+            lod.vertex_data_offset = data_offset + overall_offset;
+            overall_offset += lod.vertex_buffer_size;
 
-            vertex_offset = lod.vertex_data_offset + lod.vertex_buffer_size;
+            // index
+            lod.index_data_offset = data_offset + overall_offset;
+            overall_offset += lod.index_buffer_size;
 
-            lod.index_data_offset = vertex_offset;
+            // edge, but unused?
+            //lod.edge_geometry_data_offset = data_offset + overall_offset;
+            //overall_offset += lod.edge_geometry_size;
 
-            // dummy
-            lod.edge_geometry_data_offset = vertex_offset;
-
-            vertex_offset = lod.index_data_offset + lod.index_buffer_size;
+            lod.edge_geometry_data_offset = lod.index_data_offset;
         }
 
         for i in 0..self.lods.len() {
