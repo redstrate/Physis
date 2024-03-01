@@ -991,6 +991,26 @@ mod tests {
     }
 
     #[test]
+    fn test_update_vertices() {
+        let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        d.push("resources/tests");
+        d.push("c0201e0038_top_zeroed.mdl");
+
+        let mut mdl = MDL::from_existing(&read(d).unwrap()).unwrap();
+        let old_mdl = mdl.clone();
+
+        for l in 0..old_mdl.lods.len() {
+            for p in 0..old_mdl.lods[l].parts.len() {
+                mdl.replace_vertices(l, p, &old_mdl.lods[l].parts[p].vertices, &old_mdl.lods[l].parts[p].indices, &old_mdl.lods[l].parts[p].submeshes);
+            }
+        }
+
+        // There should be no changes
+        assert_eq!(mdl.file_header, old_mdl.file_header);
+        assert_eq!(mdl.model_data, old_mdl.model_data);
+    }
+
+    #[test]
     fn test_parsing() {
         let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
         d.push("resources/tests");
