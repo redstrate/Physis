@@ -8,7 +8,7 @@ use binrw::{binrw, BinWrite, BinWriterExt};
 use binrw::BinRead;
 use binrw::BinReaderExt;
 use crate::{ByteBuffer, ByteSpan};
-use crate::model_vertex_declarations::{vertex_element_parser, VERTEX_ELEMENT_SIZE, vertex_element_writer, VertexDeclaration, VertexElement, VertexType, VertexUsage};
+use crate::model_vertex_declarations::{vertex_element_parser, VERTEX_ELEMENT_SIZE, vertex_element_writer, VertexDeclaration, VertexType, VertexUsage};
 
 pub const NUM_VERTICES: u32 = 17;
 
@@ -239,7 +239,7 @@ struct TerrainShadowSubmesh {
 #[binrw]
 #[derive(Debug, Clone, PartialEq)]
 #[allow(dead_code)]
-struct Shape {
+struct ShapeStruct {
     string_offset: u32,
     shape_mesh_start_index: [u16; 3],
     shape_mesh_count: [u16; 3]
@@ -302,7 +302,7 @@ struct ModelData {
     bone_tables: Vec<BoneTable>,
 
     #[br(count = header.shape_count)]
-    shapes: Vec<Shape>,
+    shapes: Vec<ShapeStruct>,
 
     #[br(count = header.shape_mesh_count)]
     shape_meshes: Vec<ShapeMesh>,
@@ -376,6 +376,12 @@ pub struct SubMesh {
     pub index_offset: u32
 }
 
+#[derive(Clone)]
+pub struct Shape {
+    pub name: String,
+    pub morphed_vertices: Vec<Vertex>
+}
+
 /// Corresponds to a "Mesh" in an LOD
 #[derive(Clone)]
 pub struct Part {
@@ -383,7 +389,8 @@ pub struct Part {
     pub vertices: Vec<Vertex>,
     pub indices: Vec<u16>,
     pub material_index: u16,
-    pub submeshes: Vec<SubMesh>
+    pub submeshes: Vec<SubMesh>,
+    pub shapes: Vec<Shape>
 }
 
 #[derive(Clone)]
@@ -398,7 +405,7 @@ pub struct MDL {
 
     pub lods: Vec<Lod>,
     pub affected_bone_names: Vec<String>,
-    pub material_names: Vec<String>
+    pub material_names: Vec<String>,
 }
 
 impl MDL {
@@ -606,7 +613,51 @@ impl MDL {
                     });
                 }
 
-                parts.push(Part { mesh_index: j, vertices, indices, material_index, submeshes });
+                let mut shapes = vec![];
+
+                for shape in &model.shapes {
+                    // Adapted from https://github.com/xivdev/Penumbra/blob/master/Penumbra/Import/Models/Export/MeshExporter.cs
+                    let affected_shape_mesh: Vec<&ShapeMesh> = model.shape_meshes.iter()
+                        .skip(shape.shape_mesh_start_index[i as usize] as usize)
+                        .take(shape.shape_mesh_count[i as usize] as usize)
+                        .filter(|shape_mesh| shape_mesh.mesh_index_offset == model.meshes[j as usize].start_index).collect();
+
+                    let shape_values: Vec<&ShapeValue> = affected_shape_mesh.iter()
+                        .flat_map(|shape_mesh| model.shape_values.iter().skip(shape_mesh.shape_value_offset as usize).take(shape_mesh.shape_value_count as usize))
+                        .filter(|shape_value| shape_value.base_indices_index >= model.meshes[j as usize].start_index as u16 && shape_value.base_indices_index < (model.meshes[j as usize].start_index + model.meshes[j as usize].index_count) as u16)
+                        .collect();
+
+                    let mut morphed_vertices = vec![Vertex::default(); vertices.len()];
+
+                    if !shape_values.is_empty() {
+                        for shape_value in shape_values {
+                            let old_vertex = vertices[indices[shape_value.base_indices_index as usize] as usize];
+                            let new_vertex = vertices[shape_value.replacing_vertex_index as usize - model.meshes[j as usize].start_index as usize];
+                            let mut vertex = &mut morphed_vertices[indices[shape_value.base_indices_index as usize] as usize];
+
+                            vertex.position[0] = new_vertex.position[0] - old_vertex.position[0];
+                            vertex.position[1] = new_vertex.position[1] - old_vertex.position[1];
+                            vertex.position[2] = new_vertex.position[2] - old_vertex.position[2];
+                        }
+
+                        let mut offset = shape.string_offset;
+                        let mut string = String::new();
+
+                        let mut next_char = model.header.strings[offset as usize] as char;
+                        while next_char != '\0' {
+                            string.push(next_char);
+                            offset += 1;
+                            next_char = model.header.strings[offset as usize] as char;
+                        }
+
+                        shapes.push(Shape {
+                            name: string,
+                            morphed_vertices
+                        });
+                    }
+                }
+
+                parts.push(Part { mesh_index: j, vertices, indices, material_index, submeshes, shapes });
             }
 
             lods.push(Lod { parts });
