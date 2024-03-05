@@ -370,6 +370,13 @@ impl Default for Vertex {
 
 #[derive(Clone, Copy)]
 #[repr(C)]
+pub struct NewShapeValue {
+    pub base_index: u32,
+    pub replacing_vertex: Vertex
+}
+
+#[derive(Clone, Copy)]
+#[repr(C)]
 pub struct SubMesh {
     submesh_index: usize,
     pub index_count: u32,
@@ -633,7 +640,7 @@ impl MDL {
                         for shape_value in shape_values {
                             let old_vertex = vertices[indices[shape_value.base_indices_index as usize] as usize];
                             let new_vertex = vertices[shape_value.replacing_vertex_index as usize - model.meshes[j as usize].start_index as usize];
-                            let mut vertex = &mut morphed_vertices[indices[shape_value.base_indices_index as usize] as usize];
+                            let vertex = &mut morphed_vertices[indices[shape_value.base_indices_index as usize] as usize];
 
                             vertex.position[0] = new_vertex.position[0] - old_vertex.position[0];
                             vertex.position[1] = new_vertex.position[1] - old_vertex.position[1];
@@ -688,6 +695,48 @@ impl MDL {
         // Update vertex count in header
         self.model_data.meshes[part.mesh_index as usize].vertex_count = part.vertices.len() as u16;
         self.model_data.meshes[part.mesh_index as usize].index_count = part.indices.len() as u32;
+
+        self.update_headers();
+    }
+
+    pub fn remove_shape_meshes(&mut self) {
+        self.model_data.shape_meshes.clear();
+        self.model_data.shape_values.clear();
+
+        for lod in 0..3 {
+            for shape in &mut self.model_data.shapes {
+                shape.shape_mesh_count[lod] = 0;
+                shape.shape_mesh_start_index[lod] = 0;
+            }
+        }
+
+        self.update_headers();
+    }
+
+    pub fn add_shape_mesh(&mut self, lod_index: usize, shape_index: usize, shape_mesh_index: usize, part_index: usize, shape_values: &[NewShapeValue]) {
+        let part = &mut self.lods[lod_index].parts[part_index];
+
+        // TODO: this is assuming they are added in order
+        if shape_mesh_index == 0 {
+            self.model_data.shapes[shape_index].shape_mesh_start_index[lod_index] = self.model_data.shape_meshes.len() as u16;
+        }
+
+        self.model_data.shape_meshes.push(ShapeMesh {
+            mesh_index_offset: self.model_data.meshes[part.mesh_index as usize].start_index,
+            shape_value_count: shape_values.len() as u32,
+            shape_value_offset: self.model_data.shape_values.len() as u32
+        });
+
+        for shape_value in shape_values {
+            part.vertices.push(shape_value.replacing_vertex);
+
+            self.model_data.shape_values.push(ShapeValue {
+                base_indices_index: self.model_data.meshes[part.mesh_index as usize].start_index as u16 + shape_value.base_index as u16,
+                replacing_vertex_index: self.model_data.meshes[part.mesh_index as usize].start_index as u16 + (part.vertices.len() - 1) as u16
+            })
+        }
+
+        self.model_data.shapes[shape_index].shape_mesh_count[lod_index] += 1;
 
         self.update_headers();
     }
@@ -784,6 +833,10 @@ impl MDL {
         for i in 0..self.lods.len() {
             self.file_header.index_offsets[i] = self.model_data.lods[i].index_data_offset;
         }
+
+        self.model_data.header.shape_count = self.model_data.shapes.len() as u16;
+        self.model_data.header.shape_mesh_count = self.model_data.shape_meshes.len() as u16;
+        self.model_data.header.shape_value_count = self.model_data.shape_values.len() as u16;
     }
 
     pub fn write_to_buffer(&self) -> Option<ByteBuffer> {
