@@ -10,7 +10,7 @@ use std::path::PathBuf;
 use binrw::binread;
 use binrw::BinRead;
 use binrw::binrw;
-use tracing::debug;
+use tracing::{debug, warn};
 
 use crate::common::Region;
 use crate::sqpack::read_data_block_patch;
@@ -576,20 +576,26 @@ pub fn apply_patch(data_dir: &str, patch_path: &str) -> Result<(), PatchError> {
                                 file.seek(SeekFrom::Current(4))?;
 
                                 // now apply the file!
-                                let mut new_file = OpenOptions::new()
+                                let new_file = OpenOptions::new()
                                     .write(true)
                                     .create(true)
-                                    .open(file_path)?;
+                                    .open(&file_path);
 
-                                if fop.offset == 0 {
-                                    new_file.set_len(0)?;
+                                if let Ok(mut file) = new_file {
+                                    if fop.offset == 0 {
+                                        file.set_len(0)?;
+                                    }
+
+                                    file.seek(SeekFrom::Start(fop.offset))?;
+                                    file.write_all(&data)?;
+                                } else {
+                                    warn!("{file_path} does not exist, skipping.");
                                 }
-
-                                new_file.seek(SeekFrom::Start(fop.offset))?;
-                                new_file.write_all(&data)?;
                             }
                             SqpkFileOperation::DeleteFile => {
-                                fs::remove_file(file_path.as_str())?;
+                                if fs::remove_file(file_path.as_str()).is_err() {
+                                    warn!("Failed to remove {file_path}");
+                                }
                             }
                             SqpkFileOperation::RemoveAll => {
                                 let path: PathBuf =
