@@ -20,6 +20,9 @@ pub enum VertexType {
     ByteFloat4 = 8,
     Half2 = 13,
     Half4 = 14,
+
+    // Unknown vertex type, I seen them used in BlendIndices in Dawntrail
+    Unknown1 = 17
 }
 
 #[binrw]

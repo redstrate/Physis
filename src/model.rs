@@ -505,6 +505,12 @@ impl MDL {
                                     VertexType::ByteFloat4 => {
                                         vertices[k as usize].bone_weight = MDL::read_byte_float4(&mut cursor).unwrap();
                                     }
+                                    VertexType::Byte4 => {
+                                        // TODO: Unimplemented, needed for Dawntrail?
+                                    }
+                                    VertexType::Unknown1 => {
+                                        // TODO: Unimplemented, needed for Dawntrail?
+                                    }
                                     _ => {
                                         panic!("Unexpected vertex type for blendweight: {:#?}", element.vertex_type);
                                     }
@@ -514,6 +520,9 @@ impl MDL {
                                 match element.vertex_type {
                                     VertexType::Byte4 => {
                                         vertices[k as usize].bone_id = MDL::read_byte4(&mut cursor).unwrap();
+                                    }
+                                    VertexType::Unknown1 => {
+                                        // TODO: Unimplemented, needed for Dawntrail?
                                     }
                                     _ => {
                                         panic!("Unexpected vertex type for blendindice: {:#?}", element.vertex_type);
@@ -1014,7 +1023,7 @@ impl ModelData {
         + self.header.shape_mesh_count as u32 * 12
         + self.header.shape_value_count as u32 * 4
         + 4 // SubmeshBoneMapSize
-        + self.submesh_bone_map.len() as u32 * 2
+        //+ self.submesh_bone_map.len() as u32 * 2
         + self.padding_amount as u32 + 1          // PaddingAmount and Padding
         + (4 * 32) // 4 BoundingBoxes
         + (self.header.bone_count as u32 * 32)
