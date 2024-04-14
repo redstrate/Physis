@@ -70,27 +70,72 @@ pub struct ExcelRow {
 }
 
 impl EXD {
+    pub fn from_existing(exh: &EXH, buffer: ByteSpan) -> Option<EXD> {
+        let mut cursor = Cursor::new(buffer);
+        let mut exd = EXD::read(&mut cursor).ok()?;
+
+        for i in 0..exh.header.row_count {
+            for offset in &exd.data_offsets {
+                if offset.row_id == i {
+                    cursor.seek(SeekFrom::Start(offset.offset.into())).ok()?;
+
+                    let row_header = ExcelDataRowHeader::read(&mut cursor).ok()?;
+
+                    let header_offset = offset.offset + 6;// std::mem::size_of::<ExcelDataRowHeader>() as u32;
+
+                    let mut read_row = |row_offset: u32| -> Option<ExcelRow> {
+                        let mut subrow = ExcelRow {
+                            data: Vec::with_capacity(exh.column_definitions.len()),
+                        };
+
+                        for column in &exh.column_definitions {
+                            cursor
+                                .seek(SeekFrom::Start((row_offset + column.offset as u32).into()))
+                                .ok()?;
+
+                            subrow
+                                .data
+                                .push(Self::read_column(&mut cursor, exh, row_offset, column).unwrap());
+                        }
+
+                        Some(subrow)
+                    };
+
+                    if row_header.row_count > 1 {
+                        for i in 0..row_header.row_count {
+                            let subrow_offset =
+                                header_offset + (i * exh.header.data_offset + 2 * (i + 1)) as u32;
+
+                            exd.rows.push(read_row(subrow_offset).unwrap());
+                        }
+                    } else {
+                        exd.rows.push(read_row(header_offset).unwrap());
+                    }
+                }
+            }
+        }
+
+        Some(exd)
+    }
+    
     fn read_data_raw<Z: BinRead<Args<'static> = ()>>(cursor: &mut Cursor<ByteSpan>) -> Option<Z>
     {
-        Some(
-            Z::read_options(
-                cursor,
-                Endian::Big,
-                (),
-            )
-            .unwrap(),
-        )
+        Z::read_options(
+            cursor,
+            Endian::Big,
+            (),
+        ).ok()
     }
 
     fn read_column(
         cursor: &mut Cursor<ByteSpan>,
         exh: &EXH,
-        offset: u32,
+        row_offset: u32,
         column: &ExcelColumnDefinition,
     ) -> Option<ColumnData> {
         let mut read_packed_bool = |shift: i32| -> bool {
             let bit = 1 << shift;
-            let bool_data: i32 = Self::read_data_raw(cursor).unwrap();
+            let bool_data: i32 = Self::read_data_raw(cursor).unwrap_or(0);
 
             (bool_data & bit) == bit
         };
@@ -101,7 +146,7 @@ impl EXD {
 
                 cursor
                     .seek(SeekFrom::Start(
-                        (offset + exh.header.data_offset as u32 + string_offset).into(),
+                        (row_offset + exh.header.data_offset as u32 + string_offset).into(),
                     ))
                     .ok()?;
 
@@ -147,54 +192,6 @@ impl EXD {
             ColumnDataType::PackedBool6 => Some(ColumnData::Bool(read_packed_bool(6))),
             ColumnDataType::PackedBool7 => Some(ColumnData::Bool(read_packed_bool(7))),
         }
-    }
-
-    pub fn from_existing(exh: &EXH, buffer: ByteSpan) -> Option<EXD> {
-        let mut cursor = Cursor::new(buffer);
-        let mut exd = EXD::read(&mut cursor).ok()?;
-
-        for i in 0..exh.header.row_count {
-            for offset in &exd.data_offsets {
-                if offset.row_id == i {
-                    cursor.seek(SeekFrom::Start(offset.offset.into())).ok()?;
-
-                    let row_header = ExcelDataRowHeader::read(&mut cursor).ok()?;
-
-                    let header_offset = offset.offset + 6;
-
-                    let mut read_row = |offset: u32| -> Option<ExcelRow> {
-                        let mut subrow = ExcelRow {
-                            data: Vec::with_capacity(exh.column_definitions.len()),
-                        };
-
-                        for column in &exh.column_definitions {
-                            cursor
-                                .seek(SeekFrom::Start((offset + column.offset as u32).into()))
-                                .ok()?;
-
-                            subrow
-                                .data
-                                .push(Self::read_column(&mut cursor, exh, offset, column).unwrap());
-                        }
-
-                        Some(subrow)
-                    };
-
-                    if row_header.row_count > 1 {
-                        for i in 0..row_header.row_count {
-                            let subrow_offset =
-                                header_offset + (i * exh.header.data_offset + 2 * (i + 1)) as u32;
-
-                            exd.rows.push(read_row(subrow_offset).unwrap());
-                        }
-                    } else {
-                        exd.rows.push(read_row(header_offset).unwrap());
-                    }
-                }
-            }
-        }
-
-        Some(exd)
     }
 
     pub fn calculate_filename(
