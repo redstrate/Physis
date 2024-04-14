@@ -310,6 +310,8 @@ struct ModelData {
     #[br(count = header.shape_value_count)]
     shape_values: Vec<ShapeValue>,
 
+    // TODO: Dawntrail doesn't seem to have these anymore? Needs more testing
+    #[br(if(file_header.version < 0x01000006, 0))]
     submesh_bone_map_size: u32,
 
     #[br(count = submesh_bone_map_size / 2)]
