@@ -1025,7 +1025,7 @@ impl ModelData {
         + self.header.shape_mesh_count as u32 * 12
         + self.header.shape_value_count as u32 * 4
         + 4 // SubmeshBoneMapSize
-        //+ self.submesh_bone_map.len() as u32 * 2
+        + self.submesh_bone_map.len() as u32 * 2
         + self.padding_amount as u32 + 1          // PaddingAmount and Padding
         + (4 * 32) // 4 BoundingBoxes
         + (self.header.bone_count as u32 * 32)
