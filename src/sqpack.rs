@@ -6,31 +6,7 @@ use std::io::{Read, Seek, SeekFrom};
 use binrw::BinRead;
 
 use crate::compression::no_header_decompress;
-use crate::crc::Jamcrc;
 use crate::dat::{BlockHeader, CompressionMode};
-
-const CRC: Jamcrc = Jamcrc::new();
-
-/// Calculates a partial hash for a given path
-pub fn calculate_partial_hash(path: &str) -> u32 {
-    let lowercase = path.to_lowercase();
-
-    CRC.checksum(lowercase.as_bytes())
-}
-
-/// Calculates a hash for `index` files from a game path.
-pub fn calculate_hash(path: &str) -> u64 {
-    let lowercase = path.to_lowercase();
-
-    let pos = lowercase.rfind('/').unwrap();
-
-    let (directory, filename) = lowercase.split_at(pos);
-
-    let directory_crc = CRC.checksum(directory.as_bytes());
-    let filename_crc = CRC.checksum(filename[1..filename.len()].as_bytes());
-
-    (directory_crc as u64) << 32 | (filename_crc as u64)
-}
 
 pub fn read_data_block<T: Read + Seek>(mut buf: T, starting_position: u64) -> Option<Vec<u8>> {
     buf.seek(SeekFrom::Start(starting_position)).ok()?;

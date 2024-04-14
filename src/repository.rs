@@ -177,15 +177,11 @@ impl Repository {
         d.push("ffxivgame.ver");
 
         let version = read_version(d.as_path());
-        if version.is_some() {
-            Some(Repository {
-                name: "ffxiv".parse().unwrap(),
-                repo_type: Base,
-                version,
-            })
-        } else {
-            None
-        }
+        Some(Repository {
+            name: "ffxiv".parse().unwrap(),
+            repo_type: Base,
+            version,
+        })
     }
 
     fn expansion(&self) -> i32 {
@@ -203,6 +199,14 @@ impl Repository {
             self.expansion(),
             0,
             "win32"
+        )
+    }
+    
+    /// Calculate an index2 filename for a specific category, like _"0a0000.win32.index"_.
+    pub fn index2_filename(&self, category: Category) -> String {
+        format!(
+            "{}2",
+            self.index_filename(category)
         )
     }
 
