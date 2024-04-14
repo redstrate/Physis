@@ -5,9 +5,10 @@ use std::io::SeekFrom;
 use binrw::{BinRead, BinResult, binrw, BinWrite};
 use crate::model::NUM_VERTICES;
 
-// Marker for end of stream (0xFF)
+/// Marker for end of stream (0xFF)
 const END_OF_STREAM: u8 = 0xFF;
 
+/// The format of the vertex stream.
 #[binrw]
 #[brw(repr = u8)]
 #[derive(Copy, Clone, Debug, PartialEq)]
@@ -48,6 +49,7 @@ pub enum VertexType {
     UnsignedShort4 = 17
 }
 
+/// What the vertex stream is used for.
 #[binrw]
 #[brw(repr = u8)]
 #[derive(Copy, Clone, Debug, PartialEq)]
@@ -62,6 +64,7 @@ pub enum VertexUsage {
     Color = 7,
 }
 
+/// Represents an element within a bigger vertex stream.
 #[binrw]
 #[derive(Copy, Clone, Debug, PartialEq)]
 #[allow(dead_code)]
@@ -75,6 +78,8 @@ pub struct VertexElement {
     pub usage_index: u8,
 }
 
+/// Represents the true size of VertexElement. Always use this value instead of std::mem::size_of. 
+// 3 extra bytes to account for the padding that doesn't appear in the struct itself
 pub const VERTEX_ELEMENT_SIZE: usize = std::mem::size_of::<VertexElement>() + 3;
 
 #[derive(Clone, Debug, PartialEq)]

@@ -7,7 +7,7 @@ use half::f16;
 use crate::ByteSpan;
 use crate::model::MDL;
 
-// Maximum value of byte, used to divide and multiply floats in that space [0.0..1.0] to [0..255]
+/// Maximum value of byte, used to divide and multiply floats in that space [0.0..1.0] to [0..255]
 const MAX_BYTE_FLOAT: f32 = u8::MAX as f32;
 
 impl MDL {
