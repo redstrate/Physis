@@ -411,7 +411,6 @@ impl GameData {
     }
 
     fn get_index2_file(&self, filename: &str) -> Option<&Index2File> {
-        println!("Trying {}", filename);
         self.index2_files.get(filename)
     }
 
