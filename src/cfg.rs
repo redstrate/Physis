@@ -12,7 +12,7 @@ pub struct ConfigMap {
     pub keys: Vec<(String, String)>,
 }
 
-/// Represents a config file, which is made up of categories and settings. Categories may have zero to one settings.
+/// Represents a config file, which is made up of categories and settings. Categories may have zero to one setting.
 #[derive(Debug)]
 pub struct ConfigFile {
     /// The categories present in this config file.
@@ -34,18 +34,17 @@ impl ConfigFile {
 
         let mut current_category: Option<String> = None;
 
-        for (_, line) in reader.lines().enumerate() {
-            let unwrap = line.unwrap();
-            if !unwrap.is_empty() && unwrap != "\0" {
-                if unwrap.contains('<') || unwrap.contains('>') {
-                    let name = &unwrap[1..unwrap.len() - 1];
+        for line in reader.lines().flatten() {
+            if !line.is_empty() && line != "\0" {
+                if line.contains('<') || line.contains('>') {
+                    // Category
+                    let name = &line[1..line.len() - 1];
                     current_category = Some(String::from(name));
                     cfg.categories.push(String::from(name));
-                } else {
-                    let parts = unwrap.split_once('\t').unwrap();
-                    cfg.settings.entry(current_category.clone().unwrap()).or_insert_with(|| ConfigMap{ keys: Vec::new() });
-
-                    cfg.settings.get_mut(&current_category.clone().unwrap()).unwrap().keys.push((parts.0.to_string(), parts.1.to_string()));
+                } else if let (Some(category), Some((key, value))) = (&current_category, line.split_once('\t')) {
+                    // Key-value pair
+                    cfg.settings.entry(category.clone()).or_insert_with(|| ConfigMap{ keys: Vec::new() });
+                    cfg.settings.get_mut(category)?.keys.push((key.to_string(), value.to_string()));
                 }
             }
         }
@@ -93,13 +92,7 @@ impl ConfigFile {
 
     /// Checks if the CFG contains a category named `select_category`
     pub fn has_category(&self, select_category: &str) -> bool {
-        for category in self.settings.keys() {
-            if select_category == category {
-                return true;
-            }
-        }
-
-        false
+        self.settings.contains_key(select_category)
     }
 
     /// Sets the value to `new_value` of `select_key`
