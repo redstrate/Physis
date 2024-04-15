@@ -4,8 +4,7 @@
 use std::env;
 
 use criterion::{Criterion, criterion_group, criterion_main};
-
-use physis::sqpack::calculate_hash;
+use physis::index::IndexFile;
 
 fn reload_repos() {
     let game_dir = env::var("FFXIV_GAME_DIR").unwrap();
@@ -16,7 +15,7 @@ fn reload_repos() {
 }
 
 fn bench_calculate_hash() {
-    calculate_hash("exd/root.exl");
+    IndexFile::calculate_hash("exd/root.exl");
 }
 
 fn fetch_data() {
@@ -31,8 +30,12 @@ fn fetch_data() {
 
 fn criterion_benchmark(c: &mut Criterion) {
     c.bench_function("hash calc", |b| b.iter(bench_calculate_hash));
-    c.bench_function("gamedata reloading repositories", |b| b.iter(reload_repos));
-    c.bench_function("gamedata extract", |b| b.iter(fetch_data));
+
+    #[cfg(feature = "retail_game_testing")]
+    {
+        c.bench_function("gamedata reloading repositories", |b| b.iter(reload_repos));
+        c.bench_function("gamedata extract", |b| b.iter(fetch_data));
+    }
 }
 
 criterion_group!(benches, criterion_benchmark);
