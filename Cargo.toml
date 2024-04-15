@@ -30,7 +30,7 @@ walkdir = "2"
 hmac-sha512 = "1"
 
 # used while rust doesn't have native benchmarking capability
-criterion = "0.5.1"
+criterion = { version = "0.5.1", default-features = false }
 
 # used for testing our jamcrc implementation
 crc = "3"
