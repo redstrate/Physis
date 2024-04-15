@@ -6,7 +6,7 @@ use std::cmp::Ordering::{Greater, Less};
 use std::path::{Path, PathBuf};
 use binrw::binrw;
 
-use crate::common::{Platform, read_version};
+use crate::common::{get_platform_string, Platform, read_version};
 use crate::repository::RepositoryType::{Base, Expansion};
 
 /// The type of repository, discerning game data from expansion data.
@@ -177,7 +177,7 @@ impl Repository {
             category as i32,
             self.expansion(),
             0,
-            "win32"
+            get_platform_string(&self.platform)
         )
     }
     
@@ -193,7 +193,7 @@ impl Repository {
     pub fn dat_filename(&self, category: Category, data_file_id: u32) -> String {
         let expansion = self.expansion();
         let chunk = 0;
-        let platform = "win32";
+        let platform = get_platform_string(&self.platform);
 
         format!(
             "{:02x}{expansion:02}{chunk:02}.{platform}.dat{data_file_id}",

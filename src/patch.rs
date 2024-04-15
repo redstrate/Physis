@@ -12,7 +12,7 @@ use binrw::BinRead;
 use binrw::binrw;
 use tracing::{debug, warn};
 
-use crate::common::{Platform, Region};
+use crate::common::{get_platform_string, Platform, Region};
 use crate::sqpack::read_data_block_patch;
 
 #[binread]
@@ -261,14 +261,6 @@ struct SqpkFileOperationData {
     #[br(count = path_length)]
     #[br(map = | x: Vec < u8 > | String::from_utf8(x[..x.len() - 1].to_vec()).unwrap())]
     path: String,
-}
-
-fn get_platform_string(id: &Platform) -> &'static str {
-    match &id {
-        Platform::Win32 => "win32",
-        Platform::PS3 => "ps3.d",
-        Platform::PS4 => "ps4.d",
-    }
 }
 
 #[derive(BinRead, PartialEq, Debug)]

@@ -66,3 +66,11 @@ pub enum Platform {
     PS3,
     PS4,
 }
+
+pub fn get_platform_string(id: &Platform) -> &'static str {
+    match &id {
+        Platform::Win32 => "win32",
+        Platform::PS3 => "ps3.d",
+        Platform::PS4 => "ps4.d",
+    }
+}
