@@ -214,7 +214,7 @@ mod tests {
     use std::path::PathBuf;
     use crate::common::Platform;
 
-    use crate::repository::Repository;
+    use crate::repository::{Category, Repository, RepositoryType};
 
     #[test]
     fn test_base() {
@@ -236,5 +236,48 @@ mod tests {
         let repository = Repository::from_existing_expansion(Platform::Win32, d.to_str().unwrap());
         assert!(repository.is_some());
         assert_eq!(repository.unwrap().version.unwrap(), "2012.01.01.0000.0000");
+    }
+
+    #[test]
+    fn test_win32_filenames() {
+        let repo = Repository {
+            name: "ffxiv".to_string(),
+            platform: Platform::Win32,
+            repo_type: RepositoryType::Base,
+            version: None,
+        };
+
+        assert_eq!(repo.index_filename(Category::Music), "0c0000.win32.index");
+        assert_eq!(repo.index2_filename(Category::Music), "0c0000.win32.index2");
+        assert_eq!(repo.dat_filename(Category::GameScript, 1), "0b0000.win32.dat1");
+    }
+
+    // TODO: We need to check if these console filenames are actually correct
+    #[test]
+    fn test_ps3_filenames() {
+        let repo = Repository {
+            name: "ffxiv".to_string(),
+            platform: Platform::PS3,
+            repo_type: RepositoryType::Base,
+            version: None,
+        };
+
+        assert_eq!(repo.index_filename(Category::Music), "0c0000.ps3.d.index");
+        assert_eq!(repo.index2_filename(Category::Music), "0c0000.ps3.d.index2");
+        assert_eq!(repo.dat_filename(Category::GameScript, 1), "0b0000.ps3.d.dat1");
+    }
+
+    #[test]
+    fn test_ps4_filenames() {
+        let repo = Repository {
+            name: "ffxiv".to_string(),
+            platform: Platform::PS4,
+            repo_type: RepositoryType::Base,
+            version: None,
+        };
+
+        assert_eq!(repo.index_filename(Category::Music), "0c0000.ps4.d.index");
+        assert_eq!(repo.index2_filename(Category::Music), "0c0000.ps4.d.index2");
+        assert_eq!(repo.dat_filename(Category::GameScript, 1), "0b0000.ps4.d.dat1");
     }
 }
