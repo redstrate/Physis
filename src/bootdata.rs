@@ -15,16 +15,6 @@ pub struct BootData {
     pub version: String,
 }
 
-fn is_valid(path: &str) -> bool {
-    let d = PathBuf::from(path);
-
-    if fs::metadata(d.as_path()).is_err() {
-        return false;
-    }
-
-    true
-}
-
 impl BootData {
     /// Reads from an existing boot data location.
     ///
@@ -39,7 +29,7 @@ impl BootData {
     /// # assert!(boot.is_none())
     /// ```
     pub fn from_existing(directory: &str) -> Option<BootData> {
-        match is_valid(directory) {
+        match Self::is_valid(directory) {
             true => Some(BootData {
                 path: directory.parse().unwrap(),
                 version: fs::read_to_string(format!("{directory}/ffxivboot.ver")).unwrap(),
@@ -54,5 +44,15 @@ impl BootData {
     /// Applies the patch to boot data and returns any errors it encounters. This function will not update the version in the BootData struct.
     pub fn apply_patch(&self, patch_path: &str) -> Result<(), PatchError> {
         apply_patch(&self.path, patch_path)
+    }
+
+    fn is_valid(path: &str) -> bool {
+        let d = PathBuf::from(path);
+
+        if fs::metadata(d.as_path()).is_err() {
+            return false;
+        }
+
+        true
     }
 }
