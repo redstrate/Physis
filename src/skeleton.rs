@@ -8,7 +8,6 @@
 use std::io::{Cursor, SeekFrom};
 use binrw::{binread, BinRead};
 use binrw::helpers::until_eof;
-use glam::Mat4;
 
 use crate::havok::{HavokAnimationContainer, HavokBinaryTagFileReader};
 use crate::ByteSpan;
