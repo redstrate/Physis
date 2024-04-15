@@ -8,22 +8,14 @@ use std::io::SeekFrom;
 use binrw::BinRead;
 use binrw::binrw;
 use modular_bitfield::prelude::*;
+use crate::common::Platform;
 use crate::crc::Jamcrc;
-
-#[binrw]
-#[brw(repr = u8)]
-#[derive(Debug, PartialEq)]
-enum PlatformId {
-    Windows,
-    PS3,
-    PS4,
-}
 
 #[binrw]
 #[br(magic = b"SqPack")]
 pub struct SqPackHeader {
     #[br(pad_before = 2)]
-    platform_id: PlatformId,
+    platform_id: Platform,
     #[br(pad_before = 3)]
     size: u32,
     version: u32,

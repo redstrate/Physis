@@ -4,8 +4,9 @@
 use std::cmp::Ordering;
 use std::cmp::Ordering::{Greater, Less};
 use std::path::{Path, PathBuf};
+use binrw::binrw;
 
-use crate::common::read_version;
+use crate::common::{Platform, read_version};
 use crate::repository::RepositoryType::{Base, Expansion};
 
 /// The type of repository, discerning game data from expansion data.
@@ -27,6 +28,8 @@ pub enum RepositoryType {
 pub struct Repository {
     /// The folder name, such as "ex1".
     pub name: String,
+    /// The platform this repository is designed for.
+    pub platform: Platform,
     /// The type of repository, such as "base game" or "expansion".
     pub repo_type: RepositoryType,
     /// The version of the game data.
@@ -125,7 +128,7 @@ pub fn string_to_category(string: &str) -> Option<Category> {
 impl Repository {
     /// Creates a new base `Repository`, from an existing directory. This may return `None` if
     /// the directory is invalid, e.g. a version file is missing.
-    pub fn from_existing_base(dir: &str) -> Option<Repository> {
+    pub fn from_existing_base(platform: Platform, dir: &str) -> Option<Repository> {
         let path = Path::new(dir);
         if path.metadata().is_err() {
             return None;
@@ -137,6 +140,7 @@ impl Repository {
         let version = read_version(d.as_path());
         Some(Repository {
             name: "ffxiv".to_string(),
+            platform,
             repo_type: Base,
             version,
         })
@@ -144,7 +148,7 @@ impl Repository {
 
     /// Creates a new expansion `Repository`, from an existing directory. This may return `None` if
     /// the directory is invalid, e.g. a version file is missing.
-    pub fn from_existing_expansion(dir: &str) -> Option<Repository> {
+    pub fn from_existing_expansion(platform: Platform, dir: &str) -> Option<Repository> {
         let path = Path::new(dir);
         if path.metadata().is_err() {
             return None;
@@ -158,6 +162,7 @@ impl Repository {
 
         Some(Repository {
             name,
+            platform,
             repo_type: Expansion {
                 number: expansion_number,
             },
@@ -207,6 +212,7 @@ impl Repository {
 #[cfg(test)]
 mod tests {
     use std::path::PathBuf;
+    use crate::common::Platform;
 
     use crate::repository::Repository;
 
@@ -216,7 +222,7 @@ mod tests {
         d.push("resources/tests");
         d.push("ffxiv");
 
-        let repository = Repository::from_existing_base(d.to_str().unwrap());
+        let repository = Repository::from_existing_base(Platform::Win32, d.to_str().unwrap());
         assert!(repository.is_some());
         assert_eq!(repository.unwrap().version.unwrap(), "2012.01.01.0000.0000");
     }
@@ -227,7 +233,7 @@ mod tests {
         d.push("resources/tests");
         d.push("ex1");
 
-        let repository = Repository::from_existing_expansion(d.to_str().unwrap());
+        let repository = Repository::from_existing_expansion(Platform::Win32, d.to_str().unwrap());
         assert!(repository.is_some());
         assert_eq!(repository.unwrap().version.unwrap(), "2012.01.01.0000.0000");
     }

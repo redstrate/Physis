@@ -57,3 +57,12 @@ pub enum Region {
 pub fn read_version(p: &Path) -> Option<String> {
     fs::read_to_string(p).ok()
 }
+
+#[binrw]
+#[brw(repr = u16)]
+#[derive(Clone, Debug, PartialEq)]
+pub enum Platform {
+    Win32,
+    PS3,
+    PS4,
+}

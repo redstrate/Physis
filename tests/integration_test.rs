@@ -9,6 +9,7 @@ use walkdir::WalkDir;
 use physis::patch::apply_patch;
 
 use std::collections::HashMap;
+use physis::common::Platform;
 use physis::fiin::FileInfo;
 use physis::index;
 
@@ -28,10 +29,8 @@ fn test_gamedata_extract() {
     let game_dir = env::var("FFXIV_GAME_DIR").unwrap();
 
     let mut gamedata =
-        physis::gamedata::GameData::from_existing(format!("{}/game", game_dir).as_str()).unwrap();
-
-    gamedata.reload_repositories();
-
+        physis::gamedata::GameData::from_existing(Platform::Win32, format!("{}/game", game_dir).as_str()).unwrap();
+    
     assert!(gamedata.extract("exd/root.exl").is_some());
 }
 

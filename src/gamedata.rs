@@ -8,7 +8,7 @@ use std::path::PathBuf;
 
 use tracing::{debug, warn};
 
-use crate::common::{Language, read_version};
+use crate::common::{Language, Platform, read_version};
 use crate::dat::DatFile;
 use crate::exd::EXD;
 use crate::exh::EXH;
@@ -63,48 +63,41 @@ impl GameData {
     /// This will return _None_ if the game directory is not valid, but it does not check the validity
     /// of each individual file.
     ///
-    /// **Note**: None of the repositories are searched, and it's required to call `reload_repositories()`.
-    ///
     /// # Example
     ///
     /// ```
-    /// # use physis::gamedata::GameData;
-    /// GameData::from_existing("$FFXIV/game");
+    /// # use physis::common::Platform;
+    /// use physis::gamedata::GameData;
+    /// GameData::from_existing(Platform::Win32, "$FFXIV/game");
     /// ```
-    pub fn from_existing(directory: &str) -> Option<GameData> {
+    pub fn from_existing(platform: Platform, directory: &str) -> Option<GameData> {
         debug!(directory, "Loading game directory");
 
         match is_valid(directory) {
-            true => Some(Self {
-                game_directory: String::from(directory),
-                repositories: vec![],
-                index_files: HashMap::new(),
-                index2_files: HashMap::new()
-            }),
+            true => {
+                let mut data = Self {
+                    game_directory: String::from(directory),
+                    repositories: vec![],
+                    index_files: HashMap::new(),
+                    index2_files: HashMap::new()
+                };
+                data.reload_repositories(platform);
+                Some(data)
+            }
             false => {
                 warn!("Game data is not valid!");
                 None
             }
         }
     }
-
-    /// Reloads all repository information from disk. This is a fast operation, as it's not actually
-    /// reading any dat files yet.
-    ///
-    /// # Example
-    ///
-    /// ```should_panic
-    /// # use physis::gamedata::GameData;
-    /// let mut game = GameData::from_existing("$FFXIV/game").unwrap();
-    /// game.reload_repositories();
-    /// ```
-    pub fn reload_repositories(&mut self) {
+    
+    fn reload_repositories(&mut self, platform: Platform) {
         self.repositories.clear();
 
         let mut d = PathBuf::from(self.game_directory.as_str());
 
         // add initial ffxiv directory
-        if let Some(base_repository) = Repository::from_existing_base(d.to_str().unwrap()) {
+        if let Some(base_repository) = Repository::from_existing_base(platform.clone(), d.to_str().unwrap()) {
             self.repositories.push(base_repository);
         }
 
@@ -120,7 +113,7 @@ impl GameData {
                 .collect();
 
             for repository_path in repository_paths {
-                if let Some(expansion_repository) = Repository::from_existing_expansion(repository_path.path().to_str().unwrap()) {
+                if let Some(expansion_repository) = Repository::from_existing_expansion(platform.clone(), repository_path.path().to_str().unwrap()) {
                     self.repositories.push(expansion_repository);
                 }
             }
@@ -149,8 +142,9 @@ impl GameData {
     /// # Example
     ///
     /// ```should_panic
-    /// # use physis::gamedata::GameData;
-    /// # let mut game = GameData::from_existing("SquareEnix/Final Fantasy XIV - A Realm Reborn/game").unwrap();
+    /// # use physis::common::Platform;
+    /// use physis::gamedata::GameData;
+    /// # let mut game = GameData::from_existing(Platform::Win32, "SquareEnix/Final Fantasy XIV - A Realm Reborn/game").unwrap();
     /// if game.exists("exd/cid.exl") {
     ///     println!("Cid really does exist!");
     /// } else {
@@ -181,7 +175,8 @@ impl GameData {
     /// ```should_panic
     /// # use physis::gamedata::GameData;
     /// # use std::io::Write;
-    /// # let mut game = GameData::from_existing("SquareEnix/Final Fantasy XIV - A Realm Reborn/game").unwrap();
+    /// use physis::common::Platform;
+    /// # let mut game = GameData::from_existing(Platform::Win32, "SquareEnix/Final Fantasy XIV - A Realm Reborn/game").unwrap();
     /// let data = game.extract("exd/root.exl").unwrap();
     ///
     /// let mut file = std::fs::File::create("root.exl").unwrap();
@@ -447,13 +442,12 @@ mod tests {
         d.push("valid_sqpack");
         d.push("game");
 
-        GameData::from_existing(d.to_str().unwrap()).unwrap()
+        GameData::from_existing(Platform::Win32, d.to_str().unwrap()).unwrap()
     }
 
     #[test]
     fn repository_ordering() {
         let mut data = common_setup_data();
-        data.reload_repositories();
 
         assert_eq!(data.repositories[0].name, "ffxiv");
         assert_eq!(data.repositories[1].name, "ex1");
@@ -463,7 +457,6 @@ mod tests {
     #[test]
     fn repository_and_category_parsing() {
         let mut data = common_setup_data();
-        data.reload_repositories();
 
         assert_eq!(
             data.parse_repository_category("exd/root.exl").unwrap(),
