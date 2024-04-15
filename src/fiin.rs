@@ -3,6 +3,7 @@
 
 use std::fs::read;
 use std::io::Cursor;
+use std::path::Path;
 
 use binrw::{BinRead, BinWrite};
 use binrw::binrw;
@@ -73,17 +74,19 @@ impl FileInfo {
     /// Creates a new FileInfo structure from a list of filenames. These filenames must be present in
     /// the current working directory in order to be read properly, since it also generates SHA1
     /// hashes.
+    /// 
+    /// These paths are converted to just their filenames.
     ///
     /// The new FileInfo structure can then be serialized back into retail-compatible form.
-    pub fn new(file_names: &[&str]) -> Option<FileInfo> {
+    pub fn new(files: &[&str]) -> Option<FileInfo> {
         let mut entries = vec![];
 
-        for name in file_names {
-            let file = &read(name).expect("Cannot read file.");
+        for path in files {
+            let file = &read(path).expect("Cannot read file.");
 
             entries.push(FIINEntry {
                 file_size: file.len() as i32,
-                file_name: name.to_string(),
+                file_name: Path::new(path).file_name()?.to_str()?.to_string(),
                 sha1: Sha1::from(file).digest().bytes().to_vec(),
             });
         }
@@ -94,7 +97,7 @@ impl FileInfo {
 
 #[cfg(test)]
 mod tests {
-    use std::fs::read;
+    use std::fs::{File, read};
     use std::path::PathBuf;
 
     use crate::fiin::FileInfo;
@@ -114,5 +117,29 @@ mod tests {
         assert_eq!(fiin.entries[0].file_name, "test.txt");
 
         assert_eq!(fiin.entries[1].file_name, "test.exl");
+    }
+
+    #[test]
+    fn basic_writing() {
+        let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        d.push("resources/tests");
+        d.push("test.fiin");
+
+        let valid_fiin = &read(d).unwrap();
+
+        let mut d2 = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        d2.push("resources/tests");
+        d2.push("test.txt");
+
+        let mut d3 = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        d3.push("resources/tests");
+        d3.push("test.exl");
+
+        let testing_fiin = FileInfo::new(&[
+            d2.to_str().unwrap(),
+            d3.to_str().unwrap()
+        ]).unwrap();
+
+        assert_eq!(*valid_fiin, testing_fiin.write_to_buffer().unwrap());
     }
 }
