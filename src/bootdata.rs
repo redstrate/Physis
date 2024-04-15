@@ -4,6 +4,7 @@
 use std::fs;
 use std::path::PathBuf;
 use tracing::warn;
+use crate::blowfish::Blowfish;
 
 use crate::patch::{apply_patch, PatchError};
 
@@ -54,5 +55,28 @@ impl BootData {
         }
 
         true
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_valid_boot_dir() {
+        let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        d.push("resources/tests");
+        d.push("valid_boot");
+
+        assert!(BootData::from_existing(d.as_path().to_str().unwrap()).is_some());
+    }
+
+    #[test]
+    fn test_invalid_boot_dir() {
+        let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        d.push("resources/tests");
+        d.push("invalid_boot"); // intentionally missing so it doesn't have a .ver
+
+        assert!(BootData::from_existing(d.as_path().to_str().unwrap()).is_none());
     }
 }
