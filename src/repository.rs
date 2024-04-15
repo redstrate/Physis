@@ -123,50 +123,8 @@ pub fn string_to_category(string: &str) -> Option<Category> {
 }
 
 impl Repository {
-    /// Creates a new `Repository`, from an existing repository directory. This may return `None` if
+    /// Creates a new base `Repository`, from an existing directory. This may return `None` if
     /// the directory is invalid, e.g. a version file is missing.
-    pub fn from_existing(dir: &str) -> Option<Repository> {
-        let path = Path::new(dir);
-        if path.metadata().is_err() {
-            return None;
-        }
-
-        let name = String::from(path.file_stem().unwrap().to_str().unwrap());
-
-        let repo_type = if name == "ffxiv" {
-            Base
-        } else {
-            Expansion {
-                number: name[2..3].parse().unwrap(),
-            }
-        };
-
-        // use from_existing_base instead
-        if repo_type == Base {
-            return None
-        }
-
-        let version = if repo_type == Base {
-            let mut d = PathBuf::from(dir);
-            d.pop();
-            d.pop();
-            d.push("ffxivgame.ver");
-
-            read_version(d.as_path())
-        } else {
-            let mut d = PathBuf::from(dir);
-            d.push(format!("{}.ver", name));
-
-            read_version(d.as_path())
-        };
-
-        Some(Repository {
-            name,
-            repo_type,
-            version,
-        })
-    }
-
     pub fn from_existing_base(dir: &str) -> Option<Repository> {
         let path = Path::new(dir);
         if path.metadata().is_err() {
@@ -178,17 +136,33 @@ impl Repository {
 
         let version = read_version(d.as_path());
         Some(Repository {
-            name: "ffxiv".parse().unwrap(),
+            name: "ffxiv".to_string(),
             repo_type: Base,
             version,
         })
     }
 
-    fn expansion(&self) -> i32 {
-        match self.repo_type {
-            Base => 0,
-            Expansion { number } => number,
+    /// Creates a new expansion `Repository`, from an existing directory. This may return `None` if
+    /// the directory is invalid, e.g. a version file is missing.
+    pub fn from_existing_expansion(dir: &str) -> Option<Repository> {
+        let path = Path::new(dir);
+        if path.metadata().is_err() {
+            return None;
         }
+
+        let name = String::from(path.file_stem()?.to_str()?);
+        let expansion_number = name[2..3].parse().ok()?;
+
+        let mut d = PathBuf::from(dir);
+        d.push(format!("{name}.ver"));
+
+        Some(Repository {
+            name,
+            repo_type: Expansion {
+                number: expansion_number,
+            },
+            version: read_version(d.as_path()),
+        })
     }
 
     /// Calculate an index filename for a specific category, like _"0a0000.win32.index"_.
@@ -220,5 +194,41 @@ impl Repository {
             "{:02x}{expansion:02}{chunk:02}.{platform}.dat{data_file_id}",
             category as u32
         )
+    }
+
+    fn expansion(&self) -> i32 {
+        match self.repo_type {
+            Base => 0,
+            Expansion { number } => number,
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::path::PathBuf;
+
+    use crate::repository::Repository;
+
+    #[test]
+    fn test_base() {
+        let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        d.push("resources/tests");
+        d.push("ffxiv");
+
+        let repository = Repository::from_existing_base(d.to_str().unwrap());
+        assert!(repository.is_some());
+        assert_eq!(repository.unwrap().version.unwrap(), "2012.01.01.0000.0000");
+    }
+
+    #[test]
+    fn test_expansion() {
+        let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        d.push("resources/tests");
+        d.push("ex1");
+
+        let repository = Repository::from_existing_expansion(d.to_str().unwrap());
+        assert!(repository.is_some());
+        assert_eq!(repository.unwrap().version.unwrap(), "2012.01.01.0000.0000");
     }
 }

@@ -120,7 +120,7 @@ impl GameData {
                 .collect();
 
             for repository_path in repository_paths {
-                if let Some(expansion_repository) =Repository::from_existing(repository_path.path().to_str().unwrap()) {
+                if let Some(expansion_repository) = Repository::from_existing_expansion(repository_path.path().to_str().unwrap()) {
                     self.repositories.push(expansion_repository);
                 }
             }
