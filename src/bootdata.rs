@@ -31,8 +31,8 @@ impl BootData {
     pub fn from_existing(directory: &str) -> Option<BootData> {
         match Self::is_valid(directory) {
             true => Some(BootData {
-                path: directory.parse().unwrap(),
-                version: fs::read_to_string(format!("{directory}/ffxivboot.ver")).unwrap(),
+                path: directory.parse().ok()?,
+                version: fs::read_to_string(format!("{directory}/ffxivboot.ver")).ok()?,
             }),
             false => {
                 warn!("Boot data is not valid!");
