@@ -24,18 +24,14 @@ impl EXL {
         let cursor = Cursor::new(buffer);
         let reader = BufReader::new(cursor);
 
-        for line in reader.lines() {
-            // now parse the line!
-
-            if let Ok(line) = line {
-                if let Some((name, value)) = line.split_once(',') {
-                    let parsed_value: i32 = value.parse().unwrap();
-
+        for line in reader.lines().flatten() {
+            if let Some((name, value)) = line.split_once(',') {
+                if let Ok(parsed_value) = value.parse() {
                     if name == "EXLT" {
                         exl.version = parsed_value;
                     } else if !name.starts_with('#') {
                         // Ignore rows with comments
-                        exl.entries.push((name.parse().unwrap(), parsed_value));
+                        exl.entries.push((name.to_string(), parsed_value));
                     }
                 }
             }
