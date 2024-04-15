@@ -4,7 +4,6 @@
 use std::fs;
 use std::path::PathBuf;
 use tracing::warn;
-use crate::blowfish::Blowfish;
 
 use crate::patch::{apply_patch, PatchError};
 
