@@ -59,7 +59,7 @@ pub fn read_version(p: &Path) -> Option<String> {
 }
 
 #[binrw]
-#[brw(repr = u16)]
+#[brw(repr = u8)]
 #[derive(Clone, Debug, PartialEq)]
 pub enum Platform {
     Win32,

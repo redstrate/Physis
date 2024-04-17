@@ -267,7 +267,8 @@ struct SqpkFileOperationData {
 #[br(big)]
 struct SqpkTargetInfo {
     #[br(pad_before = 3)]
-    platform: Platform,
+    #[br(pad_size_to = 2)]
+    platform: Platform, // Platform is read as a u16, but the enum is u8
     region: Region,
     #[br(map = read_bool_from::<u16>)]
     is_debug: bool,
