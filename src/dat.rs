@@ -8,6 +8,7 @@ use binrw::{BinReaderExt, binrw};
 use binrw::BinRead;
 use binrw::BinWrite;
 use crate::ByteBuffer;
+use crate::chardat::CharacterData;
 
 #[cfg(feature = "visual_data")]
 use crate::model::ModelFileHeader;
@@ -199,7 +200,7 @@ impl DatFile {
             .seek(SeekFrom::Start(offset))
             .expect("Unable to find offset in file.");
 
-        let file_info = FileInfo::read(&mut self.file).expect("Failed to parse file info.");
+        let file_info = FileInfo::read(&mut self.file).ok()?;
 
         match file_info.file_type {
             FileType::Empty => None,
@@ -442,5 +443,37 @@ impl DatFile {
         }
 
         Some(data)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::fs::read;
+    use std::path::PathBuf;
+
+    use super::*;
+
+    #[test]
+    fn test_invalid() {
+        let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        d.push("resources/tests");
+        d.push("random");
+
+        let mut dat = crate::dat::DatFile::from_existing(d.to_str().unwrap()).unwrap();
+
+        let empty_file_info = FileInfo {
+            size: 0,
+            file_type: FileType::Empty,
+            file_size: 0,
+            standard_info: None,
+            model_info: None,
+            texture_info: None,
+        };
+        
+        // Reading invalid data should just be nothing, but no panics
+        assert!(dat.read_from_offset(0).is_none());
+        assert!(dat.read_standard_file(0, &empty_file_info).is_none());
+        assert!(dat.read_model_file(0, &empty_file_info).is_none());
+        assert!(dat.read_texture_file(0, &empty_file_info).is_none());
     }
 }
