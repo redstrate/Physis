@@ -485,9 +485,12 @@ impl Layer {
         let mut cursor = Cursor::new(buffer);
 
         let file_header = LgbHeader::read(&mut cursor).unwrap();
-
+        if file_header.file_size < 0 || file_header.total_chunk_count < 0 {
+            return None;
+        }
+        
         let chunk_header = LayerChunk::read(&mut cursor).unwrap();
-
+        
         let old_pos = cursor.position();
 
         let mut layer_offsets = vec![0i32; chunk_header.layer_count as usize];
@@ -525,3 +528,22 @@ impl Layer {
         })
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use std::fs::read;
+    use std::path::PathBuf;
+
+    use super::*;
+
+    #[test]
+    fn test_invalid() {
+        let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        d.push("resources/tests");
+        d.push("random");
+
+        // Feeding it invalid data should not panic
+        Layer::from_existing(&read(d).unwrap());
+    }
+}
+
