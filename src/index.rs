@@ -161,3 +161,30 @@ impl Index2File {
         self.entries.iter().find(|s| s.hash == hash)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use std::path::PathBuf;
+
+    use super::*;
+
+    #[test]
+    fn test_index_invalid() {
+        let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        d.push("resources/tests");
+        d.push("random");
+
+        // Feeding it invalid data should not panic
+        IndexFile::from_existing(d.to_str().unwrap());
+    }
+
+    #[test]
+    fn test_index2_invalid() {
+        let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        d.push("resources/tests");
+        d.push("random");
+
+        // Feeding it invalid data should not panic
+        Index2File::from_existing(d.to_str().unwrap());
+    }
+}
