@@ -33,7 +33,7 @@ impl ConfigFile {
         let reader = BufReader::new(cursor);
 
         let mut current_category: Option<String> = None;
-
+        
         for line in reader.lines().flatten() {
             if !line.is_empty() && line != "\0" {
                 if line.contains('<') || line.contains('>') {
@@ -131,6 +131,14 @@ mod tests {
         read(d).unwrap()
     }
 
+    fn common_setup_invalid() -> ByteBuffer {
+        let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        d.push("resources/tests");
+        d.push("random");
+
+        read(d).unwrap()
+    }
+
     #[test]
     fn basic_parsing() {
         let cfg = common_setup();
@@ -149,5 +157,13 @@ mod tests {
         let cfg_buffer = cfg.write_to_buffer().unwrap();
 
         assert_eq!(modified_cfg, cfg_buffer);
+    }
+
+    #[test]
+    fn test_invalid() {
+        let cfg = common_setup_invalid();
+
+        // Feeding it invalid data should not panic
+        ConfigFile::from_existing(&cfg);
     }
 }
