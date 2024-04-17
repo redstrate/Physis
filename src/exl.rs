@@ -125,4 +125,14 @@ mod tests {
 
         assert_eq!(existing_exl.write_to_buffer().unwrap(), exl);
     }
+    
+    #[test]
+    fn test_invalid() {
+        let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        d.push("resources/tests");
+        d.push("random");
+
+        // Feeding it invalid data should not panic
+        EXL::from_existing(&read(d).unwrap());
+    }
 }
