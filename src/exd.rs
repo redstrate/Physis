@@ -211,3 +211,36 @@ impl EXD {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use std::fs::read;
+    use std::path::PathBuf;
+    use crate::exh::EXHHeader;
+
+    use super::*;
+
+    #[test]
+    fn test_invalid() {
+        let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        d.push("resources/tests");
+        d.push("random");
+
+        let exh = EXH {
+            header: EXHHeader {
+                version: 0,
+                data_offset: 0,
+                column_count: 0,
+                page_count: 0,
+                language_count: 0,
+                row_count: 0,
+            },
+            column_definitions: vec![],
+            pages: vec![],
+            languages: vec![],
+        };
+
+        // Feeding it invalid data should not panic
+        EXD::from_existing(&exh, &read(d).unwrap());
+    }
+}

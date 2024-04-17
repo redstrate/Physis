@@ -14,12 +14,12 @@ use crate::ByteSpan;
 #[brw(big)]
 #[allow(dead_code)]
 pub struct EXHHeader {
-    version: u16,
+    pub(crate) version: u16,
 
     pub data_offset: u16,
-    column_count: u16,
-    page_count: u16,
-    language_count: u16,
+    pub(crate) column_count: u16,
+    pub(crate) page_count: u16,
+    pub(crate) language_count: u16,
 
     #[br(pad_before = 6)]
     #[br(pad_after = 8)]
