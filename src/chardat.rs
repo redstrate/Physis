@@ -216,7 +216,7 @@ impl CharacterData {
             let cursor = Cursor::new(&mut buffer);
             let mut writer = BufWriter::new(cursor);
 
-            self.write_le(&mut writer).unwrap();
+            self.write_le(&mut writer).ok()?;
         }
 
         Some(buffer)
