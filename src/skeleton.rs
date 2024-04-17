@@ -78,7 +78,7 @@ impl Skeleton {
     pub fn from_existing(buffer: ByteSpan) -> Option<Skeleton> {
         let mut cursor = Cursor::new(buffer);
 
-        let sklb = SKLB::read(&mut cursor).unwrap();
+        let sklb = SKLB::read(&mut cursor).ok()?;
 
         let root = HavokBinaryTagFileReader::read(&sklb.raw_data);
         let raw_animation_container = root.find_object_by_type("hkaAnimationContainer");
@@ -99,5 +99,23 @@ impl Skeleton {
         }
 
         Some(skeleton)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::fs::read;
+    use std::path::PathBuf;
+
+    use super::*;
+
+    #[test]
+    fn test_invalid() {
+        let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        d.push("resources/tests");
+        d.push("random");
+
+        // Feeding it invalid data should not panic
+        Skeleton::from_existing(&read(d).unwrap());
     }
 }
