@@ -58,7 +58,7 @@ impl CMP {
     pub fn from_existing(buffer: ByteSpan) -> Option<CMP> {
         let mut cursor = Cursor::new(buffer);
 
-        cursor.seek(SeekFrom::Start(0x2a800)).unwrap();
+        cursor.seek(SeekFrom::Start(0x2a800)).ok()?;
 
         let rem = buffer.len() - cursor.position() as usize;
         let entries = rem / std::mem::size_of::<RacialScalingParameters>();
@@ -66,7 +66,7 @@ impl CMP {
         let mut parameters = vec![];
 
         for _ in 0..entries {
-            parameters.push(RacialScalingParameters::read(&mut cursor).unwrap());
+            parameters.push(RacialScalingParameters::read(&mut cursor).ok()?);
         }
 
         Some(CMP {
