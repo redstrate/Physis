@@ -141,7 +141,7 @@ impl Index2File {
     pub fn from_existing(path: &str) -> Option<Self> {
         let mut index_file = std::fs::File::open(path).ok()?;
 
-        Some(Self::read(&mut index_file).unwrap())
+        Self::read(&mut index_file).ok()
     }
 
     /// Calculates a hash for `index2` files from a game path.
