@@ -65,12 +65,13 @@ pub enum Platform {
     Win32,
     PS3,
     PS4,
+    // TODO: confirm if there is a separate PS5, Xbox platform
 }
 
 pub fn get_platform_string(id: &Platform) -> &'static str {
     match &id {
         Platform::Win32 => "win32",
-        Platform::PS3 => "ps3.d",
-        Platform::PS4 => "ps4.d",
+        Platform::PS3 => "ps3",
+        Platform::PS4 => "ps4", // TODO: confirm if this "ps4" is correct
     }
 }
