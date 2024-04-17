@@ -82,7 +82,7 @@ impl Texture {
     /// Reads an existing TEX file
     pub fn from_existing(buffer: ByteSpan) -> Option<Texture> {
         let mut cursor = Cursor::new(buffer);
-        let header = TexHeader::read(&mut cursor).unwrap();
+        let header = TexHeader::read(&mut cursor).ok()?;
 
         // TODO: Adapted from Lumina, but this really can be written better...
         let mut texture_data_size = vec![0; min(13, header.mip_levels as usize)];
@@ -139,5 +139,23 @@ impl Texture {
             height: header.height as u32,
             rgba: dst,
         })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::fs::read;
+    use std::path::PathBuf;
+
+    use super::*;
+
+    #[test]
+    fn test_invalid() {
+        let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        d.push("resources/tests");
+        d.push("random");
+
+        // Feeding it invalid data should not panic
+        Texture::from_existing(&read(d).unwrap());
     }
 }
