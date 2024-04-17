@@ -312,8 +312,11 @@ struct ModelData {
     #[br(count = header.shape_value_count)]
     shape_values: Vec<ShapeValue>,
 
-    // TODO: Dawntrail doesn't seem to have these anymore? Needs more testing
-    #[br(if(file_header.version < 0x01000006, 0))]
+    // TODO: Dawntrail mysteries
+    #[br(if(file_header.version >= 0x01000006))]
+    #[br(count = 24)]
+    _padding1: Vec<u8>,
+
     submesh_bone_map_size: u32,
 
     #[br(count = submesh_bone_map_size / 2)]
@@ -322,6 +325,11 @@ struct ModelData {
     padding_amount: u8,
     #[br(count = padding_amount)]
     unknown_padding: Vec<u8>,
+
+    // TODO: Dawntrail mysteries
+    #[br(if(file_header.version >= 0x01000006))]
+    #[br(count = 385)]
+    _padding2: Vec<u8>,
 
     bounding_box: BoundingBox,
     model_bounding_box: BoundingBox,
@@ -425,6 +433,8 @@ impl MDL {
         let model_file_header = ModelFileHeader::read(&mut cursor).ok()?;
 
         let model = ModelData::read_args(&mut cursor, binrw::args! { file_header: &model_file_header }).ok()?;
+
+        //println!("{:#?}", model);
 
         let mut affected_bone_names = vec![];
 
