@@ -190,7 +190,7 @@ impl ShaderPackage {
     /// Reads an existing SHPK file
     pub fn from_existing(buffer: ByteSpan) -> Option<ShaderPackage> {
         let mut cursor = Cursor::new(buffer);
-        let mut package = ShaderPackage::read(&mut cursor).unwrap();
+        let mut package = ShaderPackage::read(&mut cursor).ok()?;
 
         for (i, node) in package.nodes.iter().enumerate() {
             package.node_selectors.push((node.selector, i as u32));
@@ -233,5 +233,23 @@ impl ShaderPackage {
         }
 
         selector
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::fs::read;
+    use std::path::PathBuf;
+
+    use super::*;
+
+    #[test]
+    fn test_invalid() {
+        let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        d.push("resources/tests");
+        d.push("random");
+
+        // Feeding it invalid data should not panic
+        ShaderPackage::from_existing(&read(d).unwrap());
     }
 }
