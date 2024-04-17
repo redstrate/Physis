@@ -422,9 +422,9 @@ pub struct MDL {
 impl MDL {
     pub fn from_existing(buffer: ByteSpan) -> Option<MDL> {
         let mut cursor = Cursor::new(buffer);
-        let model_file_header = ModelFileHeader::read(&mut cursor).unwrap();
+        let model_file_header = ModelFileHeader::read(&mut cursor).ok()?;
 
-        let model = ModelData::read_args(&mut cursor, binrw::args! { file_header: &model_file_header }).unwrap();
+        let model = ModelData::read_args(&mut cursor, binrw::args! { file_header: &model_file_header }).ok()?;
 
         let mut affected_bone_names = vec![];
 
@@ -1149,5 +1149,15 @@ mod tests {
 
         // model header
         assert_eq!(mdl.model_data.header.radius, 1.5340779);
+    }
+
+    #[test]
+    fn test_invalid() {
+        let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        d.push("resources/tests");
+        d.push("random");
+
+        // Feeding it invalid data should not panic
+        MDL::from_existing(&read(d).unwrap());
     }
 }

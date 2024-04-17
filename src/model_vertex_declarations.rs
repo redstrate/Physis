@@ -67,7 +67,7 @@ pub(crate) fn vertex_element_parser(count: u16) -> BinResult<Vec<VertexDeclarati
             count.into()
         ];
     for declaration in &mut vertex_declarations {
-        let mut element = VertexElement::read_options(reader, endian, ()).unwrap();
+        let mut element = VertexElement::read_options(reader, endian, ())?;
 
         loop {
             declaration.elements.push(element);
