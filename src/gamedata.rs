@@ -394,7 +394,7 @@ impl GameData {
             }
         }
 
-        if !self.index_files.contains_key(filenames.1) {
+        if !self.index2_files.contains_key(filenames.1) {
             if let Some(index_file) = Index2File::from_existing(filenames.1) {
                 self.index2_files.insert(filenames.1.to_string(), index_file);
             }
@@ -411,6 +411,7 @@ impl GameData {
 
     fn find_entry(&mut self, path: &str) -> Option<IndexHashBitfield> {
         let index_path = self.get_index_filenames(path);
+        debug!("Trying index files {index_path}, {index2_path}", index_path=index_path.0, index2_path=index_path.1);
 
         self.cache_index_file((&index_path.0, &index_path.1));
 
