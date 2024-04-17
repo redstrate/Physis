@@ -6,6 +6,7 @@ use std::io::{BufWriter, Cursor};
 use binrw::{BinRead, BinWrite};
 use binrw::binrw;
 use crate::{ByteBuffer, ByteSpan};
+use crate::cfg::ConfigFile;
 use crate::common_file_operations::{read_bool_from, write_bool_as};
 
 use crate::race::{Gender, Race, Subrace};
@@ -220,5 +221,23 @@ impl CharacterData {
         }
 
         Some(buffer)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::fs::read;
+    use std::path::PathBuf;
+
+    use super::*;
+    
+    #[test]
+    fn test_invalid() {
+        let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        d.push("resources/tests");
+        d.push("random");
+
+        // Feeding it invalid data should not panic
+        CharacterData::from_existing(&read(d).unwrap());
     }
 }
