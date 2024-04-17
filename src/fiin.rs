@@ -97,7 +97,7 @@ impl FileInfo {
 
 #[cfg(test)]
 mod tests {
-    use std::fs::{File, read};
+    use std::fs::read;
     use std::path::PathBuf;
 
     use crate::fiin::FileInfo;

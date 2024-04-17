@@ -4,7 +4,6 @@
 use std::cmp::Ordering;
 use std::cmp::Ordering::{Greater, Less};
 use std::path::{Path, PathBuf};
-use binrw::binrw;
 
 use crate::common::{get_platform_string, Platform, read_version};
 use crate::repository::RepositoryType::{Base, Expansion};
@@ -214,7 +213,7 @@ mod tests {
     use std::path::PathBuf;
     use crate::common::Platform;
 
-    use crate::repository::{Category, Repository, RepositoryType};
+    use super::*;
 
     #[test]
     fn test_base() {

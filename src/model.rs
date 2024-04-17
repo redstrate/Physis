@@ -7,6 +7,7 @@ use std::mem::size_of;
 use binrw::{binrw, BinWrite, BinWriterExt};
 use binrw::BinRead;
 use binrw::BinReaderExt;
+
 use crate::{ByteBuffer, ByteSpan};
 use crate::common_file_operations::{read_bool_from, write_bool_as};
 use crate::model_vertex_declarations::{vertex_element_parser, VERTEX_ELEMENT_SIZE, vertex_element_writer, VertexDeclaration, VertexType, VertexUsage};
@@ -1036,12 +1037,12 @@ impl ModelData {
 #[cfg(test)]
 mod tests {
     use std::fs::read;
-    use std::io::Cursor;
     use std::mem::size_of;
     use std::path::PathBuf;
-    use crate::dat::FileType::Model;
-    use crate::model::{MDL, ModelFileHeader};
-    use crate::model_vertex_declarations::{VERTEX_ELEMENT_SIZE, VertexElement};
+
+    use crate::model_vertex_declarations::VERTEX_ELEMENT_SIZE;
+
+    use super::*;
 
     #[test]
     fn test_file_header_size() {
@@ -1132,7 +1133,7 @@ mod tests {
         d.push("resources/tests");
         d.push("c0201e0038_top_zeroed.mdl");
 
-        let mut mdl = MDL::from_existing(&read(d).unwrap()).unwrap();
+        let mdl = MDL::from_existing(&read(d).unwrap()).unwrap();
 
         // file header
         assert_eq!(mdl.file_header.version, 16777221);

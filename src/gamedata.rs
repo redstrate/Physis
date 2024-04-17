@@ -447,7 +447,7 @@ mod tests {
 
     #[test]
     fn repository_ordering() {
-        let mut data = common_setup_data();
+        let data = common_setup_data();
 
         assert_eq!(data.repositories[0].name, "ffxiv");
         assert_eq!(data.repositories[1].name, "ex1");
@@ -456,7 +456,7 @@ mod tests {
 
     #[test]
     fn repository_and_category_parsing() {
-        let mut data = common_setup_data();
+        let data = common_setup_data();
 
         assert_eq!(
             data.parse_repository_category("exd/root.exl").unwrap(),

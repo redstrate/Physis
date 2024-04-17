@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2024 Joshua Goins <josh@redstrate.com>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-use std::io::{Cursor, Read, Seek, SeekFrom};
+use std::io::{Cursor, Seek, SeekFrom};
 
 use binrw::{BinRead, binread, BinReaderExt};
 use binrw::binrw;
@@ -263,8 +263,6 @@ enum PopType
     PC = 0x1,
     #[br(magic = 0x2u8)]
     NPC,
-    #[br(magic = 0x2u8)]
-    BNPC,
     #[br(magic = 0x3u8)]
     Content,
 }
@@ -486,9 +484,9 @@ impl Layer {
     pub fn from_existing(buffer: ByteSpan) -> Option<Layer> {
         let mut cursor = Cursor::new(buffer);
 
-        let mut file_header = LgbHeader::read(&mut cursor).unwrap();
+        let file_header = LgbHeader::read(&mut cursor).unwrap();
 
-        let mut chunk_header = LayerChunk::read(&mut cursor).unwrap();
+        let chunk_header = LayerChunk::read(&mut cursor).unwrap();
 
         let old_pos = cursor.position();
 
@@ -502,9 +500,7 @@ impl Layer {
 
             let old_pos = cursor.position();
 
-            let mut header = LayerHeader::read(&mut cursor).unwrap();
-
-            println!("{:#?}", header);
+            let header = LayerHeader::read(&mut cursor).unwrap();
 
             cursor.seek(SeekFrom::Start(old_pos + header.instance_object_offset as u64)).unwrap();
 
@@ -514,7 +510,7 @@ impl Layer {
             }
 
             cursor.seek(SeekFrom::Start(old_pos + header.layer_set_referenced_list_offset as u64)).unwrap();
-            let mut referenced_list = LayerSetReferencedList::read(&mut cursor).unwrap();
+            let referenced_list = LayerSetReferencedList::read(&mut cursor).unwrap();
 
             for i in 0..header.instance_object_count {
                 cursor.seek(SeekFrom::Start(old_pos + header.instance_object_offset as u64 + instance_offsets[i as usize] as u64)).unwrap();

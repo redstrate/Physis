@@ -11,14 +11,12 @@ pub(crate) fn write_bool_as<T: std::convert::From<u8>>(x: &bool) -> T {
 
 #[cfg(test)]
 mod tests {
-    use std::io::Cursor;
-    use crate::common_file_operations::{read_bool_from, write_bool_as};
-    use crate::model::MDL;
+    use super::*;
 
     const DATA: [u8; 2] = [0u8, 1u8];
 
     // TODO: add tests for u16
-    
+
     #[test]
     fn read_bool_u8() {
         assert!(!read_bool_from::<u8>(DATA[0]));

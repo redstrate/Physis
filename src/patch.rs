@@ -9,7 +9,6 @@ use std::path::PathBuf;
 
 use binrw::binread;
 use binrw::BinRead;
-use binrw::binrw;
 use tracing::{debug, warn};
 
 use crate::common::{get_platform_string, Platform, Region};
