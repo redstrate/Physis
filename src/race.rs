@@ -46,52 +46,71 @@ pub enum Race {
     Viera,
 }
 
-mod internal_race {
-    use paste::paste;
-
-    use crate::define_race_enum;
-    use crate::race::Gender;
-    use crate::race::Gender::*;
-    use crate::race::Race;
-    use crate::race::Race::*;
-    use crate::race::Subrace;
-    use crate::race::Subrace::*;
-
-    define_race_enum! {
-        pub enum RaceTest {
-            [101](Hyur, Male, Midlander),
-            [201](Hyur, Female, Midlander),
-            [301](Hyur, Male, Highlander),
-            [401](Hyur, Female, Highlander),
-
-            [501](Elezen, Male),
-            [601](Elezen, Female),
-
-            [701](Miqote, Male),
-            [801](Miqote, Female),
-
-            [901](Roegadyn, Male),
-            [1001](Roegadyn, Female),
-
-            [1101](Lalafell, Male),
-            [1201](Lalafell, Female),
-
-            [1301](AuRa, Male),
-            [1401](AuRa, Female),
-
-            [1501](Hrothgar, Male),
-            [1601](Hrothgar, Female),
-
-            [1701](Viera, Male),
-            [1801](Viera, Female)
-        }
-    }
-}
-
 /// Gets a proper race identifier (such as 101, for Hyur-Midlander-Males) given a race, a subrace,
 /// and a gender.
 pub fn get_race_id(race: Race, subrace: Subrace, gender: Gender) -> Option<i32> {
-    Some(internal_race::convert_to_internal(race, subrace, gender).unwrap() as i32)
+    // TODO: should we check for invalid subraces like the Hyur branch does?
+    match race {
+        Race::Hyur => {
+            match subrace {
+                Subrace::Midlander => {
+                    match gender {
+                        Gender::Male => Some(101),
+                        Gender::Female => Some(201)
+                    }
+                }
+                Subrace::Highlander => {
+                    match gender {
+                        Gender::Male => Some(301),
+                        Gender::Female => Some(401)
+                    }
+                }
+                _ => None
+            }
+        }
+        Race::Elezen => {
+            match gender {
+                Gender::Male => Some(501),
+                Gender::Female => Some(601)
+            }
+        }
+        Race::Lalafell => {
+            match gender {
+                Gender::Male => Some(501),
+                Gender::Female => Some(601)
+            }
+        }
+        Race::Miqote => {
+            match gender {
+                Gender::Male => Some(701),
+                Gender::Female => Some(801)
+            }
+        }
+        Race::Roegadyn => {
+            match gender {
+                Gender::Male => Some(901),
+                Gender::Female => Some(1001)
+            }
+        }
+        Race::AuRa => {
+            match gender {
+                Gender::Male => Some(1301),
+                Gender::Female => Some(1401)
+            }
+        }
+        Race::Hrothgar => {
+            match gender {
+                Gender::Male => Some(1501),
+                Gender::Female => Some(1601) // TODO: is this accurate as of dawntrail?
+            }
+        }
+        Race::Viera => {
+            match gender {
+                Gender::Male => Some(1701),
+                Gender::Female => Some(1801)
+            }
+        }
+    }
 }
 
 /// Builds the path to the skeleton (sklb) file for a given `race`, `subrace` and `gender`.
@@ -118,15 +137,13 @@ pub fn get_supported_subraces(race: Race) -> [Subrace; 2] {
 
 #[cfg(test)]
 mod tests {
-    use crate::race::internal_race::{convert_to_internal, RaceTest};
-
     use super::*;
 
     #[test]
-    fn test_convert_to_internal() {
+    fn test_convert_race_num() {
         assert_eq!(
-            convert_to_internal(Race::Hyur, Subrace::Midlander, Gender::Female).unwrap(),
-            RaceTest::HyurMidlanderFemale
+            get_race_id(Race::Roegadyn, Subrace::SeaWolf, Gender::Male),
+            Some(901)
         );
     }
 }

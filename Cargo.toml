@@ -61,7 +61,6 @@ libz-sys = { version = "1.1"  }
 
 # nice to have features rust is lacking at the moment
 modular-bitfield = "0.11"
-paste = "1"
 
 # needed for half-float support which FFXIV uses in its model data
 half = { version = "2", optional = true }
