@@ -6,7 +6,6 @@ use std::io::{BufWriter, Cursor};
 use binrw::{BinRead, BinWrite};
 use binrw::binrw;
 use crate::{ByteBuffer, ByteSpan};
-use crate::cfg::ConfigFile;
 use crate::common_file_operations::{read_bool_from, write_bool_as};
 
 use crate::race::{Gender, Race, Subrace};

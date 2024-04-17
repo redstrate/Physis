@@ -8,7 +8,6 @@ use binrw::{BinReaderExt, binrw};
 use binrw::BinRead;
 use binrw::BinWrite;
 use crate::ByteBuffer;
-use crate::chardat::CharacterData;
 
 #[cfg(feature = "visual_data")]
 use crate::model::ModelFileHeader;
@@ -448,7 +447,6 @@ impl DatFile {
 
 #[cfg(test)]
 mod tests {
-    use std::fs::read;
     use std::path::PathBuf;
 
     use super::*;
@@ -469,7 +467,7 @@ mod tests {
             model_info: None,
             texture_info: None,
         };
-        
+
         // Reading invalid data should just be nothing, but no panics
         assert!(dat.read_from_offset(0).is_none());
         assert!(dat.read_standard_file(0, &empty_file_info).is_none());

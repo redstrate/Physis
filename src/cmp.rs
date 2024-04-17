@@ -6,7 +6,6 @@ use std::io::{Cursor, Seek, SeekFrom};
 use binrw::BinRead;
 use binrw::binrw;
 use crate::ByteSpan;
-use crate::chardat::CharacterData;
 
 #[binrw]
 #[br(little)]
