@@ -112,14 +112,16 @@ impl IndexFile {
     pub fn calculate_hash(path: &str) -> u64 {
         let lowercase = path.to_lowercase();
 
-        let pos = lowercase.rfind('/').unwrap();
+        if let Some(pos) = lowercase.rfind('/') {
+            let (directory, filename) = lowercase.split_at(pos);
 
-        let (directory, filename) = lowercase.split_at(pos);
+            let directory_crc = CRC.checksum(directory.as_bytes());
+            let filename_crc = CRC.checksum(filename[1..filename.len()].as_bytes());
 
-        let directory_crc = CRC.checksum(directory.as_bytes());
-        let filename_crc = CRC.checksum(filename[1..filename.len()].as_bytes());
-
-        (directory_crc as u64) << 32 | (filename_crc as u64)
+            (directory_crc as u64) << 32 | (filename_crc as u64)
+        } else {
+            CRC.checksum(lowercase.as_bytes()) as u64
+        }
     }
 
     // TODO: turn into traits?
