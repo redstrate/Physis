@@ -14,7 +14,7 @@ struct ChatLogHeader {
     content_size: u32,
     file_size: u32,
 
-    #[br(count = file_size - content_size)]
+    #[br(count = file_size.saturating_sub(content_size))]
     offset_entries: Vec<u32>,
 }
 
@@ -117,7 +117,11 @@ impl ChatLog {
         let mut cursor = Cursor::new(buffer);
 
         let header = ChatLogHeader::read(&mut cursor).expect("Cannot parse header.");
-
+        // Dumb check for obviously wrong values
+        if header.content_size as usize > buffer.len() || header.file_size as usize > buffer.len() {
+            return None;
+        }
+        
         let content_offset = (8 + header.file_size * 4) as u64;
 
         // beginning of content offset
@@ -148,5 +152,23 @@ impl ChatLog {
         }
 
         Some(ChatLog { entries })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::fs::read;
+    use std::path::PathBuf;
+
+    use super::*;
+
+    #[test]
+    fn test_invalid() {
+        let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        d.push("resources/tests");
+        d.push("random");
+
+        // Feeding it invalid data should not panic
+        ChatLog::from_existing(&read(d).unwrap());
     }
 }
