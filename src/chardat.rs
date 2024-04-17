@@ -6,6 +6,7 @@ use std::io::{BufWriter, Cursor};
 use binrw::{BinRead, BinWrite};
 use binrw::binrw;
 use crate::{ByteBuffer, ByteSpan};
+use crate::common_file_operations::{read_bool_from, write_bool_as};
 
 use crate::race::{Gender, Race, Subrace};
 
@@ -136,8 +137,8 @@ pub struct CharacterData { // version 4
     pub hair: u8,
 
     /// If hair highlights are enabled for this character.
-    #[br(map = | x: u8 | x != 0 )]
-    #[bw(map = | x: &bool | if *x { 1u8 } else { 0u8 } )]
+    #[br(map = read_bool_from::<u8>)]
+    #[bw(map = write_bool_as::<u8>)]
     pub enable_highlights: bool,
 
     /// The character's skin tone.

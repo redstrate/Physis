@@ -119,5 +119,7 @@ pub mod lgb;
 #[cfg(feature = "visual_data")]
 pub mod tera;
 
+mod common_file_operations;
+
 #[doc(hidden)]
 pub const PHYSIS_VERSION: &str = env!("CARGO_PKG_VERSION");

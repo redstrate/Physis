@@ -14,6 +14,7 @@ use tracing::{debug, warn};
 
 use crate::common::{get_platform_string, Platform, Region};
 use crate::sqpack::read_data_block_patch;
+use crate::common_file_operations::read_bool_from;
 
 #[binread]
 #[derive(Debug)]
@@ -269,7 +270,7 @@ struct SqpkTargetInfo {
     #[br(pad_before = 3)]
     platform: Platform,
     region: Region,
-    #[br(map = | x : u16 | x == 1)]
+    #[br(map = read_bool_from::<u16>)]
     is_debug: bool,
     version: u16,
     #[br(little)]
@@ -292,7 +293,7 @@ enum SqpkIndexCommand {
 #[br(big)]
 struct SqpkIndex {
     command: SqpkIndexCommand,
-    #[br(map = | x : u8 | x == 1)]
+    #[br(map = read_bool_from::<u8>)]
     is_synonym: bool,
 
     #[br(pad_before = 1)]

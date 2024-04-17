@@ -12,6 +12,7 @@ use crate::ByteBuffer;
 #[cfg(feature = "visual_data")]
 use crate::model::ModelFileHeader;
 use crate::sqpack::read_data_block;
+use crate::common_file_operations::read_bool_from;
 
 #[binrw]
 #[brw(repr = i32)]
@@ -94,10 +95,10 @@ pub struct ModelFileBlock {
     pub material_num: u16,
     pub num_lods: u8,
 
-    #[br(map = | x: u8 | x != 0)]
+    #[br(map = read_bool_from::<u8>)]
     pub index_buffer_streaming_enabled: bool,
     #[brw(pad_after = 1)]
-    #[br(map = | x: u8 | x != 0)]
+    #[br(map = read_bool_from::<u8>)]
     pub edge_geometry_enabled: bool,
 }
 

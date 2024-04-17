@@ -8,6 +8,7 @@ use binrw::{binrw, BinWrite, BinWriterExt};
 use binrw::BinRead;
 use binrw::BinReaderExt;
 use crate::{ByteBuffer, ByteSpan};
+use crate::common_file_operations::{read_bool_from, write_bool_as};
 use crate::model_vertex_declarations::{vertex_element_parser, VERTEX_ELEMENT_SIZE, vertex_element_writer, VertexDeclaration, VertexType, VertexUsage};
 
 pub const NUM_VERTICES: u32 = 17;
@@ -31,11 +32,11 @@ pub struct ModelFileHeader {
 
     pub lod_count: u8,
 
-    #[br(map = | x: u8 | x != 0)]
-    #[bw(map = | x: & bool | -> u8 { if * x { 1 } else { 0 } })]
+    #[br(map = read_bool_from::<u8>)]
+    #[bw(map = write_bool_as::<u8>)]
     pub index_buffer_streaming_enabled: bool,
-    #[br(map = | x: u8 | x != 0)]
-    #[bw(map = | x: & bool | -> u8 { if * x { 1 } else { 0 } })]
+    #[br(map = read_bool_from::<u8>)]
+    #[bw(map = write_bool_as::<u8>)]
     #[brw(pad_after = 1)]
     pub has_edge_geometry: bool,
 }
