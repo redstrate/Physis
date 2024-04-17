@@ -142,4 +142,14 @@ mod tests {
 
         assert_eq!(*valid_fiin, testing_fiin.write_to_buffer().unwrap());
     }
+    
+    #[test]
+    fn test_invalid() {
+        let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        d.push("resources/tests");
+        d.push("random");
+
+        // Feeding it invalid data should not panic
+        FileInfo::from_existing(&read(d).unwrap());
+    }
 }
