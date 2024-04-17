@@ -87,3 +87,22 @@ impl EXH {
         EXH::read(&mut Cursor::new(&buffer)).ok()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use std::fs::read;
+    use std::path::PathBuf;
+
+    use super::*;
+
+    #[test]
+    fn test_invalid() {
+        let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        d.push("resources/tests");
+        d.push("random");
+
+        // Feeding it invalid data should not panic
+        EXH::from_existing(&read(d).unwrap());
+    }
+}
+
