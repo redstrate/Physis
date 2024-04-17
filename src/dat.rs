@@ -221,12 +221,14 @@ impl DatFile {
 
     /// Reads a standard file block.
     fn read_standard_file(&mut self, offset: u64, file_info: &FileInfo) -> Option<ByteBuffer> {
-        let standard_file_info = file_info.standard_info.as_ref().unwrap();
+        let Some(standard_file_info) = file_info.standard_info.as_ref() else {
+            return None;
+        };
 
         let mut blocks: Vec<Block> = Vec::with_capacity(standard_file_info.num_blocks as usize);
 
         for _ in 0..standard_file_info.num_blocks {
-            blocks.push(Block::read(&mut self.file).unwrap());
+            blocks.push(Block::read(&mut self.file).ok()?);
         }
 
         let mut data: Vec<u8> = Vec::with_capacity(file_info.file_size as usize);
@@ -249,9 +251,11 @@ impl DatFile {
     /// Reads a model file block.
     #[cfg(feature = "visual_data")]
     fn read_model_file(&mut self, offset: u64, file_info: &FileInfo) -> Option<ByteBuffer> {
-        let mut buffer = Cursor::new(Vec::new());
+        let Some(model_file_info) = file_info.model_info.as_ref() else {
+            return None;
+        };
 
-        let model_file_info = file_info.model_info.as_ref().unwrap();
+        let mut buffer = Cursor::new(Vec::new());
 
         let base_offset = offset + (file_info.size as u64);
 
@@ -284,7 +288,7 @@ impl DatFile {
             self.file.seek(SeekFrom::Start(base_offset + offset)).ok()?;
             let stack_start = buffer.position();
             for _ in 0..size {
-                let last_pos = &self.file.stream_position().unwrap();
+                let last_pos = &self.file.stream_position().ok()?;
 
                 let data =
                     read_data_block(&self.file, *last_pos).expect("Unable to read block data.");
@@ -305,13 +309,11 @@ impl DatFile {
         let stack_size = read_model_blocks(
             model_file_info.offset.stack_size as u64,
             model_file_info.num.stack_size as usize,
-        )
-        .unwrap() as u32;
+        )? as u32;
         let runtime_size = read_model_blocks(
             model_file_info.offset.runtime_size as u64,
             model_file_info.num.runtime_size as usize,
-        )
-        .unwrap() as u32;
+        )? as u32;
 
         let mut process_model_data =
             |i: usize,
@@ -399,9 +401,11 @@ impl DatFile {
 
     /// Reads a texture file block.
     fn read_texture_file(&mut self, offset: u64, file_info: &FileInfo) -> Option<ByteBuffer> {
-        let mut data: Vec<u8> = Vec::with_capacity(file_info.file_size as usize);
+        let Some(texture_file_info) = file_info.texture_info.as_ref() else {
+            return None;
+        };
 
-        let texture_file_info = file_info.texture_info.as_ref().unwrap();
+        let mut data: Vec<u8> = Vec::with_capacity(file_info.file_size as usize);
 
         // write the header if it exists
         let mipmap_size = texture_file_info.lods[0].compressed_size;
