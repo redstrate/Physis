@@ -12,17 +12,40 @@ const END_OF_STREAM: u8 = 0xFF;
 #[brw(repr = u8)]
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub enum VertexType {
+    /// 1 32-bit float
     Single1 = 0,
+    /// 2 32-bit floats
     Single2 = 1,
+    /// 3 32-bit floats
     Single3 = 2,
+    /// 4 32-bit floats
     Single4 = 3,
+
+    /// 4 bytes
     Byte4 = 5,
+
+    /// 2 16-bit signed integers
+    Short2 = 6,
+    /// 4 16-bit signed integers
+    Short4 = 7,
+
+    /// 4 8-bit floats
     ByteFloat4 = 8,
+
+    /// Duplicate of Short2?
+    Short2n = 9,
+    /// Duplicate of Short4?
+    Short4n = 10,
+
+    /// 2 16-bit floats
     Half2 = 13,
+    /// 4 16-bit floats
     Half4 = 14,
 
-    // Unknown vertex type, I seen them used in BlendIndices in Dawntrail
-    Unknown1 = 17
+    /// 2 16-bit unsigned integers
+    UnsignedShort2 = 16,
+    /// 4 16-bit unsigned integers
+    UnsignedShort4 = 17
 }
 
 #[binrw]

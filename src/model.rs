@@ -520,11 +520,13 @@ impl MDL {
                                         vertices[k as usize].bone_weight = MDL::read_byte_float4(&mut cursor).unwrap();
                                     }
                                     VertexType::Byte4 => {
-                                        // TODO: This was used in Dawntrail models. Look into if this is really correct, but seems so?
-                                        vertices[k as usize].bone_weight = MDL::read_byte_float4(&mut cursor).unwrap();
-                                    }
-                                    VertexType::Unknown1 => {
-                                        // TODO: Unimplemented, needed for Dawntrail?
+                                        let bytes = MDL::read_byte4(&mut cursor).unwrap();
+                                        vertices[k as usize].bone_weight = [
+                                            f32::from(bytes[0]),
+                                            f32::from(bytes[1]),
+                                            f32::from(bytes[2]),
+                                            f32::from(bytes[3])
+                                        ];
                                     }
                                     _ => {
                                         panic!("Unexpected vertex type for blendweight: {:#?}", element.vertex_type);
@@ -535,9 +537,6 @@ impl MDL {
                                 match element.vertex_type {
                                     VertexType::Byte4 => {
                                         vertices[k as usize].bone_id = MDL::read_byte4(&mut cursor).unwrap();
-                                    }
-                                    VertexType::Unknown1 => {
-                                        // TODO: Unimplemented, needed for Dawntrail?
                                     }
                                     _ => {
                                         panic!("Unexpected vertex type for blendindice: {:#?}", element.vertex_type);
