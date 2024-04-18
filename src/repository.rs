@@ -261,9 +261,9 @@ mod tests {
             version: None,
         };
 
-        assert_eq!(repo.index_filename(Category::Music), "0c0000.ps3.d.index");
-        assert_eq!(repo.index2_filename(Category::Music), "0c0000.ps3.d.index2");
-        assert_eq!(repo.dat_filename(Category::GameScript, 1), "0b0000.ps3.d.dat1");
+        assert_eq!(repo.index_filename(Category::Music), "0c0000.ps3.index");
+        assert_eq!(repo.index2_filename(Category::Music), "0c0000.ps3.index2");
+        assert_eq!(repo.dat_filename(Category::GameScript, 1), "0b0000.ps3.dat1");
     }
 
     #[test]
@@ -275,8 +275,8 @@ mod tests {
             version: None,
         };
 
-        assert_eq!(repo.index_filename(Category::Music), "0c0000.ps4.d.index");
-        assert_eq!(repo.index2_filename(Category::Music), "0c0000.ps4.d.index2");
-        assert_eq!(repo.dat_filename(Category::GameScript, 1), "0b0000.ps4.d.dat1");
+        assert_eq!(repo.index_filename(Category::Music), "0c0000.ps4.index");
+        assert_eq!(repo.index2_filename(Category::Music), "0c0000.ps4.index2");
+        assert_eq!(repo.dat_filename(Category::GameScript, 1), "0b0000.ps4.dat1");
     }
 }
