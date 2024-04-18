@@ -117,7 +117,10 @@ enum TextureUsage
     #[brw(magic = 0x20491240u32)]
     SamplerWaveletMap1,
     #[brw(magic = 0x95E1F64Du32)]
-    SamplerWhitecapMap
+    SamplerWhitecapMap,
+
+    #[brw(magic = 0x565f8fd8u32)]
+    UnknownDawntrail1
 }
 
 #[binrw]
@@ -150,11 +153,16 @@ struct MaterialData {
     #[br(pad_after = file_header.additional_data_size)]
     strings: Vec<u8>,
 
-    #[br(if(file_header.data_set_size > 0))]
+    #[br(if(file_header.data_set_size > 0 && file_header.version < 0x1030000))]
     color_set_info: Option<ColorSetInfo>,
 
-    #[br(if(file_header.data_set_size > 512))]
+    #[br(if(file_header.data_set_size > 512 && file_header.version < 0x1030000))]
     color_set_due_info: Option<ColorSetDyeInfo>,
+
+    // Dawntrail unknown stuff
+    #[br(if(file_header.version == 0x1030000))]
+    #[br(count = file_header.data_set_size)]
+    unknown1: Vec<u8>,
 
     header: MaterialHeader,
 
@@ -179,9 +187,7 @@ impl Material {
     pub fn from_existing(buffer: ByteSpan) -> Option<Material> {
         let mut cursor = Cursor::new(buffer);
         let mat_data = MaterialData::read(&mut cursor).ok()?;
-
-        println!("{:#?}", mat_data);
-
+        
         let mut texture_paths = vec![];
 
         let mut offset = 0;
