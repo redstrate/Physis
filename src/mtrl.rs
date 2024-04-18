@@ -41,10 +41,11 @@ struct ColorSet {
 }
 
 #[binrw]
+#[br(import {set_count: usize})]
 #[derive(Debug)]
 #[allow(dead_code)]
 struct ColorSetInfo {
-    #[br(count = 256)]
+    #[br(count = set_count)]
     data: Vec<u16>,
 }
 
@@ -153,16 +154,16 @@ struct MaterialData {
     #[br(pad_after = file_header.additional_data_size)]
     strings: Vec<u8>,
 
-    #[br(if(file_header.data_set_size > 0 && file_header.version < 0x1030000))]
+    #[br(if(file_header.data_set_size > 0))]
+    // Dawntrail doubled the amount of color sets.
+    // The MTRL version is the same (why square enix?) so we check the data set size instead
+    #[br(args { set_count: if file_header.data_set_size < 2048 { 256 } else { 1024 } })]
     color_set_info: Option<ColorSetInfo>,
 
-    #[br(if(file_header.data_set_size > 512 && file_header.version < 0x1030000))]
+    #[br(if(file_header.data_set_size >
+        if file_header.data_set_size < 2048 { 512 } else { 2048 }
+    ))]
     color_set_due_info: Option<ColorSetDyeInfo>,
-
-    // Dawntrail unknown stuff
-    #[br(if(file_header.version == 0x1030000))]
-    #[br(count = file_header.data_set_size)]
-    unknown1: Vec<u8>,
 
     header: MaterialHeader,
 
