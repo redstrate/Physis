@@ -321,7 +321,7 @@ struct ModelData {
     bone_tables: Vec<BoneTable>,
 
     #[br(count = header.bone_table_count)]
-    #[br(if(file_header.version >= 0x1000005))]
+    #[br(if(file_header.version >= 0x1000006))]
     bone_tables_v2: Vec<BoneTableV2>,
 
     #[br(count = header.shape_count)]
@@ -333,15 +333,23 @@ struct ModelData {
     #[br(count = header.shape_value_count)]
     shape_values: Vec<ShapeValue>,
 
-    submesh_bone_map_size: u16,
+    // TODO: try to unify these fields?
+    #[br(if(file_header.version <= 0x1000005))]
+    submesh_bone_map_size: u32,
 
-    #[br(count = submesh_bone_map_size / 2)]
+    // hehe, Dawntrail made this u16 instead of u32. fun?
+    #[br(if(file_header.version >= 0x1000006))]
+    submesh_bone_map_size_v2: u16,
+
+    #[br(count = if file_header.version >= 0x1000006 { (submesh_bone_map_size_v2 / 2) as u32 } else { submesh_bone_map_size / 2 } )]
     submesh_bone_map: Vec<u16>,
 
     padding_amount: u8,
     #[br(count = padding_amount)]
     unknown_padding: Vec<u8>,
 
+    #[br(dbg)]
+    // TODO: these are still wrong on Dawntrail!
     bounding_box: BoundingBox,
     model_bounding_box: BoundingBox,
     water_bounding_box: BoundingBox,
@@ -444,9 +452,7 @@ impl MDL {
         let model_file_header = ModelFileHeader::read(&mut cursor).ok()?;
 
         let model = ModelData::read_args(&mut cursor, binrw::args! { file_header: &model_file_header }).ok()?;
-
-        //println!("{:#?}", model);
-
+        
         let mut affected_bone_names = vec![];
 
         for offset in &model.bone_name_offsets {
