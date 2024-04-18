@@ -99,6 +99,10 @@ impl MDL {
         cursor.write_le::<[f32; 4]>(vec)
     }
 
+    pub(crate) fn read_unsigned_short4(cursor: &mut Cursor<ByteSpan>) -> BinResult<[u16; 4]> {
+        cursor.read_le::<[u16; 4]>()
+    }
+
     pub(crate) fn pad_slice<const N: usize>(small_slice: &[f32; N], fill: f32) -> [f32; 4] {
         let mut bigger_slice: [f32; 4] = [fill, fill, fill, fill];
         bigger_slice[..N].copy_from_slice(&small_slice[..N]);

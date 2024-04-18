@@ -209,6 +209,22 @@ struct BoneTable {
 #[binrw]
 #[derive(Debug, Clone, PartialEq)]
 #[allow(dead_code)]
+struct BoneTableV2 {
+    #[br(pad_before = 2)]
+    bone_count: u16,
+
+    #[br(count = bone_count)]
+    bone_indices: Vec<u16>,
+
+    // align to 4 bytes
+    // TODO: use br align_to?
+    #[br(if(bone_count % 2 == 0))]
+    padding: u16
+}
+
+#[binrw]
+#[derive(Debug, Clone, PartialEq)]
+#[allow(dead_code)]
 struct BoundingBox {
     min: [f32; 4],
     max: [f32; 4],
@@ -301,7 +317,12 @@ struct ModelData {
     bone_name_offsets: Vec<u32>,
 
     #[br(count = header.bone_table_count)]
+    #[br(if(file_header.version <= 0x1000005))]
     bone_tables: Vec<BoneTable>,
+
+    #[br(count = header.bone_table_count)]
+    #[br(if(file_header.version >= 0x1000005))]
+    bone_tables_v2: Vec<BoneTableV2>,
 
     #[br(count = header.shape_count)]
     shapes: Vec<ShapeStruct>,
@@ -312,12 +333,7 @@ struct ModelData {
     #[br(count = header.shape_value_count)]
     shape_values: Vec<ShapeValue>,
 
-    // TODO: Dawntrail mysteries
-    #[br(if(file_header.version >= 0x01000006))]
-    #[br(count = 24)]
-    _padding1: Vec<u8>,
-
-    submesh_bone_map_size: u32,
+    submesh_bone_map_size: u16,
 
     #[br(count = submesh_bone_map_size / 2)]
     submesh_bone_map: Vec<u16>,
@@ -325,11 +341,6 @@ struct ModelData {
     padding_amount: u8,
     #[br(count = padding_amount)]
     unknown_padding: Vec<u8>,
-
-    // TODO: Dawntrail mysteries
-    #[br(if(file_header.version >= 0x01000006))]
-    #[br(count = 385)]
-    _padding2: Vec<u8>,
 
     bounding_box: BoundingBox,
     model_bounding_box: BoundingBox,
@@ -528,6 +539,15 @@ impl MDL {
                                             f32::from(bytes[3])
                                         ];
                                     }
+                                    VertexType::UnsignedShort4 => {
+                                        let bytes = MDL::read_unsigned_short4(&mut cursor).unwrap();
+                                        vertices[k as usize].bone_weight = [
+                                            f32::from(bytes[0]),
+                                            f32::from(bytes[1]),
+                                            f32::from(bytes[2]),
+                                            f32::from(bytes[3])
+                                        ];
+                                    }
                                     _ => {
                                         panic!("Unexpected vertex type for blendweight: {:#?}", element.vertex_type);
                                     }
@@ -537,6 +557,15 @@ impl MDL {
                                 match element.vertex_type {
                                     VertexType::Byte4 => {
                                         vertices[k as usize].bone_id = MDL::read_byte4(&mut cursor).unwrap();
+                                    }
+                                    VertexType::UnsignedShort4 => {
+                                        let shorts = MDL::read_unsigned_short4(&mut cursor).unwrap();
+                                        vertices[k as usize].bone_id = [
+                                            shorts[0] as u8,
+                                            shorts[1] as u8,
+                                            shorts[2] as u8,
+                                            shorts[3] as u8
+                                        ];
                                     }
                                     _ => {
                                         panic!("Unexpected vertex type for blendindice: {:#?}", element.vertex_type);
