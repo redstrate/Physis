@@ -49,7 +49,8 @@ bitflags! {
 enum TextureFormat {
     B8G8R8A8 = 0x1450,
     BC1 = 0x3420,
-    BC5 = 0x3431,
+    BC3 = 0x3431,
+    BC5 = 0x6230,
 }
 
 #[binrw]
@@ -84,31 +85,18 @@ impl Texture {
         let mut cursor = Cursor::new(buffer);
         let header = TexHeader::read(&mut cursor).ok()?;
 
-        // TODO: Adapted from Lumina, but this really can be written better...
-        let mut texture_data_size = vec![0; min(13, header.mip_levels as usize)];
-        let size = texture_data_size.len();
-        for i in 0..size - 1 {
-            texture_data_size[i] = header.offset_to_surface[i + 1] - header.offset_to_surface[i];
-        }
-
-        texture_data_size[size - 1] =
-            (buffer.len() - header.offset_to_surface[size - 1] as usize) as u32;
-
         cursor
-            .seek(SeekFrom::Start(header.offset_to_surface[0] as u64))
+            .seek(SeekFrom::Start(std::mem::size_of::<TexHeader>() as u64))
             .ok()?;
 
-        let mut src = vec![0u8; texture_data_size.iter().sum::<u32>() as usize];
+        let mut src = vec![0u8; buffer.len() - std::mem::size_of::<TexHeader>() as usize];
         cursor.read_exact(src.as_mut_slice()).ok()?;
 
         let mut dst;
 
         match header.format {
             TextureFormat::B8G8R8A8 => {
-                dst =
-                    vec![0u8; texture_data_size.iter().sum::<u32>() as usize];
-
-                dst.copy_from_slice(&src);
+                dst = src;
             }
             TextureFormat::BC1 => {
                 dst = vec![0u8; header.width as usize * header.height as usize * 4];
@@ -121,10 +109,21 @@ impl Texture {
                     dst.as_mut_slice(),
                 );
             }
-            TextureFormat::BC5 => {
+            TextureFormat::BC3 => {
                 dst = vec![0u8; header.width as usize * header.height as usize * 4];
 
                 let format = Format::Bc3;
+                format.decompress(
+                    &src,
+                    header.width as usize,
+                    header.height as usize,
+                    dst.as_mut_slice(),
+                );
+            }
+            TextureFormat::BC5 => {
+                dst = vec![0u8; header.width as usize * header.height as usize * 4];
+
+                let format = Format::Bc5;
                 format.decompress(
                     &src,
                     header.width as usize,
