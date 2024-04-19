@@ -3,7 +3,6 @@
 
 #![allow(clippy::needless_range_loop)]
 
-use std::cmp::min;
 use std::io::{Cursor, Read, Seek, SeekFrom};
 
 use binrw::BinRead;
@@ -89,7 +88,7 @@ impl Texture {
             .seek(SeekFrom::Start(std::mem::size_of::<TexHeader>() as u64))
             .ok()?;
 
-        let mut src = vec![0u8; buffer.len() - std::mem::size_of::<TexHeader>() as usize];
+        let mut src = vec![0u8; buffer.len() - std::mem::size_of::<TexHeader>()];
         cursor.read_exact(src.as_mut_slice()).ok()?;
 
         let mut dst;
