@@ -118,5 +118,8 @@ pub mod tera;
 
 mod common_file_operations;
 
+/// Reading word dictionaries, such as the vulgar word list.
+pub mod dic;
+
 #[doc(hidden)]
 pub const PHYSIS_VERSION: &str = env!("CARGO_PKG_VERSION");
