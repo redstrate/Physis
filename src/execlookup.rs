@@ -17,14 +17,12 @@ fn find_needle(installer_file: &Vec<u8>, needle: &str) -> Option<String> {
     let mut needle: Vec<u16> = needle.encode_utf16().collect();
     let bytes = from_u16(&mut needle);
 
-    let Some(position) = installer_file
+    let Some(mut position) = installer_file
         .windows(bytes.len())
         .position(|window| window == bytes) else {
         return None;
     };
-
-    let mut position = position.unwrap();
-
+    
     let parse_char_at_position = |position: usize| {
         let upper = installer_file[position];
         let lower = installer_file[position + 1];
