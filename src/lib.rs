@@ -116,6 +116,9 @@ pub mod lgb;
 #[cfg(feature = "visual_data")]
 pub mod tera;
 
+/// Reading data from executables
+pub mod execlookup;
+
 mod common_file_operations;
 
 /// Reading word dictionaries, such as the vulgar word list.
