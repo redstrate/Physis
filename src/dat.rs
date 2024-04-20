@@ -1,18 +1,18 @@
 // SPDX-FileCopyrightText: 2023 Joshua Goins <josh@redstrate.com>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-use std::io::{Cursor, Read, Seek, SeekFrom};
 use std::io::Write;
+use std::io::{Cursor, Read, Seek, SeekFrom};
 
-use binrw::{BinReaderExt, binrw};
+use crate::ByteBuffer;
 use binrw::BinRead;
 use binrw::BinWrite;
-use crate::ByteBuffer;
+use binrw::{binrw, BinReaderExt};
 
+use crate::common_file_operations::read_bool_from;
 #[cfg(feature = "visual_data")]
 use crate::model::ModelFileHeader;
 use crate::sqpack::read_data_block;
-use crate::common_file_operations::read_bool_from;
 
 #[binrw]
 #[brw(repr = i32)]
@@ -46,13 +46,23 @@ struct TextureLodBlock {
     block_count: u32,
 }
 
-pub trait AnyNumberType<'a>: BinRead<Args<'a> = ()> + BinWrite<Args<'a> = ()> + std::ops::AddAssign + Copy + Default + 'static {}
+pub trait AnyNumberType<'a>:
+    BinRead<Args<'a> = ()> + BinWrite<Args<'a> = ()> + std::ops::AddAssign + Copy + Default + 'static
+{
+}
 
-impl<'a, T> AnyNumberType<'a> for T where T: BinRead<Args<'a> = ()> + BinWrite<Args<'a> = ()> + std::ops::AddAssign + Copy + Default + 'static {}
+impl<'a, T> AnyNumberType<'a> for T where
+    T: BinRead<Args<'a> = ()>
+        + BinWrite<Args<'a> = ()>
+        + std::ops::AddAssign
+        + Copy
+        + Default
+        + 'static
+{
+}
 
 #[derive(BinRead, BinWrite)]
-pub struct ModelMemorySizes<T: for <'a> AnyNumberType<'a>>
-{
+pub struct ModelMemorySizes<T: for<'a> AnyNumberType<'a>> {
     pub stack_size: T,
     pub runtime_size: T,
 
@@ -61,8 +71,7 @@ pub struct ModelMemorySizes<T: for <'a> AnyNumberType<'a>>
     pub index_buffer_size: [T; 3],
 }
 
-impl<T: for<'a> AnyNumberType<'a>> ModelMemorySizes<T>
-{
+impl<T: for<'a> AnyNumberType<'a>> ModelMemorySizes<T> {
     pub fn total(&self) -> T {
         let mut total: T = T::default();
 
@@ -214,7 +223,7 @@ impl DatFile {
                 {
                     panic!("Tried to extract a model without the visual_data feature enabled!")
                 }
-            },
+            }
             FileType::Texture => self.read_texture_file(offset, &file_info),
         }
     }

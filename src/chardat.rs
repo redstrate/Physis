@@ -3,10 +3,10 @@
 
 use std::io::{BufWriter, Cursor};
 
-use binrw::{BinRead, BinWrite};
-use binrw::binrw;
-use crate::{ByteBuffer, ByteSpan};
 use crate::common_file_operations::{read_bool_from, write_bool_as};
+use crate::{ByteBuffer, ByteSpan};
+use binrw::binrw;
+use binrw::{BinRead, BinWrite};
 
 use crate::race::{Gender, Race, Subrace};
 
@@ -20,7 +20,7 @@ fn convert_dat_race(x: u8) -> Race {
         6 => Race::AuRa,
         7 => Race::Hrothgar,
         8 => Race::Viera,
-        _ => Race::Hyur
+        _ => Race::Hyur,
     }
 }
 
@@ -33,7 +33,7 @@ fn convert_race_dat(race: &Race) -> u8 {
         Race::Roegadyn => 5,
         Race::AuRa => 6,
         Race::Hrothgar => 7,
-        Race::Viera => 8
+        Race::Viera => 8,
     }
 }
 
@@ -41,7 +41,7 @@ fn convert_dat_gender(x: u8) -> Gender {
     match x {
         0 => Gender::Male,
         1 => Gender::Female,
-        _ => Gender::Male
+        _ => Gender::Male,
     }
 }
 
@@ -62,7 +62,7 @@ fn convert_dat_subrace(x: u8) -> Subrace {
         6 => Subrace::Dunesfolk,
         7 => Subrace::Seeker,
         8 => Subrace::Keeper,
-        9 => Subrace:: SeaWolf,
+        9 => Subrace::SeaWolf,
         10 => Subrace::Hellsguard,
         11 => Subrace::Raen,
         12 => Subrace::Xaela,
@@ -70,7 +70,7 @@ fn convert_dat_subrace(x: u8) -> Subrace {
         14 => Subrace::Lost,
         15 => Subrace::Rava,
         16 => Subrace::Veena,
-        _ => Subrace::Midlander
+        _ => Subrace::Midlander,
     }
 }
 
@@ -84,14 +84,14 @@ fn convert_subrace_dat(subrace: &Subrace) -> u8 {
         Subrace::Dunesfolk => 6,
         Subrace::Seeker => 7,
         Subrace::Keeper => 8,
-        Subrace:: SeaWolf => 9,
+        Subrace::SeaWolf => 9,
         Subrace::Hellsguard => 10,
         Subrace::Raen => 11,
         Subrace::Xaela => 12,
         Subrace::Hellion => 13,
         Subrace::Lost => 14,
         Subrace::Rava => 15,
-        Subrace::Veena => 16
+        Subrace::Veena => 16,
     }
 }
 
@@ -101,7 +101,8 @@ fn convert_subrace_dat(subrace: &Subrace) -> u8 {
 #[repr(C)]
 #[br(magic = 0x2013FF14u32)]
 #[derive(Debug)]
-pub struct CharacterData { // version 4
+pub struct CharacterData {
+    // version 4
     /// The version of the character data, the only supported version right now is 4.
     pub version: u32,
 
@@ -197,7 +198,7 @@ pub struct CharacterData { // version 4
 
     /// The timestamp when the preset was created.
     #[br(pad_before = 1)]
-    pub timestamp: [u8; 4]
+    pub timestamp: [u8; 4],
 }
 
 impl CharacterData {
@@ -229,7 +230,7 @@ mod tests {
     use std::path::PathBuf;
 
     use super::*;
-    
+
     #[test]
     fn test_invalid() {
         let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));

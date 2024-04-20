@@ -4,9 +4,9 @@
 use std::collections::HashMap;
 use std::io::{Cursor, Seek, SeekFrom};
 
-use binrw::{BinRead, BinReaderExt};
-use binrw::binrw;
 use crate::ByteSpan;
+use binrw::binrw;
+use binrw::{BinRead, BinReaderExt};
 
 // Based off of https://github.com/Lotlab/ffxiv-vulgar-words-reader/
 // Credit goes to Jim Kirisame for documenting this format
@@ -19,7 +19,7 @@ pub struct EntryItem {
     flag: u32,
     sibling: u32,
     child: u32,
-    offset: u32
+    offset: u32,
 }
 
 #[binrw]
@@ -64,7 +64,7 @@ struct DictionaryHeader {
 
 pub struct Dictionary {
     header: DictionaryHeader,
-    pub words: Vec<String>
+    pub words: Vec<String>,
 }
 
 impl Dictionary {
@@ -113,7 +113,7 @@ impl Dictionary {
 
         let mut dict = Dictionary {
             header: dict,
-            words: Vec::new()
+            words: Vec::new(),
         };
 
         // TODO: lol
@@ -158,7 +158,7 @@ impl Dictionary {
             (((*new_val as u32) << 8) + lower) as i32
         } else {
             0
-        }
+        };
     }
 
     fn dump_dict_node(&self, vec: &mut Vec<String>, entry_id: i32, prev: String) {

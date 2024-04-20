@@ -5,9 +5,9 @@
 #![allow(clippy::needless_late_init)]
 #![allow(clippy::upper_case_acronyms)]
 
-use std::io::{Cursor, SeekFrom};
-use binrw::{binread, BinRead};
 use binrw::helpers::until_eof;
+use binrw::{binread, BinRead};
+use std::io::{Cursor, SeekFrom};
 
 use crate::havok::{HavokAnimationContainer, HavokBinaryTagFileReader};
 use crate::ByteSpan;
@@ -32,7 +32,7 @@ struct SklbV2 {
     body_id: u32,
     mapper_body_id1: u32,
     mapper_body_id2: u32,
-    mapper_body_id3: u32
+    mapper_body_id3: u32,
 }
 
 #[binread]
@@ -49,7 +49,7 @@ struct SKLB {
 
     #[br(seek_before(SeekFrom::Start(if (version == 0x3132_3030u32) { sklb_v1.as_ref().unwrap().havok_offset as u64 } else { sklb_v2.as_ref().unwrap().havok_offset as u64 })))]
     #[br(parse_with = until_eof)]
-    raw_data: Vec<u8>
+    raw_data: Vec<u8>,
 }
 
 #[derive(Debug)]
@@ -92,9 +92,17 @@ impl Skeleton {
             skeleton.bones.push(Bone {
                 name: bone.clone(),
                 parent_index: havok_skeleton.parent_indices[index] as i32,
-                position: [havok_skeleton.reference_pose[index].translation[0], havok_skeleton.reference_pose[index].translation[1], havok_skeleton.reference_pose[index].translation[2]],
+                position: [
+                    havok_skeleton.reference_pose[index].translation[0],
+                    havok_skeleton.reference_pose[index].translation[1],
+                    havok_skeleton.reference_pose[index].translation[2],
+                ],
                 rotation: havok_skeleton.reference_pose[index].rotation,
-                scale: [havok_skeleton.reference_pose[index].scale[0], havok_skeleton.reference_pose[index].scale[1], havok_skeleton.reference_pose[index].scale[2]],
+                scale: [
+                    havok_skeleton.reference_pose[index].scale[0],
+                    havok_skeleton.reference_pose[index].scale[1],
+                    havok_skeleton.reference_pose[index].scale[2],
+                ],
             });
         }
 

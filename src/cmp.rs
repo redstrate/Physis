@@ -3,9 +3,9 @@
 
 use std::io::{Cursor, Seek, SeekFrom};
 
-use binrw::BinRead;
-use binrw::binrw;
 use crate::ByteSpan;
+use binrw::binrw;
+use binrw::BinRead;
 
 #[binrw]
 #[br(little)]
@@ -44,13 +44,13 @@ pub struct RacialScalingParameters {
     /// Maximum bust size on the Y-axis
     pub bust_max_y: f32,
     /// Maximum bust size on the Z-axis
-    pub bust_max_z: f32
+    pub bust_max_z: f32,
 }
 
 #[derive(Debug)]
 pub struct CMP {
     /// The racial scaling parameters
-    pub parameters: Vec<RacialScalingParameters>
+    pub parameters: Vec<RacialScalingParameters>,
 }
 
 impl CMP {
@@ -69,9 +69,7 @@ impl CMP {
             parameters.push(RacialScalingParameters::read(&mut cursor).ok()?);
         }
 
-        Some(CMP {
-            parameters
-        })
+        Some(CMP { parameters })
     }
 }
 

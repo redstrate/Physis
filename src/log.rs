@@ -3,9 +3,9 @@
 
 use std::io::{Cursor, Seek, SeekFrom};
 
-use binrw::BinRead;
-use binrw::binrw;
 use crate::ByteSpan;
+use binrw::binrw;
+use binrw::BinRead;
 
 #[binrw]
 #[allow(dead_code)]
@@ -121,7 +121,7 @@ impl ChatLog {
         if header.content_size as usize > buffer.len() || header.file_size as usize > buffer.len() {
             return None;
         }
-        
+
         let content_offset = (8 + header.file_size * 4) as u64;
 
         // beginning of content offset
@@ -143,10 +143,9 @@ impl ChatLog {
             };
 
             // TODO: handle the coloring properly, in some way
-            entry.message = String::from_utf8_lossy(
-                &buffer[cursor.position() as usize..next_offset],
-            )
-                .to_string();
+            entry.message =
+                String::from_utf8_lossy(&buffer[cursor.position() as usize..next_offset])
+                    .to_string();
 
             entries.push(entry);
         }

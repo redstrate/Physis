@@ -3,16 +3,16 @@
 
 use std::io::Cursor;
 
-use binrw::BinRead;
-use binrw::binrw;
 use crate::ByteSpan;
+use binrw::binrw;
+use binrw::BinRead;
 
 #[binrw]
 #[derive(Debug, Clone, Copy)]
 #[brw(little)]
 struct PlatePosition {
     x: i16,
-    y: i16
+    y: i16,
 }
 
 #[binrw]
@@ -30,18 +30,18 @@ struct TerrainHeader {
     padding: Vec<u8>,
 
     #[br(count = plate_count)]
-    positions: Vec<PlatePosition>
+    positions: Vec<PlatePosition>,
 }
 
 #[derive(Debug)]
 pub struct PlateModel {
     pub position: (f32, f32),
-    pub filename: String
+    pub filename: String,
 }
 
 #[derive(Debug)]
 pub struct Terrain {
-    pub plates: Vec<PlateModel>
+    pub plates: Vec<PlateModel>,
 }
 
 impl Terrain {
@@ -54,15 +54,15 @@ impl Terrain {
 
         for i in 0..header.plate_count {
             plates.push(PlateModel {
-                position: (header.plate_size as f32 * (header.positions[i as usize].x as f32 + 0.5),
-                           header.plate_size as f32 * (header.positions[i as usize].y as f32 + 0.5)),
-                filename: format!("{:04}.mdl", i)
+                position: (
+                    header.plate_size as f32 * (header.positions[i as usize].x as f32 + 0.5),
+                    header.plate_size as f32 * (header.positions[i as usize].y as f32 + 0.5),
+                ),
+                filename: format!("{:04}.mdl", i),
             })
         }
 
-        Some(Terrain {
-            plates
-        })
+        Some(Terrain { plates })
     }
 }
 

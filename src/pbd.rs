@@ -3,9 +3,9 @@
 
 use std::io::{Cursor, Seek, SeekFrom};
 
-use binrw::{BinRead, BinReaderExt};
-use binrw::binrw;
 use crate::ByteSpan;
+use binrw::binrw;
+use binrw::{BinRead, BinReaderExt};
 
 #[binrw]
 #[derive(Debug)]
@@ -14,7 +14,7 @@ struct PreBoneDeformerItem {
     body_id: u16,
     link_index: u16,
     #[br(pad_after = 4)]
-    data_offset: u32
+    data_offset: u32,
 }
 
 #[binrw]
@@ -39,7 +39,7 @@ struct PreBoneDeformerHeader {
     links: Vec<PreBoneDeformerLink>,
 
     #[br(ignore)]
-    raw_data: Vec<u8>
+    raw_data: Vec<u8>,
 }
 
 pub struct PreBoneDeformer {
@@ -51,13 +51,13 @@ pub struct PreBoneDeformBone {
     /// Name of the affected bone
     pub name: String,
     /// The deform matrix
-    pub deform: [f32; 12]
+    pub deform: [f32; 12],
 }
 
 #[derive(Debug)]
 pub struct PreBoneDeformMatrices {
     /// The prebone deform bones
-    pub bones: Vec<PreBoneDeformBone>
+    pub bones: Vec<PreBoneDeformBone>,
 }
 
 impl PreBoneDeformer {
@@ -68,18 +68,24 @@ impl PreBoneDeformer {
 
         header.raw_data = buffer.to_vec();
 
-        Some(PreBoneDeformer {
-            header
-        })
+        Some(PreBoneDeformer { header })
     }
 
     /// Calculates the deform matrices between two races
-    pub fn get_deform_matrices(&self, from_body_id: u16, to_body_id: u16) -> Option<PreBoneDeformMatrices> {
+    pub fn get_deform_matrices(
+        &self,
+        from_body_id: u16,
+        to_body_id: u16,
+    ) -> Option<PreBoneDeformMatrices> {
         if from_body_id == to_body_id {
             return None;
         }
 
-        let mut item = self.header.items.iter().find(|x| x.body_id == from_body_id)?;
+        let mut item = self
+            .header
+            .items
+            .iter()
+            .find(|x| x.body_id == from_body_id)?;
         let mut next = &self.header.links[item.link_index as usize];
 
         if next.next_index == -1 {
@@ -96,7 +102,9 @@ impl PreBoneDeformer {
 
             let string_offsets_base = item.data_offset as usize + core::mem::size_of::<u32>();
 
-            cursor.seek(SeekFrom::Start(string_offsets_base as u64)).ok()?;
+            cursor
+                .seek(SeekFrom::Start(string_offsets_base as u64))
+                .ok()?;
             let mut strings_offset = vec![];
             for _ in 0..bone_name_count {
                 strings_offset.push(cursor.read_le::<u16>().unwrap());
@@ -125,7 +133,7 @@ impl PreBoneDeformer {
                 let matrix = matrices[i];
                 bones.push(PreBoneDeformBone {
                     name: string,
-                    deform: matrix
+                    deform: matrix,
                 });
             }
 
@@ -137,9 +145,7 @@ impl PreBoneDeformer {
             }
         }
 
-        Some(PreBoneDeformMatrices {
-            bones
-        })
+        Some(PreBoneDeformMatrices { bones })
     }
 }
 
@@ -160,4 +166,3 @@ mod tests {
         PreBoneDeformer::from_existing(&read(d).unwrap());
     }
 }
-

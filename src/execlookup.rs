@@ -20,7 +20,7 @@ fn find_needle(installer_file: &[u8], needle: &str) -> Option<String> {
     let mut position = installer_file
         .windows(bytes.len())
         .position(|window| window == bytes)?;
-    
+
     let parse_char_at_position = |position: usize| {
         let upper = installer_file[position];
         let lower = installer_file[position + 1];

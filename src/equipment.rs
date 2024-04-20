@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2023 Joshua Goins <josh@redstrate.com>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-use crate::race::{Gender, get_race_id, Race, Subrace};
+use crate::race::{get_race_id, Gender, Race, Subrace};
 
 #[repr(u8)]
 #[derive(Debug, PartialEq, Eq)]
@@ -100,7 +100,7 @@ pub enum CharacterCategory {
     Hair,
     Face,
     Tail,
-    Ear
+    Ear,
 }
 
 pub fn get_character_category_path(category: CharacterCategory) -> &'static str {
@@ -109,7 +109,7 @@ pub fn get_character_category_path(category: CharacterCategory) -> &'static str 
         CharacterCategory::Hair => "hair",
         CharacterCategory::Face => "face",
         CharacterCategory::Tail => "tail",
-        CharacterCategory::Ear => "zear"
+        CharacterCategory::Ear => "zear",
     }
 }
 
@@ -119,7 +119,7 @@ pub fn get_character_category_abbreviation(category: CharacterCategory) -> &'sta
         CharacterCategory::Hair => "hir",
         CharacterCategory::Face => "fac",
         CharacterCategory::Tail => "til",
-        CharacterCategory::Ear => "ear"
+        CharacterCategory::Ear => "ear",
     }
 }
 
@@ -129,7 +129,7 @@ pub fn get_character_category_prefix(category: CharacterCategory) -> &'static st
         CharacterCategory::Hair => "h",
         CharacterCategory::Face => "f",
         CharacterCategory::Tail => "t",
-        CharacterCategory::Ear => "e"
+        CharacterCategory::Ear => "e",
     }
 }
 
@@ -139,7 +139,7 @@ pub fn build_character_path(
     body_ver: i32,
     race: Race,
     subrace: Subrace,
-    gender: Gender
+    gender: Gender,
 ) -> String {
     let category_path = get_character_category_path(category);
     let race_id = get_race_id(race, subrace, gender).unwrap();

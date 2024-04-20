@@ -1,11 +1,11 @@
 // SPDX-FileCopyrightText: 2023 Joshua Goins <josh@redstrate.com>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-use std::io::Cursor;
+use crate::model::MDL;
+use crate::ByteSpan;
 use binrw::{BinReaderExt, BinResult, BinWriterExt};
 use half::f16;
-use crate::ByteSpan;
-use crate::model::MDL;
+use std::io::Cursor;
 
 /// Maximum value of byte, used to divide and multiply floats in that space [0.0..1.0] to [0..255]
 const MAX_BYTE_FLOAT: f32 = u8::MAX as f32;
@@ -16,16 +16,20 @@ impl MDL {
             (f32::from(cursor.read_le::<u8>().ok()?) / MAX_BYTE_FLOAT),
             (f32::from(cursor.read_le::<u8>().ok()?) / MAX_BYTE_FLOAT),
             (f32::from(cursor.read_le::<u8>().ok()?) / MAX_BYTE_FLOAT),
-            (f32::from(cursor.read_le::<u8>().ok()?) / MAX_BYTE_FLOAT)
+            (f32::from(cursor.read_le::<u8>().ok()?) / MAX_BYTE_FLOAT),
         ])
     }
 
-    pub(crate) fn write_byte_float4<T: BinWriterExt>(cursor: &mut T, vec: &[f32; 4]) -> BinResult<()> {
+    pub(crate) fn write_byte_float4<T: BinWriterExt>(
+        cursor: &mut T,
+        vec: &[f32; 4],
+    ) -> BinResult<()> {
         cursor.write_le::<[u8; 4]>(&[
             (vec[0] * MAX_BYTE_FLOAT).round() as u8,
             (vec[1] * MAX_BYTE_FLOAT).round() as u8,
             (vec[2] * MAX_BYTE_FLOAT).round() as u8,
-            (vec[3] * MAX_BYTE_FLOAT).round() as u8])
+            (vec[3] * MAX_BYTE_FLOAT).round() as u8,
+        ])
     }
 
     pub(crate) fn read_tangent(cursor: &mut Cursor<ByteSpan>) -> Option<[f32; 4]> {
@@ -33,7 +37,11 @@ impl MDL {
             (f32::from(cursor.read_le::<u8>().ok()?) * 2.0 / MAX_BYTE_FLOAT - 1.0),
             (f32::from(cursor.read_le::<u8>().ok()?) * 2.0 / MAX_BYTE_FLOAT - 1.0),
             (f32::from(cursor.read_le::<u8>().ok()?) * 2.0 / MAX_BYTE_FLOAT - 1.0),
-            if (f32::from(cursor.read_le::<u8>().ok()?) * 2.0 / MAX_BYTE_FLOAT - 1.0) == 1.0 { 1.0 } else { -1.0 }
+            if (f32::from(cursor.read_le::<u8>().ok()?) * 2.0 / MAX_BYTE_FLOAT - 1.0) == 1.0 {
+                1.0
+            } else {
+                -1.0
+            },
         ])
     }
 
@@ -42,7 +50,8 @@ impl MDL {
             ((vec[0] + 1.0) * (MAX_BYTE_FLOAT / 2.0)).round() as u8,
             ((vec[1] + 1.0) * (MAX_BYTE_FLOAT / 2.0)).round() as u8,
             ((vec[2] + 1.0) * (MAX_BYTE_FLOAT / 2.0)).round() as u8,
-            if vec[3] > 0.0 { 255 } else { 0 }]) // SqEx uses 0 as -1, not 1
+            if vec[3] > 0.0 { 255 } else { 0 },
+        ]) // SqEx uses 0 as -1, not 1
     }
 
     pub(crate) fn read_half4(cursor: &mut Cursor<ByteSpan>) -> Option<[f32; 4]> {
@@ -50,7 +59,7 @@ impl MDL {
             f16::from_bits(cursor.read_le::<u16>().ok()?).to_f32(),
             f16::from_bits(cursor.read_le::<u16>().ok()?).to_f32(),
             f16::from_bits(cursor.read_le::<u16>().ok()?).to_f32(),
-            f16::from_bits(cursor.read_le::<u16>().ok()?).to_f32()
+            f16::from_bits(cursor.read_le::<u16>().ok()?).to_f32(),
         ])
     }
 
@@ -59,13 +68,14 @@ impl MDL {
             f16::from_f32(vec[0]).to_bits(),
             f16::from_f32(vec[1]).to_bits(),
             f16::from_f32(vec[2]).to_bits(),
-            f16::from_f32(vec[3]).to_bits()])
+            f16::from_f32(vec[3]).to_bits(),
+        ])
     }
 
     pub(crate) fn read_half2(cursor: &mut Cursor<ByteSpan>) -> Option<[f32; 2]> {
         Some([
             f16::from_bits(cursor.read_le::<u16>().ok()?).to_f32(),
-            f16::from_bits(cursor.read_le::<u16>().ok()?).to_f32()
+            f16::from_bits(cursor.read_le::<u16>().ok()?).to_f32(),
         ])
     }
 
@@ -73,7 +83,8 @@ impl MDL {
     pub(crate) fn write_half2<T: BinWriterExt>(cursor: &mut T, vec: &[f32; 2]) -> BinResult<()> {
         cursor.write_le::<[u16; 2]>(&[
             f16::from_f32(vec[0]).to_bits(),
-            f16::from_f32(vec[1]).to_bits()])
+            f16::from_f32(vec[1]).to_bits(),
+        ])
     }
 
     pub(crate) fn read_byte4(cursor: &mut Cursor<ByteSpan>) -> BinResult<[u8; 4]> {
@@ -113,15 +124,17 @@ impl MDL {
 
 #[cfg(test)]
 mod tests {
-    use std::io::Cursor;
     use crate::model::MDL;
+    use std::io::Cursor;
 
     macro_rules! assert_delta {
         ($x:expr, $y:expr, $d:expr) => {
             for i in 0..4 {
-                if !($x[i] - $y[i] < $d || $y[i] - $x[i] < $d) { panic!(); }
+                if !($x[i] - $y[i] < $d || $y[i] - $x[i] < $d) {
+                    panic!();
+                }
             }
-        }
+        };
     }
 
     #[test]

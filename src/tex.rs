@@ -5,11 +5,11 @@
 
 use std::io::{Cursor, Read, Seek, SeekFrom};
 
-use binrw::BinRead;
+use crate::ByteSpan;
 use binrw::binrw;
+use binrw::BinRead;
 use bitflags::bitflags;
 use texture2ddecoder::{decode_bc1, decode_bc3, decode_bc5};
-use crate::ByteSpan;
 
 // Attributes and Format are adapted from Lumina (https://github.com/NotAdam/Lumina/blob/master/src/Lumina/Data/Files/TexFile.cs)
 bitflags! {
@@ -94,7 +94,7 @@ impl Texture {
         let mut src = vec![0u8; buffer.len() - std::mem::size_of::<TexHeader>()];
         cursor.read_exact(src.as_mut_slice()).ok()?;
 
-        let mut dst : Vec<u8>;
+        let mut dst: Vec<u8>;
 
         match header.format {
             TextureFormat::B4G4R4A4 => {
@@ -107,7 +107,7 @@ impl Texture {
                     let short: u16 = ((src[offset] as u16) << 8) | src[offset + 1] as u16;
 
                     let src_b = short & 0xF;
-                    let src_g= (short >> 4) & 0xF;
+                    let src_g = (short >> 4) & 0xF;
                     let src_r = (short >> 8) & 0xF;
                     let src_a = (short >> 12) & 0xF;
 
@@ -124,13 +124,28 @@ impl Texture {
                 dst = src; // TODO: not correct, of course
             }
             TextureFormat::BC1 => {
-                dst = Texture::decode(&src, header.width as usize, header.height as usize, decode_bc1);
+                dst = Texture::decode(
+                    &src,
+                    header.width as usize,
+                    header.height as usize,
+                    decode_bc1,
+                );
             }
             TextureFormat::BC3 => {
-                dst = Texture::decode(&src, header.width as usize, header.height as usize, decode_bc3);
+                dst = Texture::decode(
+                    &src,
+                    header.width as usize,
+                    header.height as usize,
+                    decode_bc3,
+                );
             }
             TextureFormat::BC5 => {
-                dst = Texture::decode(&src, header.width as usize, header.height as usize, decode_bc5);
+                dst = Texture::decode(
+                    &src,
+                    header.width as usize,
+                    header.height as usize,
+                    decode_bc5,
+                );
             }
         }
 
@@ -143,13 +158,7 @@ impl Texture {
 
     fn decode(src: &[u8], width: usize, height: usize, decode_func: DecodeFunction) -> Vec<u8> {
         let mut image: Vec<u32> = vec![0; width * height];
-        decode_func(
-            src,
-            width,
-            height,
-            &mut image,
-        )
-            .unwrap();
+        decode_func(src, width, height, &mut image).unwrap();
 
         image
             .iter()

@@ -6,13 +6,16 @@
 use std::io::{Cursor, Seek, SeekFrom};
 use std::mem::size_of;
 
-use binrw::{binrw, BinWrite, BinWriterExt};
 use binrw::BinRead;
 use binrw::BinReaderExt;
+use binrw::{binrw, BinWrite, BinWriterExt};
 
-use crate::{ByteBuffer, ByteSpan};
 use crate::common_file_operations::{read_bool_from, write_bool_as};
-use crate::model_vertex_declarations::{vertex_element_parser, VERTEX_ELEMENT_SIZE, vertex_element_writer, VertexDeclaration, VertexType, VertexUsage};
+use crate::model_vertex_declarations::{
+    vertex_element_parser, vertex_element_writer, VertexDeclaration, VertexType, VertexUsage,
+    VERTEX_ELEMENT_SIZE,
+};
+use crate::{ByteBuffer, ByteSpan};
 
 pub const NUM_VERTICES: u32 = 17;
 
@@ -46,7 +49,7 @@ pub struct ModelFileHeader {
 
 #[binrw]
 #[brw(repr = u8)]
-#[derive(Debug, Clone,  PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 enum ModelFlags1 {
     DustOcclusionEnabled = 0x80,
     SnowOcclusionEnabled = 0x40,
@@ -126,7 +129,7 @@ pub struct ModelHeader {
     unknown7: u16,
     unknown8: u16,
     #[brw(pad_after = 6)]
-    unknown9: u16
+    unknown9: u16,
 }
 
 #[binrw]
@@ -221,7 +224,7 @@ struct BoneTableV2 {
     // align to 4 bytes
     // TODO: use br align_to?
     #[br(if(bone_count % 2 == 0))]
-    padding: u16
+    padding: u16,
 }
 
 #[binrw]
@@ -243,7 +246,7 @@ struct TerrainShadowMesh {
     submesh_index: u16,
     submesh_count: u16,
     vertex_buffer_stride: u8,
-    padding: u8
+    padding: u8,
 }
 
 #[binrw]
@@ -253,7 +256,7 @@ struct TerrainShadowSubmesh {
     index_offset: u32,
     index_count: u32,
     unknown1: u16,
-    unknown2: u16
+    unknown2: u16,
 }
 
 #[binrw]
@@ -262,16 +265,16 @@ struct TerrainShadowSubmesh {
 struct ShapeStruct {
     string_offset: u32,
     shape_mesh_start_index: [u16; 3],
-    shape_mesh_count: [u16; 3]
+    shape_mesh_count: [u16; 3],
 }
 
 #[binrw]
-#[derive(Debug, Clone,  PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 #[allow(dead_code)]
 struct ShapeMesh {
     mesh_index_offset: u32,
     shape_value_count: u32,
-    shape_value_offset: u32
+    shape_value_offset: u32,
 }
 
 #[binrw]
@@ -279,7 +282,7 @@ struct ShapeMesh {
 #[allow(dead_code)]
 struct ShapeValue {
     base_indices_index: u16,
-    replacing_vertex_index: u16
+    replacing_vertex_index: u16,
 }
 
 #[binrw]
@@ -362,7 +365,7 @@ struct ModelData {
 }
 
 #[binrw]
-#[derive(Debug, Clone,  PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 #[allow(dead_code)]
 struct ElementId {
     element_id: u32,
@@ -371,7 +374,7 @@ struct ElementId {
     rotate: [f32; 3],
 }
 
-#[derive(Clone, Copy,  PartialEq)]
+#[derive(Clone, Copy, PartialEq)]
 #[repr(C)]
 pub struct Vertex {
     pub position: [f32; 3],
@@ -405,7 +408,7 @@ impl Default for Vertex {
 #[repr(C)]
 pub struct NewShapeValue {
     pub base_index: u32,
-    pub replacing_vertex: Vertex
+    pub replacing_vertex: Vertex,
 }
 
 #[derive(Clone, Copy)]
@@ -413,13 +416,13 @@ pub struct NewShapeValue {
 pub struct SubMesh {
     submesh_index: usize,
     pub index_count: u32,
-    pub index_offset: u32
+    pub index_offset: u32,
 }
 
 #[derive(Clone)]
 pub struct Shape {
     pub name: String,
-    pub morphed_vertices: Vec<Vertex>
+    pub morphed_vertices: Vec<Vertex>,
 }
 
 /// Corresponds to a "Mesh" in an LOD
@@ -430,7 +433,7 @@ pub struct Part {
     pub indices: Vec<u16>,
     pub material_index: u16,
     pub submeshes: Vec<SubMesh>,
-    pub shapes: Vec<Shape>
+    pub shapes: Vec<Shape>,
 }
 
 #[derive(Clone)]
@@ -453,8 +456,12 @@ impl MDL {
         let mut cursor = Cursor::new(buffer);
         let model_file_header = ModelFileHeader::read(&mut cursor).ok()?;
 
-        let model = ModelData::read_args(&mut cursor, binrw::args! { file_header: &model_file_header }).ok()?;
-        
+        let model = ModelData::read_args(
+            &mut cursor,
+            binrw::args! { file_header: &model_file_header },
+        )
+        .ok()?;
+
         let mut affected_bone_names = vec![];
 
         for offset in &model.bone_name_offsets {
@@ -507,151 +514,173 @@ impl MDL {
                             .seek(SeekFrom::Start(
                                 (model.lods[i as usize].vertex_data_offset
                                     + model.meshes[j as usize].vertex_buffer_offsets
-                                    [element.stream as usize]
+                                        [element.stream as usize]
                                     + element.offset as u32
                                     + model.meshes[j as usize].vertex_buffer_strides
-                                    [element.stream as usize]
-                                    as u32
-                                    * k as u32) as u64,
+                                        [element.stream as usize]
+                                        as u32
+                                        * k as u32) as u64,
                             ))
                             .ok()?;
 
                         match element.vertex_usage {
-                            VertexUsage::Position => {
-                                match element.vertex_type {
-                                    VertexType::Single4 => {
-                                        vertices[k as usize].position.clone_from_slice(&MDL::read_single4(&mut cursor).unwrap()[0..3]);
-                                    }
-                                    VertexType::Half4 => {
-                                        vertices[k as usize].position.clone_from_slice(&MDL::read_half4(&mut cursor).unwrap()[0..3]);
-                                    }
-                                    VertexType::Single3 => {
-                                        vertices[k as usize].position = MDL::read_single3(&mut cursor).unwrap();
-                                    }
-                                    _ => {
-                                        panic!("Unexpected vertex type for position: {:#?}", element.vertex_type);
-                                    }
+                            VertexUsage::Position => match element.vertex_type {
+                                VertexType::Single4 => {
+                                    vertices[k as usize].position.clone_from_slice(
+                                        &MDL::read_single4(&mut cursor).unwrap()[0..3],
+                                    );
                                 }
-                            }
-                            VertexUsage::BlendWeights => {
-                                match element.vertex_type {
-                                    VertexType::ByteFloat4 => {
-                                        vertices[k as usize].bone_weight = MDL::read_byte_float4(&mut cursor).unwrap();
-                                    }
-                                    VertexType::Byte4 => {
-                                        let bytes = MDL::read_byte4(&mut cursor).unwrap();
-                                        vertices[k as usize].bone_weight = [
-                                            f32::from(bytes[0]),
-                                            f32::from(bytes[1]),
-                                            f32::from(bytes[2]),
-                                            f32::from(bytes[3])
-                                        ];
-                                    }
-                                    VertexType::UnsignedShort4 => {
-                                        let bytes = MDL::read_unsigned_short4(&mut cursor).unwrap();
-                                        vertices[k as usize].bone_weight = [
-                                            f32::from(bytes[0]),
-                                            f32::from(bytes[1]),
-                                            f32::from(bytes[2]),
-                                            f32::from(bytes[3])
-                                        ];
-                                    }
-                                    _ => {
-                                        panic!("Unexpected vertex type for blendweight: {:#?}", element.vertex_type);
-                                    }
+                                VertexType::Half4 => {
+                                    vertices[k as usize].position.clone_from_slice(
+                                        &MDL::read_half4(&mut cursor).unwrap()[0..3],
+                                    );
                                 }
-                            }
-                            VertexUsage::BlendIndices => {
-                                match element.vertex_type {
-                                    VertexType::Byte4 => {
-                                        vertices[k as usize].bone_id = MDL::read_byte4(&mut cursor).unwrap();
-                                    }
-                                    VertexType::UnsignedShort4 => {
-                                        let shorts = MDL::read_unsigned_short4(&mut cursor).unwrap();
-                                        vertices[k as usize].bone_id = [
-                                            shorts[0] as u8,
-                                            shorts[1] as u8,
-                                            shorts[2] as u8,
-                                            shorts[3] as u8
-                                        ];
-                                    }
-                                    _ => {
-                                        panic!("Unexpected vertex type for blendindice: {:#?}", element.vertex_type);
-                                    }
+                                VertexType::Single3 => {
+                                    vertices[k as usize].position =
+                                        MDL::read_single3(&mut cursor).unwrap();
                                 }
-                            }
-                            VertexUsage::Normal => {
-                                match element.vertex_type {
-                                    VertexType::Half4 => {
-                                        vertices[k as usize].normal.clone_from_slice(&MDL::read_half4(&mut cursor).unwrap()[0..3]);
-                                    }
-                                    VertexType::Single3 => {
-                                        vertices[k as usize].normal = MDL::read_single3(&mut cursor).unwrap();
-                                    }
-                                    _ => {
-                                        panic!("Unexpected vertex type for normal: {:#?}", element.vertex_type);
-                                    }
+                                _ => {
+                                    panic!(
+                                        "Unexpected vertex type for position: {:#?}",
+                                        element.vertex_type
+                                    );
                                 }
-                            }
-                            VertexUsage::UV => {
-                                match element.vertex_type {
-                                    VertexType::ByteFloat4 => {
-                                        let combined = MDL::read_byte_float4(&mut cursor).unwrap();
+                            },
+                            VertexUsage::BlendWeights => match element.vertex_type {
+                                VertexType::ByteFloat4 => {
+                                    vertices[k as usize].bone_weight =
+                                        MDL::read_byte_float4(&mut cursor).unwrap();
+                                }
+                                VertexType::Byte4 => {
+                                    let bytes = MDL::read_byte4(&mut cursor).unwrap();
+                                    vertices[k as usize].bone_weight = [
+                                        f32::from(bytes[0]),
+                                        f32::from(bytes[1]),
+                                        f32::from(bytes[2]),
+                                        f32::from(bytes[3]),
+                                    ];
+                                }
+                                VertexType::UnsignedShort4 => {
+                                    let bytes = MDL::read_unsigned_short4(&mut cursor).unwrap();
+                                    vertices[k as usize].bone_weight = [
+                                        f32::from(bytes[0]),
+                                        f32::from(bytes[1]),
+                                        f32::from(bytes[2]),
+                                        f32::from(bytes[3]),
+                                    ];
+                                }
+                                _ => {
+                                    panic!(
+                                        "Unexpected vertex type for blendweight: {:#?}",
+                                        element.vertex_type
+                                    );
+                                }
+                            },
+                            VertexUsage::BlendIndices => match element.vertex_type {
+                                VertexType::Byte4 => {
+                                    vertices[k as usize].bone_id =
+                                        MDL::read_byte4(&mut cursor).unwrap();
+                                }
+                                VertexType::UnsignedShort4 => {
+                                    let shorts = MDL::read_unsigned_short4(&mut cursor).unwrap();
+                                    vertices[k as usize].bone_id = [
+                                        shorts[0] as u8,
+                                        shorts[1] as u8,
+                                        shorts[2] as u8,
+                                        shorts[3] as u8,
+                                    ];
+                                }
+                                _ => {
+                                    panic!(
+                                        "Unexpected vertex type for blendindice: {:#?}",
+                                        element.vertex_type
+                                    );
+                                }
+                            },
+                            VertexUsage::Normal => match element.vertex_type {
+                                VertexType::Half4 => {
+                                    vertices[k as usize].normal.clone_from_slice(
+                                        &MDL::read_half4(&mut cursor).unwrap()[0..3],
+                                    );
+                                }
+                                VertexType::Single3 => {
+                                    vertices[k as usize].normal =
+                                        MDL::read_single3(&mut cursor).unwrap();
+                                }
+                                _ => {
+                                    panic!(
+                                        "Unexpected vertex type for normal: {:#?}",
+                                        element.vertex_type
+                                    );
+                                }
+                            },
+                            VertexUsage::UV => match element.vertex_type {
+                                VertexType::ByteFloat4 => {
+                                    let combined = MDL::read_byte_float4(&mut cursor).unwrap();
 
-                                        vertices[k as usize].uv0.clone_from_slice(&combined[0..2]);
-                                        vertices[k as usize].uv1.clone_from_slice(&combined[2..4]);
-                                    }
-                                    VertexType::Half4 => {
-                                        let combined = MDL::read_half4(&mut cursor).unwrap();
-
-                                        vertices[k as usize].uv0.clone_from_slice(&combined[0..2]);
-                                        vertices[k as usize].uv1.clone_from_slice(&combined[2..4]);
-                                    }
-                                    VertexType::Single4 => {
-                                        let combined = MDL::read_single4(&mut cursor).unwrap();
-
-                                        vertices[k as usize].uv0.clone_from_slice(&combined[0..2]);
-                                        vertices[k as usize].uv1.clone_from_slice(&combined[2..4]);
-                                    }
-                                    VertexType::Half2 => {
-                                        let combined = MDL::read_half2(&mut cursor).unwrap();
-
-                                        vertices[k as usize].uv0.clone_from_slice(&combined[0..2]);
-                                    }
-                                    _ => {
-                                        panic!("Unexpected vertex type for uv: {:#?}", element.vertex_type);
-                                    }
+                                    vertices[k as usize].uv0.clone_from_slice(&combined[0..2]);
+                                    vertices[k as usize].uv1.clone_from_slice(&combined[2..4]);
                                 }
-                            }
-                            VertexUsage::BiTangent => {
-                                match element.vertex_type {
-                                    VertexType::ByteFloat4 => {
-                                        vertices[k as usize].bitangent = MDL::read_tangent(&mut cursor).unwrap();
-                                    }
-                                    _ => {
-                                        panic!("Unexpected vertex type for bitangent: {:#?}", element.vertex_type);
-                                    }
+                                VertexType::Half4 => {
+                                    let combined = MDL::read_half4(&mut cursor).unwrap();
+
+                                    vertices[k as usize].uv0.clone_from_slice(&combined[0..2]);
+                                    vertices[k as usize].uv1.clone_from_slice(&combined[2..4]);
                                 }
-                            }
+                                VertexType::Single4 => {
+                                    let combined = MDL::read_single4(&mut cursor).unwrap();
+
+                                    vertices[k as usize].uv0.clone_from_slice(&combined[0..2]);
+                                    vertices[k as usize].uv1.clone_from_slice(&combined[2..4]);
+                                }
+                                VertexType::Half2 => {
+                                    let combined = MDL::read_half2(&mut cursor).unwrap();
+
+                                    vertices[k as usize].uv0.clone_from_slice(&combined[0..2]);
+                                }
+                                _ => {
+                                    panic!(
+                                        "Unexpected vertex type for uv: {:#?}",
+                                        element.vertex_type
+                                    );
+                                }
+                            },
+                            VertexUsage::BiTangent => match element.vertex_type {
+                                VertexType::ByteFloat4 => {
+                                    vertices[k as usize].bitangent =
+                                        MDL::read_tangent(&mut cursor).unwrap();
+                                }
+                                _ => {
+                                    panic!(
+                                        "Unexpected vertex type for bitangent: {:#?}",
+                                        element.vertex_type
+                                    );
+                                }
+                            },
                             VertexUsage::Tangent => {
                                 match element.vertex_type {
                                     // Used for... terrain..?
                                     VertexType::ByteFloat4 => {}
                                     _ => {
-                                        panic!("Unexpected vertex type for tangent: {:#?}", element.vertex_type);
+                                        panic!(
+                                            "Unexpected vertex type for tangent: {:#?}",
+                                            element.vertex_type
+                                        );
                                     }
                                 }
                             }
-                            VertexUsage::Color => {
-                                match element.vertex_type {
-                                    VertexType::ByteFloat4 => {
-                                        vertices[k as usize].color = MDL::read_byte_float4(&mut cursor).unwrap();
-                                    }
-                                    _ => {
-                                        panic!("Unexpected vertex type for color: {:#?}", element.vertex_type);
-                                    }
+                            VertexUsage::Color => match element.vertex_type {
+                                VertexType::ByteFloat4 => {
+                                    vertices[k as usize].color =
+                                        MDL::read_byte_float4(&mut cursor).unwrap();
                                 }
-                            }
+                                _ => {
+                                    panic!(
+                                        "Unexpected vertex type for color: {:#?}",
+                                        element.vertex_type
+                                    );
+                                }
+                            },
                         }
                     }
                 }
@@ -671,12 +700,17 @@ impl MDL {
                     indices.push(cursor.read_le::<u16>().ok()?);
                 }
 
-                let mut submeshes: Vec<SubMesh> = Vec::with_capacity(model.meshes[j as usize].submesh_count as usize);
+                let mut submeshes: Vec<SubMesh> =
+                    Vec::with_capacity(model.meshes[j as usize].submesh_count as usize);
                 for i in 0..model.meshes[j as usize].submesh_count {
                     submeshes.push(SubMesh {
                         submesh_index: model.meshes[j as usize].submesh_index as usize + i as usize,
-                        index_count: model.submeshes[model.meshes[j as usize].submesh_index as usize + i as usize].index_count,
-                        index_offset: model.submeshes[model.meshes[j as usize].submesh_index as usize + i as usize].index_offset,
+                        index_count: model.submeshes
+                            [model.meshes[j as usize].submesh_index as usize + i as usize]
+                            .index_count,
+                        index_offset: model.submeshes
+                            [model.meshes[j as usize].submesh_index as usize + i as usize]
+                            .index_offset,
                     });
                 }
 
@@ -684,23 +718,45 @@ impl MDL {
 
                 for shape in &model.shapes {
                     // Adapted from https://github.com/xivdev/Penumbra/blob/master/Penumbra/Import/Models/Export/MeshExporter.cs
-                    let affected_shape_mesh: Vec<&ShapeMesh> = model.shape_meshes.iter()
+                    let affected_shape_mesh: Vec<&ShapeMesh> = model
+                        .shape_meshes
+                        .iter()
                         .skip(shape.shape_mesh_start_index[i as usize] as usize)
                         .take(shape.shape_mesh_count[i as usize] as usize)
-                        .filter(|shape_mesh| shape_mesh.mesh_index_offset == model.meshes[j as usize].start_index).collect();
+                        .filter(|shape_mesh| {
+                            shape_mesh.mesh_index_offset == model.meshes[j as usize].start_index
+                        })
+                        .collect();
 
-                    let shape_values: Vec<&ShapeValue> = affected_shape_mesh.iter()
-                        .flat_map(|shape_mesh| model.shape_values.iter().skip(shape_mesh.shape_value_offset as usize).take(shape_mesh.shape_value_count as usize))
-                        .filter(|shape_value| shape_value.base_indices_index >= model.meshes[j as usize].start_index as u16 && shape_value.base_indices_index < (model.meshes[j as usize].start_index + model.meshes[j as usize].index_count) as u16)
+                    let shape_values: Vec<&ShapeValue> = affected_shape_mesh
+                        .iter()
+                        .flat_map(|shape_mesh| {
+                            model
+                                .shape_values
+                                .iter()
+                                .skip(shape_mesh.shape_value_offset as usize)
+                                .take(shape_mesh.shape_value_count as usize)
+                        })
+                        .filter(|shape_value| {
+                            shape_value.base_indices_index
+                                >= model.meshes[j as usize].start_index as u16
+                                && shape_value.base_indices_index
+                                    < (model.meshes[j as usize].start_index
+                                        + model.meshes[j as usize].index_count)
+                                        as u16
+                        })
                         .collect();
 
                     let mut morphed_vertices = vec![Vertex::default(); vertices.len()];
 
                     if !shape_values.is_empty() {
                         for shape_value in shape_values {
-                            let old_vertex = vertices[indices[shape_value.base_indices_index as usize] as usize];
-                            let new_vertex = vertices[shape_value.replacing_vertex_index as usize - model.meshes[j as usize].start_index as usize];
-                            let vertex = &mut morphed_vertices[indices[shape_value.base_indices_index as usize] as usize];
+                            let old_vertex =
+                                vertices[indices[shape_value.base_indices_index as usize] as usize];
+                            let new_vertex = vertices[shape_value.replacing_vertex_index as usize
+                                - model.meshes[j as usize].start_index as usize];
+                            let vertex = &mut morphed_vertices
+                                [indices[shape_value.base_indices_index as usize] as usize];
 
                             vertex.position[0] = new_vertex.position[0] - old_vertex.position[0];
                             vertex.position[1] = new_vertex.position[1] - old_vertex.position[1];
@@ -719,12 +775,19 @@ impl MDL {
 
                         shapes.push(Shape {
                             name: string,
-                            morphed_vertices
+                            morphed_vertices,
                         });
                     }
                 }
 
-                parts.push(Part { mesh_index: j, vertices, indices, material_index, submeshes, shapes });
+                parts.push(Part {
+                    mesh_index: j,
+                    vertices,
+                    indices,
+                    material_index,
+                    submeshes,
+                    shapes,
+                });
             }
 
             lods.push(Lod { parts });
@@ -735,11 +798,18 @@ impl MDL {
             model_data: model,
             lods,
             affected_bone_names,
-            material_names
+            material_names,
         })
     }
 
-    pub fn replace_vertices(&mut self, lod_index: usize, part_index: usize, vertices: &[Vertex], indices: &[u16], submeshes: &[SubMesh]) {
+    pub fn replace_vertices(
+        &mut self,
+        lod_index: usize,
+        part_index: usize,
+        vertices: &[Vertex],
+        indices: &[u16],
+        submeshes: &[SubMesh],
+    ) {
         let part = &mut self.lods[lod_index].parts[part_index];
 
         part.vertices = Vec::from(vertices);
@@ -747,8 +817,10 @@ impl MDL {
 
         for (i, submesh) in part.submeshes.iter().enumerate() {
             if i < submeshes.len() {
-                self.model_data.submeshes[submesh.submesh_index].index_offset = submeshes[i].index_offset;
-                self.model_data.submeshes[submesh.submesh_index].index_count = submeshes[i].index_count;
+                self.model_data.submeshes[submesh.submesh_index].index_offset =
+                    submeshes[i].index_offset;
+                self.model_data.submeshes[submesh.submesh_index].index_count =
+                    submeshes[i].index_count;
             }
         }
 
@@ -773,26 +845,38 @@ impl MDL {
         self.update_headers();
     }
 
-    pub fn add_shape_mesh(&mut self, lod_index: usize, shape_index: usize, shape_mesh_index: usize, part_index: usize, shape_values: &[NewShapeValue]) {
+    pub fn add_shape_mesh(
+        &mut self,
+        lod_index: usize,
+        shape_index: usize,
+        shape_mesh_index: usize,
+        part_index: usize,
+        shape_values: &[NewShapeValue],
+    ) {
         let part = &mut self.lods[lod_index].parts[part_index];
 
         // TODO: this is assuming they are added in order
         if shape_mesh_index == 0 {
-            self.model_data.shapes[shape_index].shape_mesh_start_index[lod_index] = self.model_data.shape_meshes.len() as u16;
+            self.model_data.shapes[shape_index].shape_mesh_start_index[lod_index] =
+                self.model_data.shape_meshes.len() as u16;
         }
 
         self.model_data.shape_meshes.push(ShapeMesh {
             mesh_index_offset: self.model_data.meshes[part.mesh_index as usize].start_index,
             shape_value_count: shape_values.len() as u32,
-            shape_value_offset: self.model_data.shape_values.len() as u32
+            shape_value_offset: self.model_data.shape_values.len() as u32,
         });
 
         for shape_value in shape_values {
             part.vertices.push(shape_value.replacing_vertex);
 
             self.model_data.shape_values.push(ShapeValue {
-                base_indices_index: self.model_data.meshes[part.mesh_index as usize].start_index as u16 + shape_value.base_index as u16,
-                replacing_vertex_index: self.model_data.meshes[part.mesh_index as usize].start_index as u16 + (part.vertices.len() - 1) as u16
+                base_indices_index: self.model_data.meshes[part.mesh_index as usize].start_index
+                    as u16
+                    + shape_value.base_index as u16,
+                replacing_vertex_index: self.model_data.meshes[part.mesh_index as usize].start_index
+                    as u16
+                    + (part.vertices.len() - 1) as u16,
             })
         }
 
@@ -807,15 +891,18 @@ impl MDL {
             let mut vertex_offset = 0;
 
             for j in self.model_data.lods[i as usize].mesh_index
-                ..self.model_data.lods[i as usize].mesh_index + self.model_data.lods[i as usize].mesh_count
+                ..self.model_data.lods[i as usize].mesh_index
+                    + self.model_data.lods[i as usize].mesh_count
             {
                 let mesh = &mut self.model_data.meshes[j as usize];
 
-                mesh.start_index = self.model_data.submeshes[mesh.submesh_index as usize].index_offset;
+                mesh.start_index =
+                    self.model_data.submeshes[mesh.submesh_index as usize].index_offset;
 
                 for i in 0..mesh.vertex_stream_count as usize {
                     mesh.vertex_buffer_offsets[i] = vertex_offset;
-                    vertex_offset += mesh.vertex_count as u32 * mesh.vertex_buffer_strides[i] as u32;
+                    vertex_offset +=
+                        mesh.vertex_count as u32 * mesh.vertex_buffer_strides[i] as u32;
                 }
             }
         }
@@ -825,15 +912,14 @@ impl MDL {
             let mut total_index_buffer_size = 0;
 
             // still slightly off?
-            for j in lod.mesh_index
-                ..lod.mesh_index + lod.mesh_count
-            {
+            for j in lod.mesh_index..lod.mesh_index + lod.mesh_count {
                 let vertex_count = self.model_data.meshes[j as usize].vertex_count;
                 let index_count = self.model_data.meshes[j as usize].index_count;
 
                 let mut total_vertex_stride: u32 = 0;
                 for i in 0..self.model_data.meshes[j as usize].vertex_stream_count as usize {
-                    total_vertex_stride += self.model_data.meshes[j as usize].vertex_buffer_strides[i] as u32;
+                    total_vertex_stride +=
+                        self.model_data.meshes[j as usize].vertex_buffer_strides[i] as u32;
                 }
 
                 total_vertex_buffer_size += vertex_count as u32 * total_vertex_stride;
@@ -912,97 +998,117 @@ impl MDL {
 
             for (l, lod) in self.lods.iter().enumerate() {
                 for part in lod.parts.iter() {
-                    let declaration = &self.model_data.header.vertex_declarations[part.mesh_index as usize];
+                    let declaration =
+                        &self.model_data.header.vertex_declarations[part.mesh_index as usize];
 
                     for (k, vert) in part.vertices.iter().enumerate() {
                         for element in &declaration.elements {
                             cursor
                                 .seek(SeekFrom::Start(
                                     (self.model_data.lods[l].vertex_data_offset
-                                        + self.model_data.meshes[part.mesh_index as usize].vertex_buffer_offsets
-                                        [element.stream as usize]
+                                        + self.model_data.meshes[part.mesh_index as usize]
+                                            .vertex_buffer_offsets
+                                            [element.stream as usize]
                                         + element.offset as u32
-                                        + self.model_data.meshes[part.mesh_index as usize].vertex_buffer_strides
-                                        [element.stream as usize]
-                                        as u32
-                                        * k as u32) as u64,
+                                        + self.model_data.meshes[part.mesh_index as usize]
+                                            .vertex_buffer_strides
+                                            [element.stream as usize]
+                                            as u32
+                                            * k as u32) as u64,
                                 ))
                                 .ok()?;
 
                             match element.vertex_usage {
-                                VertexUsage::Position => {
-                                    match element.vertex_type {
-                                        VertexType::Half4 => {
-                                            MDL::write_half4(&mut cursor, &MDL::pad_slice(&vert.position, 1.0)).ok()?;
-                                        }
-                                        VertexType::Single3 => {
-                                            MDL::write_single3(&mut cursor, &vert.position).ok()?;
-                                        }
-                                        _ => {
-                                            panic!("Unexpected vertex type for position: {:#?}", element.vertex_type);
-                                        }
+                                VertexUsage::Position => match element.vertex_type {
+                                    VertexType::Half4 => {
+                                        MDL::write_half4(
+                                            &mut cursor,
+                                            &MDL::pad_slice(&vert.position, 1.0),
+                                        )
+                                        .ok()?;
                                     }
-                                }
-                                VertexUsage::BlendWeights => {
-                                    match element.vertex_type {
-                                        VertexType::ByteFloat4 => {
-                                            MDL::write_byte_float4(&mut cursor, &vert.bone_weight).ok()?;
-                                        }
-                                        _ => {
-                                            panic!("Unexpected vertex type for blendweight: {:#?}", element.vertex_type);
-                                        }
+                                    VertexType::Single3 => {
+                                        MDL::write_single3(&mut cursor, &vert.position).ok()?;
                                     }
-                                }
-                                VertexUsage::BlendIndices => {
-                                    match element.vertex_type {
-                                        VertexType::Byte4 => {
-                                            MDL::write_byte4(&mut cursor, &vert.bone_id).ok()?;
-                                        }
-                                        _ => {
-                                            panic!("Unexpected vertex type for blendindice: {:#?}", element.vertex_type);
-                                        }
+                                    _ => {
+                                        panic!(
+                                            "Unexpected vertex type for position: {:#?}",
+                                            element.vertex_type
+                                        );
                                     }
-                                }
-                                VertexUsage::Normal => {
-                                    match element.vertex_type {
-                                        VertexType::Half4 => {
-                                            MDL::write_half4(&mut cursor, &MDL::pad_slice(&vert.normal, 0.0)).ok()?;
-                                        }
-                                        VertexType::Single3 => {
-                                            MDL::write_single3(&mut cursor, &vert.normal).ok()?;
-                                        }
-                                        _ => {
-                                            panic!("Unexpected vertex type for normal: {:#?}", element.vertex_type);
-                                        }
+                                },
+                                VertexUsage::BlendWeights => match element.vertex_type {
+                                    VertexType::ByteFloat4 => {
+                                        MDL::write_byte_float4(&mut cursor, &vert.bone_weight)
+                                            .ok()?;
                                     }
-                                }
-                                VertexUsage::UV => {
-                                    match element.vertex_type {
-                                        VertexType::Half4 => {
-                                            let combined = [vert.uv0[0], vert.uv0[1], vert.uv1[0], vert.uv1[1]];
+                                    _ => {
+                                        panic!(
+                                            "Unexpected vertex type for blendweight: {:#?}",
+                                            element.vertex_type
+                                        );
+                                    }
+                                },
+                                VertexUsage::BlendIndices => match element.vertex_type {
+                                    VertexType::Byte4 => {
+                                        MDL::write_byte4(&mut cursor, &vert.bone_id).ok()?;
+                                    }
+                                    _ => {
+                                        panic!(
+                                            "Unexpected vertex type for blendindice: {:#?}",
+                                            element.vertex_type
+                                        );
+                                    }
+                                },
+                                VertexUsage::Normal => match element.vertex_type {
+                                    VertexType::Half4 => {
+                                        MDL::write_half4(
+                                            &mut cursor,
+                                            &MDL::pad_slice(&vert.normal, 0.0),
+                                        )
+                                        .ok()?;
+                                    }
+                                    VertexType::Single3 => {
+                                        MDL::write_single3(&mut cursor, &vert.normal).ok()?;
+                                    }
+                                    _ => {
+                                        panic!(
+                                            "Unexpected vertex type for normal: {:#?}",
+                                            element.vertex_type
+                                        );
+                                    }
+                                },
+                                VertexUsage::UV => match element.vertex_type {
+                                    VertexType::Half4 => {
+                                        let combined =
+                                            [vert.uv0[0], vert.uv0[1], vert.uv1[0], vert.uv1[1]];
 
-                                            MDL::write_half4(&mut cursor, &combined).ok()?;
-                                        }
-                                        VertexType::Single4 => {
-                                            let combined = [vert.uv0[0], vert.uv0[1], vert.uv1[0], vert.uv1[1]];
+                                        MDL::write_half4(&mut cursor, &combined).ok()?;
+                                    }
+                                    VertexType::Single4 => {
+                                        let combined =
+                                            [vert.uv0[0], vert.uv0[1], vert.uv1[0], vert.uv1[1]];
 
-                                            MDL::write_single4(&mut cursor, &combined).ok()?;
-                                        }
-                                        _ => {
-                                            panic!("Unexpected vertex type for uv: {:#?}", element.vertex_type);
-                                        }
+                                        MDL::write_single4(&mut cursor, &combined).ok()?;
                                     }
-                                }
-                                VertexUsage::BiTangent => {
-                                    match element.vertex_type {
-                                        VertexType::ByteFloat4 => {
-                                            MDL::write_tangent(&mut cursor, &vert.bitangent).ok()?;
-                                        }
-                                        _ => {
-                                            panic!("Unexpected vertex type for bitangent: {:#?}", element.vertex_type);
-                                        }
+                                    _ => {
+                                        panic!(
+                                            "Unexpected vertex type for uv: {:#?}",
+                                            element.vertex_type
+                                        );
                                     }
-                                }
+                                },
+                                VertexUsage::BiTangent => match element.vertex_type {
+                                    VertexType::ByteFloat4 => {
+                                        MDL::write_tangent(&mut cursor, &vert.bitangent).ok()?;
+                                    }
+                                    _ => {
+                                        panic!(
+                                            "Unexpected vertex type for bitangent: {:#?}",
+                                            element.vertex_type
+                                        );
+                                    }
+                                },
                                 VertexUsage::Tangent => {
                                     #[allow(clippy::match_single_binding)] // TODO
                                     match element.vertex_type {
@@ -1010,20 +1116,24 @@ impl MDL {
                                             MDL::write_tangent(&mut cursor, &vert.binormal).ok()?;
                                         }*/
                                         _ => {
-                                            panic!("Unexpected vertex type for tangent: {:#?}", element.vertex_type);
+                                            panic!(
+                                                "Unexpected vertex type for tangent: {:#?}",
+                                                element.vertex_type
+                                            );
                                         }
                                     }
                                 }
-                                VertexUsage::Color => {
-                                    match element.vertex_type {
-                                        VertexType::ByteFloat4 => {
-                                            MDL::write_byte_float4(&mut cursor, &vert.color).ok()?;
-                                        }
-                                        _ => {
-                                            panic!("Unexpected vertex type for color: {:#?}", element.vertex_type);
-                                        }
+                                VertexUsage::Color => match element.vertex_type {
+                                    VertexType::ByteFloat4 => {
+                                        MDL::write_byte_float4(&mut cursor, &vert.color).ok()?;
                                     }
-                                }
+                                    _ => {
+                                        panic!(
+                                            "Unexpected vertex type for color: {:#?}",
+                                            element.vertex_type
+                                        );
+                                    }
+                                },
                             }
                         }
                     }
@@ -1031,8 +1141,8 @@ impl MDL {
                     cursor
                         .seek(SeekFrom::Start(
                             (self.file_header.index_offsets[l]
-                                + (self.model_data.meshes[part.mesh_index as usize].start_index * size_of::<u16>() as u32))
-                                as u64,
+                                + (self.model_data.meshes[part.mesh_index as usize].start_index
+                                    * size_of::<u16>() as u32)) as u64,
                         ))
                         .ok()?;
 
@@ -1166,7 +1276,13 @@ mod tests {
 
         for l in 0..old_mdl.lods.len() {
             for p in 0..old_mdl.lods[l].parts.len() {
-                mdl.replace_vertices(l, p, &old_mdl.lods[l].parts[p].vertices, &old_mdl.lods[l].parts[p].indices, &old_mdl.lods[l].parts[p].submeshes);
+                mdl.replace_vertices(
+                    l,
+                    p,
+                    &old_mdl.lods[l].parts[p].vertices,
+                    &old_mdl.lods[l].parts[p].indices,
+                    &old_mdl.lods[l].parts[p].submeshes,
+                );
             }
         }
 
@@ -1186,9 +1302,15 @@ mod tests {
         // file header
         assert_eq!(mdl.file_header.version, 16777221);
         assert_eq!(mdl.file_header.stack_size, 816);
-        assert_eq!(mdl.file_header.stack_size, mdl.file_header.calculate_stack_size());
+        assert_eq!(
+            mdl.file_header.stack_size,
+            mdl.file_header.calculate_stack_size()
+        );
         assert_eq!(mdl.file_header.runtime_size, 12544);
-        assert_eq!(mdl.file_header.runtime_size, mdl.model_data.calculate_runtime_size());
+        assert_eq!(
+            mdl.file_header.runtime_size,
+            mdl.model_data.calculate_runtime_size()
+        );
         assert_eq!(mdl.file_header.vertex_declaration_count, 6);
         assert_eq!(mdl.file_header.material_count, 2);
         assert_eq!(mdl.file_header.lod_count, 3);

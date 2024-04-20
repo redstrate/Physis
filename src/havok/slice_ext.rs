@@ -5,22 +5,22 @@ use core::convert::TryInto;
 
 pub trait SliceByteOrderExt {
     fn to_int_be<T>(&self) -> T
-        where
-            T: Integer;
+    where
+        T: Integer;
 
     fn to_int_le<T>(&self) -> T
-        where
-            T: Integer;
+    where
+        T: Integer;
 
     fn to_float_be<T>(&self) -> T
-        where
-            T: Float;
+    where
+        T: Float;
 }
 
 impl SliceByteOrderExt for &[u8] {
     fn to_int_be<T>(&self) -> T
-        where
-            T: Integer,
+    where
+        T: Integer,
     {
         let sliced = &self[..core::mem::size_of::<T>()];
 
@@ -28,8 +28,8 @@ impl SliceByteOrderExt for &[u8] {
     }
 
     fn to_int_le<T>(&self) -> T
-        where
-            T: Integer,
+    where
+        T: Integer,
     {
         let sliced = &self[..core::mem::size_of::<T>()];
 
@@ -37,8 +37,8 @@ impl SliceByteOrderExt for &[u8] {
     }
 
     fn to_float_be<T>(&self) -> T
-        where
-            T: Float,
+    where
+        T: Float,
     {
         let sliced = &self[..core::mem::size_of::<T>()];
 

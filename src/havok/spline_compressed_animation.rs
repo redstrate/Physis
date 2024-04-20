@@ -1,13 +1,13 @@
 // SPDX-FileCopyrightText: 2020 Inseok Lee
 // SPDX-License-Identifier: MIT
 
+use crate::havok::byte_reader::ByteReader;
+use crate::havok::object::HavokObject;
+use crate::havok::transform::HavokTransform;
+use crate::havok::HavokAnimation;
 use core::{cell::RefCell, cmp};
 use std::f32;
 use std::sync::Arc;
-use crate::havok::byte_reader::ByteReader;
-use crate::havok::HavokAnimation;
-use crate::havok::object::HavokObject;
-use crate::havok::transform::HavokTransform;
 
 #[repr(u8)]
 #[allow(clippy::upper_case_acronyms)]
@@ -107,10 +107,16 @@ impl HavokSplineCompressedAnimation {
         let frame_duration = root.get("frameDuration").as_real();
 
         let raw_block_offsets = root.get("blockOffsets").as_array();
-        let block_offsets = raw_block_offsets.iter().map(|x| x.as_int() as u32).collect::<Vec<_>>();
+        let block_offsets = raw_block_offsets
+            .iter()
+            .map(|x| x.as_int() as u32)
+            .collect::<Vec<_>>();
 
         let raw_data = root.get("data").as_array();
-        let data = raw_data.iter().map(|x| x.as_int() as u8).collect::<Vec<_>>();
+        let data = raw_data
+            .iter()
+            .map(|x| x.as_int() as u8)
+            .collect::<Vec<_>>();
 
         Self {
             duration,
@@ -136,7 +142,8 @@ impl HavokSplineCompressedAnimation {
         let real_frame = (frame - first_frame_of_block) as f32 + delta;
         let block_time_out = real_frame * self.frame_duration;
 
-        let quantized_time_out = ((block_time_out * self.block_inverse_duration) * (self.max_frames_per_block as f32 - 1.)) as u8;
+        let quantized_time_out = ((block_time_out * self.block_inverse_duration)
+            * (self.max_frames_per_block as f32 - 1.)) as u8;
 
         (block_out, block_time_out, quantized_time_out)
     }
@@ -164,7 +171,11 @@ impl HavokSplineCompressedAnimation {
         mid
     }
 
-    fn read_knots(data: &mut ByteReader, u: u8, frame_duration: f32) -> (usize, usize, Vec<f32>, usize) {
+    fn read_knots(
+        data: &mut ByteReader,
+        u: u8,
+        frame_duration: f32,
+    ) -> (usize, usize, Vec<f32>, usize) {
         let n = data.read_u16_le() as usize;
         let p = data.read() as usize;
         let raw = data.raw();
@@ -199,7 +210,12 @@ impl HavokSplineCompressedAnimation {
         let phi = b * c * (f32::consts::PI / 2.);
 
         // spherical coordinate to cartesian coordinate
-        let mut result = [f32::sin(theta) * f32::cos(phi), f32::sin(theta) * f32::sin(phi), f32::cos(theta), 1.];
+        let mut result = [
+            f32::sin(theta) * f32::cos(phi),
+            f32::sin(theta) * f32::sin(phi),
+            f32::cos(theta),
+            1.,
+        ];
         for item in result.iter_mut() {
             *item *= f32::sqrt(1. - value * value);
         }
@@ -226,9 +242,18 @@ impl HavokSplineCompressedAnimation {
 
         let mut buf = [0u32; 4];
         unsafe {
-            let m = core::slice::from_raw_parts(permute.as_ptr() as *const u8, permute.len() * core::mem::size_of::<u32>());
-            let a = core::slice::from_raw_parts(data.as_ptr() as *const u8, data.len() * core::mem::size_of::<u32>());
-            let r = core::slice::from_raw_parts_mut(buf.as_mut_ptr() as *mut u8, buf.len() * core::mem::size_of::<u32>());
+            let m = core::slice::from_raw_parts(
+                permute.as_ptr() as *const u8,
+                permute.len() * core::mem::size_of::<u32>(),
+            );
+            let a = core::slice::from_raw_parts(
+                data.as_ptr() as *const u8,
+                data.len() * core::mem::size_of::<u32>(),
+            );
+            let r = core::slice::from_raw_parts_mut(
+                buf.as_mut_ptr() as *mut u8,
+                buf.len() * core::mem::size_of::<u32>(),
+            );
             for i in 0..16 {
                 r[i] = a[m[i] as usize];
             }
@@ -310,7 +335,13 @@ impl HavokSplineCompressedAnimation {
         }
     }
 
-    fn read_packed_quaternions(quantization: RotationQuantization, data: &mut ByteReader, n: usize, p: usize, span: usize) -> Vec<[f32; 4]> {
+    fn read_packed_quaternions(
+        quantization: RotationQuantization,
+        data: &mut ByteReader,
+        n: usize,
+        p: usize,
+        span: usize,
+    ) -> Vec<[f32; 4]> {
         data.align(quantization.align());
         let bytes_per_quaternion = quantization.bytes_per_quaternion();
 
@@ -409,7 +440,9 @@ impl HavokSplineCompressedAnimation {
         &base[offset..]
     }
 
-    fn unpack_quantization_types(packed_quantization_types: u8) -> (ScalarQuantization, RotationQuantization, ScalarQuantization) {
+    fn unpack_quantization_types(
+        packed_quantization_types: u8,
+    ) -> (ScalarQuantization, RotationQuantization, ScalarQuantization) {
         let translation = ScalarQuantization::from_raw(packed_quantization_types & 0x03);
         let rotation = RotationQuantization::from_raw((packed_quantization_types >> 2) & 0x0F);
         let scale = ScalarQuantization::from_raw((packed_quantization_types >> 6) & 0x03);
@@ -417,9 +450,24 @@ impl HavokSplineCompressedAnimation {
         (translation, rotation, scale)
     }
 
-    fn sample_translation(&self, quantization: ScalarQuantization, time: f32, quantized_time: u8, mask: u8, data: &mut ByteReader) -> [f32; 4] {
+    fn sample_translation(
+        &self,
+        quantization: ScalarQuantization,
+        time: f32,
+        quantized_time: u8,
+        mask: u8,
+        data: &mut ByteReader,
+    ) -> [f32; 4] {
         let result = if mask != 0 {
-            Self::read_nurbs_curve(quantization, data, quantized_time, self.frame_duration, time, mask, [0., 0., 0., 0.])
+            Self::read_nurbs_curve(
+                quantization,
+                data,
+                quantized_time,
+                self.frame_duration,
+                time,
+                mask,
+                [0., 0., 0., 0.],
+            )
         } else {
             [0., 0., 0., 0.]
         };
@@ -429,17 +477,46 @@ impl HavokSplineCompressedAnimation {
         result
     }
 
-    fn sample_rotation(&self, quantization: RotationQuantization, time: f32, quantized_time: u8, mask: u8, data: &mut ByteReader) -> [f32; 4] {
-        let result = Self::read_nurbs_quaternion(quantization, data, quantized_time, self.frame_duration, time, mask);
+    fn sample_rotation(
+        &self,
+        quantization: RotationQuantization,
+        time: f32,
+        quantized_time: u8,
+        mask: u8,
+        data: &mut ByteReader,
+    ) -> [f32; 4] {
+        let result = Self::read_nurbs_quaternion(
+            quantization,
+            data,
+            quantized_time,
+            self.frame_duration,
+            time,
+            mask,
+        );
 
         data.align(4);
 
         result
     }
 
-    fn sample_scale(&self, quantization: ScalarQuantization, time: f32, quantized_time: u8, mask: u8, data: &mut ByteReader) -> [f32; 4] {
+    fn sample_scale(
+        &self,
+        quantization: ScalarQuantization,
+        time: f32,
+        quantized_time: u8,
+        mask: u8,
+        data: &mut ByteReader,
+    ) -> [f32; 4] {
         let result = if mask != 0 {
-            Self::read_nurbs_curve(quantization, data, quantized_time, self.frame_duration, time, mask, [1., 1., 1., 1.])
+            Self::read_nurbs_curve(
+                quantization,
+                data,
+                quantized_time,
+                self.frame_duration,
+                time,
+                mask,
+                [1., 1., 1., 1.],
+            )
         } else {
             [1., 1., 1., 1.]
         };
@@ -575,17 +652,41 @@ impl HavokAnimation for HavokSplineCompressedAnimation {
             block,
             self.mask_and_quantization_size,
         ));
-        let mut mask = ByteReader::new(Self::compute_packed_nurbs_offsets(&self.data, &self.block_offsets, block, 0x8000_0000));
+        let mut mask = ByteReader::new(Self::compute_packed_nurbs_offsets(
+            &self.data,
+            &self.block_offsets,
+            block,
+            0x8000_0000,
+        ));
 
         let mut result = Vec::with_capacity(self.number_of_transform_tracks);
         for _ in 0..self.number_of_transform_tracks {
             let packed_quantization_types = mask.read();
 
-            let (translation_type, rotation_type, scale_type) = Self::unpack_quantization_types(packed_quantization_types);
+            let (translation_type, rotation_type, scale_type) =
+                Self::unpack_quantization_types(packed_quantization_types);
 
-            let translation = self.sample_translation(translation_type, block_time, quantized_time, mask.read(), &mut data);
-            let rotation = self.sample_rotation(rotation_type, block_time, quantized_time, mask.read(), &mut data);
-            let scale = self.sample_scale(scale_type, block_time, quantized_time, mask.read(), &mut data);
+            let translation = self.sample_translation(
+                translation_type,
+                block_time,
+                quantized_time,
+                mask.read(),
+                &mut data,
+            );
+            let rotation = self.sample_rotation(
+                rotation_type,
+                block_time,
+                quantized_time,
+                mask.read(),
+                &mut data,
+            );
+            let scale = self.sample_scale(
+                scale_type,
+                block_time,
+                quantized_time,
+                mask.read(),
+                &mut data,
+            );
 
             result.push(HavokTransform::from_trs(translation, rotation, scale));
         }

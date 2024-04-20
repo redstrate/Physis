@@ -3,12 +3,15 @@
 
 #![allow(clippy::arc_with_non_send_sync)]
 
+use crate::havok::byte_reader::ByteReader;
+use crate::havok::object::{
+    HavokInteger, HavokObject, HavokObjectType, HavokObjectTypeMember, HavokRootObject, HavokValue,
+    HavokValueType,
+};
+use crate::havok::slice_ext::SliceByteOrderExt;
 use core::cell::RefCell;
 use std::collections::HashMap;
 use std::sync::Arc;
-use crate::havok::byte_reader::ByteReader;
-use crate::havok::object::{HavokInteger, HavokObject, HavokObjectType, HavokObjectTypeMember, HavokRootObject, HavokValue, HavokValueType};
-use crate::havok::slice_ext::SliceByteOrderExt;
 
 #[repr(i8)]
 enum HavokTagType {
@@ -59,7 +62,11 @@ impl<'a> HavokBinaryTagFileReader<'a> {
     fn new(reader: ByteReader<'a>) -> Self {
         let file_version = 0;
         let remembered_strings = vec![Arc::from("string"), Arc::from("")];
-        let remembered_types = vec![Arc::new(HavokObjectType::new(Arc::from("object"), None, Vec::new()))];
+        let remembered_types = vec![Arc::new(HavokObjectType::new(
+            Arc::from("object"),
+            None,
+            Vec::new(),
+        ))];
         let remembered_objects = Vec::new();
         let objects = Vec::new();
 
@@ -87,7 +94,10 @@ impl<'a> HavokBinaryTagFileReader<'a> {
                     self.file_version = self.read_packed_int() as u8;
                     assert_eq!(self.file_version, 3, "Unimplemented version");
                     self.remembered_objects
-                        .push(Arc::new(RefCell::new(HavokObject::new(self.remembered_types[0].clone(), HashMap::new()))))
+                        .push(Arc::new(RefCell::new(HavokObject::new(
+                            self.remembered_types[0].clone(),
+                            HashMap::new(),
+                        ))))
                 }
                 HavokTagType::Type => {
                     let object_type = self.read_type();
@@ -152,7 +162,9 @@ impl<'a> HavokBinaryTagFileReader<'a> {
                 HavokValueType::INT => HavokValue::Integer(self.read_packed_int()),
                 HavokValueType::REAL => HavokValue::Real(self.reader.read_f32_le()),
                 HavokValueType::STRING => HavokValue::String(self.read_string()),
-                HavokValueType::OBJECT => HavokValue::ObjectReference(self.read_packed_int() as usize),
+                HavokValueType::OBJECT => {
+                    HavokValue::ObjectReference(self.read_packed_int() as usize)
+                }
                 _ => panic!("unimplemented {}", member.type_.bits()),
             }
         }
@@ -161,14 +173,19 @@ impl<'a> HavokBinaryTagFileReader<'a> {
     fn read_array(&mut self, member: &HavokObjectTypeMember, array_len: usize) -> Vec<HavokValue> {
         let base_type = member.type_.base_type();
         match base_type {
-            HavokValueType::STRING => (0..array_len).map(|_| HavokValue::String(self.read_string())).collect::<Vec<_>>(),
+            HavokValueType::STRING => (0..array_len)
+                .map(|_| HavokValue::String(self.read_string()))
+                .collect::<Vec<_>>(),
             HavokValueType::STRUCT => {
                 let target_type = self.find_type(member.class_name.as_ref().unwrap());
                 let data_existence = self.read_bit_field(target_type.member_count());
 
                 let mut result_objects = Vec::new();
                 for _ in 0..array_len {
-                    let object = Arc::new(RefCell::new(HavokObject::new(target_type.clone(), HashMap::new())));
+                    let object = Arc::new(RefCell::new(HavokObject::new(
+                        target_type.clone(),
+                        HashMap::new(),
+                    )));
 
                     result_objects.push(object.clone());
                     self.objects.push(object);
@@ -188,7 +205,10 @@ impl<'a> HavokBinaryTagFileReader<'a> {
                     }
                 }
 
-                result_objects.into_iter().map(HavokValue::Object).collect::<Vec<_>>()
+                result_objects
+                    .into_iter()
+                    .map(HavokValue::Object)
+                    .collect::<Vec<_>>()
             }
             HavokValueType::OBJECT => (0..array_len)
                 .map(|_| {
@@ -204,16 +224,33 @@ impl<'a> HavokBinaryTagFileReader<'a> {
                 if self.file_version >= 3 {
                     self.read_packed_int(); // type?
                 }
-                (0..array_len).map(|_| HavokValue::Integer(self.read_packed_int())).collect::<Vec<_>>()
-            }
-            HavokValueType::REAL => (0..array_len).map(|_| HavokValue::Real(self.reader.read_f32_le())).collect::<Vec<_>>(),
-            HavokValueType::VEC4 | HavokValueType::VEC8 | HavokValueType::VEC12 | HavokValueType::VEC16 => {
-                let vec_size = member.type_.base_type().vec_size() as usize;
                 (0..array_len)
-                    .map(|_| HavokValue::Vec((0..vec_size).map(|_| self.reader.read_f32_le()).collect::<Vec<_>>()))
+                    .map(|_| HavokValue::Integer(self.read_packed_int()))
                     .collect::<Vec<_>>()
             }
-            _ => panic!("unimplemented {} {}", member.type_.bits(), member.type_.base_type().bits()),
+            HavokValueType::REAL => (0..array_len)
+                .map(|_| HavokValue::Real(self.reader.read_f32_le()))
+                .collect::<Vec<_>>(),
+            HavokValueType::VEC4
+            | HavokValueType::VEC8
+            | HavokValueType::VEC12
+            | HavokValueType::VEC16 => {
+                let vec_size = member.type_.base_type().vec_size() as usize;
+                (0..array_len)
+                    .map(|_| {
+                        HavokValue::Vec(
+                            (0..vec_size)
+                                .map(|_| self.reader.read_f32_le())
+                                .collect::<Vec<_>>(),
+                        )
+                    })
+                    .collect::<Vec<_>>()
+            }
+            _ => panic!(
+                "unimplemented {} {}",
+                member.type_.bits(),
+                member.type_.base_type().bits()
+            ),
         }
     }
 
@@ -229,8 +266,14 @@ impl<'a> HavokBinaryTagFileReader<'a> {
                 let member_name = self.read_string();
                 let type_ = HavokValueType::from_bits(self.read_packed_int() as u32).unwrap();
 
-                let tuple_size = if type_.is_tuple() { self.read_packed_int() } else { 0 };
-                let type_name = if type_.base_type() == HavokValueType::OBJECT || type_.base_type() == HavokValueType::STRUCT {
+                let tuple_size = if type_.is_tuple() {
+                    self.read_packed_int()
+                } else {
+                    0
+                };
+                let type_name = if type_.base_type() == HavokValueType::OBJECT
+                    || type_.base_type() == HavokValueType::STRUCT
+                {
                     Some(self.read_string())
                 } else {
                     None
@@ -249,7 +292,11 @@ impl<'a> HavokBinaryTagFileReader<'a> {
             return self.remembered_strings[-length as usize].clone();
         }
 
-        let result = Arc::from(std::str::from_utf8(self.reader.read_bytes(length as usize)).unwrap().to_owned());
+        let result = Arc::from(
+            std::str::from_utf8(self.reader.read_bytes(length as usize))
+                .unwrap()
+                .to_owned(),
+        );
         self.remembered_strings.push(Arc::clone(&result));
 
         result
@@ -296,7 +343,11 @@ impl<'a> HavokBinaryTagFileReader<'a> {
     }
 
     fn find_type(&self, type_name: &str) -> Arc<HavokObjectType> {
-        self.remembered_types.iter().find(|&x| &*x.name == type_name).unwrap().clone()
+        self.remembered_types
+            .iter()
+            .find(|&x| &*x.name == type_name)
+            .unwrap()
+            .clone()
     }
 
     fn fill_object_reference(&self, object: &mut HavokObject) {
@@ -327,7 +378,11 @@ impl<'a> HavokBinaryTagFileReader<'a> {
 
     fn default_value(type_: HavokValueType) -> HavokValue {
         if type_.is_vec() {
-            HavokValue::Array((0..type_.vec_size()).map(|_| Self::default_value(type_.base_type())).collect::<Vec<_>>())
+            HavokValue::Array(
+                (0..type_.vec_size())
+                    .map(|_| Self::default_value(type_.base_type()))
+                    .collect::<Vec<_>>(),
+            )
         } else if type_.is_array() || type_.is_tuple() {
             HavokValue::Array(Vec::new())
         } else {

@@ -1,9 +1,9 @@
 // SPDX-FileCopyrightText: 2023 Joshua Goins <josh@redstrate.com>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-use std::io::SeekFrom;
-use binrw::{BinRead, BinResult, binrw, BinWrite};
 use crate::model::NUM_VERTICES;
+use binrw::{binrw, BinRead, BinResult, BinWrite};
+use std::io::SeekFrom;
 
 /// Marker for end of stream (0xFF)
 const END_OF_STREAM: u8 = 0xFF;
@@ -46,7 +46,7 @@ pub enum VertexType {
     /// 2 16-bit unsigned integers
     UnsignedShort2 = 16,
     /// 4 16-bit unsigned integers
-    UnsignedShort4 = 17
+    UnsignedShort4 = 17,
 }
 
 /// What the vertex stream is used for.
@@ -78,7 +78,7 @@ pub struct VertexElement {
     pub usage_index: u8,
 }
 
-/// Represents the true size of VertexElement. Always use this value instead of std::mem::size_of. 
+/// Represents the true size of VertexElement. Always use this value instead of std::mem::size_of.
 // 3 extra bytes to account for the padding that doesn't appear in the struct itself
 pub const VERTEX_ELEMENT_SIZE: usize = std::mem::size_of::<VertexElement>() + 3;
 
@@ -90,10 +90,7 @@ pub struct VertexDeclaration {
 #[binrw::parser(reader, endian)]
 pub(crate) fn vertex_element_parser(count: u16) -> BinResult<Vec<VertexDeclaration>> {
     let mut vertex_declarations: Vec<VertexDeclaration> =
-        vec![
-            VertexDeclaration { elements: vec![] };
-            count.into()
-        ];
+        vec![VertexDeclaration { elements: vec![] }; count.into()];
     for declaration in &mut vertex_declarations {
         let mut element = VertexElement::read_options(reader, endian, ())?;
 
@@ -115,9 +112,7 @@ pub(crate) fn vertex_element_parser(count: u16) -> BinResult<Vec<VertexDeclarati
 }
 
 #[binrw::writer(writer, endian)]
-pub(crate) fn vertex_element_writer(
-    declarations: &Vec<VertexDeclaration>,
-) -> BinResult<()> {
+pub(crate) fn vertex_element_writer(declarations: &Vec<VertexDeclaration>) -> BinResult<()> {
     // write vertex declarations
     for declaration in declarations {
         for element in &declaration.elements {
@@ -129,8 +124,9 @@ pub(crate) fn vertex_element_writer(
             offset: 0,
             vertex_type: VertexType::Single1,
             vertex_usage: VertexUsage::Position,
-            usage_index: 0
-        }.write_options(writer, endian, ())?;
+            usage_index: 0,
+        }
+        .write_options(writer, endian, ())?;
 
         let to_seek = (NUM_VERTICES as usize - 1 - declaration.elements.len()) * 8;
         writer.seek(SeekFrom::Current(to_seek as i64))?;
@@ -138,4 +134,3 @@ pub(crate) fn vertex_element_writer(
 
     Ok(())
 }
-

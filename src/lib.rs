@@ -6,7 +6,7 @@
 extern crate core;
 
 /// Represents a continuous block of memory which is not owned, and comes either from an in-memory location or from a file.
-pub type ByteSpan<'a> = &'a[u8];
+pub type ByteSpan<'a> = &'a [u8];
 
 /// Represents a continuous block of memory which is owned.
 pub type ByteBuffer = Vec<u8>;

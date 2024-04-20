@@ -3,8 +3,8 @@
 
 use std::io::{Cursor, Seek, SeekFrom};
 
-use binrw::{BinRead, Endian};
 use binrw::binrw;
+use binrw::{BinRead, Endian};
 
 use crate::common::Language;
 use crate::exh::{ColumnDataType, ExcelColumnDefinition, ExcelDataPagination, EXH};
@@ -81,7 +81,7 @@ impl EXD {
 
                     let row_header = ExcelDataRowHeader::read(&mut cursor).ok()?;
 
-                    let header_offset = offset.offset + 6;// std::mem::size_of::<ExcelDataRowHeader>() as u32;
+                    let header_offset = offset.offset + 6; // std::mem::size_of::<ExcelDataRowHeader>() as u32;
 
                     let mut read_row = |row_offset: u32| -> Option<ExcelRow> {
                         let mut subrow = ExcelRow {
@@ -93,9 +93,9 @@ impl EXD {
                                 .seek(SeekFrom::Start((row_offset + column.offset as u32).into()))
                                 .ok()?;
 
-                            subrow
-                                .data
-                                .push(Self::read_column(&mut cursor, exh, row_offset, column).unwrap());
+                            subrow.data.push(
+                                Self::read_column(&mut cursor, exh, row_offset, column).unwrap(),
+                            );
                         }
 
                         Some(subrow)
@@ -117,14 +117,9 @@ impl EXD {
 
         Some(exd)
     }
-    
-    fn read_data_raw<Z: BinRead<Args<'static> = ()>>(cursor: &mut Cursor<ByteSpan>) -> Option<Z>
-    {
-        Z::read_options(
-            cursor,
-            Endian::Big,
-            (),
-        ).ok()
+
+    fn read_data_raw<Z: BinRead<Args<'static> = ()>>(cursor: &mut Cursor<ByteSpan>) -> Option<Z> {
+        Z::read_options(cursor, Endian::Big, ()).ok()
     }
 
     fn read_column(
@@ -214,9 +209,9 @@ impl EXD {
 
 #[cfg(test)]
 mod tests {
+    use crate::exh::EXHHeader;
     use std::fs::read;
     use std::path::PathBuf;
-    use crate::exh::EXHHeader;
 
     use super::*;
 

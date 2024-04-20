@@ -5,4 +5,3 @@ fn main() {
     #[cfg(feature = "game_install")]
     println!("cargo::rustc-link-lib=unshield");
 }
-

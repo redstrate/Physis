@@ -3,8 +3,8 @@
 
 use std::io::{Cursor, SeekFrom};
 
-use binrw::{BinRead, binread};
 use crate::ByteSpan;
+use binrw::{binread, BinRead};
 
 #[binread]
 #[br(little, import {
@@ -24,7 +24,7 @@ pub struct ResourceParameter {
     #[br(seek_before = SeekFrom::Start(strings_offset as u64 + local_string_offset as u64))]
     #[br(count = string_length, map = | x: Vec<u8> | String::from_utf8(x).unwrap().trim_matches(char::from(0)).to_string())]
     #[br(restore_position)]
-    pub name: String
+    pub name: String,
 }
 
 #[binread]
@@ -55,7 +55,7 @@ pub struct Shader {
     #[br(seek_before = SeekFrom::Start(shader_data_offset as u64 + data_offset as u64))]
     #[br(count = data_size)]
     #[br(restore_position)]
-    pub bytecode: Vec<u8>
+    pub bytecode: Vec<u8>,
 }
 
 #[binread]
@@ -64,7 +64,7 @@ pub struct Shader {
 pub struct MaterialParameter {
     id: u32,
     byte_offset: u16,
-    byte_size: u16
+    byte_size: u16,
 }
 
 #[binread]
@@ -72,7 +72,7 @@ pub struct MaterialParameter {
 #[allow(unused)]
 pub struct Key {
     id: u32,
-    default_value: u32
+    default_value: u32,
 }
 
 #[binread]
@@ -82,7 +82,7 @@ pub struct Key {
 pub struct Pass {
     id: u32,
     vertex_shader: u32,
-    pixel_shader: u32
+    pixel_shader: u32,
 }
 
 #[binread]
@@ -90,7 +90,7 @@ pub struct Pass {
 #[allow(unused)]
 pub struct NodeAlias {
     selector: u32,
-    node: u32
+    node: u32,
 }
 
 #[binread]
@@ -115,7 +115,7 @@ pub struct Node {
     #[br(count = subview_key_count)]
     pub subview_keys: Vec<u32>,
     #[br(count = pass_count, err_context("system_key_count = {}", material_key_count))]
-    pub passes: Vec<Pass>
+    pub passes: Vec<Pass>,
 }
 
 #[binread]
@@ -183,7 +183,7 @@ pub struct ShaderPackage {
     node_selectors: Vec<(u32, u32)>,
 
     #[br(count = node_alias_count)]
-    node_aliases: Vec<NodeAlias>
+    node_aliases: Vec<NodeAlias>,
 }
 
 impl ShaderPackage {
@@ -215,11 +215,26 @@ impl ShaderPackage {
         None
     }
 
-    pub fn build_selector_from_all_keys(system_keys: &[u32], scene_keys: &[u32], material_keys: &[u32], subview_keys: &[u32]) -> u32 {
-        Self::build_selector_from_keys(Self::build_selector(system_keys), Self::build_selector(scene_keys), Self::build_selector(material_keys), Self::build_selector(subview_keys))
+    pub fn build_selector_from_all_keys(
+        system_keys: &[u32],
+        scene_keys: &[u32],
+        material_keys: &[u32],
+        subview_keys: &[u32],
+    ) -> u32 {
+        Self::build_selector_from_keys(
+            Self::build_selector(system_keys),
+            Self::build_selector(scene_keys),
+            Self::build_selector(material_keys),
+            Self::build_selector(subview_keys),
+        )
     }
 
-    pub fn build_selector_from_keys(system_key: u32, scene_key: u32, material_key: u32, subview_key: u32) -> u32 {
+    pub fn build_selector_from_keys(
+        system_key: u32,
+        scene_key: u32,
+        material_key: u32,
+        subview_key: u32,
+    ) -> u32 {
         Self::build_selector(&[system_key, scene_key, material_key, subview_key])
     }
 

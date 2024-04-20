@@ -1,17 +1,17 @@
 // SPDX-FileCopyrightText: 2023 Joshua Goins <josh@redstrate.com>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+use hmac_sha512::Hash;
+use physis::patch::apply_patch;
 use std::env;
 use std::fs::{read, read_dir};
 use std::process::Command;
-use hmac_sha512::Hash;
-use physis::patch::apply_patch;
 
-use std::collections::HashMap;
-use std::path::{Path, PathBuf};
 use physis::common::Platform;
 use physis::fiin::FileInfo;
 use physis::index;
+use std::collections::HashMap;
+use std::path::{Path, PathBuf};
 
 #[test]
 #[cfg_attr(not(feature = "retail_game_testing"), ignore)]
@@ -28,9 +28,12 @@ fn test_index_read() {
 fn test_gamedata_extract() {
     let game_dir = env::var("FFXIV_GAME_DIR").unwrap();
 
-    let mut gamedata =
-        physis::gamedata::GameData::from_existing(Platform::Win32, format!("{}/game", game_dir).as_str()).unwrap();
-    
+    let mut gamedata = physis::gamedata::GameData::from_existing(
+        Platform::Win32,
+        format!("{}/game", game_dir).as_str(),
+    )
+    .unwrap();
+
     assert!(gamedata.extract("exd/root.exl").is_some());
 }
 
@@ -70,34 +73,43 @@ fn make_temp_install_dir(name: &str) -> String {
 
 // Shamelessly taken from https://stackoverflow.com/a/76820878
 fn recurse(path: impl AsRef<Path>) -> Vec<PathBuf> {
-    let Ok(entries) = read_dir(path) else { return vec![] };
-    entries.flatten().flat_map(|entry| {
-        let Ok(meta) = entry.metadata() else { return vec![] };
-        if meta.is_dir() { return recurse(entry.path()); }
-        if meta.is_file() { return vec![entry.path()]; }
-        vec![]
-    }).collect()
+    let Ok(entries) = read_dir(path) else {
+        return vec![];
+    };
+    entries
+        .flatten()
+        .flat_map(|entry| {
+            let Ok(meta) = entry.metadata() else {
+                return vec![];
+            };
+            if meta.is_dir() {
+                return recurse(entry.path());
+            }
+            if meta.is_file() {
+                return vec![entry.path()];
+            }
+            vec![]
+        })
+        .collect()
 }
 
 #[cfg(feature = "patch_testing")]
 fn fill_dir_hash(game_dir: &str) -> HashMap<String, [u8; 64]> {
     let mut file_hashes: HashMap<String, [u8; 64]> = HashMap::new();
 
-    recurse(game_dir)
-        .into_iter()
-        .for_each(|x| {
-            let path = x.as_path();
-            let file = std::fs::read(path).unwrap();
+    recurse(game_dir).into_iter().for_each(|x| {
+        let path = x.as_path();
+        let file = std::fs::read(path).unwrap();
 
-            let mut hash = Hash::new();
-            hash.update(&file);
-            let sha = hash.finalize();
+        let mut hash = Hash::new();
+        hash.update(&file);
+        let sha = hash.finalize();
 
-            let mut rel_path = path;
-            rel_path = rel_path.strip_prefix(game_dir).unwrap();
+        let mut rel_path = path;
+        rel_path = rel_path.strip_prefix(game_dir).unwrap();
 
-            file_hashes.insert(rel_path.to_str().unwrap().to_string(), sha);
-        });
+        file_hashes.insert(rel_path.to_str().unwrap().to_string(), sha);
+    });
 
     file_hashes
 }

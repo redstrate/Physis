@@ -1,9 +1,9 @@
 // SPDX-FileCopyrightText: 2023 Joshua Goins <josh@redstrate.com>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+use crate::{ByteBuffer, ByteSpan};
 use std::collections::HashMap;
 use std::io::{BufRead, BufReader, BufWriter, Cursor, Write};
-use crate::{ByteBuffer, ByteSpan};
 
 /// Represents a collection of keys, mapped to their values.
 #[derive(Debug)]
@@ -26,14 +26,14 @@ impl ConfigFile {
     pub fn from_existing(buffer: ByteSpan) -> Option<ConfigFile> {
         let mut cfg = ConfigFile {
             categories: Vec::new(),
-            settings: HashMap::new()
+            settings: HashMap::new(),
         };
 
         let cursor = Cursor::new(buffer);
         let reader = BufReader::new(cursor);
 
         let mut current_category: Option<String> = None;
-        
+
         for line in reader.lines().map_while(Result::ok) {
             if !line.is_empty() && line != "\0" {
                 if line.contains('<') || line.contains('>') {
@@ -41,10 +41,17 @@ impl ConfigFile {
                     let name = &line[1..line.len() - 1];
                     current_category = Some(String::from(name));
                     cfg.categories.push(String::from(name));
-                } else if let (Some(category), Some((key, value))) = (&current_category, line.split_once('\t')) {
+                } else if let (Some(category), Some((key, value))) =
+                    (&current_category, line.split_once('\t'))
+                {
                     // Key-value pair
-                    cfg.settings.entry(category.clone()).or_insert_with(|| ConfigMap{ keys: Vec::new() });
-                    cfg.settings.get_mut(category)?.keys.push((key.to_string(), value.to_string()));
+                    cfg.settings
+                        .entry(category.clone())
+                        .or_insert_with(|| ConfigMap { keys: Vec::new() });
+                    cfg.settings
+                        .get_mut(category)?
+                        .keys
+                        .push((key.to_string(), value.to_string()));
                 }
             }
         }
@@ -61,18 +68,21 @@ impl ConfigFile {
             let mut writer = BufWriter::new(cursor);
 
             for category in &self.categories {
-                writer.write_all(format!("\r\n<{}>\r\n", category).as_ref()).ok()?;
+                writer
+                    .write_all(format!("\r\n<{}>\r\n", category).as_ref())
+                    .ok()?;
 
                 if self.settings.contains_key(category) {
                     for key in &self.settings[category].keys {
-                        writer.write_all(format!("{}\t{}\r\n", key.0, key.1).as_ref()).ok()?;
+                        writer
+                            .write_all(format!("{}\t{}\r\n", key.0, key.1).as_ref())
+                            .ok()?;
                     }
                 }
             }
 
             writer.write_all(b"\0").ok()?;
         }
-
 
         Some(buffer)
     }
@@ -106,7 +116,6 @@ impl ConfigFile {
         }
     }
 }
-
 
 #[cfg(test)]
 mod tests {

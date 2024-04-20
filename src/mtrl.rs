@@ -5,8 +5,8 @@
 
 use std::io::Cursor;
 
-use binrw::{BinRead, binrw};
 use crate::ByteSpan;
+use binrw::{binrw, BinRead};
 
 #[binrw]
 #[derive(Debug)]
@@ -79,8 +79,7 @@ struct Constant {
 // from https://github.com/NotAdam/Lumina/blob/master/src/Lumina/Data/Parsing/MtrlStructs.cs
 #[binrw]
 #[derive(Debug)]
-enum TextureUsage
-{
+enum TextureUsage {
     #[brw(magic = 0x88408C04u32)]
     Sampler,
     #[brw(magic = 0x213CB439u32)]
@@ -123,7 +122,7 @@ enum TextureUsage
     SamplerWhitecapMap,
 
     #[brw(magic = 0x565f8fd8u32)]
-    UnknownDawntrail1
+    UnknownDawntrail1,
 }
 
 #[binrw]
@@ -183,14 +182,14 @@ struct MaterialData {
 pub struct Material {
     pub shader_package_name: String,
     pub texture_paths: Vec<String>,
-    pub shader_keys: Vec<ShaderKey>
+    pub shader_keys: Vec<ShaderKey>,
 }
 
 impl Material {
     pub fn from_existing(buffer: ByteSpan) -> Option<Material> {
         let mut cursor = Cursor::new(buffer);
         let mat_data = MaterialData::read(&mut cursor).ok()?;
-        
+
         let mut texture_paths = vec![];
 
         let mut offset = 0;
@@ -224,7 +223,7 @@ impl Material {
         Some(Material {
             shader_package_name,
             texture_paths,
-            shader_keys: mat_data.shader_keys
+            shader_keys: mat_data.shader_keys,
         })
     }
 }

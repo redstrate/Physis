@@ -51,65 +51,47 @@ pub enum Race {
 pub fn get_race_id(race: Race, subrace: Subrace, gender: Gender) -> Option<i32> {
     // TODO: should we check for invalid subraces like the Hyur branch does?
     match race {
-        Race::Hyur => {
-            match subrace {
-                Subrace::Midlander => {
-                    match gender {
-                        Gender::Male => Some(101),
-                        Gender::Female => Some(201)
-                    }
-                }
-                Subrace::Highlander => {
-                    match gender {
-                        Gender::Male => Some(301),
-                        Gender::Female => Some(401)
-                    }
-                }
-                _ => None
-            }
-        }
-        Race::Elezen => {
-            match gender {
-                Gender::Male => Some(501),
-                Gender::Female => Some(601)
-            }
-        }
-        Race::Lalafell => {
-            match gender {
-                Gender::Male => Some(501),
-                Gender::Female => Some(601)
-            }
-        }
-        Race::Miqote => {
-            match gender {
-                Gender::Male => Some(701),
-                Gender::Female => Some(801)
-            }
-        }
-        Race::Roegadyn => {
-            match gender {
-                Gender::Male => Some(901),
-                Gender::Female => Some(1001)
-            }
-        }
-        Race::AuRa => {
-            match gender {
-                Gender::Male => Some(1301),
-                Gender::Female => Some(1401)
-            }
-        }
+        Race::Hyur => match subrace {
+            Subrace::Midlander => match gender {
+                Gender::Male => Some(101),
+                Gender::Female => Some(201),
+            },
+            Subrace::Highlander => match gender {
+                Gender::Male => Some(301),
+                Gender::Female => Some(401),
+            },
+            _ => None,
+        },
+        Race::Elezen => match gender {
+            Gender::Male => Some(501),
+            Gender::Female => Some(601),
+        },
+        Race::Lalafell => match gender {
+            Gender::Male => Some(501),
+            Gender::Female => Some(601),
+        },
+        Race::Miqote => match gender {
+            Gender::Male => Some(701),
+            Gender::Female => Some(801),
+        },
+        Race::Roegadyn => match gender {
+            Gender::Male => Some(901),
+            Gender::Female => Some(1001),
+        },
+        Race::AuRa => match gender {
+            Gender::Male => Some(1301),
+            Gender::Female => Some(1401),
+        },
         Race::Hrothgar => {
             match gender {
                 Gender::Male => Some(1501),
-                Gender::Female => Some(1601) // TODO: is this accurate as of dawntrail?
+                Gender::Female => Some(1601), // TODO: is this accurate as of dawntrail?
             }
         }
-        Race::Viera => {
-            match gender {
-                Gender::Male => Some(1701),
-                Gender::Female => Some(1801)
-            }
-        }
+        Race::Viera => match gender {
+            Gender::Male => Some(1701),
+            Gender::Female => Some(1801),
+        },
     }
 }
 
@@ -131,7 +113,7 @@ pub fn get_supported_subraces(race: Race) -> [Subrace; 2] {
         Race::Roegadyn => [Subrace::SeaWolf, Subrace::Hellsguard],
         Race::AuRa => [Subrace::Raen, Subrace::Xaela],
         Race::Hrothgar => [Subrace::Hellion, Subrace::Lost],
-        Race::Viera => [Subrace::Raen, Subrace::Veena]
+        Race::Viera => [Subrace::Raen, Subrace::Veena],
     }
 }
 

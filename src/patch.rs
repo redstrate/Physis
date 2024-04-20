@@ -12,8 +12,8 @@ use binrw::BinRead;
 use tracing::{debug, warn};
 
 use crate::common::{get_platform_string, Platform, Region};
-use crate::sqpack::read_data_block_patch;
 use crate::common_file_operations::read_bool_from;
+use crate::sqpack::read_data_block_patch;
 
 #[binread]
 #[derive(Debug)]
@@ -148,7 +148,7 @@ enum SqpkOperation {
     #[br(magic = b'T')]
     TargetInfo(SqpkTargetInfo),
     #[br(magic = b'I')]
-    Index(SqpkIndex)
+    Index(SqpkIndex),
 }
 
 #[derive(BinRead, PartialEq, Debug)]
@@ -301,7 +301,7 @@ struct SqpkIndex {
 
     block_offset: u32,
     #[br(pad_after = 8)] // data?
-    block_number: u32
+    block_number: u32,
 }
 
 #[derive(BinRead, PartialEq, Debug)]
@@ -463,8 +463,11 @@ pub fn apply_patch(data_dir: &str, patch_path: &str) -> Result<(), PatchError> {
                         let (left, _) = filename.rsplit_once('/').unwrap();
                         fs::create_dir_all(left)?;
 
-                        let mut new_file =
-                            OpenOptions::new().write(true).create(true).truncate(false).open(filename)?;
+                        let mut new_file = OpenOptions::new()
+                            .write(true)
+                            .create(true)
+                            .truncate(false)
+                            .open(filename)?;
 
                         new_file.seek(SeekFrom::Start(add.block_offset as u64))?;
 
@@ -480,8 +483,11 @@ pub fn apply_patch(data_dir: &str, patch_path: &str) -> Result<(), PatchError> {
                             delete.file_id,
                         );
 
-                        let new_file =
-                            OpenOptions::new().write(true).create(true).truncate(false).open(filename)?;
+                        let new_file = OpenOptions::new()
+                            .write(true)
+                            .create(true)
+                            .truncate(false)
+                            .open(filename)?;
 
                         write_empty_file_block_at(
                             &new_file,
@@ -500,8 +506,11 @@ pub fn apply_patch(data_dir: &str, patch_path: &str) -> Result<(), PatchError> {
                         let (left, _) = filename.rsplit_once('/').unwrap();
                         fs::create_dir_all(left)?;
 
-                        let new_file =
-                            OpenOptions::new().write(true).create(true).truncate(false).open(filename)?;
+                        let new_file = OpenOptions::new()
+                            .write(true)
+                            .create(true)
+                            .truncate(false)
+                            .open(filename)?;
 
                         write_empty_file_block_at(
                             &new_file,

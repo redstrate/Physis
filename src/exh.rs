@@ -5,8 +5,8 @@
 
 use std::io::Cursor;
 
-use binrw::BinRead;
 use binrw::binrw;
+use binrw::BinRead;
 
 use crate::common::Language;
 use crate::ByteSpan;
@@ -107,4 +107,3 @@ mod tests {
         EXH::from_existing(&read(d).unwrap());
     }
 }
-

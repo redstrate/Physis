@@ -5,9 +5,9 @@ use std::fs::read;
 use std::io::Cursor;
 use std::path::Path;
 
-use binrw::{BinRead, BinWrite};
-use binrw::binrw;
 use crate::{ByteBuffer, ByteSpan};
+use binrw::binrw;
+use binrw::{BinRead, BinWrite};
 
 use crate::sha1::Sha1;
 
@@ -74,7 +74,7 @@ impl FileInfo {
     /// Creates a new FileInfo structure from a list of filenames. These filenames must be present in
     /// the current working directory in order to be read properly, since it also generates SHA1
     /// hashes.
-    /// 
+    ///
     /// These paths are converted to just their filenames.
     ///
     /// The new FileInfo structure can then be serialized back into retail-compatible form.
@@ -135,14 +135,11 @@ mod tests {
         d3.push("resources/tests");
         d3.push("test.exl");
 
-        let testing_fiin = FileInfo::new(&[
-            d2.to_str().unwrap(),
-            d3.to_str().unwrap()
-        ]).unwrap();
+        let testing_fiin = FileInfo::new(&[d2.to_str().unwrap(), d3.to_str().unwrap()]).unwrap();
 
         assert_eq!(*valid_fiin, testing_fiin.write_to_buffer().unwrap());
     }
-    
+
     #[test]
     fn test_invalid() {
         let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));

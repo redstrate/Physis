@@ -8,15 +8,15 @@ use std::path::PathBuf;
 
 use tracing::{debug, warn};
 
-use crate::common::{Language, Platform, read_version};
+use crate::common::{read_version, Language, Platform};
 use crate::dat::DatFile;
 use crate::exd::EXD;
 use crate::exh::EXH;
 use crate::exl::EXL;
 use crate::index::{Index2File, IndexFile, IndexHashBitfield};
-use crate::ByteBuffer;
 use crate::patch::{apply_patch, PatchError};
-use crate::repository::{Category, Repository, string_to_category};
+use crate::repository::{string_to_category, Category, Repository};
+use crate::ByteBuffer;
 
 /// Framework for operating on game data.
 pub struct GameData {
@@ -27,7 +27,7 @@ pub struct GameData {
     pub repositories: Vec<Repository>,
 
     index_files: HashMap<String, IndexFile>,
-    index2_files: HashMap<String, Index2File>
+    index2_files: HashMap<String, Index2File>,
 }
 
 fn is_valid(path: &str) -> bool {
@@ -79,7 +79,7 @@ impl GameData {
                     game_directory: String::from(directory),
                     repositories: vec![],
                     index_files: HashMap::new(),
-                    index2_files: HashMap::new()
+                    index2_files: HashMap::new(),
                 };
                 data.reload_repositories(platform);
                 Some(data)
@@ -90,14 +90,16 @@ impl GameData {
             }
         }
     }
-    
+
     fn reload_repositories(&mut self, platform: Platform) {
         self.repositories.clear();
 
         let mut d = PathBuf::from(self.game_directory.as_str());
 
         // add initial ffxiv directory
-        if let Some(base_repository) = Repository::from_existing_base(platform.clone(), d.to_str().unwrap()) {
+        if let Some(base_repository) =
+            Repository::from_existing_base(platform.clone(), d.to_str().unwrap())
+        {
             self.repositories.push(base_repository);
         }
 
@@ -105,15 +107,18 @@ impl GameData {
         d.push("sqpack");
 
         if let Ok(repository_paths) = fs::read_dir(d.as_path()) {
-            let repository_paths : ReadDir = repository_paths;
+            let repository_paths: ReadDir = repository_paths;
 
-            let repository_paths : Vec<DirEntry> = repository_paths
+            let repository_paths: Vec<DirEntry> = repository_paths
                 .filter_map(Result::ok)
                 .filter(|s| s.file_type().unwrap().is_dir())
                 .collect();
 
             for repository_path in repository_paths {
-                if let Some(expansion_repository) = Repository::from_existing_expansion(platform.clone(), repository_path.path().to_str().unwrap()) {
+                if let Some(expansion_repository) = Repository::from_existing_expansion(
+                    platform.clone(),
+                    repository_path.path().to_str().unwrap(),
+                ) {
                     self.repositories.push(expansion_repository);
                 }
             }
@@ -183,7 +188,7 @@ impl GameData {
     /// file.write(data.as_slice()).unwrap();
     /// ```
     pub fn extract(&mut self, path: &str) -> Option<ByteBuffer> {
-        debug!(file=path, "Extracting file");
+        debug!(file = path, "Extracting file");
 
         let slice = self.find_entry(path);
         match slice {
@@ -223,8 +228,8 @@ impl GameData {
             &repository.name,
             &repository.index_filename(category),
         ]
-            .iter()
-            .collect();
+        .iter()
+        .collect();
 
         let index2_path: PathBuf = [
             &self.game_directory,
@@ -232,10 +237,13 @@ impl GameData {
             &repository.name,
             &repository.index2_filename(category),
         ]
-            .iter()
-            .collect();
+        .iter()
+        .collect();
 
-        (index_path.into_os_string().into_string().unwrap(), index2_path.into_os_string().into_string().unwrap())
+        (
+            index_path.into_os_string().into_string().unwrap(),
+            index2_path.into_os_string().into_string().unwrap(),
+        )
     }
 
     /// Read an excel sheet by name (e.g. "Achievement")
@@ -387,7 +395,7 @@ impl GameData {
         Ok(())
     }
 
-    fn cache_index_file(&mut self, filenames: (&str, &str))  {
+    fn cache_index_file(&mut self, filenames: (&str, &str)) {
         if !self.index_files.contains_key(filenames.0) {
             if let Some(index_file) = IndexFile::from_existing(filenames.0) {
                 self.index_files.insert(filenames.0.to_string(), index_file);
@@ -396,7 +404,8 @@ impl GameData {
 
         if !self.index2_files.contains_key(filenames.1) {
             if let Some(index_file) = Index2File::from_existing(filenames.1) {
-                self.index2_files.insert(filenames.1.to_string(), index_file);
+                self.index2_files
+                    .insert(filenames.1.to_string(), index_file);
             }
         }
     }
@@ -411,7 +420,11 @@ impl GameData {
 
     fn find_entry(&mut self, path: &str) -> Option<IndexHashBitfield> {
         let index_path = self.get_index_filenames(path);
-        debug!("Trying index files {index_path}, {index2_path}", index_path=index_path.0, index2_path=index_path.1);
+        debug!(
+            "Trying index files {index_path}, {index2_path}",
+            index_path = index_path.0,
+            index2_path = index_path.1
+        );
 
         self.cache_index_file((&index_path.0, &index_path.1));
 

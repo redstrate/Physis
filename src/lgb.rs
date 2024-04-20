@@ -3,9 +3,9 @@
 
 use std::io::{Cursor, Seek, SeekFrom};
 
-use binrw::{BinRead, binread, BinReaderExt};
-use binrw::binrw;
 use crate::ByteSpan;
+use binrw::binrw;
+use binrw::{binread, BinRead, BinReaderExt};
 
 // From https://github.com/NotAdam/Lumina/tree/40dab50183eb7ddc28344378baccc2d63ae71d35/src/Lumina/Data/Parsing/Layer
 
@@ -13,8 +13,7 @@ use crate::ByteSpan;
 #[binrw]
 #[repr(i32)]
 #[derive(Debug, PartialEq)]
-enum LayerEntryType
-{
+enum LayerEntryType {
     #[brw(magic = 0x0i32)]
     AssetNone,
     #[brw(magic = 0x1i32)]
@@ -29,7 +28,7 @@ enum LayerEntryType
         render_shadow_enabled: u8,
         render_light_shadow_enabled: u8,
         padding: u8,
-        render_model_clip_range: f32
+        render_model_clip_range: f32,
     },
     #[brw(magic = 0x2i32)]
     Attribute,
@@ -41,16 +40,16 @@ enum LayerEntryType
     PositionMarker,
     #[brw(magic = 0x6i32)]
     SharedGroup,
-    Sound = 0x7, //  //
-    EventNPC = 0x8, //  //
+    Sound = 0x7,     //  //
+    EventNPC = 0x8,  //  //
     BattleNPC = 0x9, //  //
     RoutePath = 0xA,
     Character = 0xB,
-    Aetheryte = 0xC, //  //
-    EnvSet = 0xD, //  //
-    Gathering = 0xE, //  //
+    Aetheryte = 0xC,    //  //
+    EnvSet = 0xD,       //  //
+    Gathering = 0xE,    //  //
     HelperObject = 0xF, //
-    Treasure = 0x10, //  //
+    Treasure = 0x10,    //  //
     Clip = 0x11,
     ClipCtrlPoint = 0x12,
     ClipCamera = 0x13,
@@ -73,13 +72,13 @@ enum LayerEntryType
     CutAssetOnlySelectable = 0x24,
     Player = 0x25,
     Monster = 0x26,
-    Weapon = 0x27, //
-    PopRange = 0x28, //  //
+    Weapon = 0x27,    //
+    PopRange = 0x28,  //  //
     ExitRange = 0x29, //  //
     Lvb = 0x2A,
-    MapRange = 0x2B, //  //
+    MapRange = 0x2B,      //  //
     NaviMeshRange = 0x2C, //  //
-    EventObject = 0x2D, //  //
+    EventObject = 0x2D,   //  //
     DemiHuman = 0x2E,
     EnvLocation = 0x2F, //  //
     ControlPoint = 0x30,
@@ -92,21 +91,21 @@ enum LayerEntryType
     ScenarioExd = 0x37,
     ScenarioText = 0x38,
     CollisionBox = 0x39, //  //
-    DoorRange = 0x3A, //
-    LineVFX = 0x3B, //  //
+    DoorRange = 0x3A,    //
+    LineVFX = 0x3B,      //  //
     SoundEnvSet = 0x3C,
     CutActionTimeline = 0x3D,
     CharaScene = 0x3E,
     CutAction = 0x3F,
     EquipPreset = 0x40,
-    ClientPath = 0x41, //      //
-    ServerPath = 0x42, //      //
-    GimmickRange = 0x43, //      //
-    TargetMarker = 0x44, //      //
-    ChairMarker = 0x45, //      //
+    ClientPath = 0x41,     //      //
+    ServerPath = 0x42,     //      //
+    GimmickRange = 0x43,   //      //
+    TargetMarker = 0x44,   //      //
+    ChairMarker = 0x45,    //      //
     ClickableRange = 0x46, //
-    PrefetchRange = 0x47, //      //
-    FateRange = 0x48, //      //
+    PrefetchRange = 0x47,  //      //
+    FateRange = 0x48,      //      //
     PartyMember = 0x49,
     KeepRange = 0x4A, //
     SphereCastRange = 0x4B,
@@ -120,8 +119,7 @@ enum LayerEntryType
 #[binrw]
 #[brw(repr = u8)]
 #[derive(Debug, PartialEq)]
-enum DoorState
-{
+enum DoorState {
     Auto = 0x1,
     Open = 0x2,
     Closed = 0x3,
@@ -130,8 +128,7 @@ enum DoorState
 #[binrw]
 #[brw(repr = u8)]
 #[derive(Debug, PartialEq)]
-enum RotationState
-{
+enum RotationState {
     Rounding = 0x1,
     Stopped = 0x2,
 }
@@ -139,8 +136,7 @@ enum RotationState
 #[binrw]
 #[brw(repr = u8)]
 #[derive(Debug, PartialEq)]
-enum TransformState
-{
+enum TransformState {
     Play = 0x0,
     Stop = 0x1,
     Replay = 0x2,
@@ -150,8 +146,7 @@ enum TransformState
 #[binrw]
 #[brw(repr = u8)]
 #[derive(Debug, PartialEq)]
-enum ColourState
-{
+enum ColourState {
     Play = 0x0,
     Stop = 0x1,
     Replay = 0x2,
@@ -161,8 +156,7 @@ enum ColourState
 #[binrw]
 #[brw(repr = u8)]
 #[derive(Debug, PartialEq)]
-enum TriggerBoxShape
-{
+enum TriggerBoxShape {
     Box = 0x1,
     Sphere = 0x2,
     Cylinder = 0x3,
@@ -174,8 +168,7 @@ enum TriggerBoxShape
 #[binrw]
 #[brw(repr = i32)]
 #[derive(Debug, PartialEq)]
-enum ModelCollisionType
-{
+enum ModelCollisionType {
     None = 0x0,
     Replace = 0x1,
     Box = 0x2,
@@ -184,8 +177,7 @@ enum ModelCollisionType
 #[binrw]
 #[brw(repr = u8)]
 #[derive(Debug, PartialEq)]
-enum LightType
-{
+enum LightType {
     None = 0x0,
     Directional = 0x1,
     Point = 0x2,
@@ -198,8 +190,7 @@ enum LightType
 #[binrw]
 #[brw(repr = u8)]
 #[derive(Debug, PartialEq)]
-enum PointLightType
-{
+enum PointLightType {
     Sphere = 0x0,
     Hemisphere = 0x1,
 }
@@ -207,8 +198,7 @@ enum PointLightType
 #[binrw]
 #[brw(repr = u8)]
 #[derive(Debug, PartialEq)]
-enum PositionMarkerType
-{
+enum PositionMarkerType {
     DebugZonePop = 0x1,
     DebugJump = 0x2,
     NaviMesh = 0x3,
@@ -218,8 +208,7 @@ enum PositionMarkerType
 #[binrw]
 #[brw(repr = u8)]
 #[derive(Debug, PartialEq)]
-enum EnvSetShape
-{
+enum EnvSetShape {
     Ellipsoid = 0x1,
     Cuboid = 0x2,
     Cylinder = 0x3,
@@ -228,8 +217,7 @@ enum EnvSetShape
 #[binrw]
 #[brw(repr = u8)]
 #[derive(Debug, PartialEq)]
-enum HelperObjectType
-{
+enum HelperObjectType {
     ProxyActor = 0x0,
     NullObject = 0x1,
 }
@@ -237,8 +225,7 @@ enum HelperObjectType
 #[binrw]
 #[brw(repr = u8)]
 #[derive(Debug, PartialEq)]
-enum TargetType
-{
+enum TargetType {
     None = 0x0,
     ENPCInstanceID = 0x1,
     Player = 0x2,
@@ -257,8 +244,7 @@ enum TargetType
 
 #[binread]
 #[derive(Debug, PartialEq)]
-enum PopType
-{
+enum PopType {
     #[br(magic = 0x1u8)]
     PC = 0x1,
     #[br(magic = 0x2u8)]
@@ -270,16 +256,14 @@ enum PopType
 #[binrw]
 #[brw(repr = u8)]
 #[derive(Debug, PartialEq)]
-enum ExitType
-{
+enum ExitType {
     ZoneLine = 0x1,
 }
 
 #[binrw]
 #[brw(repr = u8)]
 #[derive(Debug, PartialEq)]
-enum RangeType
-{
+enum RangeType {
     Type01 = 0x1,
     Type02 = 0x2,
     Type03 = 0x3,
@@ -292,8 +276,7 @@ enum RangeType
 #[binrw]
 #[brw(repr = u8)]
 #[derive(Debug, PartialEq)]
-enum LineStyle
-{
+enum LineStyle {
     Red = 0x1,
     Blue = 0x2,
 }
@@ -301,8 +284,7 @@ enum LineStyle
 #[binrw]
 #[brw(repr = u8)]
 #[derive(Debug, PartialEq)]
-enum GimmickType
-{
+enum GimmickType {
     Fishing = 0x1,
     Content = 0x2,
     Room = 0x3,
@@ -311,8 +293,7 @@ enum GimmickType
 #[binrw]
 #[brw(repr = u8)]
 #[derive(Debug, PartialEq)]
-enum TargetMarkerType
-{
+enum TargetMarkerType {
     UiTarget = 0x0,
     UiNameplate = 0x1,
     LookAt = 0x2,
@@ -324,8 +305,7 @@ enum TargetMarkerType
 #[binrw]
 #[brw(repr = u8)]
 #[derive(Debug, PartialEq)]
-enum ObjectType
-{
+enum ObjectType {
     ObjectChair = 0x0,
     ObjectBed = 0x1,
 }
@@ -333,8 +313,7 @@ enum ObjectType
 #[binrw]
 #[brw(repr = u8)]
 #[derive(Debug, PartialEq)]
-enum CharacterSize
-{
+enum CharacterSize {
     DefaultSize = 0x0,
     VerySmall = 0x1,
     Small = 0x2,
@@ -346,8 +325,7 @@ enum CharacterSize
 #[binrw]
 #[brw(repr = u8)]
 #[derive(Debug, PartialEq)]
-enum DrawHeadParts
-{
+enum DrawHeadParts {
     Default = 0x0,
     ForceOn = 0x1,
     ForceOff = 0x2,
@@ -356,8 +334,7 @@ enum DrawHeadParts
 #[binrw]
 #[brw(repr = u8)]
 #[derive(Debug, PartialEq)]
-enum RotationType
-{
+enum RotationType {
     NoRotate = 0x0,
     AllAxis = 0x1,
     YAxisOnly = 0x2,
@@ -366,8 +343,7 @@ enum RotationType
 #[binrw]
 #[brw(repr = u8)]
 #[derive(Debug, PartialEq)]
-enum MovePathMode
-{
+enum MovePathMode {
     None = 0x0,
     SharedGroupAction = 0x1,
     Timeline = 0x2,
@@ -376,8 +352,7 @@ enum MovePathMode
 #[binrw]
 #[brw(repr = i32)]
 #[derive(Debug, PartialEq)]
-enum LayerSetReferencedType
-{
+enum LayerSetReferencedType {
     All = 0x0,
     Include = 0x1,
     Exclude = 0x2,
@@ -387,8 +362,7 @@ enum LayerSetReferencedType
 #[binrw]
 #[brw(repr = u8)]
 #[derive(Debug, PartialEq)]
-enum SoundEffectType
-{
+enum SoundEffectType {
     Point = 0x3,
     PointDir = 0x4,
     Line = 0x5,
@@ -424,7 +398,7 @@ struct LayerHeader {
     is_temporary: u8,
     is_housing: u8,
     version_mask: u16,
-    
+
     #[br(pad_before = 4)]
     ob_set_referenced_list: i32,
     ob_set_referenced_list_count: i32,
@@ -439,7 +413,7 @@ struct LayerHeader {
 struct LayerSetReferencedList {
     referenced_type: LayerSetReferencedType,
     layer_sets: i32,
-    layer_set_count: i32
+    layer_set_count: i32,
 }
 
 #[binread]
@@ -450,7 +424,7 @@ struct LgbHeader {
     #[br(count = 4)]
     file_id: Vec<u8>,
     file_size: i32,
-    total_chunk_count: i32
+    total_chunk_count: i32,
 }
 
 #[binread]
@@ -464,7 +438,7 @@ struct LayerChunk {
     layer_group_id: i32,
     name_offset: u32,
     layer_offset: i32,
-    layer_count: i32
+    layer_count: i32,
 }
 
 #[binread]
@@ -474,13 +448,11 @@ struct LayerChunk {
 struct InstanceObject {
     asset_type: LayerEntryType,
     instance_id: u32,
-    name_offset: u32
+    name_offset: u32,
 }
 
 #[derive(Debug)]
-pub struct Layer {
-
-}
+pub struct Layer {}
 
 impl Layer {
     /// Reads an existing PBD file
@@ -491,35 +463,51 @@ impl Layer {
         if file_header.file_size < 0 || file_header.total_chunk_count < 0 {
             return None;
         }
-        
+
         let chunk_header = LayerChunk::read(&mut cursor).unwrap();
-        
+
         let old_pos = cursor.position();
 
         let mut layer_offsets = vec![0i32; chunk_header.layer_count as usize];
-        for i in 0.. chunk_header.layer_count {
+        for i in 0..chunk_header.layer_count {
             layer_offsets[i as usize] = cursor.read_le::<i32>().unwrap();
         }
 
-        for i in 0.. chunk_header.layer_count {
-            cursor.seek(SeekFrom::Start(old_pos + layer_offsets[i as usize] as u64)).unwrap();
+        for i in 0..chunk_header.layer_count {
+            cursor
+                .seek(SeekFrom::Start(old_pos + layer_offsets[i as usize] as u64))
+                .unwrap();
 
             let old_pos = cursor.position();
 
             let header = LayerHeader::read(&mut cursor).unwrap();
 
-            cursor.seek(SeekFrom::Start(old_pos + header.instance_object_offset as u64)).unwrap();
+            cursor
+                .seek(SeekFrom::Start(
+                    old_pos + header.instance_object_offset as u64,
+                ))
+                .unwrap();
 
             let mut instance_offsets = vec![0i32; header.instance_object_count as usize];
             for i in 0..header.instance_object_count {
                 instance_offsets[i as usize] = cursor.read_le::<i32>().unwrap();
             }
 
-            cursor.seek(SeekFrom::Start(old_pos + header.layer_set_referenced_list_offset as u64)).unwrap();
+            cursor
+                .seek(SeekFrom::Start(
+                    old_pos + header.layer_set_referenced_list_offset as u64,
+                ))
+                .unwrap();
             LayerSetReferencedList::read(&mut cursor).unwrap();
 
             for i in 0..header.instance_object_count {
-                cursor.seek(SeekFrom::Start(old_pos + header.instance_object_offset as u64 + instance_offsets[i as usize] as u64)).unwrap();
+                cursor
+                    .seek(SeekFrom::Start(
+                        old_pos
+                            + header.instance_object_offset as u64
+                            + instance_offsets[i as usize] as u64,
+                    ))
+                    .unwrap();
 
                 let instance_object = InstanceObject::read(&mut cursor).unwrap();
                 println!("{:#?}", instance_object);
@@ -549,4 +537,3 @@ mod tests {
         Layer::from_existing(&read(d).unwrap());
     }
 }
-

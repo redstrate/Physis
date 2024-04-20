@@ -1,8 +1,8 @@
 // SPDX-FileCopyrightText: 2023 Joshua Goins <josh@redstrate.com>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-use std::io::{BufRead, BufReader, BufWriter, Cursor, Write};
 use crate::{ByteBuffer, ByteSpan};
+use std::io::{BufRead, BufReader, BufWriter, Cursor, Write};
 
 /// Represents an Excel List.
 pub struct EXL {
@@ -47,7 +47,9 @@ impl EXL {
             let cursor = Cursor::new(&mut buffer);
             let mut writer = BufWriter::new(cursor);
 
-            writer.write_all(format!("EXLT,{}", self.version).as_ref()).ok()?;
+            writer
+                .write_all(format!("EXLT,{}", self.version).as_ref())
+                .ok()?;
 
             for (key, value) in &self.entries {
                 writer.write_all(format!("\n{key},{value}").as_ref()).ok()?;
@@ -120,12 +122,13 @@ mod tests {
         let exl = read(d).unwrap();
 
         let mut out = std::io::stdout();
-        out.write_all(&existing_exl.write_to_buffer().unwrap()).unwrap();
+        out.write_all(&existing_exl.write_to_buffer().unwrap())
+            .unwrap();
         out.flush().unwrap();
 
         assert_eq!(existing_exl.write_to_buffer().unwrap(), exl);
     }
-    
+
     #[test]
     fn test_invalid() {
         let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));

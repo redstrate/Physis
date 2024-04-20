@@ -170,7 +170,12 @@ pub struct HavokObjectTypeMember {
 }
 
 impl HavokObjectTypeMember {
-    pub fn new(name: Arc<str>, type_: HavokValueType, tuple_size: u32, type_name: Option<Arc<str>>) -> Self {
+    pub fn new(
+        name: Arc<str>,
+        type_: HavokValueType,
+        tuple_size: u32,
+        type_name: Option<Arc<str>>,
+    ) -> Self {
         Self {
             name,
             type_,
@@ -187,20 +192,35 @@ pub struct HavokObjectType {
 }
 
 impl HavokObjectType {
-    pub fn new(name: Arc<str>, parent: Option<Arc<HavokObjectType>>, members: Vec<HavokObjectTypeMember>) -> Self {
-        Self { name, parent, members }
+    pub fn new(
+        name: Arc<str>,
+        parent: Option<Arc<HavokObjectType>>,
+        members: Vec<HavokObjectTypeMember>,
+    ) -> Self {
+        Self {
+            name,
+            parent,
+            members,
+        }
     }
 
     pub fn members(&self) -> Vec<&HavokObjectTypeMember> {
         if let Some(x) = &self.parent {
-            x.members().into_iter().chain(self.members.iter()).collect::<Vec<_>>()
+            x.members()
+                .into_iter()
+                .chain(self.members.iter())
+                .collect::<Vec<_>>()
         } else {
             self.members.iter().collect::<Vec<_>>()
         }
     }
 
     pub fn member_count(&self) -> usize {
-        (if let Some(x) = &self.parent { x.members.len() } else { 0 }) + self.members.len()
+        (if let Some(x) = &self.parent {
+            x.members.len()
+        } else {
+            0
+        }) + self.members.len()
     }
 }
 
@@ -219,7 +239,12 @@ impl HavokObject {
     }
 
     pub fn get(&self, member_name: &str) -> &HavokValue {
-        let member_index = self.object_type.members().iter().position(|&x| &*x.name == member_name).unwrap();
+        let member_index = self
+            .object_type
+            .members()
+            .iter()
+            .position(|&x| &*x.name == member_name)
+            .unwrap();
 
         self.data.get(&member_index).unwrap()
     }

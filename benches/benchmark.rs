@@ -8,7 +8,4 @@ fn bench_calculate_hash() {
     IndexFile::calculate_hash("exd/root.exl");
 }
 
-brunch::benches!(
-    Bench::new("hash c alc")
-        .run(bench_calculate_hash),
-);
+brunch::benches!(Bench::new("hash c alc").run(bench_calculate_hash),);

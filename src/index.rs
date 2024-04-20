@@ -5,11 +5,11 @@
 
 use std::io::SeekFrom;
 
-use binrw::BinRead;
-use binrw::binrw;
-use modular_bitfield::prelude::*;
 use crate::common::Platform;
 use crate::crc::Jamcrc;
+use binrw::binrw;
+use binrw::BinRead;
+use modular_bitfield::prelude::*;
 
 #[binrw]
 #[br(magic = b"SqPack")]

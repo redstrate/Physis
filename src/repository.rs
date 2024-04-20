@@ -5,7 +5,7 @@ use std::cmp::Ordering;
 use std::cmp::Ordering::{Greater, Less};
 use std::path::{Path, PathBuf};
 
-use crate::common::{get_platform_string, Platform, read_version};
+use crate::common::{get_platform_string, read_version, Platform};
 use crate::repository::RepositoryType::{Base, Expansion};
 
 /// The type of repository, discerning game data from expansion data.
@@ -179,13 +179,10 @@ impl Repository {
             get_platform_string(&self.platform)
         )
     }
-    
+
     /// Calculate an index2 filename for a specific category, like _"0a0000.win32.index"_.
     pub fn index2_filename(&self, category: Category) -> String {
-        format!(
-            "{}2",
-            self.index_filename(category)
-        )
+        format!("{}2", self.index_filename(category))
     }
 
     /// Calculate a dat filename given a category and a data file id, returns something like _"0a0000.win32.dat0"_.
@@ -210,8 +207,8 @@ impl Repository {
 
 #[cfg(test)]
 mod tests {
-    use std::path::PathBuf;
     use crate::common::Platform;
+    use std::path::PathBuf;
 
     use super::*;
 
@@ -248,7 +245,10 @@ mod tests {
 
         assert_eq!(repo.index_filename(Category::Music), "0c0000.win32.index");
         assert_eq!(repo.index2_filename(Category::Music), "0c0000.win32.index2");
-        assert_eq!(repo.dat_filename(Category::GameScript, 1), "0b0000.win32.dat1");
+        assert_eq!(
+            repo.dat_filename(Category::GameScript, 1),
+            "0b0000.win32.dat1"
+        );
     }
 
     // TODO: We need to check if these console filenames are actually correct
@@ -263,7 +263,10 @@ mod tests {
 
         assert_eq!(repo.index_filename(Category::Music), "0c0000.ps3.index");
         assert_eq!(repo.index2_filename(Category::Music), "0c0000.ps3.index2");
-        assert_eq!(repo.dat_filename(Category::GameScript, 1), "0b0000.ps3.dat1");
+        assert_eq!(
+            repo.dat_filename(Category::GameScript, 1),
+            "0b0000.ps3.dat1"
+        );
     }
 
     #[test]
@@ -277,6 +280,9 @@ mod tests {
 
         assert_eq!(repo.index_filename(Category::Music), "0c0000.ps4.index");
         assert_eq!(repo.index2_filename(Category::Music), "0c0000.ps4.index2");
-        assert_eq!(repo.dat_filename(Category::GameScript, 1), "0b0000.ps4.dat1");
+        assert_eq!(
+            repo.dat_filename(Category::GameScript, 1),
+            "0b0000.ps4.dat1"
+        );
     }
 }
