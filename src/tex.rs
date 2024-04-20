@@ -85,7 +85,7 @@ impl Texture {
     /// Reads an existing TEX file
     pub fn from_existing(buffer: ByteSpan) -> Option<Texture> {
         let mut cursor = Cursor::new(buffer);
-        let header = TexHeader::read(&mut cursor).unwrap();
+        let header = TexHeader::read(&mut cursor).ok()?;
 
         cursor
             .seek(SeekFrom::Start(std::mem::size_of::<TexHeader>() as u64))
