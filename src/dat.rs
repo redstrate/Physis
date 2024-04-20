@@ -221,9 +221,7 @@ impl DatFile {
 
     /// Reads a standard file block.
     fn read_standard_file(&mut self, offset: u64, file_info: &FileInfo) -> Option<ByteBuffer> {
-        let Some(standard_file_info) = file_info.standard_info.as_ref() else {
-            return None;
-        };
+        let standard_file_info = file_info.standard_info.as_ref()?;
 
         let mut blocks: Vec<Block> = Vec::with_capacity(standard_file_info.num_blocks as usize);
 
@@ -251,9 +249,7 @@ impl DatFile {
     /// Reads a model file block.
     #[cfg(feature = "visual_data")]
     fn read_model_file(&mut self, offset: u64, file_info: &FileInfo) -> Option<ByteBuffer> {
-        let Some(model_file_info) = file_info.model_info.as_ref() else {
-            return None;
-        };
+        let model_file_info = file_info.model_info.as_ref()?;
 
         let mut buffer = Cursor::new(Vec::new());
 
@@ -401,9 +397,7 @@ impl DatFile {
 
     /// Reads a texture file block.
     fn read_texture_file(&mut self, offset: u64, file_info: &FileInfo) -> Option<ByteBuffer> {
-        let Some(texture_file_info) = file_info.texture_info.as_ref() else {
-            return None;
-        };
+        let texture_file_info = file_info.texture_info.as_ref()?;
 
         let mut data: Vec<u8> = Vec::with_capacity(file_info.file_size as usize);
 

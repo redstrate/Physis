@@ -142,11 +142,11 @@ impl Texture {
     }
 
     fn decode(src: &[u8], width: usize, height: usize, decode_func: DecodeFunction) -> Vec<u8> {
-        let mut image: Vec<u32> = vec![0; (width * height) as usize];
+        let mut image: Vec<u32> = vec![0; width * height];
         decode_func(
-            &src,
-            width as usize,
-            height as usize,
+            src,
+            width,
+            height,
             &mut image,
         )
             .unwrap();

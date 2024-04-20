@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: 2023 Joshua Goins <josh@redstrate.com>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+#![allow(clippy::unnecessary_fallible_conversions)] // This wrongly trips on binrw code
+
 use std::io::Cursor;
 
 use binrw::{BinRead, binrw};
@@ -195,11 +197,11 @@ impl Material {
         for _ in 0..mat_data.file_header.texture_count {
             let mut string = String::new();
 
-            let mut next_char = mat_data.strings[offset as usize] as char;
+            let mut next_char = mat_data.strings[offset] as char;
             while next_char != '\0' {
                 string.push(next_char);
                 offset += 1;
-                next_char = mat_data.strings[offset as usize] as char;
+                next_char = mat_data.strings[offset] as char;
             }
 
             texture_paths.push(string);
@@ -216,7 +218,7 @@ impl Material {
         while next_char != '\0' {
             shader_package_name.push(next_char);
             offset += 1;
-            next_char = mat_data.strings[offset as usize] as char;
+            next_char = mat_data.strings[offset] as char;
         }
 
         Some(Material {

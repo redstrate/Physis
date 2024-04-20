@@ -464,7 +464,7 @@ pub fn apply_patch(data_dir: &str, patch_path: &str) -> Result<(), PatchError> {
                         fs::create_dir_all(left)?;
 
                         let mut new_file =
-                            OpenOptions::new().write(true).create(true).open(filename)?;
+                            OpenOptions::new().write(true).create(true).truncate(false).open(filename)?;
 
                         new_file.seek(SeekFrom::Start(add.block_offset as u64))?;
 
@@ -481,7 +481,7 @@ pub fn apply_patch(data_dir: &str, patch_path: &str) -> Result<(), PatchError> {
                         );
 
                         let new_file =
-                            OpenOptions::new().write(true).create(true).open(filename)?;
+                            OpenOptions::new().write(true).create(true).truncate(false).open(filename)?;
 
                         write_empty_file_block_at(
                             &new_file,
@@ -501,7 +501,7 @@ pub fn apply_patch(data_dir: &str, patch_path: &str) -> Result<(), PatchError> {
                         fs::create_dir_all(left)?;
 
                         let new_file =
-                            OpenOptions::new().write(true).create(true).open(filename)?;
+                            OpenOptions::new().write(true).create(true).truncate(false).open(filename)?;
 
                         write_empty_file_block_at(
                             &new_file,
@@ -531,6 +531,7 @@ pub fn apply_patch(data_dir: &str, patch_path: &str) -> Result<(), PatchError> {
                         let mut new_file = OpenOptions::new()
                             .write(true)
                             .create(true)
+                            .truncate(false)
                             .open(file_path)?;
 
                         if header.header_kind != TargetHeaderKind::Version {
@@ -563,6 +564,7 @@ pub fn apply_patch(data_dir: &str, patch_path: &str) -> Result<(), PatchError> {
                                 let new_file = OpenOptions::new()
                                     .write(true)
                                     .create(true)
+                                    .truncate(false)
                                     .open(&file_path);
 
                                 if let Ok(mut file) = new_file {

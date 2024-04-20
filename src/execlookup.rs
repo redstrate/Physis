@@ -13,15 +13,13 @@ fn from_u16(from: &mut [u16]) -> &[u8] {
     unsafe { std::slice::from_raw_parts(ptr, len) }
 }
 
-fn find_needle(installer_file: &Vec<u8>, needle: &str) -> Option<String> {
+fn find_needle(installer_file: &[u8], needle: &str) -> Option<String> {
     let mut needle: Vec<u16> = needle.encode_utf16().collect();
     let bytes = from_u16(&mut needle);
 
-    let Some(mut position) = installer_file
+    let mut position = installer_file
         .windows(bytes.len())
-        .position(|window| window == bytes) else {
-        return None;
-    };
+        .position(|window| window == bytes)?;
     
     let parse_char_at_position = |position: usize| {
         let upper = installer_file[position];

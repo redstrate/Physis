@@ -69,6 +69,7 @@ impl MDL {
         ])
     }
 
+    #[allow(dead_code)] // We will eventually use this
     pub(crate) fn write_half2<T: BinWriterExt>(cursor: &mut T, vec: &[f32; 2]) -> BinResult<()> {
         cursor.write_le::<[u16; 2]>(&[
             f16::from_f32(vec[0]).to_bits(),

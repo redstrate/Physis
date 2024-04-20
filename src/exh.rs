@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: 2023 Joshua Goins <josh@redstrate.com>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+#![allow(clippy::unnecessary_fallible_conversions)] // This wrongly trips on binrw code
+
 use std::io::Cursor;
 
 use binrw::BinRead;

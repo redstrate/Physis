@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: 2023 Joshua Goins <josh@redstrate.com>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+#![allow(clippy::unnecessary_fallible_conversions)] // This wrongly trips on binrw code
+
 use std::io::{Cursor, Seek, SeekFrom};
 use std::mem::size_of;
 
@@ -1002,6 +1004,7 @@ impl MDL {
                                     }
                                 }
                                 VertexUsage::Tangent => {
+                                    #[allow(clippy::match_single_binding)] // TODO
                                     match element.vertex_type {
                                         /*VertexType::ByteFloat4 => {
                                             MDL::write_tangent(&mut cursor, &vert.binormal).ok()?;

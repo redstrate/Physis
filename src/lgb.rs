@@ -36,7 +36,7 @@ enum LayerEntryType
     #[brw(magic = 0x3i32)]
     LayLight,
     #[brw(magic = 0x4i32)]
-    VFX,
+    Vfx,
     #[brw(magic = 0x5i32)]
     PositionMarker,
     #[brw(magic = 0x6i32)]
@@ -76,7 +76,7 @@ enum LayerEntryType
     Weapon = 0x27, //
     PopRange = 0x28, //  //
     ExitRange = 0x29, //  //
-    LVB = 0x2A,
+    Lvb = 0x2A,
     MapRange = 0x2B, //  //
     NaviMeshRange = 0x2C, //  //
     EventObject = 0x2D, //  //
@@ -141,10 +141,10 @@ enum RotationState
 #[derive(Debug, PartialEq)]
 enum TransformState
 {
-    TransformStatePlay = 0x0,
-    TransformStateStop = 0x1,
-    TransformStateReplay = 0x2,
-    TransformStateReset = 0x3,
+    Play = 0x0,
+    Stop = 0x1,
+    Replay = 0x2,
+    Reset = 0x3,
 }
 
 #[binrw]
@@ -152,10 +152,10 @@ enum TransformState
 #[derive(Debug, PartialEq)]
 enum ColourState
 {
-    ColorStatePlay = 0x0,
-    ColorStateStop = 0x1,
-    ColorStateReplay = 0x2,
-    ColorStateReset = 0x3,
+    Play = 0x0,
+    Stop = 0x1,
+    Replay = 0x2,
+    Reset = 0x3,
 }
 
 #[binrw]
@@ -163,12 +163,12 @@ enum ColourState
 #[derive(Debug, PartialEq)]
 enum TriggerBoxShape
 {
-    TriggerBoxShapeBox = 0x1,
-    TriggerBoxShapeSphere = 0x2,
-    TriggerBoxShapeCylinder = 0x3,
-    TriggerBoxShapeBoard = 0x4,
-    TriggerBoxShapeMesh = 0x5,
-    TriggerBoxShapeBoardBothSides = 0x6,
+    Box = 0x1,
+    Sphere = 0x2,
+    Cylinder = 0x3,
+    Board = 0x4,
+    Mesh = 0x5,
+    BoardBothSides = 0x6,
 }
 
 #[binrw]
@@ -220,9 +220,9 @@ enum PositionMarkerType
 #[derive(Debug, PartialEq)]
 enum EnvSetShape
 {
-    EnvShapeEllipsoid = 0x1,
-    EnvShapeCuboid = 0x2,
-    EnvShapeCylinder = 0x3,
+    Ellipsoid = 0x1,
+    Cuboid = 0x2,
+    Cylinder = 0x3,
 }
 
 #[binrw]
@@ -262,7 +262,7 @@ enum PopType
     #[br(magic = 0x1u8)]
     PC = 0x1,
     #[br(magic = 0x2u8)]
-    NPC,
+    Npc,
     #[br(magic = 0x3u8)]
     Content,
 }
@@ -405,6 +405,7 @@ enum SoundEffectType
 #[binread]
 #[derive(Debug)]
 #[br(little)]
+#[allow(dead_code)] // most of the fields are unused at the moment
 struct LayerHeader {
     layer_id: u32,
     name_offset: u32,
@@ -423,10 +424,8 @@ struct LayerHeader {
     is_temporary: u8,
     is_housing: u8,
     version_mask: u16,
-
-    #[br(temp)]
-    padding: u32,
-
+    
+    #[br(pad_before = 4)]
     ob_set_referenced_list: i32,
     ob_set_referenced_list_count: i32,
     ob_set_enable_referenced_list: i32,
@@ -436,6 +435,7 @@ struct LayerHeader {
 #[binread]
 #[derive(Debug)]
 #[br(little)]
+#[allow(dead_code)] // most of the fields are unused at the moment
 struct LayerSetReferencedList {
     referenced_type: LayerSetReferencedType,
     layer_sets: i32,
@@ -445,6 +445,7 @@ struct LayerSetReferencedList {
 #[binread]
 #[derive(Debug)]
 #[br(little)]
+#[allow(dead_code)] // most of the fields are unused at the moment
 struct LgbHeader {
     #[br(count = 4)]
     file_id: Vec<u8>,
@@ -455,6 +456,7 @@ struct LgbHeader {
 #[binread]
 #[derive(Debug)]
 #[br(little)]
+#[allow(dead_code)] // most of the fields are unused at the moment
 struct LayerChunk {
     #[br(count = 4)]
     chunk_id: Vec<u8>,
@@ -468,6 +470,7 @@ struct LayerChunk {
 #[binread]
 #[derive(Debug)]
 #[br(little)]
+#[allow(dead_code)] // most of the fields are unused at the moment
 struct InstanceObject {
     asset_type: LayerEntryType,
     instance_id: u32,
@@ -513,7 +516,7 @@ impl Layer {
             }
 
             cursor.seek(SeekFrom::Start(old_pos + header.layer_set_referenced_list_offset as u64)).unwrap();
-            let referenced_list = LayerSetReferencedList::read(&mut cursor).unwrap();
+            LayerSetReferencedList::read(&mut cursor).unwrap();
 
             for i in 0..header.instance_object_count {
                 cursor.seek(SeekFrom::Start(old_pos + header.instance_object_offset as u64 + instance_offsets[i as usize] as u64)).unwrap();

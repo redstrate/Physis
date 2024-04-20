@@ -24,7 +24,7 @@ impl EXL {
         let cursor = Cursor::new(buffer);
         let reader = BufReader::new(cursor);
 
-        for line in reader.lines().flatten() {
+        for line in reader.lines().map_while(Result::ok) {
             if let Some((name, value)) = line.split_once(',') {
                 if let Ok(parsed_value) = value.parse() {
                     if name == "EXLT" {

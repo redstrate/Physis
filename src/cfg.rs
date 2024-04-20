@@ -34,7 +34,7 @@ impl ConfigFile {
 
         let mut current_category: Option<String> = None;
         
-        for line in reader.lines().flatten() {
+        for line in reader.lines().map_while(Result::ok) {
             if !line.is_empty() && line != "\0" {
                 if line.contains('<') || line.contains('>') {
                     // Category
