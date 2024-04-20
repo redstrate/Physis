@@ -3,7 +3,7 @@
 
 use std::ptr::null_mut;
 
-use libz_sys::*;
+use libz_ng_sys::*;
 
 // This module's functions are licensed under MIT from https://github.com/rust-lang/flate2-rs
 mod flate2_zallocation {
