@@ -2,13 +2,13 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 use std::env;
-use std::fs::read;
+use std::fs::{read, read_dir};
 use std::process::Command;
 use hmac_sha512::Hash;
-use walkdir::WalkDir;
 use physis::patch::apply_patch;
 
 use std::collections::HashMap;
+use std::path::{Path, PathBuf};
 use physis::common::Platform;
 use physis::fiin::FileInfo;
 use physis::index;
@@ -68,22 +68,32 @@ fn make_temp_install_dir(name: &str) -> String {
     game_dir.as_path().to_str().unwrap().parse().unwrap()
 }
 
+// Shamelessly taken from https://stackoverflow.com/a/76820878
+fn recurse(path: impl AsRef<Path>) -> Vec<PathBuf> {
+    let Ok(entries) = read_dir(path) else { return vec![] };
+    entries.flatten().flat_map(|entry| {
+        let Ok(meta) = entry.metadata() else { return vec![] };
+        if meta.is_dir() { return recurse(entry.path()); }
+        if meta.is_file() { return vec![entry.path()]; }
+        vec![]
+    }).collect()
+}
+
 #[cfg(feature = "patch_testing")]
 fn fill_dir_hash(game_dir: &str) -> HashMap<String, [u8; 64]> {
     let mut file_hashes: HashMap<String, [u8; 64]> = HashMap::new();
 
-    WalkDir::new(game_dir)
+    recurse(game_dir)
         .into_iter()
-        .filter_map(Result::ok)
-        .filter(|e| !e.file_type().is_dir())
         .for_each(|x| {
-            let file = std::fs::read(x.path()).unwrap();
+            let path = x.as_path();
+            let file = std::fs::read(path).unwrap();
 
             let mut hash = Hash::new();
             hash.update(&file);
             let sha = hash.finalize();
 
-            let mut rel_path = x.path();
+            let mut rel_path = path;
             rel_path = rel_path.strip_prefix(game_dir).unwrap();
 
             file_hashes.insert(rel_path.to_str().unwrap().to_string(), sha);

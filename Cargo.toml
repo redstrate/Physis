@@ -15,22 +15,19 @@ readme = "README.md"
 lto = true
 
 [[bench]]
-name = "physis_benchmark"
+name = "benchmark"
 harness = false
 
-[build-dependencies]
-system-deps = "6"
-
-[package.metadata.system-deps]
-libunshield = { version = "1.4", feature = "game_install" }
+[[bench]]
+name = "retail_benchmark"
+harness = false
+required-features = ["retail_game_testing"]
 
 [dev-dependencies]
-# used for patch install checking
-walkdir = "2"
 hmac-sha512 = "1"
 
 # used while rust doesn't have native benchmarking capability
-criterion = { version = "0.5.1", default-features = false }
+brunch = { version = "0.5.3", default-features = false }
 
 # used for testing our jamcrc implementation
 crc = "3"
