@@ -46,6 +46,7 @@ bitflags! {
 #[brw(repr = u32)]
 #[derive(Debug)]
 enum TextureFormat {
+    B4G4R4A4 = 0x1440,
     B8G8R8A8 = 0x1450,
     BC1 = 0x3420,
     BC3 = 0x3431,
@@ -82,7 +83,7 @@ impl Texture {
     /// Reads an existing TEX file
     pub fn from_existing(buffer: ByteSpan) -> Option<Texture> {
         let mut cursor = Cursor::new(buffer);
-        let header = TexHeader::read(&mut cursor).ok()?;
+        let header = TexHeader::read(&mut cursor).unwrap();
 
         cursor
             .seek(SeekFrom::Start(std::mem::size_of::<TexHeader>() as u64))
@@ -94,6 +95,29 @@ impl Texture {
         let mut dst;
 
         match header.format {
+            TextureFormat::B4G4R4A4 => {
+                dst = vec![0u8; header.width as usize * header.height as usize * 4];
+
+                let mut offset = 0;
+                let mut dst_offset = 0;
+
+                for _ in 0..header.width * header.height {
+                    let short: u16 = ((src[offset] as u16) << 8) | src[offset + 1] as u16;
+
+                    let src_b = short & 0xF;
+                    let src_g= (short >> 4) & 0xF;
+                    let src_r = (short >> 8) & 0xF;
+                    let src_a = (short >> 12) & 0xF;
+
+                    dst[dst_offset] = (17 * src_r) as u8;
+                    dst[dst_offset + 1] = (17 * src_g) as u8;
+                    dst[dst_offset + 2] = (17 * src_b) as u8;
+                    dst[dst_offset + 3] = (17 * src_a) as u8;
+
+                    offset += 2;
+                    dst_offset += 4;
+                }
+            }
             TextureFormat::B8G8R8A8 => {
                 dst = src;
             }
