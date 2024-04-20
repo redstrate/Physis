@@ -125,7 +125,7 @@ fn xivlauncher_install_patch(game_directory: &str, data_directory: &str, patch_n
     let game_dir = format!("Z:\\{}\\{}", game_directory, data_directory);
 
     // TODO: check for windows systems
-    Command::new("/usr/bin/wine")
+    Command::new("wine")
         .args([&patcher_exe, "install", &patch_path, &game_dir])
         .output()
         .unwrap();
@@ -146,8 +146,16 @@ fn test_patching() {
 
     println!("The game installation is now complete. Now running boot patching...");
     for patch in boot_patches {
-        //xivlauncher_install_patch(&xivlauncher_dir, "boot", patch);
-        //physis_install_patch(&physis_dir, "boot", patch);
+        let patch_dir = env::var("FFXIV_PATCH_DIR").unwrap();
+        if !Path::new(&(patch_dir + "/" + patch)).exists() {
+            println!("Skipping {} because it doesn't exist locally.", patch);
+            continue;
+        }
+
+        println!("Installing {}...", patch);
+
+        xivlauncher_install_patch(&xivlauncher_dir, "boot", patch);
+        physis_install_patch(&physis_dir, "boot", patch);
     }
 
     let game_patches = [
@@ -176,10 +184,16 @@ fn test_patching() {
     println!("Boot patching is now complete. Now running game patching...");
 
     for patch in game_patches {
+        let patch_dir = env::var("FFXIV_PATCH_DIR").unwrap();
+        if !Path::new(&(patch_dir + "/" + patch)).exists() {
+            println!("Skipping {} because it doesn't exist locally.", patch);
+            continue;
+        }
+
         println!("Installing {}...", patch);
 
-        //xivlauncher_install_patch(&xivlauncher_dir, "game", patch);
-        //physis_install_patch(&physis_dir, "game", patch);
+        xivlauncher_install_patch(&xivlauncher_dir, "game", patch);
+        physis_install_patch(&physis_dir, "game", patch);
     }
 
     println!("Game patching is now complete. Proceeding to checksum matching...");
