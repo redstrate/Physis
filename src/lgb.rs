@@ -509,8 +509,7 @@ impl Layer {
                     ))
                     .unwrap();
 
-                let instance_object = InstanceObject::read(&mut cursor).unwrap();
-                println!("{:#?}", instance_object);
+                InstanceObject::read(&mut cursor).unwrap();
             }
         }
 

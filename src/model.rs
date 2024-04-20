@@ -353,7 +353,6 @@ struct ModelData {
     #[br(count = padding_amount)]
     unknown_padding: Vec<u8>,
 
-    #[br(dbg)]
     // TODO: these are still wrong on Dawntrail!
     bounding_box: BoundingBox,
     model_bounding_box: BoundingBox,

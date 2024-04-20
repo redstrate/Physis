@@ -199,9 +199,6 @@ impl ShaderPackage {
             package.node_selectors.push((alias.selector, alias.node));
         }
 
-        println!("test: {:#?}", package.nodes);
-        println!("test: {:#?}", package.node_aliases);
-
         Some(package)
     }
 
