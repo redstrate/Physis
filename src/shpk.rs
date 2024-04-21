@@ -5,6 +5,7 @@ use std::io::{Cursor, SeekFrom};
 
 use crate::ByteSpan;
 use binrw::{binread, BinRead};
+use crc::{Algorithm, Crc};
 
 #[binread]
 #[br(little, import {
@@ -68,11 +69,12 @@ pub struct MaterialParameter {
 }
 
 #[binread]
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
+#[repr(C)]
 #[allow(unused)]
 pub struct Key {
-    id: u32,
-    default_value: u32,
+    pub id: u32,
+    pub default_value: u32,
 }
 
 #[binread]
@@ -171,7 +173,7 @@ pub struct ShaderPackage {
     #[br(count = scene_key_count)]
     scene_keys: Vec<Key>,
     #[br(count = material_key_count)]
-    material_keys: Vec<Key>,
+    pub material_keys: Vec<Key>,
 
     sub_view_key1_default: u32,
     sub_view_key2_default: u32,
@@ -185,6 +187,12 @@ pub struct ShaderPackage {
     #[br(count = node_alias_count)]
     node_aliases: Vec<NodeAlias>,
 }
+
+const SELECTOR_MULTIPLER: u32 = 31;
+
+// TODO: replace use of crc crate here
+const CRC_32_TEST: Algorithm<u32> = Algorithm { width: 32, poly: 0x04c11db7, init: 0x00000000, refin: true, refout: true, xorout: 0x00000000, check: 0x765e7680, residue: 0xc704dd7b };
+const JAMCR: Crc<u32> = Crc::<u32>::new(&CRC_32_TEST);
 
 impl ShaderPackage {
     /// Reads an existing SHPK file
@@ -241,10 +249,14 @@ impl ShaderPackage {
 
         for key in keys {
             selector = selector.wrapping_add(key.wrapping_mul(multiplier));
-            multiplier = multiplier.wrapping_mul(31);
+            multiplier = multiplier.wrapping_mul(SELECTOR_MULTIPLER);
         }
 
         selector
+    }
+
+    pub fn crc(str: &str) -> u32 {
+        return JAMCR.checksum(str.as_bytes());
     }
 }
 
@@ -252,6 +264,7 @@ impl ShaderPackage {
 mod tests {
     use std::fs::read;
     use std::path::PathBuf;
+    use crate::repository::Category::Shader;
 
     use super::*;
 
@@ -263,5 +276,22 @@ mod tests {
 
         // Feeding it invalid data should not panic
         ShaderPackage::from_existing(&read(d).unwrap());
+    }
+
+    #[test]
+    fn test_crc() {
+        assert_eq!(ShaderPackage::crc("PASS_0"), 0xC5A5389C);
+        assert_eq!(ShaderPackage::crc("DecodeDepthBuffer"), 0x2C6C023C);
+    }
+
+    #[test]
+    fn test_selector() {
+        let selector = ShaderPackage::build_selector_from_all_keys(
+            &[],
+            &[ShaderPackage::crc("TransformViewSkin"), ShaderPackage::crc("GetAmbientLight_SH"), ShaderPackage::crc("GetReflectColor_Texture"), ShaderPackage::crc("GetAmbientOcclusion_None"), ShaderPackage::crc("ApplyDitherClipOff")],
+            &[3756477356, 1556481461, 1111668802, 428675533],
+            &[ShaderPackage::crc("Default"), ShaderPackage::crc("SUB_VIEW_MAIN")]);
+
+        assert_eq!(selector, 0x1075AE91);
     }
 }
