@@ -3,51 +3,73 @@
 [![Crates.io](https://img.shields.io/crates/v/physis)](https://crates.io/crates/physis)
 [![builds.sr.ht status](https://builds.sr.ht/~redstrate/physis.svg)](https://builds.sr.ht/~redstrate/physis?)
 
-Physis is a framework for interacting with FFXIV data. It can read and write lots of game formats, and is designed for tooling to be built on top of it. Even though this library works best with Rust, [libphysis](https://git.sr.ht/~redstrate/libphysis) is a C API wrapper designed for interfacing through other languages.
+Physis is a library for reading and writing FFXIV data. Even though this library was written with and for [Rust](https://www.rust-lang.org/) in mind, [libphysis](https://github.com/redstrate/libphysis) can be used for anything that can interface with the C FFI. [Novus](https://github.com/redstrate/Novus) and [Astra](https://github.com/redstrate/Astra) is built on top of libphysis, for example.
 
 ## Goals
-* Make it easy for people to tinker around with game data. 
-* Documenting game formats for other people to develop their own libraries and applications for.
-* Parsing data should be safe, and unit tested vigorously.
-* Aim to have minimal dependencies, and those dependencies should be checked via `cargo deny`.
+
+Physis should:
+
+* ... Make it easy for developers to tinker around with game data.
+* ... Document file formats along the way, to make writing future and applications libraries easier.
+* ... Make parsing data safe, and create automated tests when possible.
+* ... Aim to be have minimal dependencies, and easy to use regardless of platform.
 
 ## Features
 
-* Easily extract game data from SqPack files.
-* Apply game and boot updates, enabling custom launchers to patch the game easily.
-* Blockfish ciphers for encrypting and decrypting SqexArg.
-* Parse various game formats:
-  * SqPack index and dat files
-  * ZiPatch files
-  * All three Excel data types (EXD, EXH, EXL)
-  * Models
-  * Havok Packfile/TexTool skeletons
-  * Textures
-  * Materials
-  * and more!
+Here is a list of supported formats and their status:
+
+| File Format | Read | Write | Note |
+| --- | --- | --- | --- |
+| [Configuration files](https://docs.xiv.zone/format/cfg/) | ✅ | ✅ | |
+| [Saved character data](https://docs.xiv.zone/format/chardat/) | ✅ | ❌ | Only some versions are currently supported. |
+| [Chara make params](https://docs.xiv.zone/format/cmp/) | ✅ | ❌ | |
+| Dictionaries | ✅ | ❌ | |
+| [Excel data](https://docs.xiv.zone/format/exd/) | ✅ | ❌ | |
+| [File infos](https://docs.xiv.zone/format/fiin/) | ✅ | ✅ | |
+| Map layers | ✅ | ❌ | Layer support isn't well tested yet. |
+| [Chat logs](https://docs.xiv.zone/format/log/) | ✅ | ❌ | Not all chat categories are discovered yet. |
+| [Models](https://docs.xiv.zone/format/mdl/) | ✅ | ✅ | Adding custom shape keys aren't fully supported yet. |
+| [Materials](https://docs.xiv.zone/format/mtrl/) | ✅ | ❌ | |
+| Patch files | ✅ | ❌ | |
+| Pre bone deformers | ✅ | ❌ | |
+| [Shader packages](https://docs.xiv.zone/format/shpk/) | ✅ | ❌ | |
+| [Skeletons](https://docs.xiv.zone/format/sklb/) | ✅ | ❌ | |
+| Terrain | ✅ | ❌ | |
+| [Textures](https://docs.xiv.zone/format/tex/) | ✅ | ❌ | Only some formats are supported. |
+
+Physis also supports doing some other useful things other than reading and writing file formats:
+
+* Extract game data from SqPack files, and list file hashes from index/index2.
+* Apply game patches. Indexed ZiPatch is not yet supported, though.
+* Blockfish ciphers for encrypting and decrypting [SqexArg](https://docs.xiv.zone/concept/sqexarg/).
+* Extract retail installer contents, useful on Linux for avoiding having to run the InstallShield installer.
+* Construct paths to equipment, items, faces, and other useful models.
+* Extract strings from executables.
 
 ## Usage
 
-**Warning:** The API will not be truly stable until 1.0. However, the API is stable between patch versions.
+If you want to use Physis in your Rust project, you can simply add it as a dependency in `Cargo.toml`:
 
-If you intend to use this in your Rust project, you can simply include this crate directly.
-
-```
+```toml
 [dependencies]
-physis = "0.1"
+physis = "0.2"
 ```
 
-You can view the documentation at [docs.xiv.zone](https://docs.xiv.zone/docs/physis)! It's automatically updated as new
+Documentation is availavble online at [docs.xiv.zone](https://docs.xiv.zone/docs/physis). It's automatically updated as new
 commits are pushed to the main branch.
 
-For other use in languages I maintain [libphysis](https://git.sr.ht/~redstrate/libphysis), which is a C wrapper
-around the same functionality. I use these bindings in [other projects](https://git.sr.ht/~redstrate/astra).
-  
+Non-Rust projects can use [libphysis](https://github.com/~redstrate/libphysis) which exposes Physis functionality under a C API.
+
+## Building
+
+Physis only has a few dependencies, and very little if nothing is turned on by default. You need to set up [Rust](https://www.rust-lang.org/learn/get-started) and then run `cargo build`.
+
+If you want to build the `game_install` feature, you also need to install [unshield](https://github.com/twogood/unshield).
+
 ## Development
 
-If you're interested to see how these formats work in more detail, see [xiv.dev](https://xiv.dev/) and
-[docs.xiv.zone](https://docs.xiv.zone)! They explain the file formats in more detail, but I also encourage reading the
-ibrary code as well if you can.
+If you're interested to read how these formats work in more detail, see [xiv.dev](https://xiv.dev/) and
+[docs.xiv.zone](https://docs.xiv.zone).
 
 ### Testing
 
@@ -97,10 +119,10 @@ versions.
 
 ## Contributing & Support
 
-The best way you can help is by [monetarily supporting me](https://redstrate.com/about/) or by submitting patches to
-help fix bugs or add functionality.
+The best way you can help is by [monetarily supporting me](https://redstrate.com/fund/) or by submitting patches to
+help fix bugs or add functionality. Filing issues is appreciated, but I do this in my free time so please don't expect professional support.
 
-## Credits
+## Credits & Thank You
 - [goatcorp](https://goatcorp.github.io) (XIVQuickLauncher, docs.xiv.dev, and even more)
 - [Ioncannon](http://ffxivexplorer.fragmenterworks.com/research.php) (FFXIV Data Explorer) for the first documenting the file formats
 - [binrw team](https://binrw.rs) for an awesome Rust library!
