@@ -3,7 +3,7 @@ Upstream-Name: physis
 Upstream-Contact: Joshua Goins <josh@redstrate.com>
 Source: https://git.sr.ht/~redstrate/physis
 
-Files: README.md .build.yml deny.toml Cargo.toml resources/*
+Files: README.md .build.yml deny.toml Cargo.toml resources/* .github/*
 Copyright: Joshua Goins <josh@redstrate.com>
 License: CC0-1.0
 
