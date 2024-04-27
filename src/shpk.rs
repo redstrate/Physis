@@ -18,7 +18,10 @@ pub struct ResourceParameter {
     #[br(temp)]
     local_string_offset: u32,
     #[br(temp)]
-    string_length: u32,
+    string_length: u16,
+
+    unknown: u16,
+
     pub slot: u16,
     size: u16,
 
@@ -42,8 +45,7 @@ pub struct Shader {
     scalar_parameter_count: u16,
     resource_parameter_count: u16,
     uav_parameter_count: u16,
-
-    unknown1: u16,
+    texture_count: u16,
 
     #[br(args { count: scalar_parameter_count as usize, inner: ResourceParameterBinReadArgs { strings_offset }})]
     pub scalar_parameters: Vec<ResourceParameter>,
@@ -51,6 +53,8 @@ pub struct Shader {
     pub resource_parameters: Vec<ResourceParameter>,
     #[br(args { count: uav_parameter_count as usize, inner: ResourceParameterBinReadArgs { strings_offset }})]
     pub uav_parameters: Vec<ResourceParameter>,
+    #[br(args { count: texture_count as usize, inner: ResourceParameterBinReadArgs { strings_offset }})]
+    pub texture_parameters: Vec<ResourceParameter>,
 
     /// The HLSL bytecode of this shader. The DX level used varies.
     #[br(seek_before = SeekFrom::Start(shader_data_offset as u64 + data_offset as u64))]
@@ -116,7 +120,7 @@ pub struct Node {
     pub material_keys: Vec<u32>,
     #[br(count = subview_key_count)]
     pub subview_keys: Vec<u32>,
-    #[br(count = pass_count, err_context("system_key_count = {}", material_key_count))]
+    #[br(count = pass_count)]
     pub passes: Vec<Pass>,
 }
 
@@ -127,25 +131,34 @@ pub struct Node {
 #[allow(dead_code)]
 pub struct ShaderPackage {
     version: u32,
+
     // "DX9\0" or "DX11"
     #[br(count = 4)]
     #[bw(pad_size_to = 4)]
     #[bw(map = |x : &String | x.as_bytes())]
     #[br(map = | x: Vec<u8> | String::from_utf8(x).unwrap().trim_matches(char::from(0)).to_string())]
     format: String,
-    file_length: u32,
 
+    file_length: u32,
     shader_data_offset: u32,
     strings_offset: u32,
+
     vertex_shader_count: u32,
     pixel_shader_count: u32,
 
     material_parameters_size: u32,
-    material_parameter_count: u32,
+    material_parameter_count: u16,
 
-    scalar_parameter_count: u32,
-    resource_parameter_count: u32,
-    uav_count: u32,
+    has_mat_param_defaults: u16,
+    scalar_parameter_count: u16,
+    #[br(temp)]
+    unknown1: u16,
+    sampler_count: u16,
+    texture_count: u16,
+    uav_count: u16,
+    #[br(temp)]
+    unknown2: u16,
+
     system_key_count: u32,
     scene_key_count: u32,
     material_key_count: u32,
@@ -161,10 +174,15 @@ pub struct ShaderPackage {
     #[br(count = material_parameter_count)]
     material_parameters: Vec<MaterialParameter>,
 
+    #[br(count = if has_mat_param_defaults == 0x1 { (material_parameters_size as i32) >> 2i32 } else { 0 })]
+    mat_param_defaults: Vec<f32>,
+
     #[br(args { count: scalar_parameter_count as usize, inner: ResourceParameterBinReadArgs { strings_offset }})]
     scalar_parameters: Vec<ResourceParameter>,
-    #[br(args { count: resource_parameter_count as usize, inner: ResourceParameterBinReadArgs { strings_offset }})]
-    resource_parameters: Vec<ResourceParameter>,
+    #[br(args { count: sampler_count as usize, inner: ResourceParameterBinReadArgs { strings_offset }})]
+    sampler_parameters: Vec<ResourceParameter>,
+    #[br(args { count: texture_count as usize, inner: ResourceParameterBinReadArgs { strings_offset }})]
+    texture_parameters: Vec<ResourceParameter>,
     #[br(args { count: uav_count as usize, inner: ResourceParameterBinReadArgs { strings_offset }})]
     uav_parameters: Vec<ResourceParameter>,
 
