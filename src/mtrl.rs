@@ -69,7 +69,8 @@ pub struct ShaderKey {
 }
 
 #[binrw]
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
+#[repr(C)]
 #[allow(dead_code)]
 struct Constant {
     constant_id: u32,
@@ -79,7 +80,8 @@ struct Constant {
 
 // from https://github.com/NotAdam/Lumina/blob/master/src/Lumina/Data/Parsing/MtrlStructs.cs
 #[binrw]
-#[derive(Debug)]
+#[repr(u8)]
+#[derive(Debug, Clone, Copy)]
 enum TextureUsage {
     #[brw(magic = 0x88408C04u32)]
     Sampler,
@@ -127,7 +129,8 @@ enum TextureUsage {
 }
 
 #[binrw]
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
+#[repr(C)]
 #[allow(dead_code)]
 struct Sampler {
     texture_usage: TextureUsage,
@@ -170,13 +173,13 @@ struct MaterialData {
     header: MaterialHeader,
 
     #[br(count = header.shader_key_count)]
-    shader_keys: Vec<ShaderKey>,
+    pub shader_keys: Vec<ShaderKey>,
     #[br(count = header.constant_count)]
-    constants: Vec<Constant>,
+    pub constants: Vec<Constant>,
     #[br(count = header.sampler_count)]
-    samplers: Vec<Sampler>,
+    pub samplers: Vec<Sampler>,
     #[br(count = header.shader_value_list_size / 4)]
-    shader_values: Vec<f32>,
+    pub shader_values: Vec<f32>,
 }
 
 #[derive(Debug)]
