@@ -61,6 +61,7 @@ struct ColorSetDyeInfo {
 
 #[binrw]
 #[derive(Debug)]
+#[repr(C)]
 #[allow(dead_code)]
 pub struct ShaderKey {
     pub category: u32,
