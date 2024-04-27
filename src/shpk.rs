@@ -193,8 +193,8 @@ pub struct ShaderPackage {
     #[br(count = material_key_count)]
     pub material_keys: Vec<Key>,
 
-    sub_view_key1_default: u32,
-    sub_view_key2_default: u32,
+    pub sub_view_key1_default: u32,
+    pub sub_view_key2_default: u32,
 
     #[br(args { count: node_count as usize, inner: NodeBinReadArgs { system_key_count, scene_key_count, material_key_count, subview_key_count: 2 }})]
     nodes: Vec<Node>,
