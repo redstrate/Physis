@@ -60,7 +60,7 @@ struct ColorSetDyeInfo {
 }
 
 #[binrw]
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 #[repr(C)]
 #[allow(dead_code)]
 pub struct ShaderKey {
