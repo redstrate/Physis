@@ -64,7 +64,8 @@ pub struct Shader {
 }
 
 #[binread]
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
+#[repr(C)]
 #[allow(unused)]
 pub struct MaterialParameter {
     id: u32,
@@ -146,7 +147,7 @@ pub struct ShaderPackage {
     vertex_shader_count: u32,
     pixel_shader_count: u32,
 
-    material_parameters_size: u32,
+    pub material_parameters_size: u32,
     material_parameter_count: u16,
 
     has_mat_param_defaults: u16,
@@ -172,7 +173,7 @@ pub struct ShaderPackage {
     pub pixel_shaders: Vec<Shader>,
 
     #[br(count = material_parameter_count)]
-    material_parameters: Vec<MaterialParameter>,
+    pub material_parameters: Vec<MaterialParameter>,
 
     #[br(count = if has_mat_param_defaults == 0x1 { (material_parameters_size as i32) >> 2i32 } else { 0 })]
     mat_param_defaults: Vec<f32>,

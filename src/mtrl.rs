@@ -77,13 +77,13 @@ pub struct ConstantStruct {
     value_size: u16,
 }
 
-#[binrw]
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 #[repr(C)]
 #[allow(dead_code)]
 pub struct Constant {
     id: u32,
-    value: f32 // TDOO: only supports single float for now
+    num_values: u32,
+    values: [f32; 4]
 }
 
 // from https://github.com/NotAdam/Lumina/blob/master/src/Lumina/Data/Parsing/MtrlStructs.cs
@@ -236,10 +236,18 @@ impl Material {
 
         let mut constants = Vec::new();
         for constant in mat_data.constants {
-            // TODO: support constants that aren't single floats
+            let mut values: [f32; 4] = [0.0; 4];
+
+            // TODO: use mem::size_of
+            let num_floats = constant.value_size / 4;
+            for i in 0..num_floats as usize {
+                values[i] = mat_data.shader_values[(constant.value_offset as usize / 4) + i];
+            }
+
             constants.push(Constant {
                 id: constant.constant_id,
-                value: mat_data.shader_values[constant.value_offset as usize / 4]
+                num_values: num_floats as u32,
+                values
             });
         }
 
