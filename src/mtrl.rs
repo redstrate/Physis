@@ -70,12 +70,20 @@ pub struct ShaderKey {
 
 #[binrw]
 #[derive(Debug, Clone, Copy)]
-#[repr(C)]
 #[allow(dead_code)]
-pub struct Constant {
+pub struct ConstantStruct {
     constant_id: u32,
     value_offset: u16,
     value_size: u16,
+}
+
+#[binrw]
+#[derive(Debug, Clone, Copy)]
+#[repr(C)]
+#[allow(dead_code)]
+pub struct Constant {
+    id: u32,
+    value: f32 // TDOO: only supports single float for now
 }
 
 // from https://github.com/NotAdam/Lumina/blob/master/src/Lumina/Data/Parsing/MtrlStructs.cs
@@ -175,7 +183,7 @@ struct MaterialData {
     #[br(count = header.shader_key_count)]
     shader_keys: Vec<ShaderKey>,
     #[br(count = header.constant_count)]
-    constants: Vec<Constant>,
+    constants: Vec<ConstantStruct>,
     #[br(count = header.sampler_count)]
     samplers: Vec<Sampler>,
     #[br(count = header.shader_value_list_size / 4)]
@@ -189,7 +197,6 @@ pub struct Material {
     pub shader_keys: Vec<ShaderKey>,
     pub constants: Vec<Constant>,
     pub samplers: Vec<Sampler>,
-    pub shader_values: Vec<f32>,
 }
 
 impl Material {
@@ -227,13 +234,21 @@ impl Material {
             next_char = mat_data.strings[offset] as char;
         }
 
+        let mut constants = Vec::new();
+        for constant in mat_data.constants {
+            // TODO: support constants that aren't single floats
+            constants.push(Constant {
+                id: constant.constant_id,
+                value: mat_data.shader_values[constant.value_offset as usize / 4]
+            });
+        }
+
         Some(Material {
             shader_package_name,
             texture_paths,
             shader_keys: mat_data.shader_keys,
-            constants: mat_data.constants,
-            samplers: mat_data.samplers,
-            shader_values: mat_data.shader_values
+            constants,
+            samplers: mat_data.samplers
         })
     }
 }
