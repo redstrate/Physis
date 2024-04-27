@@ -72,7 +72,7 @@ pub struct ShaderKey {
 #[derive(Debug, Clone, Copy)]
 #[repr(C)]
 #[allow(dead_code)]
-struct Constant {
+pub struct Constant {
     constant_id: u32,
     value_offset: u16,
     value_size: u16,
@@ -82,7 +82,7 @@ struct Constant {
 #[binrw]
 #[repr(u8)]
 #[derive(Debug, Clone, Copy)]
-enum TextureUsage {
+pub enum TextureUsage {
     #[brw(magic = 0x88408C04u32)]
     Sampler,
     #[brw(magic = 0x213CB439u32)]
@@ -132,7 +132,7 @@ enum TextureUsage {
 #[derive(Debug, Clone, Copy)]
 #[repr(C)]
 #[allow(dead_code)]
-struct Sampler {
+pub struct Sampler {
     texture_usage: TextureUsage,
     flags: u32, // TODO: unknown
     #[br(pad_after = 3)]
@@ -173,13 +173,13 @@ struct MaterialData {
     header: MaterialHeader,
 
     #[br(count = header.shader_key_count)]
-    pub shader_keys: Vec<ShaderKey>,
+    shader_keys: Vec<ShaderKey>,
     #[br(count = header.constant_count)]
-    pub constants: Vec<Constant>,
+    constants: Vec<Constant>,
     #[br(count = header.sampler_count)]
-    pub samplers: Vec<Sampler>,
+    samplers: Vec<Sampler>,
     #[br(count = header.shader_value_list_size / 4)]
-    pub shader_values: Vec<f32>,
+    shader_values: Vec<f32>,
 }
 
 #[derive(Debug)]
@@ -187,6 +187,9 @@ pub struct Material {
     pub shader_package_name: String,
     pub texture_paths: Vec<String>,
     pub shader_keys: Vec<ShaderKey>,
+    pub constants: Vec<Constant>,
+    pub samplers: Vec<Sampler>,
+    pub shader_values: Vec<f32>,
 }
 
 impl Material {
@@ -228,6 +231,9 @@ impl Material {
             shader_package_name,
             texture_paths,
             shader_keys: mat_data.shader_keys,
+            constants: mat_data.constants,
+            samplers: mat_data.samplers,
+            shader_values: mat_data.shader_values
         })
     }
 }
