@@ -27,3 +27,13 @@ jobs:
       run: cargo build --verbose
     - name: Run tests
       run: cargo test --verbose
+    - name: Run clippy
+      run: cargo clippy
+    - name: Run deny-check
+      run: |
+        cargo install --locked cargo-deny
+        cargo deny check
+    - name: Run semver-checks
+      run: |
+        cargo install --locked cargo-semver-checks
+        cargo semver-checks check-release
