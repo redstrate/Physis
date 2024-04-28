@@ -2,7 +2,11 @@
 
 [![Crates.io](https://img.shields.io/crates/v/physis)](https://crates.io/crates/physis)
 
-Physis is a library for reading and writing FFXIV data. Even though this library was written with and for [Rust](https://www.rust-lang.org/) in mind, [libphysis](https://github.com/redstrate/libphysis) can be used for anything that can interface with the C FFI. [Novus](https://github.com/redstrate/Novus) and [Astra](https://github.com/redstrate/Astra) is built on top of libphysis, for example.
+Physis is a library for reading and writing FFXIV data.
+
+Even though this library was written with and for [Rust](https://www.rust-lang.org/) in mind, Physis has bindings for other languages:
+* [PhysisSharp](https://github.com/redstrate/PhysisSharp) can be used in any C# application, and is built on top of libphysis.
+* [libphysis](https://github.com/redstrate/libphysis) can be used for anything that can interface with the C FFI. [Novus](https://github.com/redstrate/Novus) and [Astra](https://github.com/redstrate/Astra) is built on top of libphysis, for example.
 
 ## Goals
 
@@ -57,7 +61,9 @@ physis = "0.2"
 Documentation is availavble online at [docs.xiv.zone](https://docs.xiv.zone/docs/physis). It's automatically updated as new
 commits are pushed to the main branch.
 
-Non-Rust projects can use [libphysis](https://github.com/~redstrate/libphysis) which exposes Physis functionality under a C API.
+C# projects can use [PhysisSharp](https://github.com/redstrate/PhysisSharp) which exposes Physis in C#.
+
+C/C++ projects (or anything that can interface with C libraries) can use [libphysis](https://github.com/redstrate/libphysis) which exposes Physis functionality under a C API.
 
 ## Building
 
