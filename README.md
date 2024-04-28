@@ -1,7 +1,6 @@
 # Physis
 
 [![Crates.io](https://img.shields.io/crates/v/physis)](https://crates.io/crates/physis)
-[![builds.sr.ht status](https://builds.sr.ht/~redstrate/physis.svg)](https://builds.sr.ht/~redstrate/physis?)
 
 Physis is a library for reading and writing FFXIV data. Even though this library was written with and for [Rust](https://www.rust-lang.org/) in mind, [libphysis](https://github.com/redstrate/libphysis) can be used for anything that can interface with the C FFI. [Novus](https://github.com/redstrate/Novus) and [Astra](https://github.com/redstrate/Astra) is built on top of libphysis, for example.
 
