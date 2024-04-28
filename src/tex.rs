@@ -121,7 +121,23 @@ impl Texture {
                 }
             }
             TextureFormat::B8G8R8A8 => {
-                dst = src; // TODO: not correct, of course
+                dst = vec![0u8; header.width as usize * header.height as usize * 4];
+
+                let mut offset = 0;
+
+                for _ in 0..header.width * header.height {
+                    let src_b = src[offset];
+                    let src_g = src[offset + 1];
+                    let src_r = src[offset + 2];
+                    let src_a = src[offset + 3];
+
+                    dst[offset] = src_r;
+                    dst[offset + 1] = src_g;
+                    dst[offset + 2] = src_b;
+                    dst[offset + 3] = src_a;
+
+                    offset += 4;
+                }
             }
             TextureFormat::BC1 => {
                 dst = Texture::decode(
