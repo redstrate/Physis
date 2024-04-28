@@ -24,6 +24,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - uses: actions/cache@v4
+      id: cache-deps
       with:
         path: |
           ~/.cargo/bin/
@@ -37,6 +38,11 @@ jobs:
         sudo apt-get update
         sudo apt-get install \
           libunshield-dev \
+    - name: Install Cargo dependencies
+      if: steps.cache-deps.outputs.cache-hit != 'true'
+      run: |
+        cargo install --locked cargo-deny
+        cargo install --locked cargo-semver-checks
     - name: Build
       run: cargo build --features visual_data,game_install --verbose
     - name: Run tests
@@ -45,9 +51,7 @@ jobs:
       run: cargo clippy --features visual_data,game_install
     - name: Run deny-check
       run: |
-        cargo install --locked cargo-deny
         cargo deny check
     - name: Run semver-checks
       run: |
-        cargo install --locked cargo-semver-checks
         cargo semver-checks check-release
