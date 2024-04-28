@@ -10,15 +10,26 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  build:
-
+  checkout:
     runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v3
+
+  reuse:
+    runs-on: ubuntu-latest
+    needs: checkout
+
+    steps:
+    - name: REUSE Compliance Check
+      uses: fsfe/reuse-action@v3
+
+  build:
+    runs-on: ubuntu-latest
+    needs: checkout
+
+    steps:
     - name: Build
       run: cargo build --verbose
     - name: Run tests
       run: cargo test --verbose
-    - name: REUSE Compliance Check
-      uses: fsfe/reuse-action@v3
