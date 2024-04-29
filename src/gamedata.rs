@@ -157,7 +157,9 @@ impl GameData {
     /// }
     /// ```
     pub fn exists(&mut self, path: &str) -> bool {
-        let index_path = self.get_index_filenames(path);
+        let Some(index_path) = self.get_index_filenames(path) else {
+            return false;
+        };
 
         self.cache_index_file((&index_path.0, &index_path.1));
 
@@ -219,8 +221,8 @@ impl GameData {
         Some((&self.repositories[0], string_to_category(tokens[0])?))
     }
 
-    fn get_index_filenames(&self, path: &str) -> (String, String) {
-        let (repository, category) = self.parse_repository_category(path).unwrap();
+    fn get_index_filenames(&self, path: &str) -> Option<(String, String)> {
+        let (repository, category) = self.parse_repository_category(path)?;
 
         let index_path: PathBuf = [
             &self.game_directory,
@@ -240,10 +242,10 @@ impl GameData {
         .iter()
         .collect();
 
-        (
+        Some((
             index_path.into_os_string().into_string().unwrap(),
             index2_path.into_os_string().into_string().unwrap(),
-        )
+        ))
     }
 
     /// Read an excel sheet by name (e.g. "Achievement")
@@ -419,7 +421,7 @@ impl GameData {
     }
 
     fn find_entry(&mut self, path: &str) -> Option<IndexHashBitfield> {
-        let index_path = self.get_index_filenames(path);
+        let index_path = self.get_index_filenames(path)?;
         debug!(
             "Trying index files {index_path}, {index2_path}",
             index_path = index_path.0,
