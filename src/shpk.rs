@@ -5,7 +5,7 @@ use std::io::{Cursor, SeekFrom};
 
 use crate::ByteSpan;
 use binrw::{binread, BinRead};
-use crc::{Algorithm, Crc};
+use crate::crc::XivCrc32;
 
 #[binread]
 #[br(little, import {
@@ -209,10 +209,6 @@ pub struct ShaderPackage {
 
 const SELECTOR_MULTIPLER: u32 = 31;
 
-// TODO: replace use of crc crate here
-const CRC_32_TEST: Algorithm<u32> = Algorithm { width: 32, poly: 0x04c11db7, init: 0x00000000, refin: true, refout: true, xorout: 0x00000000, check: 0x765e7680, residue: 0xc704dd7b };
-const JAMCR: Crc<u32> = Crc::<u32>::new(&CRC_32_TEST);
-
 impl ShaderPackage {
     /// Reads an existing SHPK file
     pub fn from_existing(buffer: ByteSpan) -> Option<ShaderPackage> {
@@ -275,7 +271,7 @@ impl ShaderPackage {
     }
 
     pub fn crc(str: &str) -> u32 {
-        return JAMCR.checksum(str.as_bytes());
+        return XivCrc32::from(str).crc;
     }
 }
 
@@ -283,7 +279,6 @@ impl ShaderPackage {
 mod tests {
     use std::fs::read;
     use std::path::PathBuf;
-    use crate::repository::Category::Shader;
 
     use super::*;
 
