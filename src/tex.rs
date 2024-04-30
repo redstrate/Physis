@@ -70,11 +70,22 @@ struct TexHeader {
     offset_to_surface: [u32; 13],
 }
 
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub enum TextureType {
+    TwoDimensional,
+    ThreeDimensional
+}
+
 pub struct Texture {
+    /// Type of texture
+    pub texture_type: TextureType,
     /// Width of the texture in pixels
     pub width: u32,
     /// Height of the texture in pixels
     pub height: u32,
+    /// Depth of the texture in pixels
+    pub depth: u32,
     /// Raw RGBA data
     pub rgba: Vec<u8>,
 }
@@ -87,6 +98,8 @@ impl Texture {
         let mut cursor = Cursor::new(buffer);
         let header = TexHeader::read(&mut cursor).ok()?;
 
+        println!("{:#?}", header.attribute);
+
         cursor
             .seek(SeekFrom::Start(std::mem::size_of::<TexHeader>() as u64))
             .ok()?;
@@ -98,7 +111,7 @@ impl Texture {
 
         match header.format {
             TextureFormat::B4G4R4A4 => {
-                dst = vec![0u8; header.width as usize * header.height as usize * 4];
+                dst = vec![0u8; header.width as usize * header.height as usize * header.depth as usize * 4];
 
                 let mut offset = 0;
                 let mut dst_offset = 0;
@@ -121,11 +134,11 @@ impl Texture {
                 }
             }
             TextureFormat::B8G8R8A8 => {
-                dst = vec![0u8; header.width as usize * header.height as usize * 4];
+                dst = vec![0u8; header.width as usize * header.height as usize * header.depth as usize * 4];
 
                 let mut offset = 0;
 
-                for _ in 0..header.width * header.height {
+                for _ in 0..header.width * header.height * header.depth {
                     let src_b = src[offset];
                     let src_g = src[offset + 1];
                     let src_r = src[offset + 2];
@@ -143,7 +156,7 @@ impl Texture {
                 dst = Texture::decode(
                     &src,
                     header.width as usize,
-                    header.height as usize,
+                    header.height as usize * header.depth as usize,
                     decode_bc1,
                 );
             }
@@ -151,7 +164,7 @@ impl Texture {
                 dst = Texture::decode(
                     &src,
                     header.width as usize,
-                    header.height as usize,
+                    header.height as usize * header.depth as usize,
                     decode_bc3,
                 );
             }
@@ -159,15 +172,17 @@ impl Texture {
                 dst = Texture::decode(
                     &src,
                     header.width as usize,
-                    header.height as usize,
+                    header.height as usize * header.depth as usize,
                     decode_bc5,
                 );
             }
         }
 
         Some(Texture {
+            texture_type: if header.attribute.contains(TextureAttribute::TEXTURE_TYPE3_D) { TextureType::ThreeDimensional } else { TextureType::TwoDimensional },
             width: header.width as u32,
             height: header.height as u32,
+            depth: header.depth as u32,
             rgba: dst,
         })
     }
