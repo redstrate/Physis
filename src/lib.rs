@@ -150,3 +150,6 @@ pub mod skp;
 
 /// Reading SCHD files
 pub mod schd;
+
+/// Reading PHYB files
+pub mod phyb;
