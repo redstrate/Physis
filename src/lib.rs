@@ -153,3 +153,6 @@ pub mod schd;
 
 /// Reading PHYB files
 pub mod phyb;
+
+/// Reading PAP files
+pub mod pap;
