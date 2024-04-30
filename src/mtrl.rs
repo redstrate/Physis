@@ -6,7 +6,8 @@
 use std::io::Cursor;
 
 use crate::ByteSpan;
-use binrw::{binrw, BinRead};
+use binrw::{binrw, BinRead, binread};
+use crate::common_file_operations::{Half1, Half2, Half3};
 
 #[binrw]
 #[derive(Debug)]
@@ -42,19 +43,33 @@ struct ColorSet {
     index: u8,
 }
 
-#[binrw]
+#[binread]
+#[derive(Debug)]
+#[allow(dead_code)]
+struct ColorTableRow {
+    diffuse_color: Half3,
+    specular_strength: Half1,
+    specular_color: Half3,
+    gloss_strength: Half1,
+    emissive_color: Half3,
+    tile_set: u16,
+    material_repeat: Half2,
+    material_skew: Half2,
+}
+
+#[binread]
 #[br(import {set_count: usize})]
 #[derive(Debug)]
 #[allow(dead_code)]
-struct ColorSetInfo {
+struct ColorTable {
     #[br(count = set_count)]
-    data: Vec<u16>,
+    data: Vec<ColorTableRow>,
 }
 
 #[binrw]
 #[derive(Debug)]
 #[allow(dead_code)]
-struct ColorSetDyeInfo {
+struct ColorDyeTable {
     #[br(count = 16)]
     data: Vec<u16>,
 }
@@ -170,13 +185,15 @@ struct MaterialData {
     #[br(if(file_header.data_set_size > 0))]
     // Dawntrail doubled the amount of color sets.
     // The MTRL version is the same (why square enix?) so we check the data set size instead
-    #[br(args { set_count: if file_header.data_set_size < 2048 { 256 } else { 1024 } })]
-    color_set_info: Option<ColorSetInfo>,
+    #[br(args { set_count: if file_header.data_set_size < 2048 { 16 } else { 32 } })]
+    #[bw(ignore)]
+    color_set_info: Option<ColorTable>,
 
     #[br(if(file_header.data_set_size >
         if file_header.data_set_size < 2048 { 512 } else { 2048 }
     ))]
-    color_set_due_info: Option<ColorSetDyeInfo>,
+    #[bw(ignore)]
+    color_set_due_info: Option<ColorDyeTable>,
 
     header: MaterialHeader,
 

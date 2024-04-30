@@ -8,6 +8,7 @@ use binrw::{binread, BinReaderExt, binrw};
 use binrw::__private::assert;
 use binrw::BinRead;
 use half::f16;
+use crate::common_file_operations::{Half1, Half3};
 use crate::model_vertex_declarations::VertexType::Half2;
 
 /// Maximum number of elements in one row
@@ -36,36 +37,6 @@ pub struct DyePack {
     specular_power: f32
 }
 
-pub(crate) fn read_half3(data: [u16; 3]) -> Half3 {
-    Half3 {
-        r: f16::from_bits(data[0]),
-        g: f16::from_bits(data[0]),
-        b: f16::from_bits(data[0])
-    }
-}
-
-#[binread]
-#[derive(Debug, Default, Clone, Copy)]
-#[br(map = read_half3)]
-struct Half3 {
-    r: f16,
-    g: f16,
-    b: f16
-}
-
-pub(crate) fn read_half1(data: [u16; 1]) -> Half1 {
-    Half1 {
-        value: f16::from_bits(data[0])
-    }
-}
-
-#[binread]
-#[derive(Debug, Default, Clone, Copy)]
-#[br(map = read_half1)]
-struct Half1 {
-    value: f16,
-}
-
 #[derive(Debug)]
 pub struct StainingTemplate {
 
@@ -90,9 +61,6 @@ impl StainingTemplate {
             }
 
             let new_offset = (offset + 10) as u64;
-
-            assert_eq!(std::mem::size_of::<Half1>(), std::mem::size_of::<f16>());
-            assert_eq!(std::mem::size_of::<Half3>(), std::mem::size_of::<f16>() * 3);
 
             let diffuse_entries = StainingTemplate::read_array::<Half3>(&mut cursor, new_offset, ends[0] as usize);
             let specular_entries = StainingTemplate::read_array::<Half3>(&mut cursor, new_offset + ends[0] as u64, ends[1] as usize - ends[0] as usize);

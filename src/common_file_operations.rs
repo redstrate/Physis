@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 use std::io::SeekFrom;
-use binrw::{BinReaderExt, BinResult};
+use binrw::{binread, BinReaderExt, BinResult};
+use half::f16;
 
 pub(crate) fn read_bool_from<T: std::convert::From<u8> + std::cmp::PartialEq>(x: T) -> bool {
     x == T::from(1u8)
@@ -37,6 +38,51 @@ pub(crate) fn strings_parser(base_offset: u64, strings_offset: &Vec<u16>) -> Bin
     }
 
     Ok(strings)
+}
+
+fn read_half1(data: [u16; 1]) -> Half1 {
+    Half1 {
+        value: f16::from_bits(data[0])
+    }
+}
+
+#[binread]
+#[derive(Debug, Default, Clone, Copy)]
+#[br(map = read_half1)]
+pub(crate) struct Half1 {
+    value: f16,
+}
+
+fn read_half2(data: [u16; 2]) -> Half2 {
+    Half2 {
+        x: f16::from_bits(data[0]),
+        y: f16::from_bits(data[0])
+    }
+}
+
+#[binread]
+#[derive(Debug, Default, Clone, Copy)]
+#[br(map = read_half2)]
+pub(crate) struct Half2 {
+    x: f16,
+    y: f16,
+}
+
+fn read_half3(data: [u16; 3]) -> Half3 {
+    Half3 {
+        r: f16::from_bits(data[0]),
+        g: f16::from_bits(data[0]),
+        b: f16::from_bits(data[0])
+    }
+}
+
+#[binread]
+#[derive(Debug, Default, Clone, Copy)]
+#[br(map = read_half3)]
+pub(crate) struct Half3 {
+    r: f16,
+    g: f16,
+    b: f16
 }
 
 #[cfg(test)]
