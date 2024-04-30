@@ -138,3 +138,6 @@ pub mod scd;
 
 /// Reading HWC files
 pub mod hwc;
+
+/// Reading IWC files
+pub mod iwc;
