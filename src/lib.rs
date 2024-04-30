@@ -156,3 +156,6 @@ pub mod phyb;
 
 /// Reading PAP files
 pub mod pap;
+
+/// Reading AVFX files
+pub mod avfx;
