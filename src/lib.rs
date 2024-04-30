@@ -141,3 +141,9 @@ pub mod hwc;
 
 /// Reading IWC files
 pub mod iwc;
+
+/// Reading TMB files
+pub mod tmb;
+
+/// Reading SKP files
+pub mod skp;
