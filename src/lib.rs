@@ -147,3 +147,6 @@ pub mod tmb;
 
 /// Reading SKP files
 pub mod skp;
+
+/// Reading SCHD files
+pub mod schd;
