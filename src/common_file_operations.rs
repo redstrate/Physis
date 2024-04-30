@@ -1,6 +1,9 @@
 // SPDX-FileCopyrightText: 2024 Joshua Goins <josh@redstrate.com>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+use std::io::SeekFrom;
+use binrw::{BinReaderExt, BinResult};
+
 pub(crate) fn read_bool_from<T: std::convert::From<u8> + std::cmp::PartialEq>(x: T) -> bool {
     x == T::from(1u8)
 }
@@ -11,6 +14,29 @@ pub(crate) fn write_bool_as<T: std::convert::From<u8>>(x: &bool) -> T {
     } else {
         T::from(0u8)
     }
+}
+
+#[binrw::parser(reader, endian)]
+pub(crate) fn strings_parser(base_offset: u64, strings_offset: &Vec<u16>) -> BinResult<Vec<String>> {
+    let mut strings: Vec<String> =
+        vec![];
+
+    for offset in strings_offset {
+        let string_offset = base_offset + *offset as u64;
+
+        let mut string = String::new();
+
+        reader.seek(SeekFrom::Start(string_offset as u64))?;
+        let mut next_char = reader.read_le::<u8>().unwrap() as char;
+        while next_char != '\0' {
+            string.push(next_char);
+            next_char = reader.read_le::<u8>().unwrap() as char;
+        }
+
+        strings.push(string);
+    }
+
+    Ok(strings)
 }
 
 #[cfg(test)]

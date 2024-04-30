@@ -4,42 +4,73 @@
 use std::io::{Cursor, Seek, SeekFrom};
 
 use crate::ByteSpan;
-use binrw::binrw;
+use binrw::{binread, binrw};
 use binrw::{BinRead, BinReaderExt};
+use crate::common_file_operations::strings_parser;
 
-#[binrw]
+#[binread]
+#[derive(Debug)]
+#[br(import { data_offset: i32 })]
+#[brw(little)]
+struct RacialDeformer {
+    bone_count: i32,
+
+    #[br(count = bone_count)]
+    bone_name_offsets: Vec<u16>,
+
+
+    #[br(args(data_offset as u64, &bone_name_offsets), parse_with = strings_parser)]
+    #[br(restore_position)]
+    bone_names: Vec<String>,
+
+    #[br(if((bone_count & 1) != 0))]
+    #[br(temp)]
+    _padding: u16,
+
+    /// 4x3 matrix
+    #[br(count = bone_count)]
+    #[br(err_context("offset = {} bone count = {}", data_offset, bone_count))]
+    transform: Vec<[f32; 12]>,
+
+}
+
+#[binread]
 #[derive(Debug)]
 #[brw(little)]
 struct PreBoneDeformerItem {
-    body_id: u16,
-    link_index: u16,
+    body_id: u16, // the combined body id like 0101
+    link_index: i16,
     #[br(pad_after = 4)]
-    data_offset: u32,
+    #[br(temp)]
+    data_offset: i32,
+
+    #[br(args { data_offset: data_offset })]
+    #[br(seek_before = SeekFrom::Start(data_offset as u64))]
+    #[br(restore_position)]
+    deformer: RacialDeformer
 }
 
-#[binrw]
+#[binread]
 #[derive(Debug)]
 #[brw(little)]
 struct PreBoneDeformerLink {
-    #[br(pad_after = 4)]
-    next_index: i16,
-    next_item_index: u16,
+    parent_index: i16,
+    first_child_index: i16,
+    next_sibling_index: i16,
+    deformer_index: u16,
 }
 
-#[binrw]
+#[binread]
 #[derive(Debug)]
 #[brw(little)]
 struct PreBoneDeformerHeader {
-    count: u32,
+    count: i32,
 
     #[br(count = count)]
     items: Vec<PreBoneDeformerItem>,
 
     #[br(count = count)]
     links: Vec<PreBoneDeformerLink>,
-
-    #[br(ignore)]
-    raw_data: Vec<u8>,
 }
 
 pub struct PreBoneDeformer {
@@ -64,9 +95,7 @@ impl PreBoneDeformer {
     /// Reads an existing PBD file
     pub fn from_existing(buffer: ByteSpan) -> Option<PreBoneDeformer> {
         let mut cursor = Cursor::new(buffer);
-        let mut header = PreBoneDeformerHeader::read(&mut cursor).ok()?;
-
-        header.raw_data = buffer.to_vec();
+        let mut header = PreBoneDeformerHeader::read(&mut cursor).unwrap();
 
         Some(PreBoneDeformer { header })
     }
@@ -88,57 +117,26 @@ impl PreBoneDeformer {
             .find(|x| x.body_id == from_body_id)?;
         let mut next = &self.header.links[item.link_index as usize];
 
-        if next.next_index == -1 {
+        if next.next_sibling_index == -1 {
             return None;
         }
 
         let mut bones = vec![];
 
-        let mut cursor = Cursor::new(&self.header.raw_data);
-
         loop {
-            cursor.seek(SeekFrom::Start(item.data_offset as u64)).ok()?;
-            let bone_name_count = cursor.read_le::<u32>().unwrap() as usize;
-
-            let string_offsets_base = item.data_offset as usize + core::mem::size_of::<u32>();
-
-            cursor
-                .seek(SeekFrom::Start(string_offsets_base as u64))
-                .ok()?;
-            let mut strings_offset = vec![];
-            for _ in 0..bone_name_count {
-                strings_offset.push(cursor.read_le::<u16>().unwrap());
-            }
-
-            let matrices_base = string_offsets_base + (bone_name_count + bone_name_count % 2) * 2;
-            cursor.seek(SeekFrom::Start(matrices_base as u64)).ok()?;
-
-            let mut matrices = vec![];
-            for _ in 0..bone_name_count {
-                matrices.push(cursor.read_le::<[f32; 12]>().unwrap());
-            }
-
-            for i in 0..bone_name_count {
-                let string_offset = item.data_offset as usize + strings_offset[i] as usize;
-
-                let mut string = String::new();
-
-                cursor.seek(SeekFrom::Start(string_offset as u64)).ok()?;
-                let mut next_char = cursor.read_le::<u8>().unwrap() as char;
-                while next_char != '\0' {
-                    string.push(next_char);
-                    next_char = cursor.read_le::<u8>().unwrap() as char;
-                }
-
-                let matrix = matrices[i];
+            for i in 0..item.deformer.bone_count {
                 bones.push(PreBoneDeformBone {
-                    name: string,
-                    deform: matrix,
-                });
+                    name: item.deformer.bone_names[i as usize].clone(),
+                    deform: item.deformer.transform[i as usize],
+                })
             }
 
-            next = &self.header.links[next.next_index as usize];
-            item = &self.header.items[next.next_item_index as usize];
+            if next.parent_index == -1 {
+                break;
+            }
+
+            next = &self.header.links[next.parent_index as usize];
+            item = &self.header.items[next.deformer_index as usize];
 
             if item.body_id == to_body_id {
                 break;
