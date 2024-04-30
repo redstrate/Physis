@@ -135,3 +135,6 @@ pub mod sgb;
 
 /// Reading SCD files
 pub mod scd;
+
+/// Reading HWC files
+pub mod hwc;
