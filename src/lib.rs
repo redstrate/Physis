@@ -159,3 +159,6 @@ pub mod pap;
 
 /// Reading AVFX files
 pub mod avfx;
+
+/// Reading STM files
+pub mod stm;
