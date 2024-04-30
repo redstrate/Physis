@@ -129,3 +129,9 @@ pub const PHYSIS_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 /// Reading ULD files
 pub mod uld;
+
+/// Reading SGB files
+pub mod sgb;
+
+/// Reading SCD files
+pub mod scd;
