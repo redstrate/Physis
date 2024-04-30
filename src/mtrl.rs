@@ -66,12 +66,38 @@ struct ColorTable {
     data: Vec<ColorTableRow>,
 }
 
-#[binrw]
+#[binread]
+#[derive(Debug)]
+#[allow(dead_code)]
+struct ColorDyeTableRow {
+    #[br(temp)]
+    data: u16,
+
+    #[br(calc = data >> 5)]
+    template: u16,
+
+    #[br(calc = (data & 0x01) != 0)]
+    diffuse: bool,
+
+    #[br(calc = (data & 0x02) != 0)]
+    specular: bool,
+
+    #[br(calc = (data & 0x04) != 0)]
+    emissive: bool,
+
+    #[br(calc = (data & 0x08) != 0)]
+    gloss: bool,
+
+    #[br(calc = (data & 0x10) != 0)]
+    specular_strength: bool,
+}
+
+#[binread]
 #[derive(Debug)]
 #[allow(dead_code)]
 struct ColorDyeTable {
     #[br(count = 16)]
-    data: Vec<u16>,
+    data: Vec<ColorDyeTableRow>,
 }
 
 #[binrw]
