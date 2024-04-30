@@ -126,3 +126,6 @@ pub mod dic;
 
 #[doc(hidden)]
 pub const PHYSIS_VERSION: &str = env!("CARGO_PKG_VERSION");
+
+/// Reading ULD files
+pub mod uld;
