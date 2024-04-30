@@ -46,7 +46,7 @@ struct ColorSet {
 #[binread]
 #[derive(Debug)]
 #[allow(dead_code)]
-struct ColorTableRow {
+pub struct ColorTableRow {
     diffuse_color: Half3,
     specular_strength: Half1,
     specular_color: Half3,
@@ -61,7 +61,7 @@ struct ColorTableRow {
 #[br(import {set_count: usize})]
 #[derive(Debug)]
 #[allow(dead_code)]
-struct ColorTable {
+pub struct ColorTable {
     #[br(count = set_count)]
     data: Vec<ColorTableRow>,
 }
@@ -69,7 +69,7 @@ struct ColorTable {
 #[binread]
 #[derive(Debug)]
 #[allow(dead_code)]
-struct ColorDyeTableRow {
+pub struct ColorDyeTableRow {
     #[br(temp)]
     data: u16,
 
@@ -95,7 +95,7 @@ struct ColorDyeTableRow {
 #[binread]
 #[derive(Debug)]
 #[allow(dead_code)]
-struct ColorDyeTable {
+pub struct ColorDyeTable {
     #[br(count = 16)]
     data: Vec<ColorDyeTableRow>,
 }
@@ -240,6 +240,8 @@ pub struct Material {
     pub shader_keys: Vec<ShaderKey>,
     pub constants: Vec<Constant>,
     pub samplers: Vec<Sampler>,
+    pub color_table: Option<ColorTable>,
+    pub color_dye_table: Option<ColorDyeTable>
 }
 
 impl Material {
@@ -299,7 +301,9 @@ impl Material {
             texture_paths,
             shader_keys: mat_data.shader_keys,
             constants,
-            samplers: mat_data.samplers
+            samplers: mat_data.samplers,
+            color_table: mat_data.color_set_info,
+            color_dye_table: mat_data.color_set_due_info
         })
     }
 }
