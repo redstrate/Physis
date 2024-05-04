@@ -201,9 +201,7 @@ impl DatFile {
     /// by the function.
     ///
     /// If the block of data is successfully parsed, it returns the file data - otherwise is None.
-    pub fn read_from_offset(&mut self, offset: u32) -> Option<ByteBuffer> {
-        let offset = (offset * 0x80) as u64;
-
+    pub fn read_from_offset(&mut self, offset: u64) -> Option<ByteBuffer> {
         self.file
             .seek(SeekFrom::Start(offset))
             .expect("Unable to find offset in file.");

@@ -13,7 +13,7 @@ use crate::dat::DatFile;
 use crate::exd::EXD;
 use crate::exh::EXH;
 use crate::exl::EXL;
-use crate::index::{Index2File, IndexFile, IndexHashBitfield};
+use crate::index::{Index2File, IndexEntry, IndexFile};
 use crate::patch::{apply_patch, PatchError};
 use crate::repository::{string_to_category, Category, Repository};
 use crate::ByteBuffer;
@@ -127,14 +127,14 @@ impl GameData {
         self.repositories.sort();
     }
 
-    fn get_dat_file(&self, path: &str, data_file_id: u32) -> Option<DatFile> {
+    fn get_dat_file(&self, path: &str, chunk: u8, data_file_id: u32) -> Option<DatFile> {
         let (repository, category) = self.parse_repository_category(path).unwrap();
 
         let dat_path: PathBuf = [
             self.game_directory.clone(),
             "sqpack".to_string(),
             repository.name.clone(),
-            repository.dat_filename(category, data_file_id),
+            repository.dat_filename(chunk, category, data_file_id),
         ]
         .iter()
         .collect();
@@ -161,17 +161,7 @@ impl GameData {
             return false;
         };
 
-        self.cache_index_file((&index_path.0, &index_path.1));
-
-        if let Some(index_file) = self.get_index_file(&index_path.0) {
-            return index_file.exists(path);
-        }
-
-        if let Some(index2_file) = self.get_index2_file(&index_path.1) {
-            return index2_file.exists(path);
-        }
-
-        false
+        return self.find_entry(path).is_some();
     }
 
     /// Extracts the file located at `path`. This is returned as an in-memory buffer, and will usually
@@ -194,10 +184,10 @@ impl GameData {
 
         let slice = self.find_entry(path);
         match slice {
-            Some(entry) => {
-                let mut dat_file = self.get_dat_file(path, entry.data_file_id().into())?;
+            Some((entry, chunk)) => {
+                let mut dat_file = self.get_dat_file(path, chunk, entry.data_file_id.into())?;
 
-                dat_file.read_from_offset(entry.offset())
+                dat_file.read_from_offset(entry.offset as u64)
             }
             None => None,
         }
@@ -206,45 +196,55 @@ impl GameData {
     /// Parses a path structure and spits out the corresponding category and repository.
     fn parse_repository_category(&self, path: &str) -> Option<(&Repository, Category)> {
         let tokens: Vec<&str> = path.split('/').collect(); // TODO: use split_once here
-        let repository_token = tokens[0];
 
         if tokens.len() < 2 {
             return None;
         }
 
+        let repository_token = tokens[1];
+
         for repository in &self.repositories {
             if repository.name == repository_token {
-                return Some((repository, string_to_category(tokens[1])?));
+                return Some((repository, string_to_category(tokens[0])?));
             }
         }
 
         Some((&self.repositories[0], string_to_category(tokens[0])?))
     }
 
-    fn get_index_filenames(&self, path: &str) -> Option<(String, String)> {
+    fn get_index_filenames(&self, path: &str) -> Option<(Vec<(String, u8)>, Vec<(String, u8)>)> {
         let (repository, category) = self.parse_repository_category(path)?;
 
-        let index_path: PathBuf = [
-            &self.game_directory,
-            "sqpack",
-            &repository.name,
-            &repository.index_filename(category),
-        ]
-        .iter()
-        .collect();
+        let mut index1_filenames = vec![];
+        let mut index2_filenames = vec![];
 
-        let index2_path: PathBuf = [
-            &self.game_directory,
-            "sqpack",
-            &repository.name,
-            &repository.index2_filename(category),
-        ]
-        .iter()
-        .collect();
+        for chunk in 0..255 {
+            let index_path: PathBuf = [
+                &self.game_directory,
+                "sqpack",
+                &repository.name,
+                &repository.index_filename(chunk, category),
+            ]
+                .iter()
+                .collect();
+
+            index1_filenames.push((index_path.into_os_string().into_string().unwrap(), chunk));
+
+            let index2_path: PathBuf = [
+                &self.game_directory,
+                "sqpack",
+                &repository.name,
+                &repository.index2_filename(chunk, category),
+            ]
+                .iter()
+                .collect();
+
+            index2_filenames.push((index2_path.into_os_string().into_string().unwrap(), chunk));
+        }
 
         Some((
-            index_path.into_os_string().into_string().unwrap(),
-            index2_path.into_os_string().into_string().unwrap(),
+            index1_filenames,
+            index2_filenames
         ))
     }
 
@@ -397,17 +397,19 @@ impl GameData {
         Ok(())
     }
 
-    fn cache_index_file(&mut self, filenames: (&str, &str)) {
-        if !self.index_files.contains_key(filenames.0) {
-            if let Some(index_file) = IndexFile::from_existing(filenames.0) {
-                self.index_files.insert(filenames.0.to_string(), index_file);
+    fn cache_index_file(&mut self, filename: &str) {
+        if !self.index_files.contains_key(filename) {
+            if let Some(index_file) = IndexFile::from_existing(filename) {
+                self.index_files.insert(filename.to_string(), index_file);
             }
         }
+    }
 
-        if !self.index2_files.contains_key(filenames.1) {
-            if let Some(index_file) = Index2File::from_existing(filenames.1) {
+    fn cache_index2_file(&mut self, filename: &str) {
+        if !self.index2_files.contains_key(filename) {
+            if let Some(index_file) = Index2File::from_existing(filename) {
                 self.index2_files
-                    .insert(filenames.1.to_string(), index_file);
+                    .insert(filename.to_string(), index_file);
             }
         }
     }
@@ -420,25 +422,26 @@ impl GameData {
         self.index2_files.get(filename)
     }
 
-    fn find_entry(&mut self, path: &str) -> Option<IndexHashBitfield> {
-        let index_path = self.get_index_filenames(path)?;
-        debug!(
-            "Trying index files {index_path}, {index2_path}",
-            index_path = index_path.0,
-            index2_path = index_path.1
-        );
+    fn find_entry(&mut self, path: &str) -> Option<(IndexEntry, u8)> {
+        let (index_paths, index2_paths) = self.get_index_filenames(path)?;
 
-        self.cache_index_file((&index_path.0, &index_path.1));
+        for (index_path, chunk) in index_paths {
+            self.cache_index_file(&index_path);
 
-        if let Some(index_file) = self.get_index_file(&index_path.0) {
-            if let Some(entry) = index_file.find_entry(path) {
-                return Some(entry.bitfield);
+            if let Some(index_file) = self.get_index_file(&index_path) {
+                if let Some(entry) = index_file.find_entry(path) {
+                    return Some((entry, chunk));
+                }
             }
         }
 
-        if let Some(index2_file) = self.get_index2_file(&index_path.1) {
-            if let Some(entry) = index2_file.find_entry(path) {
-                return Some(entry.bitfield);
+        for (index2_path, chunk) in index2_paths {
+            self.cache_index2_file(&index2_path);
+
+            if let Some(index_file) = self.get_index2_file(&index2_path) {
+                if let Some(entry) = index_file.find_entry(path) {
+                    return Some((entry, chunk));
+                }
             }
         }
 

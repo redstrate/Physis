@@ -70,35 +70,35 @@ impl PartialOrd for Repository {
 #[derive(Debug, PartialEq, Eq, Copy, Clone)]
 pub enum Category {
     /// Common files such as game fonts, and other data that doesn't really fit anywhere else.
-    Common,
+    Common = 0x00,
     /// Shared data between game maps.
-    BackgroundCommon,
+    BackgroundCommon = 0x01,
     /// Game map data such as models, textures, and so on.
-    Background,
+    Background = 0x02,
     /// Cutscene content such as animations.
-    Cutscene,
+    Cutscene = 0x03,
     /// Character model files and more.
-    Character,
+    Character = 0x04,
     /// Compiled shaders used by the retail client.
-    Shader,
+    Shader = 0x05,
     /// UI layouts and textures.
-    UI,
+    UI = 0x06,
     /// Sound effects, basically anything not under `Music`.
-    Sound,
+    Sound = 0x07,
     /// This "VFX" means "visual effects", and contains textures and definitions for stuff like battle effects.
-    VFX,
+    VFX = 0x08,
     /// A leftover from 1.0, where the UI was primarily driven by LUA scripts.
-    UIScript,
+    UIScript = 0x09,
     /// Excel data.
-    EXD,
+    EXD = 0x0A,
     /// Many game events are driven by LUA scripts, such as cutscenes.
-    GameScript,
+    GameScript = 0x0B,
     /// Music!
-    Music,
+    Music = 0x0C,
     /// Unknown purpose, most likely to test SqPack functionality.
-    SqPackTest,
+    SqPackTest = 0x12,
     /// Unknown purpose, most likely debug files.
-    Debug,
+    Debug = 0x13,
 }
 
 pub fn string_to_category(string: &str) -> Option<Category> {
@@ -170,25 +170,24 @@ impl Repository {
     }
 
     /// Calculate an index filename for a specific category, like _"0a0000.win32.index"_.
-    pub fn index_filename(&self, category: Category) -> String {
+    pub fn index_filename(&self, chunk: u8, category: Category) -> String {
         format!(
             "{:02x}{:02}{:02}.{}.index",
             category as i32,
             self.expansion(),
-            0,
+            chunk,
             get_platform_string(&self.platform)
         )
     }
 
     /// Calculate an index2 filename for a specific category, like _"0a0000.win32.index"_.
-    pub fn index2_filename(&self, category: Category) -> String {
-        format!("{}2", self.index_filename(category))
+    pub fn index2_filename(&self, chunk: u8, category: Category) -> String {
+        format!("{}2", self.index_filename(chunk, category))
     }
 
     /// Calculate a dat filename given a category and a data file id, returns something like _"0a0000.win32.dat0"_.
-    pub fn dat_filename(&self, category: Category, data_file_id: u32) -> String {
+    pub fn dat_filename(&self, chunk: u8, category: Category, data_file_id: u32) -> String {
         let expansion = self.expansion();
-        let chunk = 0;
         let platform = get_platform_string(&self.platform);
 
         format!(

@@ -12,9 +12,8 @@ use binrw::BinRead;
 use modular_bitfield::prelude::*;
 
 #[binrw]
-#[br(magic = b"SqPack")]
+#[br(magic = b"SqPack\0\0")]
 pub struct SqPackHeader {
-    #[br(pad_before = 2)]
     platform_id: Platform,
     #[br(pad_before = 3)]
     size: u32,
@@ -25,26 +24,48 @@ pub struct SqPackHeader {
 #[binrw]
 pub struct SqPackIndexHeader {
     size: u32,
-    file_type: u32,
+    version: u32,
     index_data_offset: u32,
     index_data_size: u32,
-}
-
-#[bitfield]
-#[binrw]
-#[br(map = Self::from_bytes)]
-#[derive(Clone, Copy, Debug)]
-pub struct IndexHashBitfield {
-    pub size: B1,
-    pub data_file_id: B3,
-    pub offset: B28,
+    index_data_hash: [u8; 64],
+    number_of_data_file: u32,
+    synonym_data_offset: u32,
+    synonym_data_size: u32,
+    synonym_data_hash: [u8; 64],
+    empty_block_data_offset: u32,
+    empty_block_data_size: u32,
+    empty_block_data_hash: [u8; 64],
+    dir_index_data_offset: u32,
+    dir_index_data_size: u32,
+    dir_index_data_hash: [u8; 64],
+    index_type: u32,
+    #[br(pad_before = 656)]
+    self_hash: [u8; 64]
 }
 
 #[binrw]
 pub struct IndexHashTableEntry {
     pub hash: u64,
-    #[br(pad_after = 4)]
-    pub(crate) bitfield: IndexHashBitfield,
+
+    #[br(temp)]
+    #[bw(ignore)]
+    data: u32,
+
+    #[br(temp)]
+    #[bw(ignore)]
+    padding: u32,
+
+    #[br(calc = (data & 0b1) == 0b1)]
+    #[bw(ignore)]
+    pub is_synonym: bool,
+
+    #[br(calc = ((data & 0b1110) >> 1) as u8)]
+    #[bw(ignore)]
+    pub data_file_id: u8,
+
+    #[br(calc = (data & !0xF) * 0x08)]
+    #[bw(ignore)]
+    pub offset: u32,
 }
 
 // The only difference between index and index2 is how the path hash is stored.
@@ -54,7 +75,22 @@ pub struct IndexHashTableEntry {
 #[derive(Debug)]
 pub struct Index2HashTableEntry {
     pub hash: u32,
-    pub(crate) bitfield: IndexHashBitfield,
+
+    #[br(temp)]
+    #[bw(ignore)]
+    data: u32,
+
+    #[br(calc = (data & 0b1) == 0b1)]
+    #[bw(ignore)]
+    pub is_synonym: bool,
+
+    #[br(calc = ((data & 0b1110) >> 1) as u8)]
+    #[bw(ignore)]
+    pub data_file_id: u8,
+
+    #[br(calc = (data & !0xF) * 0x08)]
+    #[bw(ignore)]
+    pub offset: u32,
 }
 
 #[derive(Debug)]
@@ -73,8 +109,7 @@ pub struct IndexFile {
     index_header: SqPackIndexHeader,
 
     #[br(seek_before = SeekFrom::Start(index_header.index_data_offset.into()))]
-    // +4 because of padding
-    #[br(count = index_header.index_data_size / core::mem::size_of::<IndexHashTableEntry>() as u32 + 4)]
+    #[br(count = index_header.index_data_size / 16)]
     pub entries: Vec<IndexHashTableEntry>,
 }
 
@@ -87,7 +122,7 @@ pub struct Index2File {
     index_header: SqPackIndexHeader,
 
     #[br(seek_before = SeekFrom::Start(index_header.index_data_offset.into()))]
-    #[br(count = index_header.index_data_size / core::mem::size_of::<Index2HashTableEntry>() as u32)]
+    #[br(count = index_header.index_data_size / 8)]
     pub entries: Vec<Index2HashTableEntry>,
 }
 
@@ -130,9 +165,18 @@ impl IndexFile {
         self.entries.iter().any(|s| s.hash == hash)
     }
 
-    pub fn find_entry(&self, path: &str) -> Option<&IndexHashTableEntry> {
+    pub fn find_entry(&self, path: &str) -> Option<IndexEntry> {
         let hash = IndexFile::calculate_hash(path);
-        self.entries.iter().find(|s| s.hash == hash)
+
+        if let Some(entry) = self.entries.iter().find(|s| s.hash == hash) {
+            return Some(IndexEntry {
+                hash: entry.hash,
+                data_file_id: entry.data_file_id,
+                offset: entry.offset,
+            });
+        }
+
+        None
     }
 }
 
@@ -156,9 +200,18 @@ impl Index2File {
         self.entries.iter().any(|s| s.hash == hash)
     }
 
-    pub fn find_entry(&self, path: &str) -> Option<&Index2HashTableEntry> {
+    pub fn find_entry(&self, path: &str) -> Option<IndexEntry> {
         let hash = Index2File::calculate_hash(path);
-        self.entries.iter().find(|s| s.hash == hash)
+
+        if let Some(entry) = self.entries.iter().find(|s| s.hash == hash) {
+            return Some(IndexEntry {
+                hash: entry.hash as u64,
+                data_file_id: entry.data_file_id,
+                offset: entry.offset,
+            });
+        }
+
+        None
     }
 }
 
