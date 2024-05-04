@@ -95,7 +95,7 @@ impl PreBoneDeformer {
     /// Reads an existing PBD file
     pub fn from_existing(buffer: ByteSpan) -> Option<PreBoneDeformer> {
         let mut cursor = Cursor::new(buffer);
-        let mut header = PreBoneDeformerHeader::read(&mut cursor).unwrap();
+        let mut header = PreBoneDeformerHeader::read(&mut cursor).ok()?;
 
         Some(PreBoneDeformer { header })
     }
