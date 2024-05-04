@@ -50,7 +50,7 @@ fn read_half1(data: [u16; 1]) -> Half1 {
 #[derive(Debug, Default, Clone, Copy)]
 #[br(map = read_half1)]
 pub(crate) struct Half1 {
-    value: f16,
+    pub value: f16,
 }
 
 fn read_half2(data: [u16; 2]) -> Half2 {
@@ -64,8 +64,8 @@ fn read_half2(data: [u16; 2]) -> Half2 {
 #[derive(Debug, Default, Clone, Copy)]
 #[br(map = read_half2)]
 pub(crate) struct Half2 {
-    x: f16,
-    y: f16,
+    pub x: f16,
+    pub y: f16,
 }
 
 fn read_half3(data: [u16; 3]) -> Half3 {
@@ -80,9 +80,9 @@ fn read_half3(data: [u16; 3]) -> Half3 {
 #[derive(Debug, Default, Clone, Copy)]
 #[br(map = read_half3)]
 pub(crate) struct Half3 {
-    r: f16,
-    g: f16,
-    b: f16
+    pub r: f16,
+    pub g: f16,
+    pub b: f16
 }
 
 #[cfg(test)]

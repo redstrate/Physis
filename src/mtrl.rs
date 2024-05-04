@@ -44,17 +44,32 @@ struct ColorSet {
 }
 
 #[binread]
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
+#[repr(C)]
 #[allow(dead_code)]
 pub struct ColorTableRow {
-    diffuse_color: Half3,
-    specular_strength: Half1,
-    specular_color: Half3,
-    gloss_strength: Half1,
-    emissive_color: Half3,
-    tile_set: u16,
-    material_repeat: Half2,
-    material_skew: Half2,
+    #[br(map = |x: Half3| { [x.r.to_f32(), x.g.to_f32(), x.b.to_f32()] })]
+    pub diffuse_color: [f32; 3],
+
+    #[br(map = |x: Half1| { x.value.to_f32() })]
+    pub specular_strength: f32,
+
+    #[br(map = |x: Half3| { [x.r.to_f32(), x.g.to_f32(), x.b.to_f32()] })]
+    pub specular_color: [f32; 3],
+
+    #[br(map = |x: Half1| { x.value.to_f32() })]
+    pub gloss_strength: f32,
+
+    #[br(map = |x: Half3| { [x.r.to_f32(), x.g.to_f32(), x.b.to_f32()] })]
+    pub emissive_color: [f32; 3],
+
+    pub tile_set: u16,
+
+    #[br(map = |x: Half2| { [x.x.to_f32(), x.y.to_f32()] })]
+    pub material_repeat: [f32; 2],
+
+    #[br(map = |x: Half2| { [x.x.to_f32(), x.y.to_f32()] })]
+    pub material_skew: [f32; 2],
 }
 
 #[binread]
@@ -63,7 +78,7 @@ pub struct ColorTableRow {
 #[allow(dead_code)]
 pub struct ColorTable {
     #[br(count = set_count)]
-    data: Vec<ColorTableRow>,
+    pub rows: Vec<ColorTableRow>,
 }
 
 #[binread]
@@ -74,22 +89,22 @@ pub struct ColorDyeTableRow {
     data: u16,
 
     #[br(calc = data >> 5)]
-    template: u16,
+    pub template: u16,
 
     #[br(calc = (data & 0x01) != 0)]
-    diffuse: bool,
+    pub diffuse: bool,
 
     #[br(calc = (data & 0x02) != 0)]
-    specular: bool,
+    pub specular: bool,
 
     #[br(calc = (data & 0x04) != 0)]
-    emissive: bool,
+    pub emissive: bool,
 
     #[br(calc = (data & 0x08) != 0)]
-    gloss: bool,
+    pub gloss: bool,
 
     #[br(calc = (data & 0x10) != 0)]
-    specular_strength: bool,
+    pub specular_strength: bool,
 }
 
 #[binread]
@@ -97,7 +112,7 @@ pub struct ColorDyeTableRow {
 #[allow(dead_code)]
 pub struct ColorDyeTable {
     #[br(count = 16)]
-    data: Vec<ColorDyeTableRow>,
+    pub rows: Vec<ColorDyeTableRow>,
 }
 
 #[binrw]
@@ -184,8 +199,10 @@ pub enum TextureUsage {
 pub struct Sampler {
     texture_usage: TextureUsage,
     flags: u32, // TODO: unknown
-    #[br(pad_after = 3)]
     texture_index: u8,
+    unknown1: u8,
+    unknown2: u8,
+    unknown3: u8
 }
 
 #[binrw]
@@ -213,13 +230,13 @@ struct MaterialData {
     // The MTRL version is the same (why square enix?) so we check the data set size instead
     #[br(args { set_count: if file_header.data_set_size < 2048 { 16 } else { 32 } })]
     #[bw(ignore)]
-    color_set_info: Option<ColorTable>,
+    color_table: Option<ColorTable>,
 
     #[br(if(file_header.data_set_size >
         if file_header.data_set_size < 2048 { 512 } else { 2048 }
     ))]
     #[bw(ignore)]
-    color_set_due_info: Option<ColorDyeTable>,
+    color_dye_table: Option<ColorDyeTable>,
 
     header: MaterialHeader,
 
@@ -302,8 +319,8 @@ impl Material {
             shader_keys: mat_data.shader_keys,
             constants,
             samplers: mat_data.samplers,
-            color_table: mat_data.color_set_info,
-            color_dye_table: mat_data.color_set_due_info
+            color_table: mat_data.color_table,
+            color_dye_table: mat_data.color_dye_table
         })
     }
 }
