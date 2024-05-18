@@ -12,20 +12,18 @@ use binrw::BinRead;
 #[brw(little)]
 struct IwcHeader {
     count: u16,
-    part_mask: u16
+    part_mask: u16,
 }
 
 #[derive(Debug)]
-pub struct Iwc {
-
-}
+pub struct Iwc {}
 
 impl Iwc {
     /// Reads an existing ULD file
     pub fn from_existing(buffer: ByteSpan) -> Option<Self> {
         let mut cursor = Cursor::new(buffer);
-        let header = IwcHeader::read(&mut cursor).ok()?;
+        IwcHeader::read(&mut cursor).ok()?;
 
-        Some(Iwc{})
+        Some(Iwc {})
     }
 }

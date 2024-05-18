@@ -3,9 +3,9 @@
 
 use std::io::{Cursor, SeekFrom};
 
+use crate::crc::XivCrc32;
 use crate::ByteSpan;
 use binrw::{binread, BinRead};
-use crate::crc::XivCrc32;
 
 #[binread]
 #[br(little, import {
@@ -271,7 +271,7 @@ impl ShaderPackage {
     }
 
     pub fn crc(str: &str) -> u32 {
-        return XivCrc32::from(str).crc;
+        XivCrc32::from(str).crc
     }
 }
 
@@ -302,9 +302,19 @@ mod tests {
     fn test_selector() {
         let selector = ShaderPackage::build_selector_from_all_keys(
             &[],
-            &[ShaderPackage::crc("TransformViewSkin"), ShaderPackage::crc("GetAmbientLight_SH"), ShaderPackage::crc("GetReflectColor_Texture"), ShaderPackage::crc("GetAmbientOcclusion_None"), ShaderPackage::crc("ApplyDitherClipOff")],
+            &[
+                ShaderPackage::crc("TransformViewSkin"),
+                ShaderPackage::crc("GetAmbientLight_SH"),
+                ShaderPackage::crc("GetReflectColor_Texture"),
+                ShaderPackage::crc("GetAmbientOcclusion_None"),
+                ShaderPackage::crc("ApplyDitherClipOff"),
+            ],
             &[3756477356, 1556481461, 1111668802, 428675533],
-            &[ShaderPackage::crc("Default"), ShaderPackage::crc("SUB_VIEW_MAIN")]);
+            &[
+                ShaderPackage::crc("Default"),
+                ShaderPackage::crc("SUB_VIEW_MAIN"),
+            ],
+        );
 
         assert_eq!(selector, 0x1075AE91);
     }

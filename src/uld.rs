@@ -24,20 +24,18 @@ struct UldHeader {
     pub version: String,
 
     component_offset: u32,
-    widget_offset: u32
+    widget_offset: u32,
 }
 
 #[derive(Debug)]
-pub struct Uld {
-
-}
+pub struct Uld {}
 
 impl Uld {
     /// Reads an existing ULD file
     pub fn from_existing(buffer: ByteSpan) -> Option<Self> {
         let mut cursor = Cursor::new(buffer);
-        let header = UldHeader::read(&mut cursor).ok()?;
+        UldHeader::read(&mut cursor).ok()?;
 
-        Some(Uld{})
+        Some(Uld {})
     }
 }

@@ -17,7 +17,7 @@ enum SkeletonType {
     #[brw(magic = 2u8)]
     DemiHuman,
     #[brw(magic = 3u8)]
-    Weapon
+    Weapon,
 }
 
 #[binrw]
@@ -34,20 +34,18 @@ struct PapHeader {
 
     info_offset: i32,
     havok_position: i32,
-    footer_position: i32
+    footer_position: i32,
 }
 
 #[derive(Debug)]
-pub struct Pap {
-
-}
+pub struct Pap {}
 
 impl Pap {
     /// Reads an existing ULD file
     pub fn from_existing(buffer: ByteSpan) -> Option<Self> {
         let mut cursor = Cursor::new(buffer);
-        let header = PapHeader::read(&mut cursor).ok()?;
+        PapHeader::read(&mut cursor).ok()?;
 
-        Some(Pap{})
+        Some(Pap {})
     }
 }

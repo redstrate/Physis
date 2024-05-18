@@ -1,12 +1,12 @@
 // SPDX-FileCopyrightText: 2023 Joshua Goins <josh@redstrate.com>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-use std::io::{Cursor, Seek, SeekFrom};
+use std::io::{Cursor, SeekFrom};
 
-use crate::ByteSpan;
-use binrw::{binread, binrw};
-use binrw::{BinRead, BinReaderExt};
 use crate::common_file_operations::strings_parser;
+use crate::ByteSpan;
+use binrw::binread;
+use binrw::BinRead;
 
 #[binread]
 #[derive(Debug)]
@@ -17,7 +17,6 @@ struct RacialDeformer {
 
     #[br(count = bone_count)]
     bone_name_offsets: Vec<u16>,
-
 
     #[br(args(data_offset as u64, &bone_name_offsets), parse_with = strings_parser)]
     #[br(restore_position)]
@@ -31,7 +30,6 @@ struct RacialDeformer {
     #[br(count = bone_count)]
     #[br(err_context("offset = {} bone count = {}", data_offset, bone_count))]
     transform: Vec<[f32; 12]>,
-
 }
 
 #[binread]
@@ -47,7 +45,7 @@ struct PreBoneDeformerItem {
     #[br(args { data_offset: data_offset })]
     #[br(seek_before = SeekFrom::Start(data_offset as u64))]
     #[br(restore_position)]
-    deformer: RacialDeformer
+    deformer: RacialDeformer,
 }
 
 #[binread]
@@ -95,7 +93,7 @@ impl PreBoneDeformer {
     /// Reads an existing PBD file
     pub fn from_existing(buffer: ByteSpan) -> Option<PreBoneDeformer> {
         let mut cursor = Cursor::new(buffer);
-        let mut header = PreBoneDeformerHeader::read(&mut cursor).ok()?;
+        let header = PreBoneDeformerHeader::read(&mut cursor).ok()?;
 
         Some(PreBoneDeformer { header })
     }

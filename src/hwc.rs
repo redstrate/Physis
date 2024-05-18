@@ -18,8 +18,7 @@ impl Hwc {
     pub fn from_existing(buffer: ByteSpan) -> Option<Self> {
         let mut cursor = Cursor::new(buffer);
 
-        let mut rgba = Vec::new();
-        rgba.resize(CURSOR_WIDTH * CURSOR_HEIGHT * 4, 0);
+        let mut rgba = vec![0; CURSOR_WIDTH * CURSOR_HEIGHT * 4];
         cursor.read_exact(&mut rgba).ok()?;
 
         Some(Self { rgba })

@@ -2,19 +2,17 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 use std::io::{Cursor, Seek, SeekFrom};
-use std::ptr::read;
 
 use crate::ByteSpan;
-use binrw::{binread, BinReaderExt, binrw};
 use binrw::BinRead;
-use crate::dat::Block;
+use binrw::{binread, binrw, BinReaderExt};
 
 #[binrw]
 #[derive(Debug)]
 #[brw(little)]
 struct AvfxHeader {
     name: u32,
-    size: u32
+    size: u32,
 }
 
 #[binread]
@@ -291,17 +289,11 @@ impl Avfx {
 
         let mut avfx = Avfx::default();
 
-        let read_bool = |cursor: &mut Cursor<ByteSpan>| {
-            return cursor.read_le::<u8>().unwrap() == 1u8;
-        };
+        let read_bool = |cursor: &mut Cursor<ByteSpan>| cursor.read_le::<u8>().unwrap() == 1u8;
 
-        let read_uint = |cursor: &mut Cursor<ByteSpan>| {
-            return cursor.read_le::<u32>().unwrap();
-        };
+        let read_uint = |cursor: &mut Cursor<ByteSpan>| cursor.read_le::<u32>().unwrap();
 
-        let read_float = |cursor: &mut Cursor<ByteSpan>| {
-            return cursor.read_le::<f32>().unwrap();
-        };
+        let read_float = |cursor: &mut Cursor<ByteSpan>| cursor.read_le::<f32>().unwrap();
 
         while cursor.position() < header.size as u64 {
             let last_pos = cursor.position();
@@ -522,7 +514,7 @@ impl Avfx {
             let new_pos = cursor.position();
             let read_bytes = (new_pos - last_pos) - 8;
             let padding = block.size as u64 - read_bytes;
-            cursor.seek(SeekFrom::Current(padding as i64));
+            cursor.seek(SeekFrom::Current(padding as i64)).ok()?;
         }
 
         Some(avfx)

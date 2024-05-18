@@ -9,7 +9,6 @@ use crate::common::Platform;
 use crate::crc::Jamcrc;
 use binrw::binrw;
 use binrw::BinRead;
-use modular_bitfield::prelude::*;
 
 #[binrw]
 #[br(magic = b"SqPack\0\0")]
@@ -40,7 +39,7 @@ pub struct SqPackIndexHeader {
     dir_index_data_hash: [u8; 64],
     index_type: u32,
     #[br(pad_before = 656)]
-    self_hash: [u8; 64]
+    self_hash: [u8; 64],
 }
 
 #[binrw]

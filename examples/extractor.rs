@@ -1,11 +1,11 @@
 // SPDX-FileCopyrightText: 2024 Joshua Goins <josh@redstrate.com>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+use physis::common::Platform;
+use physis::gamedata::GameData;
 use std::env;
 use std::fs::File;
 use std::io::Write;
-use physis::common::Platform;
-use physis::gamedata::GameData;
 
 /// A simple program that allows a user to extract raw files from the game
 fn main() {
@@ -44,5 +44,8 @@ fn main() {
         return;
     };
 
-    println!("Successfully extracted {} to {}!", file_path, destination_path);
+    println!(
+        "Successfully extracted {} to {}!",
+        file_path, destination_path
+    );
 }

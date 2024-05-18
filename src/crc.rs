@@ -1,8 +1,8 @@
 // SPDX-FileCopyrightText: 2023 Joshua Goins <josh@redstrate.com>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-use std::ops::{Add, AddAssign, BitXor, BitXorAssign};
 use libz_ng_sys::z_off_t;
+use std::ops::{Add, AddAssign, BitXor, BitXorAssign};
 
 /// CRC used for filepath hashes in index file
 pub(crate) struct Jamcrc {
@@ -49,7 +49,7 @@ fn crc32(crc: u32, s: &[u8]) -> u32 {
 }
 
 fn crc32_combine(crc1: u32, crc2: u32, len2: usize) -> u32 {
-    unsafe {  libz_ng_sys::crc32_combine(crc1, crc2, len2 as z_off_t) as u32 }
+    unsafe { libz_ng_sys::crc32_combine(crc1, crc2, len2 as z_off_t) as u32 }
 }
 
 /// CRC used for shader keys
@@ -62,10 +62,7 @@ pub(crate) struct XivCrc32 {
 
 impl XivCrc32 {
     pub(crate) fn new(crc: u32, len: usize) -> Self {
-        Self {
-            crc,
-            len,
-        }
+        Self { crc, len }
     }
 }
 
@@ -75,7 +72,7 @@ impl From<&[u8]> for XivCrc32 {
     }
 }
 
-impl <const N: usize> From<&[u8; N]> for XivCrc32 {
+impl<const N: usize> From<&[u8; N]> for XivCrc32 {
     fn from(s: &[u8; N]) -> Self {
         Self::new(!crc32(0xFFFFFFFF, s), N)
     }
@@ -91,7 +88,10 @@ impl Add<XivCrc32> for XivCrc32 {
     type Output = XivCrc32;
 
     fn add(self, rhs: XivCrc32) -> Self::Output {
-        Self::new(crc32_combine(self.crc, rhs.crc, rhs.len), self.len + rhs.len)
+        Self::new(
+            crc32_combine(self.crc, rhs.crc, rhs.len),
+            self.len + rhs.len,
+        )
     }
 }
 
@@ -119,8 +119,8 @@ impl BitXorAssign<XivCrc32> for XivCrc32 {
 
 #[cfg(test)]
 mod tests {
-    use crc::{Algorithm, Crc};
     use super::*;
+    use crc::{Algorithm, Crc};
 
     #[test]
     fn check_jamcrc() {
@@ -137,7 +137,16 @@ mod tests {
 
     #[test]
     fn check_xivcrc() {
-        const CRC_32_TEST: Algorithm<u32> = Algorithm { width: 32, poly: 0x04c11db7, init: 0x00000000, refin: true, refout: true, xorout: 0x00000000, check: 0x765e7680, residue: 0xc704dd7b };
+        const CRC_32_TEST: Algorithm<u32> = Algorithm {
+            width: 32,
+            poly: 0x04c11db7,
+            init: 0x00000000,
+            refin: true,
+            refout: true,
+            xorout: 0x00000000,
+            check: 0x765e7680,
+            residue: 0xc704dd7b,
+        };
         const JAMCR: Crc<u32> = Crc::<u32>::new(&CRC_32_TEST);
 
         let str = "Default";

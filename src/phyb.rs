@@ -18,20 +18,18 @@ struct PhybHeader {
     data_type: u32,
 
     collision_offset: u32,
-    simulator_offset: u32
+    simulator_offset: u32,
 }
 
 #[derive(Debug)]
-pub struct Phyb {
-
-}
+pub struct Phyb {}
 
 impl Phyb {
     /// Reads an existing ULD file
     pub fn from_existing(buffer: ByteSpan) -> Option<Self> {
         let mut cursor = Cursor::new(buffer);
-        let header = PhybHeader::read(&mut cursor).ok()?;
+        PhybHeader::read(&mut cursor).ok()?;
 
-        Some(Phyb{})
+        Some(Phyb {})
     }
 }

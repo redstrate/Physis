@@ -752,7 +752,9 @@ impl MDL {
                         for shape_value in shape_values {
                             let old_vertex =
                                 vertices[indices[shape_value.base_indices_index as usize] as usize];
-                            let new_vertex = vertices[(shape_value.replacing_vertex_index as usize).saturating_sub(model.meshes[j as usize].start_index as usize)];
+                            let new_vertex = vertices[(shape_value.replacing_vertex_index
+                                as usize)
+                                .saturating_sub(model.meshes[j as usize].start_index as usize)];
                             let vertex = &mut morphed_vertices
                                 [indices[shape_value.base_indices_index as usize] as usize];
 

@@ -5,9 +5,9 @@
 
 use std::io::Cursor;
 
-use crate::ByteSpan;
-use binrw::{binrw, BinRead, binread};
 use crate::common_file_operations::{Half1, Half2, Half3};
+use crate::ByteSpan;
+use binrw::{binread, binrw, BinRead};
 
 #[binrw]
 #[derive(Debug)]
@@ -139,7 +139,7 @@ pub struct ConstantStruct {
 pub struct Constant {
     id: u32,
     num_values: u32,
-    values: [f32; 4]
+    values: [f32; 4],
 }
 
 // from https://github.com/NotAdam/Lumina/blob/master/src/Lumina/Data/Parsing/MtrlStructs.cs
@@ -202,7 +202,7 @@ pub struct Sampler {
     texture_index: u8,
     unknown1: u8,
     unknown2: u8,
-    unknown3: u8
+    unknown3: u8,
 }
 
 #[binrw]
@@ -258,7 +258,7 @@ pub struct Material {
     pub constants: Vec<Constant>,
     pub samplers: Vec<Sampler>,
     pub color_table: Option<ColorTable>,
-    pub color_dye_table: Option<ColorDyeTable>
+    pub color_dye_table: Option<ColorDyeTable>,
 }
 
 impl Material {
@@ -309,7 +309,7 @@ impl Material {
             constants.push(Constant {
                 id: constant.constant_id,
                 num_values: num_floats as u32,
-                values
+                values,
             });
         }
 
@@ -320,7 +320,7 @@ impl Material {
             constants,
             samplers: mat_data.samplers,
             color_table: mat_data.color_table,
-            color_dye_table: mat_data.color_dye_table
+            color_dye_table: mat_data.color_dye_table,
         })
     }
 }

@@ -4,7 +4,7 @@
 use std::io::Cursor;
 
 use crate::ByteSpan;
-use binrw::{binread, binrw};
+use binrw::binread;
 use binrw::BinRead;
 
 #[binread]
@@ -13,7 +13,7 @@ enum ShaderStage {
     #[br(magic = 0u8)]
     Vertex,
     #[br(magic = 1u8)]
-    Pixel
+    Pixel,
 }
 
 #[binread]
@@ -34,20 +34,18 @@ struct SchdHeader {
 
     file_length: i32,
     shader_offset: u32,
-    parameter_offset: u32
+    parameter_offset: u32,
 }
 
 #[derive(Debug)]
-pub struct Schd {
-
-}
+pub struct Schd {}
 
 impl Schd {
     /// Reads an existing ULD file
     pub fn from_existing(buffer: ByteSpan) -> Option<Self> {
         let mut cursor = Cursor::new(buffer);
-        let header = SchdHeader::read(&mut cursor).ok()?;
+        SchdHeader::read(&mut cursor).ok()?;
 
-        Some(Schd{})
+        Some(Schd {})
     }
 }

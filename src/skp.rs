@@ -21,16 +21,14 @@ struct SkpHeader {
 }
 
 #[derive(Debug)]
-pub struct Skp {
-
-}
+pub struct Skp {}
 
 impl Skp {
     /// Reads an existing ULD file
     pub fn from_existing(buffer: ByteSpan) -> Option<Self> {
         let mut cursor = Cursor::new(buffer);
-        let header = SkpHeader::read(&mut cursor).ok()?;
+        SkpHeader::read(&mut cursor).ok()?;
 
-        Some(Skp{})
+        Some(Skp {})
     }
 }

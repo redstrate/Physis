@@ -1,9 +1,9 @@
 // SPDX-FileCopyrightText: 2024 Joshua Goins <josh@redstrate.com>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-use std::io::SeekFrom;
 use binrw::{binread, BinReaderExt, BinResult};
 use half::f16;
+use std::io::SeekFrom;
 
 pub(crate) fn read_bool_from<T: std::convert::From<u8> + std::cmp::PartialEq>(x: T) -> bool {
     x == T::from(1u8)
@@ -17,17 +17,19 @@ pub(crate) fn write_bool_as<T: std::convert::From<u8>>(x: &bool) -> T {
     }
 }
 
-#[binrw::parser(reader, endian)]
-pub(crate) fn strings_parser(base_offset: u64, strings_offset: &Vec<u16>) -> BinResult<Vec<String>> {
-    let mut strings: Vec<String> =
-        vec![];
+#[binrw::parser(reader)]
+pub(crate) fn strings_parser(
+    base_offset: u64,
+    strings_offset: &Vec<u16>,
+) -> BinResult<Vec<String>> {
+    let mut strings: Vec<String> = vec![];
 
     for offset in strings_offset {
         let string_offset = base_offset + *offset as u64;
 
         let mut string = String::new();
 
-        reader.seek(SeekFrom::Start(string_offset as u64))?;
+        reader.seek(SeekFrom::Start(string_offset))?;
         let mut next_char = reader.read_le::<u8>().unwrap() as char;
         while next_char != '\0' {
             string.push(next_char);
@@ -42,7 +44,7 @@ pub(crate) fn strings_parser(base_offset: u64, strings_offset: &Vec<u16>) -> Bin
 
 fn read_half1(data: [u16; 1]) -> Half1 {
     Half1 {
-        value: f16::from_bits(data[0])
+        value: f16::from_bits(data[0]),
     }
 }
 
@@ -56,7 +58,7 @@ pub(crate) struct Half1 {
 fn read_half2(data: [u16; 2]) -> Half2 {
     Half2 {
         x: f16::from_bits(data[0]),
-        y: f16::from_bits(data[0])
+        y: f16::from_bits(data[0]),
     }
 }
 
@@ -72,7 +74,7 @@ fn read_half3(data: [u16; 3]) -> Half3 {
     Half3 {
         r: f16::from_bits(data[0]),
         g: f16::from_bits(data[0]),
-        b: f16::from_bits(data[0])
+        b: f16::from_bits(data[0]),
     }
 }
 
@@ -82,7 +84,7 @@ fn read_half3(data: [u16; 3]) -> Half3 {
 pub(crate) struct Half3 {
     pub r: f16,
     pub g: f16,
-    pub b: f16
+    pub b: f16,
 }
 
 #[cfg(test)]

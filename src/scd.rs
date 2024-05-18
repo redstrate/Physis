@@ -46,16 +46,14 @@ struct ScdHeader {
 }
 
 #[derive(Debug)]
-pub struct Scd {
-
-}
+pub struct Scd {}
 
 impl Scd {
     /// Reads an existing ULD file
     pub fn from_existing(buffer: ByteSpan) -> Option<Self> {
         let mut cursor = Cursor::new(buffer);
-        let header = ScdHeader::read(&mut cursor).ok()?;
+        ScdHeader::read(&mut cursor).ok()?;
 
-        Some(Scd{})
+        Some(Scd {})
     }
 }

@@ -74,7 +74,7 @@ struct TexHeader {
 #[derive(Clone, Copy)]
 pub enum TextureType {
     TwoDimensional,
-    ThreeDimensional
+    ThreeDimensional,
 }
 
 pub struct Texture {
@@ -111,7 +111,11 @@ impl Texture {
 
         match header.format {
             TextureFormat::B4G4R4A4 => {
-                dst = vec![0u8; header.width as usize * header.height as usize * header.depth as usize * 4];
+                dst =
+                    vec![
+                        0u8;
+                        header.width as usize * header.height as usize * header.depth as usize * 4
+                    ];
 
                 let mut offset = 0;
                 let mut dst_offset = 0;
@@ -134,7 +138,11 @@ impl Texture {
                 }
             }
             TextureFormat::B8G8R8A8 => {
-                dst = vec![0u8; header.width as usize * header.height as usize * header.depth as usize * 4];
+                dst =
+                    vec![
+                        0u8;
+                        header.width as usize * header.height as usize * header.depth as usize * 4
+                    ];
 
                 let mut offset = 0;
 
@@ -179,7 +187,11 @@ impl Texture {
         }
 
         Some(Texture {
-            texture_type: if header.attribute.contains(TextureAttribute::TEXTURE_TYPE3_D) { TextureType::ThreeDimensional } else { TextureType::TwoDimensional },
+            texture_type: if header.attribute.contains(TextureAttribute::TEXTURE_TYPE3_D) {
+                TextureType::ThreeDimensional
+            } else {
+                TextureType::TwoDimensional
+            },
             width: header.width as u32,
             height: header.height as u32,
             depth: header.depth as u32,

@@ -157,11 +157,11 @@ impl GameData {
     /// }
     /// ```
     pub fn exists(&mut self, path: &str) -> bool {
-        let Some(index_path) = self.get_index_filenames(path) else {
+        let Some((_, _)) = self.get_index_filenames(path) else {
             return false;
         };
 
-        return self.find_entry(path).is_some();
+        self.find_entry(path).is_some()
     }
 
     /// Extracts the file located at `path`. This is returned as an in-memory buffer, and will usually
@@ -225,8 +225,8 @@ impl GameData {
                 &repository.name,
                 &repository.index_filename(chunk, category),
             ]
-                .iter()
-                .collect();
+            .iter()
+            .collect();
 
             index1_filenames.push((index_path.into_os_string().into_string().unwrap(), chunk));
 
@@ -236,16 +236,13 @@ impl GameData {
                 &repository.name,
                 &repository.index2_filename(chunk, category),
             ]
-                .iter()
-                .collect();
+            .iter()
+            .collect();
 
             index2_filenames.push((index2_path.into_os_string().into_string().unwrap(), chunk));
         }
 
-        Some((
-            index1_filenames,
-            index2_filenames
-        ))
+        Some((index1_filenames, index2_filenames))
     }
 
     /// Read an excel sheet by name (e.g. "Achievement")
@@ -408,8 +405,7 @@ impl GameData {
     fn cache_index2_file(&mut self, filename: &str) {
         if !self.index2_files.contains_key(filename) {
             if let Some(index_file) = Index2File::from_existing(filename) {
-                self.index2_files
-                    .insert(filename.to_string(), index_file);
+                self.index2_files.insert(filename.to_string(), index_file);
             }
         }
     }
