@@ -9,7 +9,8 @@ use binrw::BinRead;
 
 #[binread]
 #[derive(Debug)]
-enum ShaderStage {
+#[repr(C)]
+pub enum ShaderStage {
     #[br(magic = 0u8)]
     Vertex,
     #[br(magic = 1u8)]
