@@ -34,6 +34,7 @@ jobs:
           target/
         key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.toml') }}
     - name: Install dependencies
+      if: steps.cache-deps.outputs.cache-hit != 'true'
       run: |
         sudo apt-get update
         sudo apt-get install \
