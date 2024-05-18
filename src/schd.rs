@@ -8,7 +8,7 @@ use binrw::binread;
 use binrw::BinRead;
 
 #[binread]
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 #[repr(C)]
 pub enum ShaderStage {
     #[br(magic = 0u8)]
