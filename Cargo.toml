@@ -1,12 +1,12 @@
 [package]
 name = "physis"
-version = "0.2.2"
+version = "0.2.3"
 authors = ["Joshua Goins <josh@redstrate.com>"]
 edition = "2021"
 description = "Interact with XIV game data."
 license = "GPL-3.0"
 homepage = "https://xiv.zone/physis"
-repository = "https://git.sr.ht/~redstrate/physis"
+repository = "https://github.com/redstrate/Physis"
 keywords = ["ffxiv", "modding"]
 documentation = "https://docs.xiv.zone/docs/physis/"
 readme = "README.md"
