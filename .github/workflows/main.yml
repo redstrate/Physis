@@ -49,6 +49,16 @@ jobs:
       run: cargo test --features visual_data,game_install --verbose
     - name: Run clippy
       run: cargo clippy --features visual_data,game_install
+    - name: Set up SSH key
+      run: |
+        mkdir -p ~/.ssh
+        echo "${{ secrets.DEPLOY_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+        chmod 600 ~/.ssh/id_rsa
+    - name: Update Docs
+      if: github.ref == 'refs/heads/main'
+      run: |
+        cargo doc --release --no-deps
+        rsync -e "ssh -p 38901 -o StrictHostKeyChecking=no" --recursive target/doc/ deploy@ryne.moe:/srv/http/physis-docs
     - name: Run deny-check
       run: |
         cargo deny check
