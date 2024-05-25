@@ -193,6 +193,17 @@ impl GameData {
         }
     }
 
+    /// Finds the offset inside of the DAT file for `path`.
+    pub fn find_offset(&mut self, path: &str) -> Option<u32> {
+        let slice = self.find_entry(path);
+        match slice {
+            Some((entry, chunk)) => {
+                Some(entry.offset)
+            }
+            None => None,
+        }
+    }
+
     /// Parses a path structure and spits out the corresponding category and repository.
     fn parse_repository_category(&self, path: &str) -> Option<(&Repository, Category)> {
         let tokens: Vec<&str> = path.split('/').collect(); // TODO: use split_once here
