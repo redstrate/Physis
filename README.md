@@ -71,7 +71,7 @@ If you want to use Physis in your Rust project, you can simply add it as a depen
 physis = "0.2"
 ```
 
-Documentation is availavble online at [docs.xiv.zone](https://docs.xiv.zone/docs/physis). It's automatically updated as new
+Documentation is available online at [docs.xiv.zone](https://docs.xiv.zone/docs/physis). It's automatically updated as new
 commits are pushed to the main branch.
 
 C# projects can use [PhysisSharp](https://github.com/redstrate/PhysisSharp) which exposes Physis in C#.
