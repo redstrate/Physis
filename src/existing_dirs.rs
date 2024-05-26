@@ -97,7 +97,7 @@ pub fn find_existing_game_dirs() -> Vec<ExistingGameDirectory> {
         &_ => {}
     }
 
-    install_dirs.iter().filter(|dir| is_valid_game_dir(&dir.path)).collect()
+    install_dirs.into_iter().filter(|dir| is_valid_game_dir(&dir.path)).collect()
 }
 
 /// An existing user directory
@@ -171,7 +171,7 @@ pub fn find_existing_user_dirs() -> Vec<ExistingUserDirectory> {
         &_ => {}
     }
 
-    user_dirs.iter().filter(|dir| is_valid_user_dir(&dir.path)).collect()
+    user_dirs.into_iter().filter(|dir| is_valid_user_dir(&dir.path)).collect()
 }
 
 fn from_home_dir(path: &'static str) -> String {
