@@ -49,6 +49,19 @@ Physis also supports doing some other useful things other than reading and writi
 * Construct paths to equipment, items, faces, and other useful models.
 * Extract strings from executables.
 
+## Supported Game Versions
+
+| Version              | Works | Note                                                        |
+|----------------------|-----|-------------------------------------------------------------|
+| A Realm Reborn (2.x) | ??? | Have yet to test.                                           |
+| Heavensward (3.x)    | ??? | Have yet to test.                                           |
+| Stormblood (4.x)     | ??? | Have yet to test.                                           |
+| Shadowbringers (5.x) | ~   | Not tested in a while but shuld work..                      |
+| Endwalker (6.x)      | ✅   |                                                             |
+| Dawntrail (7.x)      | ~   | Limited support for the benchmark, awaiting retail release. |
+
+Note that only Windows versions of the game is supported at the moment. 
+
 ## Usage
 
 If you want to use Physis in your Rust project, you can simply add it as a dependency in `Cargo.toml`:
@@ -63,7 +76,7 @@ commits are pushed to the main branch.
 
 C# projects can use [PhysisSharp](https://github.com/redstrate/PhysisSharp) which exposes Physis in C#.
 
-C/C++ projects (or anything that can interface with C libraries) can use [libphysis](https://github.com/redstrate/libphysis) which exposes Physis functionality under a C API.
+C/C++ projects (or anything that can interface with C libraries) can use [libphysis](https://github.com/redstrate/libphysis).
 
 ## Building
 
