@@ -162,3 +162,6 @@ pub mod avfx;
 
 /// Reading STM files
 pub mod stm;
+
+/// Find existing installation directories
+pub mod existing_dirs;
