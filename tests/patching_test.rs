@@ -4,6 +4,7 @@
 use hmac_sha512::Hash;
 use physis::patch::apply_patch;
 use std::env;
+use std::io::Write;
 use std::fs::{read, read_dir};
 use std::process::Command;
 
@@ -80,8 +81,6 @@ fn fill_dir_hash(game_dir: &str) -> HashMap<String, [u8; 64]> {
 
 #[cfg(feature = "patch_testing")]
 fn physis_install_patch(game_directory: &str, data_directory: &str, patch_name: &str) {
-    println!("physis: Installing {patch_name}");
-
     let patch_dir = env::var("FFXIV_PATCH_DIR").unwrap();
 
     let patch_path = format!("{}/{}", patch_dir, &patch_name);
@@ -92,8 +91,6 @@ fn physis_install_patch(game_directory: &str, data_directory: &str, patch_name: 
 
 #[cfg(feature = "patch_testing")]
 fn xivlauncher_install_patch(game_directory: &str, data_directory: &str, patch_name: &str) {
-    println!("XivLauncher: Installing {patch_name}");
-
     let patch_dir = env::var("FFXIV_PATCH_DIR").unwrap();
     let patcher_exe = env::var("FFXIV_XIV_LAUNCHER_PATCHER").expect("$FFXIV_XIV_LAUNCHER_PATCHER must point to XIVLauncher.PatchInstaller.exe");
 
@@ -101,10 +98,32 @@ fn xivlauncher_install_patch(game_directory: &str, data_directory: &str, patch_n
     let game_dir = format!("Z:\\{}\\{}", game_directory, data_directory);
 
     // TODO: check for windows systems
-    Command::new("wine")
+    let output = Command::new("wine")
         .args([&patcher_exe, "install", &patch_path, &game_dir])
         .output()
         .unwrap();
+
+    // If there is some kind of catostrophic failure, make sure it's printed.
+    // For example, missing .NET in your wine prefix
+    if (!output.status.success()) {
+        std::io::stdout().write_all(&output.stdout).unwrap();
+        std::io::stderr().write_all(&output.stderr).unwrap();
+    }
+
+    assert!(output. status.success());
+}
+
+fn check_if_files_match(xivlauncher_dir: &str, physis_dir: &str) {
+    let xivlauncher_files = fill_dir_hash(xivlauncher_dir);
+    let physis_files = fill_dir_hash(physis_dir);
+
+    for file in xivlauncher_files.keys() {
+        if xivlauncher_files[file] != physis_files[file] {
+            println!("!! {} does not match!", file);
+        }
+    }
+
+    assert_eq!(physis_files, xivlauncher_files);
 }
 
 #[test]
@@ -112,15 +131,26 @@ fn xivlauncher_install_patch(game_directory: &str, data_directory: &str, patch_n
 fn test_patching() {
     println!("Beginning game installation...");
 
-    let physis_dir = make_temp_install_dir("game_test");
-    let xivlauncher_dir = make_temp_install_dir("game_test_xivlauncher");
+    let physis_dir = make_temp_install_dir("game_install_physis");
+    let xivlauncher_dir = make_temp_install_dir("game_install_xivquicklauncher");
+
+    println!("Done with game installation! Now checking if the checksums match first...");
+
+    check_if_files_match(&xivlauncher_dir, &physis_dir);
+
+    println!("* Directories match.");
 
     let boot_patches = [
-        "boot/2022.03.25.0000.0001.patch",
-        "boot/2022.08.05.0000.0001.patch",
+        "boot/2023.04.28.0000.0001.patch",
+        "boot/2023.04.28.0000.0001.patch",
+        "boot/2024.03.07.0000.0001.patch",
+        "boot/2024.03.21.0000.0001.patch",
+        "boot/2024.04.09.0000.0001.patch",
+        "boot/2024.05.24.0000.0001.patch"
     ];
 
-    println!("The game installation is now complete. Now running boot patching...");
+    println!("Now beginning boot patching...");
+
     for patch in boot_patches {
         let patch_dir = env::var("FFXIV_PATCH_DIR").expect("$FFXIV_PATCH_DIR must point to the directory where the patches are stored");
         if !Path::new(&(patch_dir + "/" + patch)).exists() {
@@ -132,6 +162,8 @@ fn test_patching() {
 
         xivlauncher_install_patch(&xivlauncher_dir, "boot", patch);
         physis_install_patch(&physis_dir, "boot", patch);
+
+        check_if_files_match(&xivlauncher_dir, &physis_dir);
     }
 
     let game_patches = [
@@ -170,19 +202,11 @@ fn test_patching() {
 
         xivlauncher_install_patch(&xivlauncher_dir, "game", patch);
         physis_install_patch(&physis_dir, "game", patch);
+
+        check_if_files_match(&xivlauncher_dir, &physis_dir);
     }
 
     println!("Game patching is now complete. Proceeding to checksum matching...");
 
-    let xivlauncher_files = fill_dir_hash(&xivlauncher_dir);
-    let physis_files = fill_dir_hash(&physis_dir);
-
-    for file in xivlauncher_files.keys() {
-        println!("Checking {file}...");
-        if xivlauncher_files[file] != physis_files[file] {
-            println!("{} does not match!", file);
-        }
-    }
-
-    assert_eq!(physis_files, xivlauncher_files);
+    check_if_files_match(&xivlauncher_dir, &physis_dir);
 }
