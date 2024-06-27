@@ -120,7 +120,7 @@ impl Texture {
                 let mut offset = 0;
                 let mut dst_offset = 0;
 
-                for _ in 0..header.width * header.height {
+                for _ in 0..header.width as usize * header.height as usize {
                     let short: u16 = ((src[offset] as u16) << 8) | src[offset + 1] as u16;
 
                     let src_b = short & 0xF;
@@ -146,7 +146,7 @@ impl Texture {
 
                 let mut offset = 0;
 
-                for _ in 0..header.width * header.height * header.depth {
+                for _ in 0..header.width as usize * header.height as usize * header.depth as usize {
                     let src_b = src[offset];
                     let src_g = src[offset + 1];
                     let src_r = src[offset + 2];
