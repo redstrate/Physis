@@ -194,7 +194,7 @@ impl GameData {
     }
 
     /// Finds the offset inside of the DAT file for `path`.
-    pub fn find_offset(&mut self, path: &str) -> Option<u32> {
+    pub fn find_offset(&mut self, path: &str) -> Option<u64> {
         let slice = self.find_entry(path);
         match slice {
             Some((entry, chunk)) => {

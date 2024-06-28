@@ -62,9 +62,9 @@ pub struct IndexHashTableEntry {
     #[bw(ignore)]
     pub data_file_id: u8,
 
-    #[br(calc = (data & !0xF) * 0x08)]
+    #[br(calc = (data & !0xF) as u64 * 0x08)]
     #[bw(ignore)]
-    pub offset: u32,
+    pub offset: u64,
 }
 
 // The only difference between index and index2 is how the path hash is stored.
@@ -87,16 +87,16 @@ pub struct Index2HashTableEntry {
     #[bw(ignore)]
     pub data_file_id: u8,
 
-    #[br(calc = (data & !0xF) * 0x08)]
+    #[br(calc = (data & !0xF) as u64 * 0x08)]
     #[bw(ignore)]
-    pub offset: u32,
+    pub offset: u64,
 }
 
 #[derive(Debug)]
 pub struct IndexEntry {
     pub hash: u64,
     pub data_file_id: u8,
-    pub offset: u32,
+    pub offset: u64,
 }
 
 #[binrw]
