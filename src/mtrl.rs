@@ -190,6 +190,9 @@ pub enum TextureUsage {
 
     #[brw(magic = 0x565f8fd8u32)]
     UnknownDawntrail1,
+
+    #[brw(magic = 0xe5338c17u32)]
+    UnknownDawntrail2,
 }
 
 #[binrw]
@@ -264,7 +267,7 @@ pub struct Material {
 impl Material {
     pub fn from_existing(buffer: ByteSpan) -> Option<Material> {
         let mut cursor = Cursor::new(buffer);
-        let mat_data = MaterialData::read(&mut cursor).ok()?;
+        let mat_data = MaterialData::read(&mut cursor).unwrap();
 
         let mut texture_paths = vec![];
 
