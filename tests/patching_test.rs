@@ -113,6 +113,7 @@ fn xivlauncher_install_patch(game_directory: &str, data_directory: &str, patch_n
     assert!(output. status.success());
 }
 
+#[cfg(feature = "patch_testing")]
 fn check_if_files_match(xivlauncher_dir: &str, physis_dir: &str) {
     let xivlauncher_files = fill_dir_hash(xivlauncher_dir);
     let physis_files = fill_dir_hash(physis_dir);
