@@ -4,8 +4,7 @@
 use std::env::home_dir;
 use std::fs;
 use std::fs::read_dir;
-use std::path::{Path, PathBuf};
-use tracing::warn;
+use std::path::PathBuf;
 
 /// Where the existing installation came from
 #[derive(Clone, Copy)]

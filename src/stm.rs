@@ -3,7 +3,6 @@
 
 use std::io::{Cursor, Seek, SeekFrom};
 
-use crate::common_file_operations::{Half1, Half3};
 use crate::ByteSpan;
 use binrw::BinRead;
 use binrw::{binrw, BinReaderExt};
@@ -67,6 +66,7 @@ impl StainingTemplate {
         Some(StainingTemplate {})
     }
 
+    #[allow(unused)]
     fn read_array<T: binrw::BinRead<Args<'static> = ()> + Default + Clone + Copy>(
         cursor: &mut Cursor<ByteSpan>,
         offset: u64,
