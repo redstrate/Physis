@@ -182,12 +182,12 @@ struct SqpkAddData {
     sub_id: u16,
     file_id: u32,
 
-    #[br(map = | x : u32 | x << 7 )]
-    block_offset: u32,
-    #[br(map = | x : u32 | x << 7 )]
-    block_number: u32,
-    #[br(map = | x : u32 | x << 7 )]
-    block_delete_number: u32,
+    #[br(map = | x : u32 | (x as u64) << 7 )]
+    block_offset: u64,
+    #[br(map = | x : u32 | (x as u64) << 7 )]
+    block_number: u64,
+    #[br(map = | x : u32 | (x as u64) << 7 )]
+    block_delete_number: u64,
 
     #[br(count = block_number)]
     block_data: Vec<u8>,
@@ -201,8 +201,8 @@ struct SqpkDeleteData {
     sub_id: u16,
     file_id: u32,
 
-    #[br(map = | x : u32 | x << 7 )]
-    block_offset: u32,
+    #[br(map = | x : u32 | (x as u64) << 7 )]
+    block_offset: u64,
     #[br(pad_after = 4)]
     block_number: u32,
 }
@@ -313,8 +313,8 @@ struct SqpkChunk {
 
 const WIPE_BUFFER: [u8; 1 << 16] = [0; 1 << 16];
 
-fn wipe(mut file: &File, length: u32) -> Result<(), PatchError> {
-    let mut length: usize = length as usize;
+fn wipe(mut file: &File, length: usize) -> Result<(), PatchError> {
+    let mut length: usize = length;
     while length > 0 {
         let num_bytes = min(WIPE_BUFFER.len(), length);
         file.write_all(&WIPE_BUFFER[0..num_bytes])?;
@@ -324,19 +324,19 @@ fn wipe(mut file: &File, length: u32) -> Result<(), PatchError> {
     Ok(())
 }
 
-fn wipe_from_offset(mut file: &File, length: u32, offset: u32) -> Result<(), PatchError> {
-    file.seek(SeekFrom::Start(offset as u64))?;
+fn wipe_from_offset(mut file: &File, length: usize, offset: u64) -> Result<(), PatchError> {
+    file.seek(SeekFrom::Start(offset))?;
     wipe(file, length)
 }
 
 fn write_empty_file_block_at(
     mut file: &File,
-    offset: u32,
-    block_number: u32,
+    offset: u64,
+    block_number: u64,
 ) -> Result<(), PatchError> {
-    wipe_from_offset(file, block_number << 7, offset)?;
+    wipe_from_offset(file, (block_number << 7) as usize, offset)?;
 
-    file.seek(SeekFrom::Start(offset as u64))?;
+    file.seek(SeekFrom::Start(offset))?;
 
     let block_size: i32 = 1 << 7;
     file.write_all(block_size.to_le_bytes().as_slice())?;
@@ -469,11 +469,11 @@ pub fn apply_patch(data_dir: &str, patch_path: &str) -> Result<(), PatchError> {
                             .truncate(false)
                             .open(filename)?;
 
-                        new_file.seek(SeekFrom::Start(add.block_offset as u64))?;
+                        new_file.seek(SeekFrom::Start(add.block_offset))?;
 
                         new_file.write_all(&add.block_data)?;
 
-                        wipe(&new_file, add.block_delete_number)?;
+                        wipe(&new_file, add.block_delete_number as usize)?;
                     }
                     SqpkOperation::DeleteData(delete) => {
                         let filename = get_dat_path(
@@ -492,7 +492,7 @@ pub fn apply_patch(data_dir: &str, patch_path: &str) -> Result<(), PatchError> {
                         write_empty_file_block_at(
                             &new_file,
                             delete.block_offset,
-                            delete.block_number,
+                            delete.block_number as u64,
                         )?;
                     }
                     SqpkOperation::ExpandData(expand) => {
@@ -515,7 +515,7 @@ pub fn apply_patch(data_dir: &str, patch_path: &str) -> Result<(), PatchError> {
                         write_empty_file_block_at(
                             &new_file,
                             expand.block_offset,
-                            expand.block_number,
+                            expand.block_number as u64,
                         )?;
                     }
                     SqpkOperation::HeaderUpdate(header) => {
