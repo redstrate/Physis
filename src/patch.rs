@@ -3,9 +3,9 @@
 
 use core::cmp::min;
 use std::fs;
-use std::fs::{File, OpenOptions};
+use std::fs::{File, OpenOptions, read, read_dir};
 use std::io::{BufWriter, Cursor, Seek, SeekFrom, Write};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use binrw::{binread, binrw, BinWrite};
 use binrw::BinRead;
@@ -13,78 +13,79 @@ use tracing::{debug, warn};
 use crate::ByteBuffer;
 
 use crate::common::{get_platform_string, Platform, Region};
-use crate::common_file_operations::{read_bool_from, read_string, write_bool_as, write_string};
-use crate::sqpack::read_data_block_patch;
+use crate::common_file_operations::{get_string_len, read_bool_from, read_string, write_bool_as, write_string};
+use crate::sqpack::{read_data_block_patch, write_data_block_patch};
 
 #[binrw]
 #[derive(Debug)]
-#[br(little)]
+#[brw(little)]
 struct PatchHeader {
     #[br(temp)]
     #[bw(calc = *b"ZIPATCH")]
-    #[br(pad_before = 1)]
-    #[br(pad_after = 4)]
+    #[brw(pad_before = 1)]
+    #[brw(pad_after = 4)]
     #[br(assert(magic == *b"ZIPATCH"))]
     magic: [u8; 7],
 }
 
 #[binrw]
 #[allow(dead_code)]
-#[br(little)]
+#[brw(little)]
 struct PatchChunk {
-    #[br(big)]
+    #[brw(big)]
     size: u32,
     chunk_type: ChunkType,
     #[br(if(chunk_type != ChunkType::EndOfFile))]
+    #[bw(if(*chunk_type != ChunkType::EndOfFile))]
     crc32: u32,
 }
 
 #[binrw]
 #[derive(PartialEq, Debug)]
 enum ChunkType {
-    #[br(magic = b"FHDR")]
+    #[brw(magic = b"FHDR")]
     FileHeader(
-        #[br(pad_before = 2)]
-        #[br(pad_after = 1)]
+        #[brw(pad_before = 2)]
+        #[brw(pad_after = 1)]
         FileHeaderChunk,
     ),
-    #[br(magic = b"APLY")]
+    #[brw(magic = b"APLY")]
     ApplyOption(ApplyOptionChunk),
-    #[br(magic = b"ADIR")]
+    #[brw(magic = b"ADIR")]
     AddDirectory(DirectoryChunk),
-    #[br(magic = b"DELD")]
+    #[brw(magic = b"DELD")]
     DeleteDirectory(DirectoryChunk),
-    #[br(magic = b"SQPK")]
+    #[brw(magic = b"SQPK")]
     Sqpk(SqpkChunk),
-    #[br(magic = b"EOF_")]
+    #[brw(magic = b"EOF_")]
     EndOfFile,
 }
 
 #[binrw]
 #[derive(PartialEq, Debug)]
 enum FileHeaderChunk {
-    #[br(magic = 2u8)]
+    #[brw(magic = 2u8)]
     Version2(FileHeaderChunk2),
-    #[br(magic = 3u8)]
+    #[brw(magic = 3u8)]
     Version3(FileHeaderChunk3),
 }
 
 #[binrw]
 #[derive(PartialEq, Debug)]
-#[br(big)]
+#[brw(big)]
 struct FileHeaderChunk2 {
     #[br(count = 4)]
     #[br(map = read_string)]
     #[bw(map = write_string)]
     name: String,
 
-    #[br(pad_before = 8)]
+    #[brw(pad_before = 8)]
     depot_hash: u32,
 }
 
 #[binrw]
 #[derive(PartialEq, Debug)]
-#[br(big)]
+#[brw(big)]
 struct FileHeaderChunk3 {
     #[br(count = 4)]
     #[br(map = read_string)]
@@ -104,7 +105,7 @@ struct FileHeaderChunk3 {
     sqpk_delete_commands: u32,
     sqpk_expand_commands: u32,
     sqpk_header_commands: u32,
-    #[br(pad_after = 0xB8)]
+    #[brw(pad_after = 0xB8)]
     sqpk_file_commands: u32,
 }
 
@@ -120,9 +121,9 @@ enum ApplyOption {
 #[binrw]
 #[derive(PartialEq, Debug)]
 struct ApplyOptionChunk {
-    #[br(pad_after = 4)]
+    #[brw(pad_after = 4)]
     option: ApplyOption,
-    #[br(big)]
+    #[brw(big)]
     value: u32,
 }
 
@@ -130,10 +131,10 @@ struct ApplyOptionChunk {
 #[derive(PartialEq, Debug)]
 struct DirectoryChunk {
     #[br(temp)]
-    #[bw(ignore)]
-    path_length: u32,
+    #[bw(calc = get_string_len(name) as u32)]
+    name_length: u32,
 
-    #[br(count = path_length)]
+    #[br(count = name_length)]
     #[br(map = read_string)]
     #[bw(map = write_string)]
     name: String,
@@ -142,21 +143,21 @@ struct DirectoryChunk {
 #[binrw]
 #[derive(PartialEq, Debug)]
 enum SqpkOperation {
-    #[br(magic = b'A')]
+    #[brw(magic = b'A')]
     AddData(SqpkAddData),
-    #[br(magic = b'D')]
+    #[brw(magic = b'D')]
     DeleteData(SqpkDeleteData),
-    #[br(magic = b'E')]
+    #[brw(magic = b'E')]
     ExpandData(SqpkDeleteData),
-    #[br(magic = b'F')]
+    #[brw(magic = b'F')]
     FileOperation(SqpkFileOperationData),
-    #[br(magic = b'H')]
+    #[brw(magic = b'H')]
     HeaderUpdate(SqpkHeaderUpdateData),
-    #[br(magic = b'X')]
+    #[brw(magic = b'X')]
     PatchInfo(SqpkPatchInfo),
-    #[br(magic = b'T')]
+    #[brw(magic = b'T')]
     TargetInfo(SqpkTargetInfo),
-    #[br(magic = b'I')]
+    #[brw(magic = b'I')]
     Index(SqpkIndex),
 }
 
@@ -164,10 +165,10 @@ enum SqpkOperation {
 #[derive(PartialEq, Debug)]
 struct SqpkPatchInfo {
     status: u8,
-    #[br(pad_after = 1)]
+    #[brw(pad_after = 1)]
     version: u8,
 
-    #[br(big)]
+    #[brw(big)]
     install_size: u64,
 }
 
@@ -186,9 +187,9 @@ enum SqpkFileOperation {
 
 #[binrw]
 #[derive(PartialEq, Debug)]
-#[br(big)]
+#[brw(big)]
 struct SqpkAddData {
-    #[br(pad_before = 3)]
+    #[brw(pad_before = 3)]
     main_id: u16,
     sub_id: u16,
     file_id: u32,
@@ -206,16 +207,16 @@ struct SqpkAddData {
 
 #[binrw]
 #[derive(PartialEq, Debug)]
-#[br(big)]
+#[brw(big)]
 struct SqpkDeleteData {
-    #[br(pad_before = 3)]
+    #[brw(pad_before = 3)]
     main_id: u16,
     sub_id: u16,
     file_id: u32,
 
     #[br(map = | x : u32 | (x as u64) << 7 )]
     block_offset: u64,
-    #[br(pad_after = 4)]
+    #[brw(pad_after = 4)]
     block_number: u32,
 }
 
@@ -246,7 +247,7 @@ struct SqpkHeaderUpdateData {
     file_kind: TargetFileKind,
     header_kind: TargetHeaderKind,
 
-    #[br(pad_before = 1)]
+    #[brw(pad_before = 1)]
     main_id: u16,
     sub_id: u16,
     file_id: u32,
@@ -259,42 +260,43 @@ struct SqpkHeaderUpdateData {
 #[derive(PartialEq, Debug)]
 #[brw(big)]
 struct SqpkFileOperationData {
-    #[br(pad_after = 2)]
+    #[brw(pad_after = 2)]
     operation: SqpkFileOperation,
 
     offset: u64,
     file_size: u64,
 
+    // Note: counts the \0 at the end... for some reason
     #[br(temp)]
-    #[bw(ignore)]
+    #[bw(calc = get_string_len(path) as u32 + 1)]
+    #[br(dbg)]
     path_length: u32,
 
-    #[br(pad_after = 2)]
+    #[brw(pad_after = 2)]
     expansion_id: u16,
 
-    #[br(count = path_length)]
-    // TODO: find out why this is a special string reading operation
-    #[br(map = | x: Vec < u8 > | String::from_utf8(x[..x.len() - 1].to_vec()).unwrap())]
+    #[br(count = path_length - 1)]
+    #[br(map = read_string)]
     #[bw(map = write_string)]
     path: String,
 }
 
 #[binrw]
 #[derive(PartialEq, Debug)]
-#[br(big)]
+#[brw(big)]
 struct SqpkTargetInfo {
-    #[br(pad_before = 3)]
-    #[br(pad_size_to = 2)]
+    #[brw(pad_before = 3)]
+    #[brw(pad_size_to = 2)]
     platform: Platform, // Platform is read as a u16, but the enum is u8
     region: Region,
     #[br(map = read_bool_from::<u16>)]
     #[bw(map = write_bool_as::<u16>)]
     is_debug: bool,
     version: u16,
-    #[br(little)]
+    #[brw(little)]
     deleted_data_size: u64,
-    #[br(little)]
-    #[br(pad_after = 96)]
+    #[brw(little)]
+    #[brw(pad_after = 96)]
     seek_count: u64,
 }
 
@@ -309,24 +311,24 @@ enum SqpkIndexCommand {
 
 #[binrw]
 #[derive(PartialEq, Debug)]
-#[br(big)]
+#[brw(big)]
 struct SqpkIndex {
     command: SqpkIndexCommand,
     #[br(map = read_bool_from::<u8>)]
     #[bw(map = write_bool_as::<u8>)]
     is_synonym: bool,
 
-    #[br(pad_before = 1)]
+    #[brw(pad_before = 1)]
     file_hash: u64,
 
     block_offset: u32,
-    #[br(pad_after = 8)] // data?
+    #[brw(pad_after = 8)] // data?
     block_number: u32,
 }
 
 #[binrw]
 #[derive(PartialEq, Debug)]
-#[br(big)]
+#[brw(big)]
 struct SqpkChunk {
     size: u32,
     operation: SqpkOperation,
@@ -658,6 +660,27 @@ pub fn apply_patch(data_dir: &str, patch_path: &str) -> Result<(), PatchError> {
     }
 }
 
+fn recurse(path: impl AsRef<Path>) -> Vec<PathBuf> {
+    let Ok(entries) = read_dir(path) else {
+        return vec![];
+    };
+    entries
+        .flatten()
+        .flat_map(|entry| {
+            let Ok(meta) = entry.metadata() else {
+                return vec![];
+            };
+            if meta.is_dir() {
+                return recurse(entry.path());
+            }
+            if meta.is_file() {
+                return vec![entry.path()];
+            }
+            vec![]
+        })
+        .collect()
+}
+
 /// Creates a new ZiPatch describing the diff between `base_directory` and `new_directory`.
 pub fn create_patch(base_directory: &str, new_directory: &str) -> Option<ByteBuffer> {
     let mut buffer = ByteBuffer::new();
@@ -667,19 +690,53 @@ pub fn create_patch(base_directory: &str, new_directory: &str) -> Option<ByteBuf
         let mut writer = BufWriter::new(cursor);
 
         let header = PatchHeader {};
-        header.write_le(&mut writer).ok()?;
-        
-        let mut chunks: Vec<PatchChunk> = vec![];
-        
-        chunks.push(PatchChunk {
+        header.write(&mut writer).ok()?;
+
+        let base_files = recurse(base_directory);
+        let new_files = recurse(new_directory);
+
+        // A set of files not present in base, but in new (aka added files)
+        let added_files: Vec<&PathBuf> = new_files.iter().filter(|item| !base_files.contains(item)).collect();
+
+        // A set of files not present in the new directory, that used to be in base (aka removedf iles)
+        let removed_files: Vec<&PathBuf> = base_files.iter().filter(|item| !new_files.contains(item)).collect();
+
+        for file in added_files {
+            let file_data = read(file.to_str().unwrap()).unwrap();
+
+            let add_file_chunk = PatchChunk {
+                size: 0,
+                chunk_type: ChunkType::Sqpk(SqpkChunk {
+                    size: 0,
+                    operation: SqpkOperation::FileOperation(SqpkFileOperationData {
+                        operation: SqpkFileOperation::AddFile,
+                        offset: 0,
+                        file_size: file_data.len() as u64,
+                        expansion_id: 0,
+                        path: file.to_str().unwrap().parse().unwrap(),
+                    }),
+                }),
+                crc32: 0,
+            };
+            
+            add_file_chunk.write(&mut writer).ok()?;
+
+            // reverse reading crc32
+            writer.seek(SeekFrom::Current(-4));
+            
+            // add file data, dummy ver for now
+            write_data_block_patch(&mut writer, file_data);
+
+            // re-apply crc32
+            writer.seek(SeekFrom::Current(4));
+        }
+
+        let eof_chunk = PatchChunk {
             size: 0,
             chunk_type: ChunkType::EndOfFile,
             crc32: 0,
-        });
-
-        for chunk in chunks {
-            chunk.write_le(&mut writer).ok()?;
-        }
+        };
+        eof_chunk.write(&mut writer).ok()?;
     }
 
     Some(buffer)
