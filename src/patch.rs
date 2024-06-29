@@ -270,7 +270,6 @@ struct SqpkFileOperationData {
     // Note: counts the \0 at the end... for some reason
     #[br(temp)]
     #[bw(calc = get_string_len(path) as u32 + 1)]
-    #[br(dbg)]
     path_length: u32,
 
     #[brw(pad_after = 2)]
@@ -426,7 +425,7 @@ fn recurse(path: impl AsRef<Path>) -> Vec<PathBuf> {
                 return vec![];
             };
             if meta.is_dir() {
-                return crate::patch::recurse(entry.path());
+                return recurse(entry.path());
             }
             if meta.is_file() {
                 return vec![entry.path()];
@@ -704,7 +703,10 @@ impl ZiPatch {
             let new_files = crate::patch::recurse(new_directory);
 
             // A set of files not present in base, but in new (aka added files)
-            let added_files: Vec<&PathBuf> = new_files.iter().filter(|item| !base_files.contains(item)).collect();
+            let added_files: Vec<&PathBuf> = new_files.iter().filter(|item| {
+                let metadata = fs::metadata(item).unwrap();
+                !base_files.contains(item) && metadata.len() > 0 // TODO: we filter out zero byte files here, but does SqEx do that?
+            }).collect();
 
             // A set of files not present in the new directory, that used to be in base (aka removedf iles)
             let removed_files: Vec<&PathBuf> = base_files.iter().filter(|item| !new_files.contains(item)).collect();
@@ -712,6 +714,7 @@ impl ZiPatch {
             // Process added files
             for file in added_files {
                 let file_data = read(file.to_str().unwrap()).unwrap();
+                let relative_path = file.strip_prefix(new_directory).unwrap().to_str().unwrap().to_string();
 
                 let add_file_chunk = PatchChunk {
                     size: 0,
@@ -722,7 +725,7 @@ impl ZiPatch {
                             offset: 0,
                             file_size: file_data.len() as u64,
                             expansion_id: 0,
-                            path: file.to_str().unwrap().parse().unwrap(),
+                            path: relative_path,
                         }),
                     }),
                     crc32: 0,
@@ -742,6 +745,8 @@ impl ZiPatch {
 
             // Process deleted files
             for file in removed_files {
+                let relative_path = file.strip_prefix(base_directory).unwrap().to_str().unwrap().to_string();
+
                 let remove_file_chunk = PatchChunk {
                     size: 0,
                     chunk_type: ChunkType::Sqpk(SqpkChunk {
@@ -751,7 +756,7 @@ impl ZiPatch {
                             offset: 0,
                             file_size: 0,
                             expansion_id: 0,
-                            path: file.to_str().unwrap().parse().unwrap(),
+                            path: relative_path,
                         }),
                     }),
                     crc32: 0,
@@ -777,6 +782,8 @@ impl ZiPatch {
 mod tests {
     use std::fs::{read, write};
     use std::path::PathBuf;
+    use std::thread::sleep;
+    use std::time::Duration;
 
     use super::*;
 
@@ -805,6 +812,42 @@ mod tests {
 
         // Feeding it invalid data should not panic
         ZiPatch::apply(&data_dir.clone(), &(data_dir + "/test.patch"));
+    }
+
+    #[test]
+    fn test_add_file_op() {
+        let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        d.push("resources/tests");
+        d.push("random");
+
+        let data_dir = prepare_data_dir();
+
+        let mut resources_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        resources_dir.push("resources/tests");
+
+        // Let's create a patch that re-creates the resources dir into our data directory
+        let patch = ZiPatch::create(&*data_dir, resources_dir.to_str().unwrap()).unwrap();
+
+        write(data_dir.clone() + "/test.patch", &patch);
+
+        ZiPatch::apply(&data_dir.clone(), &(data_dir.clone() + "/test.patch"));
+
+        // FIXME: For some reason, running this test by itself is fine. However when running in the test suite, it trips over itself.
+        // So this is a really cruddy way to wait for the files to settle.
+        sleep(Duration::new(1, 0));
+
+        fs::remove_file(data_dir.clone() + "/test.patch");
+
+        let old_files = recurse(&resources_dir);
+        let new_files = recurse(&data_dir);
+
+        let old_relative_files: Vec<&Path> = old_files.iter().filter(|item| {
+            let metadata = fs::metadata(item).unwrap();
+            metadata.len() > 0 // fitler out zero byte files because ZiPatch::create does
+        }).map(|x| x.strip_prefix(&resources_dir).unwrap()).collect();
+        let new_relative_files: Vec<&Path> = new_files.iter().map(|x| x.strip_prefix(&data_dir).unwrap()).collect();
+
+        assert_eq!(old_relative_files, new_relative_files);
     }
 }
 

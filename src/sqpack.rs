@@ -76,10 +76,12 @@ pub fn read_data_block_patch<T: Read + Seek>(mut buf: T) -> Option<Vec<u8>> {
 }
 
 pub fn write_data_block_patch<T: Write + Seek>(mut writer: T, data: Vec<u8>) {
+    let new_file_size: usize = (data.len() as usize + 143) & 0xFFFFFF80;
+
     // This only adds uncompressed data for now, to simplify implementation
     // TODO: write compressed blocks
     let block_header = BlockHeader {
-        size: 128, // TODO: i have no idea what this value is from
+        size: (new_file_size - data.len()) as u32, // TODO: i have no idea what this value is from
         compression: CompressionMode::Uncompressed {
             file_size: data.len() as i32,
         },

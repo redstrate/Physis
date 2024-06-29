@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 use hmac_sha512::Hash;
-use physis::patch::apply_patch;
 use std::env;
 use std::io::Write;
 use std::fs::{read, read_dir};
@@ -13,6 +12,7 @@ use physis::fiin::FileInfo;
 use physis::index;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
+use physis::patch::ZiPatch;
 
 #[cfg(feature = "patch_testing")]
 fn make_temp_install_dir(name: &str) -> String {
@@ -86,7 +86,7 @@ fn physis_install_patch(game_directory: &str, data_directory: &str, patch_name: 
     let patch_path = format!("{}/{}", patch_dir, &patch_name);
     let data_dir = format!("{}/{}", game_directory, data_directory);
 
-    apply_patch(&data_dir, &patch_path).unwrap();
+    ZiPatch::apply(&data_dir, &patch_path).unwrap();
 }
 
 #[cfg(feature = "patch_testing")]
