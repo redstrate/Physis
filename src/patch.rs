@@ -4,12 +4,13 @@
 use core::cmp::min;
 use std::fs;
 use std::fs::{File, OpenOptions};
-use std::io::{Seek, SeekFrom, Write};
+use std::io::{BufWriter, Cursor, Seek, SeekFrom, Write};
 use std::path::PathBuf;
 
-use binrw::{binread, binrw};
+use binrw::{binread, binrw, BinWrite};
 use binrw::BinRead;
 use tracing::{debug, warn};
+use crate::ByteBuffer;
 
 use crate::common::{get_platform_string, Platform, Region};
 use crate::common_file_operations::{read_bool_from, read_string, write_bool_as, write_string};
@@ -655,4 +656,31 @@ pub fn apply_patch(data_dir: &str, patch_path: &str) -> Result<(), PatchError> {
             }
         }
     }
+}
+
+/// Creates a new ZiPatch describing the diff between `base_directory` and `new_directory`.
+pub fn create_patch(base_directory: &str, new_directory: &str) -> Option<ByteBuffer> {
+    let mut buffer = ByteBuffer::new();
+
+    {
+        let cursor = Cursor::new(&mut buffer);
+        let mut writer = BufWriter::new(cursor);
+
+        let header = PatchHeader {};
+        header.write_le(&mut writer).ok()?;
+        
+        let mut chunks: Vec<PatchChunk> = vec![];
+        
+        chunks.push(PatchChunk {
+            size: 0,
+            chunk_type: ChunkType::EndOfFile,
+            crc32: 0,
+        });
+
+        for chunk in chunks {
+            chunk.write_le(&mut writer).ok()?;
+        }
+    }
+
+    Some(buffer)
 }
