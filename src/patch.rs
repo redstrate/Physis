@@ -14,6 +14,7 @@ use crate::ByteBuffer;
 
 use crate::common::{get_platform_string, Platform, Region};
 use crate::common_file_operations::{get_string_len, read_bool_from, read_string, write_bool_as, write_string};
+use crate::shpk::ShaderPackage;
 use crate::sqpack::{read_data_block_patch, write_data_block_patch};
 
 #[binrw]
@@ -687,7 +688,7 @@ impl ZiPatch {
             }
         }
     }
-    
+
     /// Creates a new ZiPatch describing the diff between `base_directory` and `new_directory`.
     pub fn create(base_directory: &str, new_directory: &str) -> Option<ByteBuffer> {
         let mut buffer = ByteBuffer::new();
@@ -770,3 +771,40 @@ impl ZiPatch {
         Some(buffer)
     }
 }
+
+// Note that these only deal with fake patch data. To test retail patches, see tests/patching_test.rs
+#[cfg(test)]
+mod tests {
+    use std::fs::{read, write};
+    use std::path::PathBuf;
+
+    use super::*;
+
+    // Prepares a temporary data directory to use
+    fn prepare_data_dir() -> String {
+        let mut dir = std::env::temp_dir();
+        dir.push("physis-patch-tests");
+        if dir.exists() {
+            fs::remove_dir_all(&dir);
+        }
+
+        fs::create_dir_all(&dir);
+
+        dir.to_str().unwrap().to_string()
+    }
+
+    #[test]
+    fn test_invalid() {
+        let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        d.push("resources/tests");
+        d.push("random");
+
+        let data_dir = prepare_data_dir();
+
+        write(data_dir.clone() + "/test.patch", &read(d).unwrap());
+
+        // Feeding it invalid data should not panic
+        ZiPatch::apply(&data_dir.clone(), &(data_dir + "/test.patch"));
+    }
+}
+
