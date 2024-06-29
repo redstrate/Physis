@@ -48,6 +48,7 @@ jobs:
     - name: Run clippy
       run: cargo clippy --features visual_data,game_install
     - name: Set up SSH key
+      if: github.ref == 'refs/heads/main'
       run: |
         mkdir -p ~/.ssh
         echo "${{ secrets.DEPLOY_PRIVATE_KEY }}" > ~/.ssh/id_rsa
