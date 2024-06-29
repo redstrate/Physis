@@ -14,7 +14,7 @@ use crate::exd::EXD;
 use crate::exh::EXH;
 use crate::exl::EXL;
 use crate::index::{Index2File, IndexEntry, IndexFile};
-use crate::patch::{apply_patch, PatchError};
+use crate::patch::{PatchError, ZiPatch};
 use crate::repository::{string_to_category, Category, Repository};
 use crate::ByteBuffer;
 
@@ -304,7 +304,7 @@ impl GameData {
 
     /// Applies the patch to game data and returns any errors it encounters. This function will not update the version in the GameData struct.
     pub fn apply_patch(&self, patch_path: &str) -> Result<(), PatchError> {
-        apply_patch(&self.game_directory, patch_path)
+        ZiPatch::apply(&self.game_directory, patch_path)
     }
 
     /// Detects whether or not the game files need a repair, right now it only checks for invalid

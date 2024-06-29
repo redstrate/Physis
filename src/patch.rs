@@ -7,7 +7,7 @@ use std::fs::{File, OpenOptions, read, read_dir};
 use std::io::{BufWriter, Cursor, Seek, SeekFrom, Write};
 use std::path::{Path, PathBuf};
 
-use binrw::{binread, binrw, BinWrite};
+use binrw::{binrw, BinWrite};
 use binrw::BinRead;
 use tracing::{debug, warn};
 use crate::ByteBuffer;
@@ -414,256 +414,6 @@ impl From<binrw::Error> for PatchError {
     }
 }
 
-/// Applies a boot or a game patch to the specified _data_dir_.
-pub fn apply_patch(data_dir: &str, patch_path: &str) -> Result<(), PatchError> {
-    let mut file = File::open(patch_path)?;
-
-    PatchHeader::read(&mut file)?;
-
-    let mut target_info: Option<SqpkTargetInfo> = None;
-
-    let get_dat_path =
-        |target_info: &SqpkTargetInfo, main_id: u16, sub_id: u16, file_id: u32| -> String {
-            let filename = format!(
-                "{:02x}{:04x}.{}.dat{}",
-                main_id,
-                sub_id,
-                get_platform_string(&target_info.platform),
-                file_id
-            );
-            let path: PathBuf = [
-                data_dir,
-                "sqpack",
-                &get_expansion_folder_sub(sub_id),
-                &filename,
-            ]
-            .iter()
-            .collect();
-
-            path.to_str().unwrap().to_string()
-        };
-
-    let get_index_path =
-        |target_info: &SqpkTargetInfo, main_id: u16, sub_id: u16, file_id: u32| -> String {
-            let mut filename = format!(
-                "{:02x}{:04x}.{}.index",
-                main_id,
-                sub_id,
-                get_platform_string(&target_info.platform)
-            );
-
-            // index files have no special ending if it's file_id == 0
-            if file_id != 0 {
-                filename += &*format!("{}", file_id);
-            }
-
-            let path: PathBuf = [
-                data_dir,
-                "sqpack",
-                &get_expansion_folder_sub(sub_id),
-                &filename,
-            ]
-            .iter()
-            .collect();
-
-            path.to_str().unwrap().to_string()
-        };
-
-    loop {
-        let chunk = PatchChunk::read(&mut file)?;
-
-        match chunk.chunk_type {
-            ChunkType::Sqpk(pchunk) => {
-                match pchunk.operation {
-                    SqpkOperation::AddData(add) => {
-                        let filename = get_dat_path(
-                            target_info.as_ref().unwrap(),
-                            add.main_id,
-                            add.sub_id,
-                            add.file_id,
-                        );
-
-                        let (left, _) = filename.rsplit_once('/').unwrap();
-                        fs::create_dir_all(left)?;
-
-                        let mut new_file = OpenOptions::new()
-                            .write(true)
-                            .create(true)
-                            .truncate(false)
-                            .open(filename)?;
-
-                        new_file.seek(SeekFrom::Start(add.block_offset))?;
-
-                        new_file.write_all(&add.block_data)?;
-
-                        wipe(&new_file, add.block_delete_number as usize)?;
-                    }
-                    SqpkOperation::DeleteData(delete) => {
-                        let filename = get_dat_path(
-                            target_info.as_ref().unwrap(),
-                            delete.main_id,
-                            delete.sub_id,
-                            delete.file_id,
-                        );
-
-                        let new_file = OpenOptions::new()
-                            .write(true)
-                            .create(true)
-                            .truncate(false)
-                            .open(filename)?;
-
-                        write_empty_file_block_at(
-                            &new_file,
-                            delete.block_offset,
-                            delete.block_number as u64,
-                        )?;
-                    }
-                    SqpkOperation::ExpandData(expand) => {
-                        let filename = get_dat_path(
-                            target_info.as_ref().unwrap(),
-                            expand.main_id,
-                            expand.sub_id,
-                            expand.file_id,
-                        );
-
-                        let (left, _) = filename.rsplit_once('/').unwrap();
-                        fs::create_dir_all(left)?;
-
-                        let new_file = OpenOptions::new()
-                            .write(true)
-                            .create(true)
-                            .truncate(false)
-                            .open(filename)?;
-
-                        write_empty_file_block_at(
-                            &new_file,
-                            expand.block_offset,
-                            expand.block_number as u64,
-                        )?;
-                    }
-                    SqpkOperation::HeaderUpdate(header) => {
-                        let file_path = match header.file_kind {
-                            TargetFileKind::Dat => get_dat_path(
-                                target_info.as_ref().unwrap(),
-                                header.main_id,
-                                header.sub_id,
-                                header.file_id,
-                            ),
-                            TargetFileKind::Index => get_index_path(
-                                target_info.as_ref().unwrap(),
-                                header.main_id,
-                                header.sub_id,
-                                header.file_id,
-                            ),
-                        };
-
-                        let (left, _) = file_path.rsplit_once('/').ok_or(PatchError::ParseError)?;
-                        fs::create_dir_all(left)?;
-
-                        let mut new_file = OpenOptions::new()
-                            .write(true)
-                            .create(true)
-                            .truncate(false)
-                            .open(file_path)?;
-
-                        if header.header_kind != TargetHeaderKind::Version {
-                            new_file.seek(SeekFrom::Start(1024))?;
-                        }
-
-                        new_file.write_all(&header.header_data)?;
-                    }
-                    SqpkOperation::FileOperation(fop) => {
-                        let file_path = format!("{}/{}", data_dir, fop.path);
-                        let (parent_directory, _) = file_path.rsplit_once('/').unwrap();
-
-                        match fop.operation {
-                            SqpkFileOperation::AddFile => {
-                                fs::create_dir_all(parent_directory)?;
-
-                                // reverse reading crc32
-                                file.seek(SeekFrom::Current(-4))?;
-
-                                let mut data: Vec<u8> = Vec::with_capacity(fop.file_size as usize);
-
-                                while data.len() < fop.file_size as usize {
-                                    data.append(&mut read_data_block_patch(&mut file).unwrap());
-                                }
-
-                                // re-apply crc32
-                                file.seek(SeekFrom::Current(4))?;
-
-                                // now apply the file!
-                                let new_file = OpenOptions::new()
-                                    .write(true)
-                                    .create(true)
-                                    .truncate(false)
-                                    .open(&file_path);
-
-                                if let Ok(mut file) = new_file {
-                                    if fop.offset == 0 {
-                                        file.set_len(0)?;
-                                    }
-
-                                    file.seek(SeekFrom::Start(fop.offset))?;
-                                    file.write_all(&data)?;
-                                } else {
-                                    warn!("{file_path} does not exist, skipping.");
-                                }
-                            }
-                            SqpkFileOperation::DeleteFile => {
-                                if fs::remove_file(file_path.as_str()).is_err() {
-                                    warn!("Failed to remove {file_path}");
-                                }
-                            }
-                            SqpkFileOperation::RemoveAll => {
-                                let path: PathBuf =
-                                    [data_dir, "sqpack", &get_expansion_folder(fop.expansion_id)]
-                                        .iter()
-                                        .collect();
-
-                                if fs::read_dir(&path).is_ok() {
-                                    fs::remove_dir_all(&path)?;
-                                }
-                            }
-                            SqpkFileOperation::MakeDirTree => {
-                                fs::create_dir_all(parent_directory)?;
-                            }
-                        }
-                    }
-                    SqpkOperation::PatchInfo(_) => {
-                        // Currently, there's nothing we need from PatchInfo. Intentional NOP.
-                        debug!("PATCH: NOP PatchInfo");
-                    }
-                    SqpkOperation::TargetInfo(new_target_info) => {
-                        target_info = Some(new_target_info);
-                    }
-                    SqpkOperation::Index(_) => {
-                        // Currently, there's nothing we need from Index command. Intentional NOP.
-                        debug!("PATCH: NOP Index");
-                    }
-                }
-            }
-            ChunkType::FileHeader(_) => {
-                // Currently there's nothing very useful in the FileHeader, so it's an intentional NOP.
-                debug!("PATCH: NOP FileHeader");
-            }
-            ChunkType::ApplyOption(_) => {
-                // Currently, IgnoreMissing and IgnoreOldMismatch is not used in XIVQuickLauncher either. This stays as an intentional NOP.
-                debug!("PATCH: NOP ApplyOption");
-            }
-            ChunkType::AddDirectory(_) => {
-                debug!("PATCH: NOP AddDirectory");
-            }
-            ChunkType::DeleteDirectory(_) => {
-                debug!("PATCH: NOP DeleteDirectory");
-            }
-            ChunkType::EndOfFile => {
-                return Ok(());
-            }
-        }
-    }
-}
-
 fn recurse(path: impl AsRef<Path>) -> Vec<PathBuf> {
     let Ok(entries) = read_dir(path) else {
         return vec![];
@@ -675,7 +425,7 @@ fn recurse(path: impl AsRef<Path>) -> Vec<PathBuf> {
                 return vec![];
             };
             if meta.is_dir() {
-                return recurse(entry.path());
+                return crate::patch::recurse(entry.path());
             }
             if meta.is_file() {
                 return vec![entry.path()];
@@ -685,84 +435,338 @@ fn recurse(path: impl AsRef<Path>) -> Vec<PathBuf> {
         .collect()
 }
 
-/// Creates a new ZiPatch describing the diff between `base_directory` and `new_directory`.
-pub fn create_patch(base_directory: &str, new_directory: &str) -> Option<ByteBuffer> {
-    let mut buffer = ByteBuffer::new();
+pub struct ZiPatch;
 
-    {
-        let cursor = Cursor::new(&mut buffer);
-        let mut writer = BufWriter::new(cursor);
+impl ZiPatch {
+    /// Applies a boot or a game patch to the specified _data_dir_.
+    pub fn apply(data_dir: &str, patch_path: &str) -> Result<(), PatchError> {
+        let mut file = File::open(patch_path)?;
 
-        let header = PatchHeader {};
-        header.write(&mut writer).ok()?;
+        PatchHeader::read(&mut file)?;
 
-        let base_files = recurse(base_directory);
-        let new_files = recurse(new_directory);
+        let mut target_info: Option<SqpkTargetInfo> = None;
 
-        // A set of files not present in base, but in new (aka added files)
-        let added_files: Vec<&PathBuf> = new_files.iter().filter(|item| !base_files.contains(item)).collect();
+        let get_dat_path =
+            |target_info: &SqpkTargetInfo, main_id: u16, sub_id: u16, file_id: u32| -> String {
+                let filename = format!(
+                    "{:02x}{:04x}.{}.dat{}",
+                    main_id,
+                    sub_id,
+                    get_platform_string(&target_info.platform),
+                    file_id
+                );
+                let path: PathBuf = [
+                    data_dir,
+                    "sqpack",
+                    &get_expansion_folder_sub(sub_id),
+                    &filename,
+                ]
+                    .iter()
+                    .collect();
 
-        // A set of files not present in the new directory, that used to be in base (aka removedf iles)
-        let removed_files: Vec<&PathBuf> = base_files.iter().filter(|item| !new_files.contains(item)).collect();
-
-        // Process added files
-        for file in added_files {
-            let file_data = read(file.to_str().unwrap()).unwrap();
-
-            let add_file_chunk = PatchChunk {
-                size: 0,
-                chunk_type: ChunkType::Sqpk(SqpkChunk {
-                    size: 0,
-                    operation: SqpkOperation::FileOperation(SqpkFileOperationData {
-                        operation: SqpkFileOperation::AddFile,
-                        offset: 0,
-                        file_size: file_data.len() as u64,
-                        expansion_id: 0,
-                        path: file.to_str().unwrap().parse().unwrap(),
-                    }),
-                }),
-                crc32: 0,
+                path.to_str().unwrap().to_string()
             };
 
-            add_file_chunk.write(&mut writer).ok()?;
+        let get_index_path =
+            |target_info: &SqpkTargetInfo, main_id: u16, sub_id: u16, file_id: u32| -> String {
+                let mut filename = format!(
+                    "{:02x}{:04x}.{}.index",
+                    main_id,
+                    sub_id,
+                    get_platform_string(&target_info.platform)
+                );
 
-            // reverse reading crc32
-            writer.seek(SeekFrom::Current(-4));
+                // index files have no special ending if it's file_id == 0
+                if file_id != 0 {
+                    filename += &*format!("{}", file_id);
+                }
 
-            // add file data, dummy ver for now
-            write_data_block_patch(&mut writer, file_data);
+                let path: PathBuf = [
+                    data_dir,
+                    "sqpack",
+                    &get_expansion_folder_sub(sub_id),
+                    &filename,
+                ]
+                    .iter()
+                    .collect();
 
-            // re-apply crc32
-            writer.seek(SeekFrom::Current(4));
-        }
-
-        // Process deleted files
-        for file in removed_files {
-            let remove_file_chunk = PatchChunk {
-                size: 0,
-                chunk_type: ChunkType::Sqpk(SqpkChunk {
-                    size: 0,
-                    operation: SqpkOperation::FileOperation(SqpkFileOperationData {
-                        operation: SqpkFileOperation::DeleteFile,
-                        offset: 0,
-                        file_size: 0,
-                        expansion_id: 0,
-                        path: file.to_str().unwrap().parse().unwrap(),
-                    }),
-                }),
-                crc32: 0,
+                path.to_str().unwrap().to_string()
             };
 
-            remove_file_chunk.write(&mut writer).ok()?;
-        }
+        loop {
+            let chunk = PatchChunk::read(&mut file)?;
 
-        let eof_chunk = PatchChunk {
-            size: 0,
-            chunk_type: ChunkType::EndOfFile,
-            crc32: 0,
-        };
-        eof_chunk.write(&mut writer).ok()?;
+            match chunk.chunk_type {
+                ChunkType::Sqpk(pchunk) => {
+                    match pchunk.operation {
+                        SqpkOperation::AddData(add) => {
+                            let filename = get_dat_path(
+                                target_info.as_ref().unwrap(),
+                                add.main_id,
+                                add.sub_id,
+                                add.file_id,
+                            );
+
+                            let (left, _) = filename.rsplit_once('/').unwrap();
+                            fs::create_dir_all(left)?;
+
+                            let mut new_file = OpenOptions::new()
+                                .write(true)
+                                .create(true)
+                                .truncate(false)
+                                .open(filename)?;
+
+                            new_file.seek(SeekFrom::Start(add.block_offset))?;
+
+                            new_file.write_all(&add.block_data)?;
+
+                            wipe(&new_file, add.block_delete_number as usize)?;
+                        }
+                        SqpkOperation::DeleteData(delete) => {
+                            let filename = get_dat_path(
+                                target_info.as_ref().unwrap(),
+                                delete.main_id,
+                                delete.sub_id,
+                                delete.file_id,
+                            );
+
+                            let new_file = OpenOptions::new()
+                                .write(true)
+                                .create(true)
+                                .truncate(false)
+                                .open(filename)?;
+
+                            write_empty_file_block_at(
+                                &new_file,
+                                delete.block_offset,
+                                delete.block_number as u64,
+                            )?;
+                        }
+                        SqpkOperation::ExpandData(expand) => {
+                            let filename = get_dat_path(
+                                target_info.as_ref().unwrap(),
+                                expand.main_id,
+                                expand.sub_id,
+                                expand.file_id,
+                            );
+
+                            let (left, _) = filename.rsplit_once('/').unwrap();
+                            fs::create_dir_all(left)?;
+
+                            let new_file = OpenOptions::new()
+                                .write(true)
+                                .create(true)
+                                .truncate(false)
+                                .open(filename)?;
+
+                            write_empty_file_block_at(
+                                &new_file,
+                                expand.block_offset,
+                                expand.block_number as u64,
+                            )?;
+                        }
+                        SqpkOperation::HeaderUpdate(header) => {
+                            let file_path = match header.file_kind {
+                                TargetFileKind::Dat => get_dat_path(
+                                    target_info.as_ref().unwrap(),
+                                    header.main_id,
+                                    header.sub_id,
+                                    header.file_id,
+                                ),
+                                TargetFileKind::Index => get_index_path(
+                                    target_info.as_ref().unwrap(),
+                                    header.main_id,
+                                    header.sub_id,
+                                    header.file_id,
+                                ),
+                            };
+
+                            let (left, _) = file_path.rsplit_once('/').ok_or(PatchError::ParseError)?;
+                            fs::create_dir_all(left)?;
+
+                            let mut new_file = OpenOptions::new()
+                                .write(true)
+                                .create(true)
+                                .truncate(false)
+                                .open(file_path)?;
+
+                            if header.header_kind != TargetHeaderKind::Version {
+                                new_file.seek(SeekFrom::Start(1024))?;
+                            }
+
+                            new_file.write_all(&header.header_data)?;
+                        }
+                        SqpkOperation::FileOperation(fop) => {
+                            let file_path = format!("{}/{}", data_dir, fop.path);
+                            let (parent_directory, _) = file_path.rsplit_once('/').unwrap();
+
+                            match fop.operation {
+                                SqpkFileOperation::AddFile => {
+                                    fs::create_dir_all(parent_directory)?;
+
+                                    // reverse reading crc32
+                                    file.seek(SeekFrom::Current(-4))?;
+
+                                    let mut data: Vec<u8> = Vec::with_capacity(fop.file_size as usize);
+
+                                    while data.len() < fop.file_size as usize {
+                                        data.append(&mut read_data_block_patch(&mut file).unwrap());
+                                    }
+
+                                    // re-apply crc32
+                                    file.seek(SeekFrom::Current(4))?;
+
+                                    // now apply the file!
+                                    let new_file = OpenOptions::new()
+                                        .write(true)
+                                        .create(true)
+                                        .truncate(false)
+                                        .open(&file_path);
+
+                                    if let Ok(mut file) = new_file {
+                                        if fop.offset == 0 {
+                                            file.set_len(0)?;
+                                        }
+
+                                        file.seek(SeekFrom::Start(fop.offset))?;
+                                        file.write_all(&data)?;
+                                    } else {
+                                        warn!("{file_path} does not exist, skipping.");
+                                    }
+                                }
+                                SqpkFileOperation::DeleteFile => {
+                                    if fs::remove_file(file_path.as_str()).is_err() {
+                                        warn!("Failed to remove {file_path}");
+                                    }
+                                }
+                                SqpkFileOperation::RemoveAll => {
+                                    let path: PathBuf =
+                                        [data_dir, "sqpack", &get_expansion_folder(fop.expansion_id)]
+                                            .iter()
+                                            .collect();
+
+                                    if fs::read_dir(&path).is_ok() {
+                                        fs::remove_dir_all(&path)?;
+                                    }
+                                }
+                                SqpkFileOperation::MakeDirTree => {
+                                    fs::create_dir_all(parent_directory)?;
+                                }
+                            }
+                        }
+                        SqpkOperation::PatchInfo(_) => {
+                            // Currently, there's nothing we need from PatchInfo. Intentional NOP.
+                            debug!("PATCH: NOP PatchInfo");
+                        }
+                        SqpkOperation::TargetInfo(new_target_info) => {
+                            target_info = Some(new_target_info);
+                        }
+                        SqpkOperation::Index(_) => {
+                            // Currently, there's nothing we need from Index command. Intentional NOP.
+                            debug!("PATCH: NOP Index");
+                        }
+                    }
+                }
+                ChunkType::FileHeader(_) => {
+                    // Currently there's nothing very useful in the FileHeader, so it's an intentional NOP.
+                    debug!("PATCH: NOP FileHeader");
+                }
+                ChunkType::ApplyOption(_) => {
+                    // Currently, IgnoreMissing and IgnoreOldMismatch is not used in XIVQuickLauncher either. This stays as an intentional NOP.
+                    debug!("PATCH: NOP ApplyOption");
+                }
+                ChunkType::AddDirectory(_) => {
+                    debug!("PATCH: NOP AddDirectory");
+                }
+                ChunkType::DeleteDirectory(_) => {
+                    debug!("PATCH: NOP DeleteDirectory");
+                }
+                ChunkType::EndOfFile => {
+                    return Ok(());
+                }
+            }
+        }
     }
+    
+    /// Creates a new ZiPatch describing the diff between `base_directory` and `new_directory`.
+    pub fn create(base_directory: &str, new_directory: &str) -> Option<ByteBuffer> {
+        let mut buffer = ByteBuffer::new();
 
-    Some(buffer)
+        {
+            let cursor = Cursor::new(&mut buffer);
+            let mut writer = BufWriter::new(cursor);
+
+            let header = PatchHeader {};
+            header.write(&mut writer).ok()?;
+
+            let base_files = crate::patch::recurse(base_directory);
+            let new_files = crate::patch::recurse(new_directory);
+
+            // A set of files not present in base, but in new (aka added files)
+            let added_files: Vec<&PathBuf> = new_files.iter().filter(|item| !base_files.contains(item)).collect();
+
+            // A set of files not present in the new directory, that used to be in base (aka removedf iles)
+            let removed_files: Vec<&PathBuf> = base_files.iter().filter(|item| !new_files.contains(item)).collect();
+
+            // Process added files
+            for file in added_files {
+                let file_data = read(file.to_str().unwrap()).unwrap();
+
+                let add_file_chunk = PatchChunk {
+                    size: 0,
+                    chunk_type: ChunkType::Sqpk(SqpkChunk {
+                        size: 0,
+                        operation: SqpkOperation::FileOperation(SqpkFileOperationData {
+                            operation: SqpkFileOperation::AddFile,
+                            offset: 0,
+                            file_size: file_data.len() as u64,
+                            expansion_id: 0,
+                            path: file.to_str().unwrap().parse().unwrap(),
+                        }),
+                    }),
+                    crc32: 0,
+                };
+
+                add_file_chunk.write(&mut writer).ok()?;
+
+                // reverse reading crc32
+                writer.seek(SeekFrom::Current(-4));
+
+                // add file data, dummy ver for now
+                write_data_block_patch(&mut writer, file_data);
+
+                // re-apply crc32
+                writer.seek(SeekFrom::Current(4));
+            }
+
+            // Process deleted files
+            for file in removed_files {
+                let remove_file_chunk = PatchChunk {
+                    size: 0,
+                    chunk_type: ChunkType::Sqpk(SqpkChunk {
+                        size: 0,
+                        operation: SqpkOperation::FileOperation(SqpkFileOperationData {
+                            operation: SqpkFileOperation::DeleteFile,
+                            offset: 0,
+                            file_size: 0,
+                            expansion_id: 0,
+                            path: file.to_str().unwrap().parse().unwrap(),
+                        }),
+                    }),
+                    crc32: 0,
+                };
+
+                remove_file_chunk.write(&mut writer).ok()?;
+            }
+
+            let eof_chunk = PatchChunk {
+                size: 0,
+                chunk_type: ChunkType::EndOfFile,
+                crc32: 0,
+            };
+            eof_chunk.write(&mut writer).ok()?;
+        }
+
+        Some(buffer)
+    }
 }
