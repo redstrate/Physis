@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2024 Joshua Goins <josh@redstrate.com>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+use std::ffi::CString;
 use binrw::{binread, BinReaderExt, BinResult};
 use half::f16;
 use std::io::SeekFrom;
@@ -22,7 +23,13 @@ pub(crate) fn read_string(byte_stream: Vec<u8>) -> String {
 }
 
 pub(crate) fn write_string(str: &String) -> Vec<u8> {
-    vec![]
+    let c_string = CString::new(&**str).unwrap();
+    c_string.as_bytes().to_vec()
+}
+
+pub(crate) fn get_string_len(str: &String) -> usize {
+    let c_string = CString::new(&**str).unwrap();
+    c_string.count_bytes()
 }
 
 #[binrw::parser(reader)]
