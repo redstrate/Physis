@@ -267,7 +267,7 @@ pub struct Material {
 impl Material {
     pub fn from_existing(buffer: ByteSpan) -> Option<Material> {
         let mut cursor = Cursor::new(buffer);
-        let mat_data = MaterialData::read(&mut cursor).unwrap();
+        let mat_data = MaterialData::read(&mut cursor).ok()?;
 
         let mut texture_paths = vec![];
 
