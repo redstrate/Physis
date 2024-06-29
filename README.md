@@ -51,14 +51,14 @@ Physis also supports doing some other useful things other than reading and writi
 
 ## Supported Game Versions
 
-| Version              | Works | Note                                                        |
-|----------------------|-----|-------------------------------------------------------------|
-| A Realm Reborn (2.x) | ??? | Have yet to test.                                           |
-| Heavensward (3.x)    | ??? | Have yet to test.                                           |
-| Stormblood (4.x)     | ??? | Have yet to test.                                           |
-| Shadowbringers (5.x) | ~   | Not tested in a while but shuld work..                      |
-| Endwalker (6.x)      | ✅   |                                                             |
-| Dawntrail (7.x)      | ~   | Limited support for the benchmark, awaiting retail release. |
+| Version              | Works | Note                                                                                                                          |
+|----------------------|-----|-------------------------------------------------------------------------------------------------------------------------------|
+| A Realm Reborn (2.x) | ??? | Have yet to test.                                                                                                             |
+| Heavensward (3.x)    | ??? | Have yet to test.                                                                                                             |
+| Stormblood (4.x)     | ??? | Have yet to test.                                                                                                             |
+| Shadowbringers (5.x) | ~   | Not tested in a while but shuld work..                                                                                        |
+| Endwalker (6.x)      | ✅   |                                                                                                                               |
+| Dawntrail (7.x)      | ✅   | Most features are compatible, but newer visual data such as models, textures and materials may not load correctly/at all yet. |
 
 Note that only Windows versions of the game is supported at the moment. 
 
