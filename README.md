@@ -15,7 +15,7 @@ Physis should:
 * ... Make it easy for developers to tinker around with game data.
 * ... Document file formats along the way, to make writing future and applications libraries easier.
 * ... Make parsing data safe, and create automated tests when possible.
-* ... Aim to be have minimal dependencies, and easy to use regardless of platform.
+* ... Aim for minimal dependencies, and should be easy to use regardless of platform.
 
 ## Features
 
@@ -51,13 +51,13 @@ Physis also supports doing some other useful things other than reading and writi
 
 ## Supported Game Versions
 
-| Version              | Works | Note                                                                                                                          |
-|----------------------|-----|-------------------------------------------------------------------------------------------------------------------------------|
-| A Realm Reborn (2.x) | ??? | Have yet to test.                                                                                                             |
-| Heavensward (3.x)    | ??? | Have yet to test.                                                                                                             |
-| Stormblood (4.x)     | ??? | Have yet to test.                                                                                                             |
-| Shadowbringers (5.x) | ~   | Not tested in a while but shuld work..                                                                                        |
-| Endwalker (6.x)      | ✅   |                                                                                                                               |
+| Version              | Works | Note                                                                                                                         |
+|----------------------|-----|------------------------------------------------------------------------------------------------------------------------------|
+| A Realm Reborn (2.x) | ??? | Have yet to test.                                                                                                            |
+| Heavensward (3.x)    | ??? | Have yet to test.                                                                                                            |
+| Stormblood (4.x)     | ??? | Have yet to test.                                                                                                            |
+| Shadowbringers (5.x) | ✅   |                                                                                        |
+| Endwalker (6.x)      | ✅   |                                                                                                                              |
 | Dawntrail (7.x)      | ✅   | Most features are compatible, but newer visual data such as models, textures and materials may not load correctly/at all yet. |
 
 Note that only Windows versions of the game is supported at the moment. 
@@ -97,7 +97,7 @@ data that might take hours to download.
 #### Unit Testing
 
 There are a set of basic unit tests you can run via `cargo test`. You can also find the relevant test resources in `resources/tests`.
-This does **NOT** contain copyrighted material, but actually fake game data created by physis itself. These tests are
+This does **NOT** contain copyrighted material, but actually fake game data created by Physis itself. These tests are
 run automatically by the CI.
 
 #### Retail Testing
@@ -109,7 +109,7 @@ feature.
 #### Patch Testing
 
 Patching is an extremely sensitive operation since it is not easily reversible if done wrong. Repairing the game files
-is an option, but it's time-consuming and not yet implemented in physis. To prevent regressions in patching the
+is an option, but it's time-consuming and not yet implemented in Physis. To prevent regressions in patching the
 game, I have set up a testing bed for cross-checking our implementation with others. Currently, this is limited to XIVLauncher's implementation,
 but I will eventually adopt a way to test the retail patch installer as well.
 
