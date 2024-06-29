@@ -17,6 +17,14 @@ pub(crate) fn write_bool_as<T: std::convert::From<u8>>(x: &bool) -> T {
     }
 }
 
+pub(crate) fn read_string(byte_stream: Vec<u8>) -> String {
+    String::from_utf8(byte_stream).unwrap()
+}
+
+pub(crate) fn write_string(str: &String) -> Vec<u8> {
+    vec![]
+}
+
 #[binrw::parser(reader)]
 pub(crate) fn strings_parser(
     base_offset: u64,

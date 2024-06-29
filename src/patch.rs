@@ -7,27 +7,27 @@ use std::fs::{File, OpenOptions};
 use std::io::{Seek, SeekFrom, Write};
 use std::path::PathBuf;
 
-use binrw::binread;
+use binrw::{binread, binrw};
 use binrw::BinRead;
 use tracing::{debug, warn};
 
 use crate::common::{get_platform_string, Platform, Region};
-use crate::common_file_operations::read_bool_from;
+use crate::common_file_operations::{read_bool_from, read_string, write_bool_as, write_string};
 use crate::sqpack::read_data_block_patch;
 
-#[binread]
+#[binrw]
 #[derive(Debug)]
 #[br(little)]
 struct PatchHeader {
     #[br(temp)]
-    #[br(count = 7)]
+    #[bw(calc = *b"ZIPATCH")]
     #[br(pad_before = 1)]
     #[br(pad_after = 4)]
-    #[br(assert(magic == b"ZIPATCH"))]
-    magic: Vec<u8>,
+    #[br(assert(magic == *b"ZIPATCH"))]
+    magic: [u8; 7],
 }
 
-#[derive(BinRead, Debug)]
+#[binrw]
 #[allow(dead_code)]
 #[br(little)]
 struct PatchChunk {
@@ -38,7 +38,8 @@ struct PatchChunk {
     crc32: u32,
 }
 
-#[derive(BinRead, PartialEq, Debug)]
+#[binrw]
+#[derive(PartialEq, Debug)]
 enum ChunkType {
     #[br(magic = b"FHDR")]
     FileHeader(
@@ -58,7 +59,8 @@ enum ChunkType {
     EndOfFile,
 }
 
-#[derive(BinRead, PartialEq, Debug)]
+#[binrw]
+#[derive(PartialEq, Debug)]
 enum FileHeaderChunk {
     #[br(magic = 2u8)]
     Version2(FileHeaderChunk2),
@@ -66,22 +68,26 @@ enum FileHeaderChunk {
     Version3(FileHeaderChunk3),
 }
 
-#[derive(BinRead, PartialEq, Debug)]
+#[binrw]
+#[derive(PartialEq, Debug)]
 #[br(big)]
 struct FileHeaderChunk2 {
     #[br(count = 4)]
-    #[br(map = | x: Vec < u8 > | String::from_utf8(x).unwrap())]
+    #[br(map = read_string)]
+    #[bw(map = write_string)]
     name: String,
 
     #[br(pad_before = 8)]
     depot_hash: u32,
 }
 
-#[derive(BinRead, PartialEq, Debug)]
+#[binrw]
+#[derive(PartialEq, Debug)]
 #[br(big)]
 struct FileHeaderChunk3 {
     #[br(count = 4)]
-    #[br(map = | x: Vec < u8 > | String::from_utf8(x).unwrap())]
+    #[br(map = read_string)]
+    #[bw(map = write_string)]
     name: String,
 
     entry_files: u32,
@@ -101,16 +107,16 @@ struct FileHeaderChunk3 {
     sqpk_file_commands: u32,
 }
 
-#[binread]
-#[br(repr = u32)]
-#[br(big)]
+#[binrw]
+#[brw(repr = u32)]
+#[brw(big)]
 #[derive(PartialEq, Debug)]
 enum ApplyOption {
     IgnoreMissing = 1,
     IgnoreOldMismatch = 2,
 }
 
-#[binrw::binread]
+#[binrw]
 #[derive(PartialEq, Debug)]
 struct ApplyOptionChunk {
     #[br(pad_after = 4)]
@@ -119,18 +125,20 @@ struct ApplyOptionChunk {
     value: u32,
 }
 
-#[binrw::binread]
+#[binrw]
 #[derive(PartialEq, Debug)]
 struct DirectoryChunk {
     #[br(temp)]
+    #[bw(ignore)]
     path_length: u32,
 
     #[br(count = path_length)]
-    #[br(map = | x: Vec < u8 > | String::from_utf8(x).unwrap())]
+    #[br(map = read_string)]
+    #[bw(map = write_string)]
     name: String,
 }
 
-#[binread]
+#[binrw]
 #[derive(PartialEq, Debug)]
 enum SqpkOperation {
     #[br(magic = b'A')]
@@ -151,7 +159,8 @@ enum SqpkOperation {
     Index(SqpkIndex),
 }
 
-#[derive(BinRead, PartialEq, Debug)]
+#[binrw]
+#[derive(PartialEq, Debug)]
 struct SqpkPatchInfo {
     status: u8,
     #[br(pad_after = 1)]
@@ -161,20 +170,21 @@ struct SqpkPatchInfo {
     install_size: u64,
 }
 
-#[binread]
+#[binrw]
 #[derive(PartialEq, Debug)]
 enum SqpkFileOperation {
-    #[br(magic = b'A')]
+    #[brw(magic = b'A')]
     AddFile,
-    #[br(magic = b'R')]
+    #[brw(magic = b'R')]
     RemoveAll,
-    #[br(magic = b'D')]
+    #[brw(magic = b'D')]
     DeleteFile,
-    #[br(magic = b'M')]
+    #[brw(magic = b'M')]
     MakeDirTree,
 }
 
-#[derive(BinRead, PartialEq, Debug)]
+#[binrw]
+#[derive(PartialEq, Debug)]
 #[br(big)]
 struct SqpkAddData {
     #[br(pad_before = 3)]
@@ -193,7 +203,8 @@ struct SqpkAddData {
     block_data: Vec<u8>,
 }
 
-#[derive(BinRead, PartialEq, Debug)]
+#[binrw]
+#[derive(PartialEq, Debug)]
 #[br(big)]
 struct SqpkDeleteData {
     #[br(pad_before = 3)]
@@ -207,28 +218,29 @@ struct SqpkDeleteData {
     block_number: u32,
 }
 
-#[binread]
+#[binrw]
 #[derive(PartialEq, Debug)]
 enum TargetFileKind {
-    #[br(magic = b'D')]
+    #[brw(magic = b'D')]
     Dat,
-    #[br(magic = b'I')]
+    #[brw(magic = b'I')]
     Index,
 }
 
-#[binread]
+#[binrw]
 #[derive(PartialEq, Debug)]
 enum TargetHeaderKind {
-    #[br(magic = b'V')]
+    #[brw(magic = b'V')]
     Version,
-    #[br(magic = b'I')]
+    #[brw(magic = b'I')]
     Index,
-    #[br(magic = b'D')]
+    #[brw(magic = b'D')]
     Data,
 }
 
-#[derive(BinRead, PartialEq, Debug)]
-#[br(big)]
+#[binrw]
+#[derive(PartialEq, Debug)]
+#[brw(big)]
 struct SqpkHeaderUpdateData {
     file_kind: TargetFileKind,
     header_kind: TargetHeaderKind,
@@ -242,9 +254,9 @@ struct SqpkHeaderUpdateData {
     header_data: Vec<u8>,
 }
 
-#[binread]
+#[binrw]
 #[derive(PartialEq, Debug)]
-#[br(big)]
+#[brw(big)]
 struct SqpkFileOperationData {
     #[br(pad_after = 2)]
     operation: SqpkFileOperation,
@@ -253,17 +265,21 @@ struct SqpkFileOperationData {
     file_size: u64,
 
     #[br(temp)]
+    #[bw(ignore)]
     path_length: u32,
 
     #[br(pad_after = 2)]
     expansion_id: u16,
 
     #[br(count = path_length)]
+    // TODO: find out why this is a special string reading operation
     #[br(map = | x: Vec < u8 > | String::from_utf8(x[..x.len() - 1].to_vec()).unwrap())]
+    #[bw(map = write_string)]
     path: String,
 }
 
-#[derive(BinRead, PartialEq, Debug)]
+#[binrw]
+#[derive(PartialEq, Debug)]
 #[br(big)]
 struct SqpkTargetInfo {
     #[br(pad_before = 3)]
@@ -271,6 +287,7 @@ struct SqpkTargetInfo {
     platform: Platform, // Platform is read as a u16, but the enum is u8
     region: Region,
     #[br(map = read_bool_from::<u16>)]
+    #[bw(map = write_bool_as::<u16>)]
     is_debug: bool,
     version: u16,
     #[br(little)]
@@ -280,20 +297,22 @@ struct SqpkTargetInfo {
     seek_count: u64,
 }
 
-#[binread]
+#[binrw]
 #[derive(PartialEq, Debug)]
 enum SqpkIndexCommand {
-    #[br(magic = b'A')]
+    #[brw(magic = b'A')]
     Add,
-    #[br(magic = b'D')]
+    #[brw(magic = b'D')]
     Delete,
 }
 
-#[derive(BinRead, PartialEq, Debug)]
+#[binrw]
+#[derive(PartialEq, Debug)]
 #[br(big)]
 struct SqpkIndex {
     command: SqpkIndexCommand,
     #[br(map = read_bool_from::<u8>)]
+    #[bw(map = write_bool_as::<u8>)]
     is_synonym: bool,
 
     #[br(pad_before = 1)]
@@ -304,7 +323,8 @@ struct SqpkIndex {
     block_number: u32,
 }
 
-#[derive(BinRead, PartialEq, Debug)]
+#[binrw]
+#[derive(PartialEq, Debug)]
 #[br(big)]
 struct SqpkChunk {
     size: u32,
