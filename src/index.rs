@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #![allow(clippy::identity_op)]
+#![allow(unused_variables)] // for br(temp), meh
 
 use std::io::SeekFrom;
 

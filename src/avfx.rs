@@ -175,6 +175,7 @@ struct AvfxBlock {
 }
 
 #[derive(Debug)]
+#[allow(dead_code)]
 pub struct Avfx {
     clip_box: [f32; 3],
     clip_box_size: [f32; 3],

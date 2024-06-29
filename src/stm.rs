@@ -25,6 +25,7 @@ struct StmHeader {
 }
 
 #[derive(Debug)]
+#[allow(dead_code)]
 pub struct DyePack {
     diffuse: [f32; 3],
     specular: [f32; 3],

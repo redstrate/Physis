@@ -1,7 +1,10 @@
 // SPDX-FileCopyrightText: 2024 Joshua Goins <josh@redstrate.com>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+// Rust deprecating this is stupid, I don't want to use a crate here
+#[allow(deprecated)]
 use std::env::home_dir;
+
 use std::fs;
 use std::fs::read_dir;
 use std::path::PathBuf;
@@ -110,7 +113,7 @@ pub struct ExistingUserDirectory {
 /// Finds existing user folders on disk. Will only return locations that actually have files in them, and a really basic check to see if the data is valid.
 pub fn find_existing_user_dirs() -> Vec<ExistingUserDirectory> {
     let mut user_dirs = Vec::new();
-    let Some(home_dir) = home_dir() else {
+    let Some(_) = home_dir() else {
         return user_dirs;
     };
 

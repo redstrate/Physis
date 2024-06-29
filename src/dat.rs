@@ -89,6 +89,7 @@ impl<T: for<'a> AnyNumberType<'a>> ModelMemorySizes<T> {
 }
 
 #[derive(BinRead)]
+#[allow(dead_code)]
 pub struct ModelFileBlock {
     pub num_blocks: u32,
     pub num_used_blocks: u32,

@@ -10,6 +10,7 @@ use binrw::BinRead;
 #[binread]
 #[derive(Debug)]
 #[brw(little)]
+#[allow(dead_code)]
 struct PhybHeader {
     version: [u8; 4],
 

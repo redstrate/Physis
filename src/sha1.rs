@@ -13,6 +13,7 @@
 #![allow(deprecated)]
 #![allow(clippy::double_parens)]
 #![allow(clippy::identity_op)]
+#![allow(dead_code)]
 
 use core::cmp;
 use core::fmt;

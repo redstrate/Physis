@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 #![allow(clippy::bad_bit_mask)]
+#![allow(dead_code)]
 
 use core::cell::RefCell;
 use std::collections::HashMap;

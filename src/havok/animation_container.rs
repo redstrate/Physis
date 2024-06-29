@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: 2020 Inseok Lee
 // SPDX-License-Identifier: MIT
 
+#![allow(dead_code)]
+
 use crate::havok::animation_binding::HavokAnimationBinding;
 use crate::havok::object::HavokObject;
 use crate::havok::skeleton::HavokSkeleton;

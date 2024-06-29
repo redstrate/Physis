@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: 2020 Inseok Lee
 // SPDX-License-Identifier: MIT
 
+#![allow(dead_code)]
+
 use core::convert::TryInto;
 
 pub trait SliceByteOrderExt {

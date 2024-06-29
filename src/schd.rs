@@ -20,6 +20,7 @@ pub enum ShaderStage {
 #[binread]
 #[derive(Debug)]
 #[brw(little)]
+#[allow(dead_code)]
 struct SchdHeader {
     magic: i32, // TODO: what magic?
 

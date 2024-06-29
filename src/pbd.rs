@@ -12,6 +12,7 @@ use binrw::BinRead;
 #[derive(Debug)]
 #[br(import { data_offset: i32 })]
 #[brw(little)]
+#[allow(unused)]
 struct RacialDeformer {
     bone_count: i32,
 
@@ -51,6 +52,7 @@ struct PreBoneDeformerItem {
 #[binread]
 #[derive(Debug)]
 #[brw(little)]
+#[allow(dead_code)]
 struct PreBoneDeformerLink {
     parent_index: i16,
     first_child_index: i16,
@@ -61,6 +63,7 @@ struct PreBoneDeformerLink {
 #[binread]
 #[derive(Debug)]
 #[brw(little)]
+#[allow(dead_code)]
 struct PreBoneDeformerHeader {
     count: i32,
 

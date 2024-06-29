@@ -129,7 +129,7 @@ pub struct Node {
 #[br(little)]
 #[br(magic = b"ShPk")]
 #[derive(Debug)]
-#[allow(dead_code)]
+#[allow(dead_code, unused_variables)]
 pub struct ShaderPackage {
     version: u32,
 
