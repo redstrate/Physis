@@ -21,24 +21,24 @@ Physis should:
 
 Here is a list of supported formats and their status:
 
-| File Format | Read | Write | Note |
-| --- | --- | --- | --- |
-| [Configuration files](https://docs.xiv.zone/format/cfg/) | ✅ | ✅ | |
-| [Saved character data](https://docs.xiv.zone/format/chardat/) | ✅ | ❌ | Only some versions are currently supported. |
-| [Chara make params](https://docs.xiv.zone/format/cmp/) | ✅ | ❌ | |
-| Dictionaries | ✅ | ❌ | |
-| [Excel data](https://docs.xiv.zone/format/exd/) | ✅ | ❌ | |
-| [File infos](https://docs.xiv.zone/format/fiin/) | ✅ | ✅ | |
-| Map layers | ✅ | ❌ | Layer support isn't well tested yet. |
-| [Chat logs](https://docs.xiv.zone/format/log/) | ✅ | ❌ | Not all chat categories are discovered yet. |
-| [Models](https://docs.xiv.zone/format/mdl/) | ✅ | ✅ | Adding custom shape keys aren't fully supported yet. |
-| [Materials](https://docs.xiv.zone/format/mtrl/) | ✅ | ❌ | |
-| Patch files | ✅ | ❌ | |
-| Pre bone deformers | ✅ | ❌ | |
-| [Shader packages](https://docs.xiv.zone/format/shpk/) | ✅ | ❌ | |
-| [Skeletons](https://docs.xiv.zone/format/sklb/) | ✅ | ❌ | |
-| Terrain | ✅ | ❌ | |
-| [Textures](https://docs.xiv.zone/format/tex/) | ✅ | ❌ | Only some formats are supported. |
+| File Format | Read | Write | Note                                                                                               |
+| --- | --- |-------|----------------------------------------------------------------------------------------------------|
+| [Configuration files](https://docs.xiv.zone/format/cfg/) | ✅ | ✅     |                                                                                                    |
+| [Saved character data](https://docs.xiv.zone/format/chardat/) | ✅ | ❌     | Only some versions are currently supported.                                                        |
+| [Chara make params](https://docs.xiv.zone/format/cmp/) | ✅ | ❌     |                                                                                                    |
+| Dictionaries | ✅ | ❌     |                                                                                                    |
+| [Excel data](https://docs.xiv.zone/format/exd/) | ✅ | ❌     |                                                                                                    |
+| [File infos](https://docs.xiv.zone/format/fiin/) | ✅ | ✅     |                                                                                                    |
+| Map layers | ✅ | ❌     | Layer support isn't well tested yet.                                                               |
+| [Chat logs](https://docs.xiv.zone/format/log/) | ✅ | ❌     | Not all chat categories are discovered yet.                                                        |
+| [Models](https://docs.xiv.zone/format/mdl/) | ✅ | ✅     | Adding custom shape keys aren't fully supported yet.                                               |
+| [Materials](https://docs.xiv.zone/format/mtrl/) | ✅ | ❌     |                                                                                                    |
+| Patch files | ✅ | ~     | ZiPatch writing support is currently being worked on, but many operations are not yet implemented. |
+| Pre bone deformers | ✅ | ❌     |                                                                                                    |
+| [Shader packages](https://docs.xiv.zone/format/shpk/) | ✅ | ❌     |                                                                                                    |
+| [Skeletons](https://docs.xiv.zone/format/sklb/) | ✅ | ❌     |                                                                                                    |
+| Terrain | ✅ | ❌     |                                                                                                    |
+| [Textures](https://docs.xiv.zone/format/tex/) | ✅ | ❌     | Only some formats are supported.                                                                   |
 
 Physis also supports doing some other useful things other than reading and writing file formats:
 
