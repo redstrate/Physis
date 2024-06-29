@@ -632,20 +632,24 @@ pub fn apply_patch(data_dir: &str, patch_path: &str) -> Result<(), PatchError> {
                     }
                     SqpkOperation::PatchInfo(_) => {
                         // Currently, there's nothing we need from PatchInfo. Intentional NOP.
+                        debug!("PATCH: NOP PatchInfo");
                     }
                     SqpkOperation::TargetInfo(new_target_info) => {
                         target_info = Some(new_target_info);
                     }
                     SqpkOperation::Index(_) => {
                         // Currently, there's nothing we need from Index command. Intentional NOP.
+                        debug!("PATCH: NOP Index");
                     }
                 }
             }
             ChunkType::FileHeader(_) => {
                 // Currently there's nothing very useful in the FileHeader, so it's an intentional NOP.
+                debug!("PATCH: NOP FileHeader");
             }
             ChunkType::ApplyOption(_) => {
                 // Currently, IgnoreMissing and IgnoreOldMismatch is not used in XIVQuickLauncher either. This stays as an intentional NOP.
+                debug!("PATCH: NOP ApplyOption");
             }
             ChunkType::AddDirectory(_) => {
                 debug!("PATCH: NOP AddDirectory");
