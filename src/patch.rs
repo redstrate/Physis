@@ -701,6 +701,7 @@ pub fn create_patch(base_directory: &str, new_directory: &str) -> Option<ByteBuf
         // A set of files not present in the new directory, that used to be in base (aka removedf iles)
         let removed_files: Vec<&PathBuf> = base_files.iter().filter(|item| !new_files.contains(item)).collect();
 
+        // Process added files
         for file in added_files {
             let file_data = read(file.to_str().unwrap()).unwrap();
 
@@ -718,17 +719,37 @@ pub fn create_patch(base_directory: &str, new_directory: &str) -> Option<ByteBuf
                 }),
                 crc32: 0,
             };
-            
+
             add_file_chunk.write(&mut writer).ok()?;
 
             // reverse reading crc32
             writer.seek(SeekFrom::Current(-4));
-            
+
             // add file data, dummy ver for now
             write_data_block_patch(&mut writer, file_data);
 
             // re-apply crc32
             writer.seek(SeekFrom::Current(4));
+        }
+
+        // Process deleted files
+        for file in removed_files {
+            let remove_file_chunk = PatchChunk {
+                size: 0,
+                chunk_type: ChunkType::Sqpk(SqpkChunk {
+                    size: 0,
+                    operation: SqpkOperation::FileOperation(SqpkFileOperationData {
+                        operation: SqpkFileOperation::DeleteFile,
+                        offset: 0,
+                        file_size: 0,
+                        expansion_id: 0,
+                        path: file.to_str().unwrap().parse().unwrap(),
+                    }),
+                }),
+                crc32: 0,
+            };
+
+            remove_file_chunk.write(&mut writer).ok()?;
         }
 
         let eof_chunk = PatchChunk {
