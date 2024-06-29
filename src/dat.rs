@@ -162,21 +162,23 @@ pub enum CompressionMode {
     },
 }
 
-#[binrw::binread]
+#[binrw]
 #[derive(Debug)]
-#[br(little)]
+#[brw(little)]
 pub struct BlockHeader {
-    #[br(pad_after = 4)]
+    #[brw(pad_after = 4)]
     pub size: u32,
 
     #[br(temp)]
+    #[bw(calc = match compression { CompressionMode::Compressed{ compressed_length, .. } => { *compressed_length } CompressionMode::Uncompressed{ .. } => { 32000 }})]
     x: i32,
 
     #[br(temp)]
+    #[bw(calc = match compression { CompressionMode::Compressed{ decompressed_length, .. } => { *decompressed_length } CompressionMode::Uncompressed{ file_size } => { *file_size }})]
     y: i32,
 
     #[br(args { x, y })]
-    #[br(restore_position)]
+    #[brw(restore_position)]
     pub compression: CompressionMode,
 }
 
