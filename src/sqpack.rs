@@ -1,9 +1,9 @@
 // SPDX-FileCopyrightText: 2023 Joshua Goins <josh@redstrate.com>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-use std::io::{Read, Seek, SeekFrom};
+use std::io::{Read, Seek, SeekFrom, Write};
 
-use binrw::BinRead;
+use binrw::{BinRead, BinWrite};
 
 use crate::compression::no_header_decompress;
 use crate::dat::{BlockHeader, CompressionMode};
@@ -74,3 +74,18 @@ pub fn read_data_block_patch<T: Read + Seek>(mut buf: T) -> Option<Vec<u8>> {
         }
     }
 }
+
+pub fn write_data_block_patch<T: Write + Seek>(mut writer: T, data: Vec<u8>) {
+    // This only adds uncompressed data for now, to simplify implementation
+    // TODO: write compressed blocks
+    let block_header = BlockHeader {
+        size: 128, // TODO: i have no idea what this value is from
+        compression: CompressionMode::Uncompressed {
+            file_size: data.len() as i32,
+        },
+    };
+    block_header.write(&mut writer);
+
+    data.write(&mut writer);
+}
+
