@@ -25,12 +25,12 @@ pub(crate) fn read_string(byte_stream: Vec<u8>) -> String {
 
 pub(crate) fn write_string(str: &String) -> Vec<u8> {
     let c_string = CString::new(&**str).unwrap();
-    c_string.as_bytes().to_vec()
+    c_string.as_bytes_with_nul().to_vec()
 }
 
 pub(crate) fn get_string_len(str: &String) -> usize {
     let c_string = CString::new(&**str).unwrap();
-    c_string.count_bytes()
+    c_string.count_bytes() + 1 // for the nul terminator
 }
 
 #[binrw::parser(reader)]
@@ -121,5 +121,26 @@ mod tests {
     fn write_bool_u8() {
         assert_eq!(write_bool_as::<u8>(&false), DATA[0]);
         assert_eq!(write_bool_as::<u8>(&true), DATA[1]);
+    }
+
+    // "FOO\0"
+    const STRING_DATA: [u8; 4] = [0x46u8, 0x4Fu8, 0x4Fu8, 0x0u8];
+
+    #[test]
+    fn read_string() {
+        // The nul terminator is supposed to be removed
+        assert_eq!(crate::common_file_operations::read_string(STRING_DATA.to_vec()), "FOO".to_string());
+    }
+
+    #[test]
+    fn write_string() {
+        // Supposed to include the nul terminator
+        assert_eq!(crate::common_file_operations::write_string(&"FOO".to_string()), STRING_DATA.to_vec());
+    }
+
+    #[test]
+    fn get_string_len() {
+        // Supposed to include the nul terminator
+        assert_eq!(crate::common_file_operations::get_string_len(&"FOO".to_string()), 4);
     }
 }
