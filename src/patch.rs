@@ -269,13 +269,13 @@ struct SqpkFileOperationData {
 
     // Note: counts the \0 at the end... for some reason
     #[br(temp)]
-    #[bw(calc = get_string_len(path) as u32 + 1)]
+    #[bw(calc = get_string_len(path) as u32)]
     path_length: u32,
 
     #[brw(pad_after = 2)]
     expansion_id: u16,
 
-    #[br(count = path_length - 1)]
+    #[br(count = path_length)]
     #[br(map = read_string)]
     #[bw(map = write_string)]
     path: String,
