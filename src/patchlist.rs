@@ -188,6 +188,7 @@ mod tests {
         assert_eq!(patch_list.patches.len(), 1);
         assert_eq!(patch_list.patches[0].version, "2023.09.14.0000.0001");
         assert_eq!(patch_list.patches[0].url, "http://patch-dl.ffxiv.com/boot/2b5cbc63/D2023.09.14.0000.0001.patch");
+        assert_eq!(patch_list.patches[0].size_on_disk, 69674819);
     }
 
     #[test]
@@ -251,6 +252,7 @@ mod tests {
         assert_eq!(patch_list.patches.len(), 19);
         assert_eq!(patch_list.patches[5].version, "2023.07.26.0000.0001");
         assert_eq!(patch_list.patches[5].url, "http://patch-dl.ffxiv.com/game/ex1/6b936f08/D2023.07.26.0000.0001.patch");
+        assert_eq!(patch_list.patches[5].size_on_disk, 5854598228);
     }
 
     #[test]
