@@ -165,3 +165,6 @@ pub mod stm;
 
 /// Find existing installation directories
 pub mod existing_dirs;
+
+/// Reading patch lists
+pub mod patchlist;
