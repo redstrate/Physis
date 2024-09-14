@@ -187,7 +187,7 @@ impl GameData {
             Some((entry, chunk)) => {
                 let mut dat_file = self.get_dat_file(path, chunk, entry.data_file_id.into())?;
 
-                dat_file.read_from_offset(entry.offset as u64)
+                dat_file.read_from_offset(entry.offset)
             }
             None => None,
         }

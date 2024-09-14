@@ -113,6 +113,7 @@ pub struct ExistingUserDirectory {
 /// Finds existing user folders on disk. Will only return locations that actually have files in them, and a really basic check to see if the data is valid.
 pub fn find_existing_user_dirs() -> Vec<ExistingUserDirectory> {
     let mut user_dirs = Vec::new();
+    #[allow(deprecated)] // We still want std::env::home_dir
     let Some(_) = home_dir() else {
         return user_dirs;
     };
@@ -177,9 +178,10 @@ pub fn find_existing_user_dirs() -> Vec<ExistingUserDirectory> {
 }
 
 fn from_home_dir(path: &'static str) -> String {
+    #[allow(deprecated)] // We still want std::env::home_dir
     let mut new_path = home_dir().unwrap();
     new_path.push(path);
-    return new_path.into_os_string().into_string().unwrap();
+    new_path.into_os_string().into_string().unwrap()
 }
 
 fn is_valid_game_dir(path: &String) -> bool {

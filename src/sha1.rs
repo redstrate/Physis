@@ -283,15 +283,6 @@ impl Sha1 {
 
         Digest { data: state }
     }
-
-    /// Retrieve the digest result as hex string directly.
-    ///
-    /// (The function is only available if the `std` feature is enabled)
-    #[cfg(feature = "std")]
-    pub fn hexdigest(&self) -> std::string::String {
-        use std::string::ToString;
-        self.digest().to_string()
-    }
 }
 
 impl Digest {

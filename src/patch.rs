@@ -14,7 +14,6 @@ use crate::ByteBuffer;
 
 use crate::common::{get_platform_string, Platform, Region};
 use crate::common_file_operations::{get_string_len, read_bool_from, read_string, write_bool_as, write_string};
-use crate::shpk::ShaderPackage;
 use crate::sqpack::{read_data_block_patch, write_data_block_patch};
 
 #[binrw]
@@ -734,13 +733,13 @@ impl ZiPatch {
                 add_file_chunk.write(&mut writer).ok()?;
 
                 // reverse reading crc32
-                writer.seek(SeekFrom::Current(-4));
+                writer.seek(SeekFrom::Current(-4)).ok()?;
 
                 // add file data, dummy ver for now
                 write_data_block_patch(&mut writer, file_data);
 
                 // re-apply crc32
-                writer.seek(SeekFrom::Current(4));
+                writer.seek(SeekFrom::Current(4)).ok()?;
             }
 
             // Process deleted files

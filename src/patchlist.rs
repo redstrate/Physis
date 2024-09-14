@@ -96,7 +96,7 @@ impl PatchList {
             id: "".to_string(),
             content_location: "".to_string(),
             requested_version: "".to_string(),
-            patch_length: patch_length,
+            patch_length,
             patches,
         }
     }
@@ -155,7 +155,7 @@ impl PatchList {
                 str.push_str(&patch.hashes[0]);
                 for hash in &patch.hashes[1..] {
                     str.push(',');
-                    str.push_str(&hash);
+                    str.push_str(hash);
                 }
                 str.push('\t');
             }
