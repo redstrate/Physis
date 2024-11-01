@@ -3,6 +3,6 @@
 
 fn main() {
     // Windows doesn't ship pkgconfig files, typically. At least in our build system.
-    #[cfg(not(target_os = "windows"))]
+    #[cfg(all(not(target_os = "windows"), not(target_family = "wasm")))]
     system_deps::Config::new().probe().unwrap();
 }
