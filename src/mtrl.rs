@@ -7,7 +7,9 @@ use std::io::Cursor;
 
 use crate::common_file_operations::{Half1, Half2, Half3};
 use crate::ByteSpan;
-use binrw::{binread, binrw, BinRead};
+use binrw::{binread, binrw, BinRead, BinResult};
+use crate::mtrl::ColorDyeTable::{DawntrailColorDyeTable, LegacyColorDyeTable, OpaqueColorDyeTable};
+use crate::mtrl::ColorTable::{DawntrailColorTable, LegacyColorTable, OpaqueColorTable};
 
 #[binrw]
 #[derive(Debug)]
@@ -30,8 +32,8 @@ struct MaterialHeader {
     shader_value_list_size: u16,
     shader_key_count: u16,
     constant_count: u16,
-    #[br(pad_after = 4)]
     sampler_count: u16,
+    flags: u32,
 }
 
 #[binrw]
@@ -39,15 +41,89 @@ struct MaterialHeader {
 #[allow(dead_code)]
 struct ColorSet {
     name_offset: u16,
-    #[br(pad_after = 1)]
-    index: u8,
+    index: u16,
 }
 
 #[binread]
 #[derive(Debug, Clone, Copy)]
 #[repr(C)]
 #[allow(dead_code)]
-pub struct ColorTableRow {
+pub struct DawntrailColorTableRow {
+    #[br(map = |x: Half3| { [x.r.to_f32(), x.g.to_f32(), x.b.to_f32()] })]
+    pub diffuse_color: [f32; 3],
+
+    #[br(map = |x: Half1| { x.value.to_f32() })]
+    pub unknown1: f32,
+
+    #[br(map = |x: Half3| { [x.r.to_f32(), x.g.to_f32(), x.b.to_f32()] })]
+    pub specular_color: [f32; 3],
+
+    #[br(map = |x: Half1| { x.value.to_f32() })]
+    pub unknown2: f32,
+
+    #[br(map = |x: Half3| { [x.r.to_f32(), x.g.to_f32(), x.b.to_f32()] })]
+    pub emissive_color: [f32; 3],
+
+    #[br(map = |x: Half1| { x.value.to_f32() })]
+    pub unknown3: f32,
+
+    #[br(map = |x: Half1| { x.value.to_f32() })]
+    pub sheen_rate: f32,
+
+    #[br(map = |x: Half1| { x.value.to_f32() })]
+    pub sheen_tint: f32,
+
+    #[br(map = |x: Half1| { x.value.to_f32() })]
+    pub sheen_aperture: f32,
+
+    #[br(map = |x: Half1| { x.value.to_f32() })]
+    pub unknown4: f32,
+
+    #[br(map = |x: Half1| { x.value.to_f32() })]
+    pub roughness: f32,
+
+    #[br(map = |x: Half1| { x.value.to_f32() })]
+    pub unknown5: f32,
+
+    #[br(map = |x: Half1| { x.value.to_f32() })]
+    pub metalness: f32,
+
+    #[br(map = |x: Half1| { x.value.to_f32() })]
+    pub anisotropy: f32,
+
+    #[br(map = |x: Half1| { x.value.to_f32() })]
+    pub unknown6: f32,
+
+    #[br(map = |x: Half1| { x.value.to_f32() })]
+    pub sphere_mask: f32,
+
+    #[br(map = |x: Half1| { x.value.to_f32() })]
+    pub unknown7: f32,
+
+    #[br(map = |x: Half1| { x.value.to_f32() })]
+    pub unknown8: f32,
+
+    pub shader_index: u16,
+
+    pub tile_set: u16,
+
+    #[br(map = |x: Half1| { x.value.to_f32() })]
+    pub tile_alpha: f32,
+
+    pub sphere_index: u16,
+
+    #[br(map = |x: Half2| { [x.x.to_f32(), x.y.to_f32()] })]
+    pub material_repeat: [f32; 2],
+
+    #[br(map = |x: Half2| { [x.x.to_f32(), x.y.to_f32()] })]
+    pub material_skew: [f32; 2],
+}
+
+#[binread]
+#[derive(Debug, Clone, Copy)]
+#[repr(C)]
+#[allow(dead_code)]
+pub struct LegacyColorTableRow {
     #[br(map = |x: Half3| { [x.r.to_f32(), x.g.to_f32(), x.b.to_f32()] })]
     pub diffuse_color: [f32; 3],
 
@@ -73,18 +149,41 @@ pub struct ColorTableRow {
 }
 
 #[binread]
-#[br(import {set_count: usize})]
 #[derive(Debug)]
 #[allow(dead_code)]
-pub struct ColorTable {
-    #[br(count = set_count)]
-    pub rows: Vec<ColorTableRow>,
+pub struct LegacyColorTableData {
+    #[br(count = 16)]
+    pub rows: Vec<LegacyColorTableRow>,
 }
 
 #[binread]
 #[derive(Debug)]
 #[allow(dead_code)]
-pub struct ColorDyeTableRow {
+pub struct DawntrailColorTableData {
+    #[br(count = 32)]
+    pub rows: Vec<DawntrailColorTableRow>,
+}
+
+#[binread]
+#[derive(Debug)]
+#[allow(dead_code)]
+pub struct OpaqueColorTableData {
+    // TODO: Support
+}
+
+#[binread]
+#[derive(Debug)]
+#[allow(dead_code)]
+pub enum ColorTable {
+    LegacyColorTable(LegacyColorTableData),
+    DawntrailColorTable(DawntrailColorTableData),
+    OpaqueColorTable(OpaqueColorTableData)
+}
+
+#[binread]
+#[derive(Debug)]
+#[allow(dead_code)]
+pub struct LegacyColorDyeTableRow {
     #[br(temp)]
     data: u16,
 
@@ -110,9 +209,83 @@ pub struct ColorDyeTableRow {
 #[binread]
 #[derive(Debug)]
 #[allow(dead_code)]
-pub struct ColorDyeTable {
+pub struct DawntrailColorDyeTableRow {
+    #[br(temp)]
+    data: u32,
+
+    #[br(calc = ((data >> 16) & 0x7FF) as u16)]
+    pub template: u16,
+
+    #[br(calc = ((data >> 27) & 0x3) as u8)]
+    pub channel: u8,
+
+    #[br(calc = (data & 0x0001) != 0)]
+    pub diffuse: bool,
+
+    #[br(calc = (data & 0x0002) != 0)]
+    pub specular: bool,
+
+    #[br(calc = (data & 0x0004) != 0)]
+    pub emissive: bool,
+
+    #[br(calc = (data & 0x0008) != 0)]
+    pub scalar3: bool,
+
+    #[br(calc = (data & 0x0010) != 0)]
+    pub metalness: bool,
+
+    #[br(calc = (data & 0x0020) != 0)]
+    pub roughness: bool,
+
+    #[br(calc = (data & 0x0040) != 0)]
+    pub sheen_rate: bool,
+
+    #[br(calc = (data & 0x0080) != 0)]
+    pub sheen_tint_rate: bool,
+
+    #[br(calc = (data & 0x0100) != 0)]
+    pub sheen_aperture: bool,
+
+    #[br(calc = (data & 0x0200) != 0)]
+    pub anisotropy: bool,
+
+    #[br(calc = (data & 0x0400) != 0)]
+    pub sphere_map_index: bool,
+
+    #[br(calc = (data & 0x0800) != 0)]
+    pub sphere_map_mask: bool,
+}
+
+#[binread]
+#[derive(Debug)]
+#[allow(dead_code)]
+pub struct LegacyColorDyeTableData {
     #[br(count = 16)]
-    pub rows: Vec<ColorDyeTableRow>,
+    pub rows: Vec<LegacyColorDyeTableRow>,
+}
+
+#[binread]
+#[derive(Debug)]
+#[allow(dead_code)]
+pub struct DawntrailColorDyeTableData {
+    #[br(count = 32)]
+    pub rows: Vec<DawntrailColorDyeTableRow>,
+}
+
+#[binread]
+#[derive(Debug)]
+#[allow(dead_code)]
+pub struct OpaqueColorDyeTableData {
+    // TODO: implement
+}
+
+#[binread]
+#[derive(Debug)]
+#[allow(dead_code)]
+pub enum ColorDyeTable {
+    LegacyColorDyeTable(LegacyColorDyeTableData),
+    DawntrailColorDyeTable(DawntrailColorDyeTableData),
+    OpaqueColorDyeTable(OpaqueColorDyeTableData)
 }
 
 #[binrw]
@@ -208,6 +381,24 @@ pub struct Sampler {
     unknown3: u8,
 }
 
+#[binrw::parser(reader, endian)]
+fn parse_color_table(table_dimension_logs: u8) -> BinResult<Option<ColorTable>> {
+    Ok(Some(match table_dimension_logs {
+        0 | 0x42 => LegacyColorTable(LegacyColorTableData::read_options(reader, endian, ())?),
+        0x53 => DawntrailColorTable(DawntrailColorTableData::read_options(reader, endian, ())?),
+        _ => OpaqueColorTable(OpaqueColorTableData::read_options(reader, endian, ())?)
+    }))
+}
+
+#[binrw::parser(reader, endian)]
+fn parse_color_dye_table(table_dimension_logs: u8) -> BinResult<Option<ColorDyeTable>> {
+    Ok(Some(match table_dimension_logs {
+        0 => LegacyColorDyeTable(LegacyColorDyeTableData::read_options(reader, endian, ())?),
+        0x50...0x5F => DawntrailColorDyeTable(DawntrailColorDyeTableData::read_options(reader, endian, ())?),
+        _ => OpaqueColorDyeTable(OpaqueColorDyeTableData::read_options(reader, endian, ())?)
+    }))
+}
+
 #[binrw]
 #[derive(Debug)]
 #[allow(dead_code)]
@@ -225,19 +416,46 @@ struct MaterialData {
     color_sets: Vec<ColorSet>,
 
     #[br(count = file_header.string_table_size)]
-    #[br(pad_after = file_header.additional_data_size)]
     strings: Vec<u8>,
 
-    #[br(if(file_header.data_set_size > 0))]
-    // Dawntrail doubled the amount of color sets.
-    // The MTRL version is the same (why square enix?) so we check the data set size instead
-    #[br(args { set_count: if file_header.data_set_size < 2048 { 16 } else { 32 } })]
+    #[br(count = file_header.additional_data_size)]
+    #[br(pad_size_to = 4)]
+    #[br(map = |x: Vec<u8>| u32::from_le_bytes(x[0..4].try_into().unwrap()))]
+    table_flags: u32,
+
+    #[br(calc = (table_flags & 0x4) != 0)]
+    #[bw(ignore)]
+    has_table: bool,
+
+    #[br(calc = (table_flags & 0x8) != 0)]
+    #[bw(ignore)]
+    has_dye_table: bool,
+
+    #[br(calc = ((table_flags >> 4) & 0xF) as u8)]
+    #[bw(ignore)]
+    table_width_log: u8,
+
+    #[br(calc = ((table_flags >> 8) & 0xF) as u8)]
+    #[bw(ignore)]
+    table_height_log: u8,
+
+    #[br(calc = (table_flags >> 4) as u8)]
+    #[bw(ignore)]
+    table_dimension_logs: u8,
+
+    #[br(calc = !has_table || table_width_log != 0 && table_height_log != 0)]
+    #[bw(ignore)]
+    is_dawntrail: bool,
+
+    #[br(if(has_table))]
+    #[br(parse_with = parse_color_table)]
+    #[br(args(table_dimension_logs))]
     #[bw(ignore)]
     color_table: Option<ColorTable>,
 
-    #[br(if(file_header.data_set_size >
-        if file_header.data_set_size < 2048 { 512 } else { 2048 }
-    ))]
+    #[br(if(has_dye_table))]
+    #[br(parse_with = parse_color_dye_table)]
+    #[br(args(table_dimension_logs))]
     #[bw(ignore)]
     color_dye_table: Option<ColorDyeTable>,
 
