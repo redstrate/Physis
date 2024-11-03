@@ -1,29 +1,20 @@
 [advisories]
-db-path = "~/.cargo/advisory-db"
-db-urls = ["https://github.com/rustsec/advisory-db"]
-vulnerability = "deny"
-unmaintained = "deny"
-yanked = "deny"
-notice = "warn"
+version = 2
 
 [licenses]
-unlicensed = "deny"
 allow = [
+    "MIT",
+    "Apache-2.0",
+    "Apache-2.0 WITH LLVM-exception",
+    "GPL-3.0",
     "Unicode-DFS-2016" # used for unicode-ident
 ]
-copyleft = "allow"
-allow-osi-fsf-free = "both"
-default = "deny"
 confidence-threshold = 0.8
 
 [bans]
 multiple-versions = "deny"
 wildcards = "warn"
 highlight = "all"
-skip-tree = [
-    # I HATE CRITERION AAAAAAAA
-    { name = "criterion" }
-]
 
 [sources]
 unknown-registry = "deny"
