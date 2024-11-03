@@ -188,9 +188,9 @@ pub struct ShaderPackage {
     uav_parameters: Vec<ResourceParameter>,
 
     #[br(count = system_key_count)]
-    system_keys: Vec<Key>,
+    pub system_keys: Vec<Key>,
     #[br(count = scene_key_count)]
-    scene_keys: Vec<Key>,
+    pub scene_keys: Vec<Key>,
     #[br(count = material_key_count)]
     pub material_keys: Vec<Key>,
 
