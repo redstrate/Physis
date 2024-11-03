@@ -32,6 +32,18 @@ impl MDL {
         ])
     }
 
+    pub(crate) fn write_byte_float42<T: BinWriterExt>(
+        cursor: &mut T,
+        vec: &[f32; 4],
+    ) -> BinResult<()> {
+        cursor.write_le::<[u8; 4]>(&[
+            (vec[0]).round() as u8,
+            (vec[1]).round() as u8,
+            (vec[2]).round() as u8,
+            (vec[3]).round() as u8,
+        ])
+    }
+
     pub(crate) fn read_tangent(cursor: &mut Cursor<ByteSpan>) -> Option<[f32; 4]> {
         Some([
             (f32::from(cursor.read_le::<u8>().ok()?) * 2.0 / MAX_BYTE_FLOAT - 1.0),

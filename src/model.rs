@@ -11,10 +11,7 @@ use binrw::BinReaderExt;
 use binrw::{binrw, BinWrite, BinWriterExt};
 
 use crate::common_file_operations::{read_bool_from, write_bool_as};
-use crate::model_vertex_declarations::{
-    vertex_element_parser, vertex_element_writer, VertexDeclaration, VertexType, VertexUsage,
-    VERTEX_ELEMENT_SIZE,
-};
+use crate::model_vertex_declarations::{vertex_element_parser, vertex_element_writer, VertexDeclaration, VertexType, VertexUsage, VERTEX_ELEMENT_SIZE};
 use crate::{ByteBuffer, ByteSpan};
 
 pub const NUM_VERTICES: u32 = 17;
@@ -290,9 +287,9 @@ struct ShapeValue {
 #[allow(dead_code)]
 #[br(import {file_header: &ModelFileHeader})]
 #[brw(little)]
-struct ModelData {
+pub struct ModelData {
     #[br(args { vertex_declaration_count: file_header.vertex_declaration_count })]
-    header: ModelHeader,
+    pub header: ModelHeader,
 
     #[br(count = header.element_id_count)]
     element_ids: Vec<ElementId>,
@@ -373,7 +370,7 @@ struct ElementId {
     rotate: [f32; 3],
 }
 
-#[derive(Clone, Copy, PartialEq)]
+#[derive(Clone, Copy, PartialEq, Debug)]
 #[repr(C)]
 pub struct Vertex {
     pub position: [f32; 3],
@@ -403,14 +400,14 @@ impl Default for Vertex {
     }
 }
 
-#[derive(Clone, Copy)]
+#[derive(Debug, Clone, Copy)]
 #[repr(C)]
 pub struct NewShapeValue {
     pub base_index: u32,
     pub replacing_vertex: Vertex,
 }
 
-#[derive(Clone, Copy)]
+#[derive(Debug, Clone, Copy)]
 #[repr(C)]
 pub struct SubMesh {
     submesh_index: usize,
@@ -418,32 +415,35 @@ pub struct SubMesh {
     pub index_offset: u32,
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct Shape {
     pub name: String,
     pub morphed_vertices: Vec<Vertex>,
 }
 
 /// Corresponds to a "Mesh" in an LOD
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct Part {
     mesh_index: u16,
     pub vertices: Vec<Vertex>,
+    /// Indexed by VertexElement::stream
+    pub vertex_streams: Vec<Vec<u8>>,
+    pub vertex_stream_strides: Vec<usize>,
     pub indices: Vec<u16>,
     pub material_index: u16,
     pub submeshes: Vec<SubMesh>,
     pub shapes: Vec<Shape>,
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct Lod {
     pub parts: Vec<Part>,
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct MDL {
     file_header: ModelFileHeader,
-    model_data: ModelData,
+    pub model_data: ModelData,
 
     pub lods: Vec<Lod>,
     pub affected_bone_names: Vec<String>,
@@ -551,13 +551,7 @@ impl MDL {
                                         MDL::read_byte_float4(&mut cursor).unwrap();
                                 }
                                 VertexType::Byte4 => {
-                                    let bytes = MDL::read_byte4(&mut cursor).unwrap();
-                                    vertices[k as usize].bone_weight = [
-                                        f32::from(bytes[0]),
-                                        f32::from(bytes[1]),
-                                        f32::from(bytes[2]),
-                                        f32::from(bytes[3]),
-                                    ];
+                                    vertices[k as usize].bone_weight = MDL::read_tangent(&mut cursor).unwrap();
                                 }
                                 VertexType::UnsignedShort4 => {
                                     let bytes = MDL::read_unsigned_short4(&mut cursor).unwrap();
@@ -779,6 +773,33 @@ impl MDL {
                     }
                 }
 
+                let mut vertex_streams = vec![];
+                let mut vertex_stream_strides = vec![];
+                let mesh = &model.meshes[j as usize];
+                for stream in 0..mesh.vertex_stream_count {
+                    let mut vertex_data = vec![];
+                    let stride = mesh.vertex_buffer_strides[stream as usize];
+                    for z in 0..mesh.vertex_count {
+                        // TODO: read the entire vertex data into a buffer
+                        // Handle the offsets within Novus itself
+                        cursor
+                            .seek(SeekFrom::Start(
+                                (model.lods[i as usize].vertex_data_offset
+                                    + model.meshes[j as usize].vertex_buffer_offsets
+                                    [stream as usize]
+                                    + (z as u32 * stride as u32)) as u64,
+                            ))
+                            .ok()?;
+
+                        for _ in 0..stride {
+                            vertex_data.push(cursor.read_le::<u8>().ok()?);
+                        }
+                    }
+
+                    vertex_streams.push(vertex_data);
+                    vertex_stream_strides.push(mesh.vertex_buffer_strides[stream as usize] as usize);
+                }
+
                 parts.push(Part {
                     mesh_index: j,
                     vertices,
@@ -786,6 +807,8 @@ impl MDL {
                     material_index,
                     submeshes,
                     shapes,
+                    vertex_streams,
+                    vertex_stream_strides
                 });
             }
 
@@ -1019,6 +1042,13 @@ impl MDL {
 
                             match element.vertex_usage {
                                 VertexUsage::Position => match element.vertex_type {
+                                    VertexType::Single4 => {
+                                        MDL::write_single4(
+                                            &mut cursor,
+                                            &MDL::pad_slice(&vert.position, 1.0),
+                                        )
+                                            .ok()?;
+                                    }
                                     VertexType::Half4 => {
                                         MDL::write_half4(
                                             &mut cursor,
@@ -1040,6 +1070,10 @@ impl MDL {
                                     VertexType::ByteFloat4 => {
                                         MDL::write_byte_float4(&mut cursor, &vert.bone_weight)
                                             .ok()?;
+                                    }
+                                    VertexType::Byte4 => {
+                                        MDL::write_byte_float42(&mut cursor, &vert.bone_weight)
+                                            .ok()?; // TODO: WRONG!
                                     }
                                     _ => {
                                         panic!(
