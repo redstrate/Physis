@@ -51,14 +51,14 @@ Physis also supports doing some other useful things other than reading and writi
 
 ## Supported Game Versions
 
-| Version              | Works | Note                                                                                                                         |
-|----------------------|-----|------------------------------------------------------------------------------------------------------------------------------|
-| A Realm Reborn (2.x) | ??? | Have yet to test.                                                                                                            |
-| Heavensward (3.x)    | ??? | Have yet to test.                                                                                                            |
-| Stormblood (4.x)     | ??? | Have yet to test.                                                                                                            |
-| Shadowbringers (5.x) | ✅   |                                                                                        |
-| Endwalker (6.x)      | ✅   |                                                                                                                              |
-| Dawntrail (7.x)      | ✅   | Most features are compatible, but newer visual data such as models, textures and materials may not load correctly/at all yet. |
+| Version              | Works | Note                                                                             |
+|----------------------|-------|----------------------------------------------------------------------------------|
+| A Realm Reborn (2.x) | ???   | Have yet to test.                                                                |
+| Heavensward (3.x)    | ???   | Have yet to test.                                                                |
+| Stormblood (4.x)     | ???   | Have yet to test.                                                                |
+| Shadowbringers (5.x) | ✅     |                                                                                  |
+| Endwalker (6.x)      | ✅     |                                                                                  |
+| Dawntrail (7.x)      | ✅     | Visual formats (models, materials, etc) by Physis crashes the 7.x retail client. |
 
 Note that only Windows versions of the game is supported at the moment. 
 
