@@ -11,7 +11,7 @@ const END_OF_STREAM: u8 = 0xFF;
 /// The format of the vertex stream.
 #[binrw]
 #[brw(repr = u8)]
-#[repr(C)]
+#[repr(u8)]
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub enum VertexType {
     /// 1 32-bit float
@@ -74,7 +74,7 @@ pub fn get_vertex_type_size(vertex_type: VertexType) -> usize {
 /// What the vertex stream is used for.
 #[binrw]
 #[brw(repr = u8)]
-#[repr(C)]
+#[repr(u8)]
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub enum VertexUsage {
     Position = 0,
