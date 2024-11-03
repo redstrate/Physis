@@ -108,7 +108,7 @@ mod sha1;
 mod model_file_operations;
 
 #[cfg(feature = "visual_data")]
-mod model_vertex_declarations;
+pub mod model_vertex_declarations;
 
 #[cfg(feature = "visual_data")]
 pub mod lgb;

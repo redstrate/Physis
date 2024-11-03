@@ -11,6 +11,7 @@ const END_OF_STREAM: u8 = 0xFF;
 /// The format of the vertex stream.
 #[binrw]
 #[brw(repr = u8)]
+#[repr(C)]
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub enum VertexType {
     /// 1 32-bit float
@@ -49,9 +50,31 @@ pub enum VertexType {
     UnsignedShort4 = 17,
 }
 
+/// In bytes
+pub fn get_vertex_type_size(vertex_type: VertexType) -> usize {
+    // TODO: Most of these are wrong
+    match vertex_type {
+        VertexType::Single1 => 4,
+        VertexType::Single2 => 8,
+        VertexType::Single3 => 12,
+        VertexType::Single4 => 16,
+        VertexType::Byte4 => 4,
+        VertexType::Short2 => 4,
+        VertexType::Short4 => 8,
+        VertexType::ByteFloat4 => 4,
+        VertexType::Short2n => 4,
+        VertexType::Short4n => 4,
+        VertexType::Half2 => 4,
+        VertexType::Half4 => 8,
+        VertexType::UnsignedShort2 => 4,
+        VertexType::UnsignedShort4 => 8,
+    }
+}
+
 /// What the vertex stream is used for.
 #[binrw]
 #[brw(repr = u8)]
+#[repr(C)]
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub enum VertexUsage {
     Position = 0,
@@ -68,6 +91,7 @@ pub enum VertexUsage {
 #[binrw]
 #[derive(Copy, Clone, Debug, PartialEq)]
 #[allow(dead_code)]
+#[repr(C)]
 #[brw(little)]
 pub struct VertexElement {
     pub stream: u8,
