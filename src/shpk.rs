@@ -34,7 +34,8 @@ pub struct ResourceParameter {
 #[binread]
 #[br(little, import {
     shader_data_offset: u32,
-    strings_offset: u32
+    strings_offset: u32,
+    is_vertex: bool
 })]
 #[derive(Debug)]
 #[allow(unused)]
@@ -56,8 +57,14 @@ pub struct Shader {
     #[br(args { count: texture_count as usize, inner: ResourceParameterBinReadArgs { strings_offset }})]
     pub texture_parameters: Vec<ResourceParameter>,
 
-    /// The HLSL bytecode of this shader. The DX level used varies.
+    /// Additional data specific to the shader type
     #[br(seek_before = SeekFrom::Start(shader_data_offset as u64 + data_offset as u64))]
+    #[br(count = if is_vertex { shader_data_offset } else { 0 } )]
+    #[br(restore_position)]
+    pub additional_data: Vec<u8>,
+
+    /// The HLSL bytecode of this shader. The DX level used varies.
+    #[br(seek_before = SeekFrom::Start(shader_data_offset as u64 + data_offset as u64 + if is_vertex { 8 } else { 0 } ))]
     #[br(count = data_size)]
     #[br(restore_position)]
     pub bytecode: Vec<u8>,
@@ -167,9 +174,9 @@ pub struct ShaderPackage {
     node_alias_count: u32,
 
     // TODO: dx9 needs 4 bytes of padding, dx11 is 8 (correct)
-    #[br(args { count: vertex_shader_count as usize, inner : ShaderBinReadArgs { shader_data_offset: shader_data_offset + 8, strings_offset }})]
+    #[br(args { count: vertex_shader_count as usize, inner : ShaderBinReadArgs { is_vertex: true, shader_data_offset, strings_offset }})]
     pub vertex_shaders: Vec<Shader>,
-    #[br(args { count: pixel_shader_count as usize, inner: ShaderBinReadArgs { shader_data_offset, strings_offset } })]
+    #[br(args { count: pixel_shader_count as usize, inner: ShaderBinReadArgs { is_vertex: false, shader_data_offset, strings_offset } })]
     pub pixel_shaders: Vec<Shader>,
 
     #[br(count = material_parameter_count)]
@@ -198,7 +205,7 @@ pub struct ShaderPackage {
     pub sub_view_key2_default: u32,
 
     #[br(args { count: node_count as usize, inner: NodeBinReadArgs { system_key_count, scene_key_count, material_key_count, subview_key_count: 2 }})]
-    nodes: Vec<Node>,
+    pub nodes: Vec<Node>,
 
     #[br(ignore)]
     node_selectors: Vec<(u32, u32)>,
