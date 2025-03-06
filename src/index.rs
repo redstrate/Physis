@@ -24,12 +24,25 @@ enum SqPackFileType {
 #[binrw]
 #[brw(magic = b"SqPack\0\0")]
 pub struct SqPackHeader {
+    #[brw(pad_size_to = 4)]
     platform_id: Platform,
-    #[brw(pad_before = 3)]
     size: u32,
     // Have only seen version 1
     version: u32,
+    #[brw(pad_size_to = 4)]
     file_type: SqPackFileType,
+
+    // some unknown value, zeroed out for index files
+    unk1: u32,
+    unk2: u32,
+
+    // always 0xFFFFFFFF
+    unk3: u32,
+
+    #[brw(pad_before = 924)]
+    #[brw(pad_after = 44)]
+    // always a certain value for index values, otherwise some value based on the content of the data
+    unk4: [u8; 24]
 }
 
 #[binrw]
