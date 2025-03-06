@@ -807,10 +807,12 @@ mod tests {
 
         let data_dir = prepare_data_dir();
 
-        write(data_dir.clone() + "/test.patch", &read(d).unwrap());
+        write(data_dir.clone() + "/test.patch", &read(d).unwrap()).unwrap();
 
         // Feeding it invalid data should not panic
-        ZiPatch::apply(&data_dir.clone(), &(data_dir + "/test.patch"));
+        let Err(PatchError::ParseError) = ZiPatch::apply(&data_dir.clone(), &(data_dir + "/test.patch")) else {
+            panic!("Expecting a parse error!");
+        };
     }
 
     #[test]
@@ -827,26 +829,22 @@ mod tests {
         // Let's create a patch that re-creates the resources dir into our data directory
         let patch = ZiPatch::create(&*data_dir, resources_dir.to_str().unwrap()).unwrap();
 
-        write(data_dir.clone() + "/test.patch", &patch);
+        write(data_dir.clone() + "/test.patch", &patch).unwrap();
 
-        ZiPatch::apply(&data_dir.clone(), &(data_dir.clone() + "/test.patch"));
+        ZiPatch::apply(&data_dir.clone(), &(data_dir.clone() + "/test.patch")).unwrap();
 
-        // FIXME: For some reason, running this test by itself is fine. However when running in the test suite, it trips over itself.
-        // So this is a really cruddy way to wait for the files to settle.
-        sleep(Duration::new(1, 0));
-
-        fs::remove_file(data_dir.clone() + "/test.patch");
+        fs::remove_file(data_dir.clone() + "/test.patch").unwrap();
 
         let old_files = recurse(&resources_dir);
         let new_files = recurse(&data_dir);
 
-        let old_relative_files: Vec<&Path> = old_files.iter().filter(|item| {
+        let mut old_relative_files: Vec<&Path> = old_files.iter().filter(|item| {
             let metadata = fs::metadata(item).unwrap();
-            metadata.len() > 0 // fitler out zero byte files because ZiPatch::create does
+            metadata.len() > 0 // filter out zero byte files because ZiPatch::create does
         }).map(|x| x.strip_prefix(&resources_dir).unwrap()).collect();
-        let new_relative_files: Vec<&Path> = new_files.iter().map(|x| x.strip_prefix(&data_dir).unwrap()).collect();
+        let mut new_relative_files: Vec<&Path> = new_files.iter().map(|x| x.strip_prefix(&data_dir).unwrap()).collect();
 
-        assert_eq!(old_relative_files, new_relative_files);
+        assert_eq!(old_relative_files.sort(), new_relative_files.sort());
     }
 }
 
