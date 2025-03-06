@@ -3,22 +3,23 @@
 
 use hmac_sha512::Hash;
 use std::env;
-use std::io::Write;
 use std::fs::{read, read_dir};
+use std::io::Write;
 use std::process::Command;
 
 use physis::common::Platform;
 use physis::fiin::FileInfo;
 use physis::index;
+use physis::patch::ZiPatch;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
-use physis::patch::ZiPatch;
 
 #[cfg(feature = "patch_testing")]
 fn make_temp_install_dir(name: &str) -> String {
     use physis::installer::install_game;
 
-    let installer_exe = env::var("FFXIV_INSTALLER").expect("$FFXIV_INSTALLER needs to point to the retail installer");
+    let installer_exe = env::var("FFXIV_INSTALLER")
+        .expect("$FFXIV_INSTALLER needs to point to the retail installer");
 
     let mut game_dir = env::home_dir().unwrap();
     game_dir.push(name);
@@ -92,7 +93,8 @@ fn physis_install_patch(game_directory: &str, data_directory: &str, patch_name: 
 #[cfg(feature = "patch_testing")]
 fn xivlauncher_install_patch(game_directory: &str, data_directory: &str, patch_name: &str) {
     let patch_dir = env::var("FFXIV_PATCH_DIR").unwrap();
-    let patcher_exe = env::var("FFXIV_XIV_LAUNCHER_PATCHER").expect("$FFXIV_XIV_LAUNCHER_PATCHER must point to XIVLauncher.PatchInstaller.exe");
+    let patcher_exe = env::var("FFXIV_XIV_LAUNCHER_PATCHER")
+        .expect("$FFXIV_XIV_LAUNCHER_PATCHER must point to XIVLauncher.PatchInstaller.exe");
 
     let patch_path = format!("Z:\\{}\\{}", patch_dir, &patch_name);
     let game_dir = format!("Z:\\{}\\{}", game_directory, data_directory);
@@ -110,7 +112,7 @@ fn xivlauncher_install_patch(game_directory: &str, data_directory: &str, patch_n
         std::io::stderr().write_all(&output.stderr).unwrap();
     }
 
-    assert!(output. status.success());
+    assert!(output.status.success());
 }
 
 #[cfg(feature = "patch_testing")]
@@ -147,13 +149,14 @@ fn test_patching() {
         "boot/2024.03.07.0000.0001.patch",
         "boot/2024.03.21.0000.0001.patch",
         "boot/2024.04.09.0000.0001.patch",
-        "boot/2024.05.24.0000.0001.patch"
+        "boot/2024.05.24.0000.0001.patch",
     ];
 
     println!("Now beginning boot patching...");
 
     for patch in boot_patches {
-        let patch_dir = env::var("FFXIV_PATCH_DIR").expect("$FFXIV_PATCH_DIR must point to the directory where the patches are stored");
+        let patch_dir = env::var("FFXIV_PATCH_DIR")
+            .expect("$FFXIV_PATCH_DIR must point to the directory where the patches are stored");
         if !Path::new(&(patch_dir + "/" + patch)).exists() {
             println!("Skipping {} because it doesn't exist locally.", patch);
             continue;

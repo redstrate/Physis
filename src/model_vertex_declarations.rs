@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 use crate::model::NUM_VERTICES;
-use binrw::{binrw, BinRead, BinResult, BinWrite};
+use binrw::{BinRead, BinResult, BinWrite, binrw};
 use std::io::SeekFrom;
 
 /// Marker for end of stream (0xFF)

@@ -1,10 +1,10 @@
 // SPDX-FileCopyrightText: 2020 Inseok Lee
 // SPDX-License-Identifier: MIT
 
+use crate::havok::HavokAnimation;
 use crate::havok::byte_reader::ByteReader;
 use crate::havok::object::HavokObject;
 use crate::havok::transform::HavokTransform;
-use crate::havok::HavokAnimation;
 use core::{cell::RefCell, cmp};
 use std::f32;
 use std::sync::Arc;

@@ -5,11 +5,13 @@
 
 use std::io::Cursor;
 
-use crate::common_file_operations::{Half1, Half2, Half3};
 use crate::ByteSpan;
-use binrw::{binread, binrw, BinRead, BinResult};
-use crate::mtrl::ColorDyeTable::{DawntrailColorDyeTable, LegacyColorDyeTable, OpaqueColorDyeTable};
+use crate::common_file_operations::{Half1, Half2, Half3};
+use crate::mtrl::ColorDyeTable::{
+    DawntrailColorDyeTable, LegacyColorDyeTable, OpaqueColorDyeTable,
+};
 use crate::mtrl::ColorTable::{DawntrailColorTable, LegacyColorTable, OpaqueColorTable};
+use binrw::{BinRead, BinResult, binread, binrw};
 
 #[binrw]
 #[derive(Debug)]
@@ -177,7 +179,7 @@ pub struct OpaqueColorTableData {
 pub enum ColorTable {
     LegacyColorTable(LegacyColorTableData),
     DawntrailColorTable(DawntrailColorTableData),
-    OpaqueColorTable(OpaqueColorTableData)
+    OpaqueColorTable(OpaqueColorTableData),
 }
 
 #[binread]
@@ -285,7 +287,7 @@ pub struct OpaqueColorDyeTableData {
 pub enum ColorDyeTable {
     LegacyColorDyeTable(LegacyColorDyeTableData),
     DawntrailColorDyeTable(DawntrailColorDyeTableData),
-    OpaqueColorDyeTable(OpaqueColorDyeTableData)
+    OpaqueColorDyeTable(OpaqueColorDyeTableData),
 }
 
 #[binrw]
@@ -386,7 +388,7 @@ fn parse_color_table(table_dimension_logs: u8) -> BinResult<Option<ColorTable>> 
     Ok(Some(match table_dimension_logs {
         0 | 0x42 => LegacyColorTable(LegacyColorTableData::read_options(reader, endian, ())?),
         0x53 => DawntrailColorTable(DawntrailColorTableData::read_options(reader, endian, ())?),
-        _ => OpaqueColorTable(OpaqueColorTableData::read_options(reader, endian, ())?)
+        _ => OpaqueColorTable(OpaqueColorTableData::read_options(reader, endian, ())?),
     }))
 }
 
@@ -394,8 +396,12 @@ fn parse_color_table(table_dimension_logs: u8) -> BinResult<Option<ColorTable>> 
 fn parse_color_dye_table(table_dimension_logs: u8) -> BinResult<Option<ColorDyeTable>> {
     Ok(Some(match table_dimension_logs {
         0 => LegacyColorDyeTable(LegacyColorDyeTableData::read_options(reader, endian, ())?),
-        0x50...0x5F => DawntrailColorDyeTable(DawntrailColorDyeTableData::read_options(reader, endian, ())?),
-        _ => OpaqueColorDyeTable(OpaqueColorDyeTableData::read_options(reader, endian, ())?)
+        0x50...0x5F => DawntrailColorDyeTable(DawntrailColorDyeTableData::read_options(
+            reader,
+            endian,
+            (),
+        )?),
+        _ => OpaqueColorDyeTable(OpaqueColorDyeTableData::read_options(reader, endian, ())?),
     }))
 }
 

@@ -5,7 +5,7 @@ use std::io::{Cursor, Seek, SeekFrom};
 
 use crate::ByteSpan;
 use binrw::BinRead;
-use binrw::{binread, binrw, BinReaderExt};
+use binrw::{BinReaderExt, binread, binrw};
 
 #[binrw]
 #[derive(Debug)]

@@ -4,8 +4,8 @@
 use std::io::Cursor;
 
 use crate::ByteSpan;
-use binrw::binread;
 use binrw::BinRead;
+use binrw::binread;
 
 #[binread]
 #[derive(Debug, Clone, Copy)]

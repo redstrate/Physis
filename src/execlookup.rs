@@ -48,12 +48,12 @@ fn find_needle(installer_file: &[u8], needle: &str) -> Option<String> {
 /// Extract the frontier URL from ffxivlauncher.exe
 pub fn extract_frontier_url(launcher_path: &str) -> Option<String> {
     let installer_file = fs::read(launcher_path).unwrap();
-    
+
     // New Frontier URL format
     if let Some(url) = find_needle(&installer_file, "https://launcher.finalfantasyxiv.com") {
         return Some(url);
     }
-    
+
     // Old Frontier URL format
     if let Some(url) = find_needle(&installer_file, "https://frontier.ffxiv.com") {
         return Some(url);

@@ -1,9 +1,9 @@
 // SPDX-FileCopyrightText: 2024 Joshua Goins <josh@redstrate.com>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-use std::ffi::CString;
-use binrw::{binread, BinReaderExt, BinResult};
+use binrw::{BinReaderExt, BinResult, binread};
 use half::f16;
+use std::ffi::CString;
 use std::io::SeekFrom;
 
 pub(crate) fn read_bool_from<T: std::convert::From<u8> + std::cmp::PartialEq>(x: T) -> bool {
@@ -11,11 +11,7 @@ pub(crate) fn read_bool_from<T: std::convert::From<u8> + std::cmp::PartialEq>(x:
 }
 
 pub(crate) fn write_bool_as<T: std::convert::From<u8>>(x: &bool) -> T {
-    if *x {
-        T::from(1u8)
-    } else {
-        T::from(0u8)
-    }
+    if *x { T::from(1u8) } else { T::from(0u8) }
 }
 
 pub(crate) fn read_string(byte_stream: Vec<u8>) -> String {
@@ -129,18 +125,27 @@ mod tests {
     #[test]
     fn read_string() {
         // The nul terminator is supposed to be removed
-        assert_eq!(crate::common_file_operations::read_string(STRING_DATA.to_vec()), "FOO".to_string());
+        assert_eq!(
+            crate::common_file_operations::read_string(STRING_DATA.to_vec()),
+            "FOO".to_string()
+        );
     }
 
     #[test]
     fn write_string() {
         // Supposed to include the nul terminator
-        assert_eq!(crate::common_file_operations::write_string(&"FOO".to_string()), STRING_DATA.to_vec());
+        assert_eq!(
+            crate::common_file_operations::write_string(&"FOO".to_string()),
+            STRING_DATA.to_vec()
+        );
     }
 
     #[test]
     fn get_string_len() {
         // Supposed to include the nul terminator
-        assert_eq!(crate::common_file_operations::get_string_len(&"FOO".to_string()), 4);
+        assert_eq!(
+            crate::common_file_operations::get_string_len(&"FOO".to_string()),
+            4
+        );
     }
 }

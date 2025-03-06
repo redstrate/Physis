@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2023 Joshua Goins <josh@redstrate.com>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-use crate::race::{get_race_id, Gender, Race, Subrace};
+use crate::race::{Gender, Race, Subrace, get_race_id};
 
 #[repr(u8)]
 #[derive(Debug, PartialEq, Eq)]

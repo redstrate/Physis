@@ -5,7 +5,7 @@ use std::io::{Cursor, Seek, SeekFrom};
 
 use crate::ByteSpan;
 use binrw::binrw;
-use binrw::{binread, BinRead, BinReaderExt};
+use binrw::{BinRead, BinReaderExt, binread};
 
 // From https://github.com/NotAdam/Lumina/tree/40dab50183eb7ddc28344378baccc2d63ae71d35/src/Lumina/Data/Parsing/Layer
 

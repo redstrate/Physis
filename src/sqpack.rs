@@ -90,4 +90,3 @@ pub fn write_data_block_patch<T: Write + Seek>(mut writer: T, data: Vec<u8>) {
 
     data.write(&mut writer).unwrap();
 }
-

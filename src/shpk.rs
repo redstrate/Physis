@@ -3,9 +3,9 @@
 
 use std::io::{Cursor, SeekFrom};
 
-use crate::crc::XivCrc32;
 use crate::ByteSpan;
-use binrw::{binread, BinRead};
+use crate::crc::XivCrc32;
+use binrw::{BinRead, binread};
 
 #[binread]
 #[br(little, import {

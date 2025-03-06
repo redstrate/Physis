@@ -22,15 +22,15 @@ pub enum ExistingInstallType {
     /// Installed via XIVOnMac
     XIVOnMac,
     /// Installed via Astra
-    Astra
+    Astra,
 }
 
 /// An existing install location on disk
 pub struct ExistingGameDirectory {
     /// The application where this installation was from
-    pub install_type : ExistingInstallType,
+    pub install_type: ExistingInstallType,
     /// The path to the "main folder" where "game" and "boot" sits
-    pub path: String
+    pub path: String,
 }
 
 /// Finds existing installations on disk. Will only return locations that actually have files in them, and a really basic check to see if the data is valid.
@@ -48,13 +48,15 @@ pub fn find_existing_game_dirs() -> Vec<ExistingGameDirectory> {
             // Official install (Steam)
             install_dirs.push(ExistingGameDirectory {
                 install_type: ExistingInstallType::OfficialLauncher,
-                path: from_home_dir(".steam/steam/steamapps/common/FINAL FANTASY XIV - A Realm Reborn")
+                path: from_home_dir(
+                    ".steam/steam/steamapps/common/FINAL FANTASY XIV - A Realm Reborn",
+                ),
             });
 
             // XIVLauncherCore location
             install_dirs.push(ExistingGameDirectory {
                 install_type: ExistingInstallType::XIVLauncherCore,
-                path: from_home_dir(".xlcore/ffxiv")
+                path: from_home_dir(".xlcore/ffxiv"),
             });
 
             // Astra location. But we have to iterate through each UUID.
@@ -73,7 +75,7 @@ pub fn find_existing_game_dirs() -> Vec<ExistingGameDirectory> {
                     .for_each(|path| {
                         install_dirs.push(ExistingGameDirectory {
                             install_type: ExistingInstallType::Astra,
-                            path: path.into_os_string().into_string().unwrap()
+                            path: path.into_os_string().into_string().unwrap(),
                         })
                     });
             }
@@ -91,7 +93,9 @@ pub fn find_existing_game_dirs() -> Vec<ExistingGameDirectory> {
             // Official install (Wine)
             install_dirs.push(ExistingGameDirectory {
                 install_type: ExistingInstallType::OfficialLauncher,
-                path: "C:\\Program Files (x86)\\SquareEnix\\FINAL FANTASY XIV - A Realm Reborn".parse().unwrap()
+                path: "C:\\Program Files (x86)\\SquareEnix\\FINAL FANTASY XIV - A Realm Reborn"
+                    .parse()
+                    .unwrap(),
             });
 
             // TODO: Add Astra
@@ -99,15 +103,18 @@ pub fn find_existing_game_dirs() -> Vec<ExistingGameDirectory> {
         &_ => {}
     }
 
-    install_dirs.into_iter().filter(|dir| is_valid_game_dir(&dir.path)).collect()
+    install_dirs
+        .into_iter()
+        .filter(|dir| is_valid_game_dir(&dir.path))
+        .collect()
 }
 
 /// An existing user directory
 pub struct ExistingUserDirectory {
     /// The application where this directory was from
-    pub install_type : ExistingInstallType,
+    pub install_type: ExistingInstallType,
     /// The path to the user folder
-    pub path: String
+    pub path: String,
 }
 
 /// Finds existing user folders on disk. Will only return locations that actually have files in them, and a really basic check to see if the data is valid.
@@ -123,13 +130,13 @@ pub fn find_existing_user_dirs() -> Vec<ExistingUserDirectory> {
             // Official install (Wine)
             user_dirs.push(ExistingUserDirectory {
                 install_type: ExistingInstallType::OfficialLauncher,
-                path: from_home_dir("Documents/My Games/FINAL FANTASY XIV - A Realm Reborn")
+                path: from_home_dir("Documents/My Games/FINAL FANTASY XIV - A Realm Reborn"),
             });
 
             // XIVLauncherCore location
             user_dirs.push(ExistingUserDirectory {
                 install_type: ExistingInstallType::XIVLauncherCore,
-                path: from_home_dir(".xlcore/ffxivConfig")
+                path: from_home_dir(".xlcore/ffxivConfig"),
             });
 
             // Astra location. But we have to iterate through each UUID.
@@ -148,7 +155,7 @@ pub fn find_existing_user_dirs() -> Vec<ExistingUserDirectory> {
                     .for_each(|path| {
                         user_dirs.push(ExistingUserDirectory {
                             install_type: ExistingInstallType::Astra,
-                            path: path.into_os_string().into_string().unwrap()
+                            path: path.into_os_string().into_string().unwrap(),
                         })
                     });
             }
@@ -157,7 +164,7 @@ pub fn find_existing_user_dirs() -> Vec<ExistingUserDirectory> {
             // Official install (Wine)
             user_dirs.push(ExistingUserDirectory {
                 install_type: ExistingInstallType::OfficialLauncher,
-                path: from_home_dir("Documents/My Games/FINAL FANTASY XIV - A Realm Reborn")
+                path: from_home_dir("Documents/My Games/FINAL FANTASY XIV - A Realm Reborn"),
             })
 
             // TODO: Add XIV on Mac?
@@ -166,7 +173,7 @@ pub fn find_existing_user_dirs() -> Vec<ExistingUserDirectory> {
             // Official install
             user_dirs.push(ExistingUserDirectory {
                 install_type: ExistingInstallType::OfficialLauncher,
-                path: from_home_dir("Documents/My Games/FINAL FANTASY XIV - A Realm Reborn")
+                path: from_home_dir("Documents/My Games/FINAL FANTASY XIV - A Realm Reborn"),
             })
 
             // TODO: Add Astra
@@ -174,7 +181,10 @@ pub fn find_existing_user_dirs() -> Vec<ExistingUserDirectory> {
         &_ => {}
     }
 
-    user_dirs.into_iter().filter(|dir| is_valid_user_dir(&dir.path)).collect()
+    user_dirs
+        .into_iter()
+        .filter(|dir| is_valid_user_dir(&dir.path))
+        .collect()
 }
 
 fn from_home_dir(path: &'static str) -> String {

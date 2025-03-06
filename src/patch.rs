@@ -7,13 +7,15 @@ use std::fs::{File, OpenOptions, read, read_dir};
 use std::io::{BufWriter, Cursor, Seek, SeekFrom, Write};
 use std::path::{Path, PathBuf};
 
-use binrw::{binrw, BinWrite};
-use binrw::BinRead;
-use tracing::{debug, warn};
 use crate::ByteBuffer;
+use binrw::BinRead;
+use binrw::{BinWrite, binrw};
+use tracing::{debug, warn};
 
-use crate::common::{get_platform_string, Platform, Region};
-use crate::common_file_operations::{get_string_len, read_bool_from, read_string, write_bool_as, write_string};
+use crate::common::{Platform, Region, get_platform_string};
+use crate::common_file_operations::{
+    get_string_len, read_bool_from, read_string, write_bool_as, write_string,
+};
 use crate::sqpack::{read_data_block_patch, write_data_block_patch};
 
 #[binrw]
@@ -460,8 +462,8 @@ impl ZiPatch {
                     &get_expansion_folder_sub(sub_id),
                     &filename,
                 ]
-                    .iter()
-                    .collect();
+                .iter()
+                .collect();
 
                 path.to_str().unwrap().to_string()
             };
@@ -486,8 +488,8 @@ impl ZiPatch {
                     &get_expansion_folder_sub(sub_id),
                     &filename,
                 ]
-                    .iter()
-                    .collect();
+                .iter()
+                .collect();
 
                 path.to_str().unwrap().to_string()
             };
@@ -580,7 +582,8 @@ impl ZiPatch {
                                 ),
                             };
 
-                            let (left, _) = file_path.rsplit_once('/').ok_or(PatchError::ParseError)?;
+                            let (left, _) =
+                                file_path.rsplit_once('/').ok_or(PatchError::ParseError)?;
                             fs::create_dir_all(left)?;
 
                             let mut new_file = OpenOptions::new()
@@ -606,7 +609,8 @@ impl ZiPatch {
                                     // reverse reading crc32
                                     file.seek(SeekFrom::Current(-4))?;
 
-                                    let mut data: Vec<u8> = Vec::with_capacity(fop.file_size as usize);
+                                    let mut data: Vec<u8> =
+                                        Vec::with_capacity(fop.file_size as usize);
 
                                     while data.len() < fop.file_size as usize {
                                         data.append(&mut read_data_block_patch(&mut file).unwrap());
@@ -639,10 +643,13 @@ impl ZiPatch {
                                     }
                                 }
                                 SqpkFileOperation::RemoveAll => {
-                                    let path: PathBuf =
-                                        [data_dir, "sqpack", &get_expansion_folder(fop.expansion_id)]
-                                            .iter()
-                                            .collect();
+                                    let path: PathBuf = [
+                                        data_dir,
+                                        "sqpack",
+                                        &get_expansion_folder(fop.expansion_id),
+                                    ]
+                                    .iter()
+                                    .collect();
 
                                     if fs::read_dir(&path).is_ok() {
                                         fs::remove_dir_all(&path)?;
@@ -702,18 +709,29 @@ impl ZiPatch {
             let new_files = crate::patch::recurse(new_directory);
 
             // A set of files not present in base, but in new (aka added files)
-            let added_files: Vec<&PathBuf> = new_files.iter().filter(|item| {
-                let metadata = fs::metadata(item).unwrap();
-                !base_files.contains(item) && metadata.len() > 0 // TODO: we filter out zero byte files here, but does SqEx do that?
-            }).collect();
+            let added_files: Vec<&PathBuf> = new_files
+                .iter()
+                .filter(|item| {
+                    let metadata = fs::metadata(item).unwrap();
+                    !base_files.contains(item) && metadata.len() > 0 // TODO: we filter out zero byte files here, but does SqEx do that?
+                })
+                .collect();
 
             // A set of files not present in the new directory, that used to be in base (aka removedf iles)
-            let removed_files: Vec<&PathBuf> = base_files.iter().filter(|item| !new_files.contains(item)).collect();
+            let removed_files: Vec<&PathBuf> = base_files
+                .iter()
+                .filter(|item| !new_files.contains(item))
+                .collect();
 
             // Process added files
             for file in added_files {
                 let file_data = read(file.to_str().unwrap()).unwrap();
-                let relative_path = file.strip_prefix(new_directory).unwrap().to_str().unwrap().to_string();
+                let relative_path = file
+                    .strip_prefix(new_directory)
+                    .unwrap()
+                    .to_str()
+                    .unwrap()
+                    .to_string();
 
                 let add_file_chunk = PatchChunk {
                     size: 0,
@@ -744,7 +762,12 @@ impl ZiPatch {
 
             // Process deleted files
             for file in removed_files {
-                let relative_path = file.strip_prefix(base_directory).unwrap().to_str().unwrap().to_string();
+                let relative_path = file
+                    .strip_prefix(base_directory)
+                    .unwrap()
+                    .to_str()
+                    .unwrap()
+                    .to_string();
 
                 let remove_file_chunk = PatchChunk {
                     size: 0,
@@ -810,7 +833,9 @@ mod tests {
         write(data_dir.clone() + "/test.patch", &read(d).unwrap()).unwrap();
 
         // Feeding it invalid data should not panic
-        let Err(PatchError::ParseError) = ZiPatch::apply(&data_dir.clone(), &(data_dir + "/test.patch")) else {
+        let Err(PatchError::ParseError) =
+            ZiPatch::apply(&data_dir.clone(), &(data_dir + "/test.patch"))
+        else {
             panic!("Expecting a parse error!");
         };
     }
@@ -838,13 +863,19 @@ mod tests {
         let old_files = recurse(&resources_dir);
         let new_files = recurse(&data_dir);
 
-        let mut old_relative_files: Vec<&Path> = old_files.iter().filter(|item| {
-            let metadata = fs::metadata(item).unwrap();
-            metadata.len() > 0 // filter out zero byte files because ZiPatch::create does
-        }).map(|x| x.strip_prefix(&resources_dir).unwrap()).collect();
-        let mut new_relative_files: Vec<&Path> = new_files.iter().map(|x| x.strip_prefix(&data_dir).unwrap()).collect();
+        let mut old_relative_files: Vec<&Path> = old_files
+            .iter()
+            .filter(|item| {
+                let metadata = fs::metadata(item).unwrap();
+                metadata.len() > 0 // filter out zero byte files because ZiPatch::create does
+            })
+            .map(|x| x.strip_prefix(&resources_dir).unwrap())
+            .collect();
+        let mut new_relative_files: Vec<&Path> = new_files
+            .iter()
+            .map(|x| x.strip_prefix(&data_dir).unwrap())
+            .collect();
 
         assert_eq!(old_relative_files.sort(), new_relative_files.sort());
     }
 }
-

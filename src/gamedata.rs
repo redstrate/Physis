@@ -8,15 +8,15 @@ use std::path::PathBuf;
 
 use tracing::{debug, warn};
 
-use crate::common::{read_version, Language, Platform};
+use crate::ByteBuffer;
+use crate::common::{Language, Platform, read_version};
 use crate::dat::DatFile;
 use crate::exd::EXD;
 use crate::exh::EXH;
 use crate::exl::EXL;
-use crate::index::{Index2File, IndexEntry, IndexFile};
+use crate::index::{IndexEntry, IndexFile};
 use crate::patch::{PatchError, ZiPatch};
-use crate::repository::{string_to_category, Category, Repository};
-use crate::ByteBuffer;
+use crate::repository::{Category, Repository, string_to_category};
 
 /// Framework for operating on game data.
 pub struct GameData {
@@ -27,7 +27,6 @@ pub struct GameData {
     pub repositories: Vec<Repository>,
 
     index_files: HashMap<String, IndexFile>,
-    index2_files: HashMap<String, Index2File>,
 }
 
 fn is_valid(path: &str) -> bool {
@@ -79,7 +78,6 @@ impl GameData {
                     game_directory: String::from(directory),
                     repositories: vec![],
                     index_files: HashMap::new(),
-                    index2_files: HashMap::new(),
                 };
                 data.reload_repositories(platform);
                 Some(data)
@@ -157,7 +155,7 @@ impl GameData {
     /// }
     /// ```
     pub fn exists(&mut self, path: &str) -> bool {
-        let Some((_, _)) = self.get_index_filenames(path) else {
+        let Some(_) = self.get_index_filenames(path) else {
             return false;
         };
 
@@ -214,11 +212,10 @@ impl GameData {
         Some((&self.repositories[0], string_to_category(tokens.0)?))
     }
 
-    fn get_index_filenames(&self, path: &str) -> Option<(Vec<(String, u8)>, Vec<(String, u8)>)> {
+    fn get_index_filenames(&self, path: &str) -> Option<Vec<(String, u8)>> {
         let (repository, category) = self.parse_repository_category(path)?;
 
-        let mut index1_filenames = vec![];
-        let mut index2_filenames = vec![];
+        let mut index_filenames = vec![];
 
         for chunk in 0..255 {
             let index_path: PathBuf = [
@@ -230,7 +227,7 @@ impl GameData {
             .iter()
             .collect();
 
-            index1_filenames.push((index_path.into_os_string().into_string().unwrap(), chunk));
+            index_filenames.push((index_path.into_os_string().into_string().unwrap(), chunk));
 
             let index2_path: PathBuf = [
                 &self.game_directory,
@@ -241,10 +238,10 @@ impl GameData {
             .iter()
             .collect();
 
-            index2_filenames.push((index2_path.into_os_string().into_string().unwrap(), chunk));
+            index_filenames.push((index2_path.into_os_string().into_string().unwrap(), chunk));
         }
 
-        Some((index1_filenames, index2_filenames))
+        Some(index_filenames)
     }
 
     /// Read an excel sheet by name (e.g. "Achievement")
@@ -404,39 +401,17 @@ impl GameData {
         }
     }
 
-    fn cache_index2_file(&mut self, filename: &str) {
-        if !self.index2_files.contains_key(filename) {
-            if let Some(index_file) = Index2File::from_existing(filename) {
-                self.index2_files.insert(filename.to_string(), index_file);
-            }
-        }
-    }
-
     fn get_index_file(&self, filename: &str) -> Option<&IndexFile> {
         self.index_files.get(filename)
     }
 
-    fn get_index2_file(&self, filename: &str) -> Option<&Index2File> {
-        self.index2_files.get(filename)
-    }
-
     fn find_entry(&mut self, path: &str) -> Option<(IndexEntry, u8)> {
-        let (index_paths, index2_paths) = self.get_index_filenames(path)?;
+        let index_paths = self.get_index_filenames(path)?;
 
         for (index_path, chunk) in index_paths {
             self.cache_index_file(&index_path);
 
             if let Some(index_file) = self.get_index_file(&index_path) {
-                if let Some(entry) = index_file.find_entry(path) {
-                    return Some((entry, chunk));
-                }
-            }
-        }
-
-        for (index2_path, chunk) in index2_paths {
-            self.cache_index2_file(&index2_path);
-
-            if let Some(index_file) = self.get_index2_file(&index2_path) {
                 if let Some(entry) = index_file.find_entry(path) {
                     return Some((entry, chunk));
                 }
@@ -479,8 +454,9 @@ mod tests {
             data.parse_repository_category("exd/root.exl").unwrap(),
             (&data.repositories[0], EXD)
         );
-        assert!(data
-            .parse_repository_category("what/some_font.dat")
-            .is_none());
+        assert!(
+            data.parse_repository_category("what/some_font.dat")
+                .is_none()
+        );
     }
 }

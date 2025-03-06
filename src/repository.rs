@@ -5,7 +5,7 @@ use std::cmp::Ordering;
 use std::cmp::Ordering::{Greater, Less};
 use std::path::{Path, PathBuf};
 
-use crate::common::{get_platform_string, read_version, Platform};
+use crate::common::{Platform, get_platform_string, read_version};
 use crate::repository::RepositoryType::{Base, Expansion};
 
 /// The type of repository, discerning game data from expansion data.

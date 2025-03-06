@@ -124,7 +124,7 @@ mod tests {
 
     #[test]
     fn check_jamcrc() {
-        use crc::{Crc, CRC_32_JAMCRC};
+        use crc::{CRC_32_JAMCRC, Crc};
 
         const JAMCR: Crc<u32> = Crc::<u32>::new(&CRC_32_JAMCRC);
 

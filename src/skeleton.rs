@@ -6,11 +6,11 @@
 #![allow(clippy::upper_case_acronyms)]
 
 use binrw::helpers::until_eof;
-use binrw::{binread, BinRead};
+use binrw::{BinRead, binread};
 use std::io::{Cursor, SeekFrom};
 
-use crate::havok::{HavokAnimationContainer, HavokBinaryTagFileReader};
 use crate::ByteSpan;
+use crate::havok::{HavokAnimationContainer, HavokBinaryTagFileReader};
 
 #[binread]
 #[br(little)]

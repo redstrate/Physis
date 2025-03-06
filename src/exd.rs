@@ -6,9 +6,9 @@ use std::io::{Cursor, Seek, SeekFrom};
 use binrw::binrw;
 use binrw::{BinRead, Endian};
 
-use crate::common::Language;
-use crate::exh::{ColumnDataType, ExcelColumnDefinition, ExcelDataPagination, EXH};
 use crate::ByteSpan;
+use crate::common::Language;
+use crate::exh::{ColumnDataType, EXH, ExcelColumnDefinition, ExcelDataPagination};
 
 #[binrw]
 #[brw(magic = b"EXDF")]

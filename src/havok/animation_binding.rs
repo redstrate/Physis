@@ -3,9 +3,9 @@
 
 #![allow(dead_code)]
 
+use crate::havok::HavokAnimation;
 use crate::havok::object::HavokObject;
 use crate::havok::spline_compressed_animation::HavokSplineCompressedAnimation;
-use crate::havok::HavokAnimation;
 use core::cell::RefCell;
 use std::sync::Arc;
 

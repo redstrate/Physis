@@ -5,7 +5,7 @@ use std::io::{Cursor, Seek, SeekFrom};
 
 use crate::ByteSpan;
 use binrw::BinRead;
-use binrw::{binrw, BinReaderExt};
+use binrw::{BinReaderExt, binrw};
 
 /// Maximum number of elements in one row
 const MAX_ELEMENTS: usize = 128;

@@ -49,8 +49,10 @@ pub fn get_language_code(lang: &Language) -> &'static str {
 #[brw(repr = i16)]
 #[derive(Debug, PartialEq, Eq)]
 pub enum Region {
-    /// The global region.
-    Global = -1, // TODO: find patch codes for other regions :-)
+    /// The global region, used for any region not specified.
+    Global = -1,
+    /// Korea and China clients.
+    KoreaChina = 1,
 }
 
 /// Reads a version file.

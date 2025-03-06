@@ -3,10 +3,10 @@
 
 use std::io::{Cursor, SeekFrom};
 
-use crate::common_file_operations::strings_parser;
 use crate::ByteSpan;
-use binrw::binread;
+use crate::common_file_operations::strings_parser;
 use binrw::BinRead;
+use binrw::binread;
 
 #[binread]
 #[derive(Debug)]

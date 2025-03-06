@@ -5,11 +5,11 @@
 
 use std::io::Cursor;
 
-use binrw::binrw;
 use binrw::BinRead;
+use binrw::binrw;
 
-use crate::common::Language;
 use crate::ByteSpan;
+use crate::common::Language;
 
 #[binrw]
 #[brw(magic = b"EXHF")]

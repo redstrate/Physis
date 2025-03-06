@@ -7,14 +7,17 @@
 use std::io::SeekFrom;
 
 use crate::common::Platform;
+use crate::common::Region;
 use crate::crc::Jamcrc;
-use binrw::binrw;
 use binrw::BinRead;
+use binrw::binrw;
 
 /// The type of this SqPack file.
 #[binrw]
 #[brw(repr = u8)]
 enum SqPackFileType {
+    /// FFXIV Explorer says "SQDB", whatever that is.
+    SQDB = 0x0,
     /// Dat files.
     Data = 0x1,
     /// Index/Index2 files.
@@ -33,36 +36,54 @@ pub struct SqPackHeader {
     file_type: SqPackFileType,
 
     // some unknown value, zeroed out for index files
+    // XivAlexandar says date/time, where does that come from?
     unk1: u32,
     unk2: u32,
 
-    // always 0xFFFFFFFF
-    unk3: u32,
+    #[br(pad_size_to = 4)]
+    region: Region,
 
     #[brw(pad_before = 924)]
     #[brw(pad_after = 44)]
     // The SHA1 of the bytes immediately before this
-    sha1_hash: [u8; 20]
+    sha1_hash: [u8; 20],
 }
 
 #[binrw]
+#[derive(Debug)]
+pub struct SegementDescriptor {
+    count: u32,
+    offset: u32,
+    size: u32,
+    #[brw(pad_after = 40)]
+    sha1_hash: [u8; 20],
+}
+
+#[binrw]
+#[brw(repr = u8)]
+#[derive(Debug, PartialEq)]
+pub enum IndexType {
+    Index1,
+    Index2,
+}
+
+#[binrw]
+#[derive(Debug)]
 pub struct SqPackIndexHeader {
     size: u32,
-    version: u32,
-    index_data_offset: u32,
-    index_data_size: u32,
-    index_data_hash: [u8; 64],
-    number_of_data_file: u32,
-    synonym_data_offset: u32,
-    synonym_data_size: u32,
-    synonym_data_hash: [u8; 64],
-    empty_block_data_offset: u32,
-    empty_block_data_size: u32,
-    empty_block_data_hash: [u8; 64],
-    dir_index_data_offset: u32,
-    dir_index_data_size: u32,
-    dir_index_data_hash: [u8; 64],
-    index_type: u32,
+
+    #[brw(pad_after = 4)]
+    file_descriptor: SegementDescriptor,
+
+    // Count in this descriptor correlates to the number of dat files.
+    data_descriptor: SegementDescriptor,
+
+    unknown_descriptor: SegementDescriptor,
+
+    folder_descriptor: SegementDescriptor,
+
+    #[brw(pad_size_to = 4)]
+    pub(crate) index_type: IndexType,
 
     #[brw(pad_before = 656)]
     #[brw(pad_after = 44)]
@@ -71,13 +92,29 @@ pub struct SqPackIndexHeader {
 }
 
 #[binrw]
+#[br(import(index_type: &IndexType))]
+#[derive(PartialEq)]
+pub enum Hash {
+    #[br(pre_assert(*index_type == IndexType::Index1))]
+    SplitPath { name: u32, path: u32 },
+    #[br(pre_assert(*index_type == IndexType::Index2))]
+    FullPath(u32),
+}
+
+#[binrw]
+#[br(import(index_type: &IndexType))]
 pub struct IndexHashTableEntry {
-    pub hash: u64,
+    #[br(args(index_type))]
+    pub hash: Hash,
 
     #[br(temp)]
     #[bw(ignore)]
-    #[brw(pad_after = 4)]
     data: u32,
+
+    #[br(temp)]
+    #[bw(calc = 0)]
+    #[br(if(*index_type == IndexType::Index1))]
+    padding: u32,
 
     #[br(calc = (data & 0b1) == 0b1)]
     #[bw(ignore)]
@@ -117,6 +154,23 @@ pub struct Index2HashTableEntry {
     pub offset: u64,
 }
 
+#[binrw]
+#[derive(Debug)]
+pub struct DataEntry {
+    // A bunch of 0xFFFFFFFF
+    unk: [u8; 256],
+}
+
+#[binrw]
+#[derive(Debug)]
+pub struct FolderEntry {
+    hash: u32,
+    files_offset: u32,
+    // Divide by 0x10 to get the number of files
+    #[brw(pad_after = 4)]
+    total_files_size: u32,
+}
+
 #[derive(Debug)]
 pub struct IndexEntry {
     pub hash: u64,
@@ -132,22 +186,19 @@ pub struct IndexFile {
     #[br(seek_before = SeekFrom::Start(sqpack_header.size.into()))]
     index_header: SqPackIndexHeader,
 
-    #[br(seek_before = SeekFrom::Start(index_header.index_data_offset.into()))]
-    #[br(count = index_header.index_data_size / 16)]
+    #[br(seek_before = SeekFrom::Start(index_header.file_descriptor.offset.into()), count = index_header.file_descriptor.size / 16, args { inner: (&index_header.index_type,) })]
     pub entries: Vec<IndexHashTableEntry>,
-}
 
-#[binrw]
-#[br(little)]
-pub struct Index2File {
-    sqpack_header: SqPackHeader,
+    #[br(seek_before = SeekFrom::Start(index_header.data_descriptor.offset.into()))]
+    #[br(count = index_header.data_descriptor.size / 256)]
+    pub data_entries: Vec<DataEntry>,
 
-    #[br(seek_before = SeekFrom::Start(sqpack_header.size.into()))]
-    index_header: SqPackIndexHeader,
-
-    #[br(seek_before = SeekFrom::Start(index_header.index_data_offset.into()))]
-    #[br(count = index_header.index_data_size / 8)]
-    pub entries: Vec<Index2HashTableEntry>,
+    /*#[br(seek_before = SeekFrom::Start(index_header.unknown_descriptor.offset.into()))]
+    #[br(count = index_header.unknown_descriptor.size / 16)]
+    pub unknown_entries: Vec<IndexHashTableEntry>,*/
+    #[br(seek_before = SeekFrom::Start(index_header.folder_descriptor.offset.into()))]
+    #[br(count = index_header.folder_descriptor.size / 16)]
+    pub folder_entries: Vec<FolderEntry>,
 }
 
 const CRC: Jamcrc = Jamcrc::new();
@@ -156,6 +207,8 @@ impl IndexFile {
     /// Creates a new reference to an existing index file.
     pub fn from_existing(path: &str) -> Option<Self> {
         let mut index_file = std::fs::File::open(path).ok()?;
+
+        println!("Reading {}!", path);
 
         Self::read(&mut index_file).ok()
     }
@@ -168,68 +221,45 @@ impl IndexFile {
     }
 
     /// Calculates a hash for `index` files from a game path.
-    pub fn calculate_hash(path: &str) -> u64 {
+    pub fn calculate_hash(&self, path: &str) -> Hash {
         let lowercase = path.to_lowercase();
 
-        if let Some(pos) = lowercase.rfind('/') {
-            let (directory, filename) = lowercase.split_at(pos);
+        return match &self.index_header.index_type {
+            IndexType::Index1 => {
+                if let Some(pos) = lowercase.rfind('/') {
+                    let (directory, filename) = lowercase.split_at(pos);
 
-            let directory_crc = CRC.checksum(directory.as_bytes());
-            let filename_crc = CRC.checksum(filename[1..filename.len()].as_bytes());
+                    let directory_crc = CRC.checksum(directory.as_bytes());
+                    let filename_crc = CRC.checksum(filename[1..filename.len()].as_bytes());
 
-            (directory_crc as u64) << 32 | (filename_crc as u64)
-        } else {
-            CRC.checksum(lowercase.as_bytes()) as u64
-        }
+                    Hash::SplitPath {
+                        name: filename_crc,
+                        path: directory_crc,
+                    }
+                } else {
+                    // TODO: is this ever hit?
+                    panic!("This is unexpected, why is the file sitting outside of a folder?");
+                }
+            }
+            IndexType::Index2 => Hash::FullPath(CRC.checksum(lowercase.as_bytes())),
+        };
     }
 
-    // TODO: turn into traits?
     pub fn exists(&self, path: &str) -> bool {
-        let hash = IndexFile::calculate_hash(path);
+        let hash = self.calculate_hash(path);
         self.entries.iter().any(|s| s.hash == hash)
     }
 
     pub fn find_entry(&self, path: &str) -> Option<IndexEntry> {
-        let hash = IndexFile::calculate_hash(path);
+        let hash = self.calculate_hash(path);
 
         if let Some(entry) = self.entries.iter().find(|s| s.hash == hash) {
+            let full_hash = match hash {
+                Hash::SplitPath { name, path } => (path as u64) << 32 | (name as u64),
+                Hash::FullPath(hash) => hash as u64,
+            };
             return Some(IndexEntry {
-                hash: entry.hash,
-                data_file_id: entry.data_file_id,
-                offset: entry.offset,
-            });
-        }
-
-        None
-    }
-}
-
-impl Index2File {
-    /// Creates a new reference to an existing index2 file.
-    pub fn from_existing(path: &str) -> Option<Self> {
-        let mut index_file = std::fs::File::open(path).ok()?;
-
-        Self::read(&mut index_file).ok()
-    }
-
-    /// Calculates a hash for `index2` files from a game path.
-    pub fn calculate_hash(path: &str) -> u32 {
-        let lowercase = path.to_lowercase();
-
-        CRC.checksum(lowercase.as_bytes())
-    }
-
-    pub fn exists(&self, path: &str) -> bool {
-        let hash = Index2File::calculate_hash(path);
-        self.entries.iter().any(|s| s.hash == hash)
-    }
-
-    pub fn find_entry(&self, path: &str) -> Option<IndexEntry> {
-        let hash = Index2File::calculate_hash(path);
-
-        if let Some(entry) = self.entries.iter().find(|s| s.hash == hash) {
-            return Some(IndexEntry {
-                hash: entry.hash as u64,
+                hash: 0,
                 data_file_id: entry.data_file_id,
                 offset: entry.offset,
             });
@@ -253,15 +283,5 @@ mod tests {
 
         // Feeding it invalid data should not panic
         IndexFile::from_existing(d.to_str().unwrap());
-    }
-
-    #[test]
-    fn test_index2_invalid() {
-        let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-        d.push("resources/tests");
-        d.push("random");
-
-        // Feeding it invalid data should not panic
-        Index2File::from_existing(d.to_str().unwrap());
     }
 }

@@ -4,8 +4,8 @@
 use std::io::{Cursor, Seek, SeekFrom};
 
 use crate::ByteSpan;
-use binrw::binrw;
 use binrw::BinRead;
+use binrw::binrw;
 
 #[binrw]
 #[allow(dead_code)]

@@ -6,8 +6,8 @@
 use std::io::{Cursor, Read, Seek, SeekFrom};
 
 use crate::ByteSpan;
-use binrw::binrw;
 use binrw::BinRead;
+use binrw::binrw;
 use bitflags::bitflags;
 use texture2ddecoder::{decode_bc1, decode_bc3, decode_bc5};
 

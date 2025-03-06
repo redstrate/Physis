@@ -7,7 +7,7 @@ use std::io::{Cursor, Read, Seek, SeekFrom};
 use crate::ByteBuffer;
 use binrw::BinRead;
 use binrw::BinWrite;
-use binrw::{binrw, BinReaderExt};
+use binrw::{BinReaderExt, binrw};
 
 use crate::common_file_operations::read_bool_from;
 #[cfg(feature = "visual_data")]
