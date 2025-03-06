@@ -76,11 +76,8 @@ pub struct IndexHashTableEntry {
 
     #[br(temp)]
     #[bw(ignore)]
+    #[brw(pad_after = 4)]
     data: u32,
-
-    #[br(temp)]
-    #[bw(ignore)]
-    padding: u32,
 
     #[br(calc = (data & 0b1) == 0b1)]
     #[bw(ignore)]
