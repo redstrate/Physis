@@ -17,7 +17,7 @@ use binrw::BinRead;
 enum SqPackFileType {
     /// Dat files.
     Data = 0x1,
-    // Index/Index2 files.
+    /// Index/Index2 files.
     Index = 0x2,
 }
 
@@ -27,6 +27,7 @@ pub struct SqPackHeader {
     platform_id: Platform,
     #[brw(pad_before = 3)]
     size: u32,
+    // Have only seen version 1
     version: u32,
     file_type: SqPackFileType,
 }
