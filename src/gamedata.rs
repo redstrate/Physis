@@ -201,21 +201,17 @@ impl GameData {
 
     /// Parses a path structure and spits out the corresponding category and repository.
     fn parse_repository_category(&self, path: &str) -> Option<(&Repository, Category)> {
-        let tokens: Vec<&str> = path.split('/').collect(); // TODO: use split_once here
+        let tokens = path.split_once('/')?;
 
-        if tokens.len() < 2 {
-            return None;
-        }
-
-        let repository_token = tokens[1];
+        let repository_token = tokens.1;
 
         for repository in &self.repositories {
             if repository.name == repository_token {
-                return Some((repository, string_to_category(tokens[0])?));
+                return Some((repository, string_to_category(tokens.0)?));
             }
         }
 
-        Some((&self.repositories[0], string_to_category(tokens[0])?))
+        Some((&self.repositories[0], string_to_category(tokens.0)?))
     }
 
     fn get_index_filenames(&self, path: &str) -> Option<(Vec<(String, u8)>, Vec<(String, u8)>)> {
