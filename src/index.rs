@@ -42,7 +42,7 @@ pub struct SqPackHeader {
     #[brw(pad_before = 924)]
     #[brw(pad_after = 44)]
     // The SHA1 of the bytes immediately before this
-    sha1: [u8; 20]
+    sha1_hash: [u8; 20]
 }
 
 #[binrw]
@@ -63,8 +63,11 @@ pub struct SqPackIndexHeader {
     dir_index_data_size: u32,
     dir_index_data_hash: [u8; 64],
     index_type: u32,
-    #[br(pad_before = 656)]
-    self_hash: [u8; 64],
+
+    #[brw(pad_before = 656)]
+    #[brw(pad_after = 44)]
+    // The SHA1 of the bytes immediately before this
+    sha1_hash: [u8; 20],
 }
 
 #[binrw]
