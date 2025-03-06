@@ -11,14 +11,24 @@ use crate::crc::Jamcrc;
 use binrw::binrw;
 use binrw::BinRead;
 
+/// The type of this SqPack file.
 #[binrw]
-#[br(magic = b"SqPack\0\0")]
+#[brw(repr = u8)]
+enum SqPackFileType {
+    /// Dat files.
+    Data = 0x1,
+    // Index/Index2 files.
+    Index = 0x2,
+}
+
+#[binrw]
+#[brw(magic = b"SqPack\0\0")]
 pub struct SqPackHeader {
     platform_id: Platform,
-    #[br(pad_before = 3)]
+    #[brw(pad_before = 3)]
     size: u32,
     version: u32,
-    file_type: u32,
+    file_type: SqPackFileType,
 }
 
 #[binrw]
