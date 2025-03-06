@@ -41,8 +41,8 @@ pub struct SqPackHeader {
 
     #[brw(pad_before = 924)]
     #[brw(pad_after = 44)]
-    // always a certain value for index values, otherwise some value based on the content of the data
-    unk4: [u8; 24]
+    // The SHA1 of the bytes immediately before this
+    sha1: [u8; 20]
 }
 
 #[binrw]
