@@ -2,7 +2,7 @@
 name = "physis"
 version = "0.4.0"
 authors = ["Joshua Goins <josh@redstrate.com>"]
-edition = "2021"
+edition = "2024"
 description = "Interact with XIV game data."
 license = "GPL-3.0"
 homepage = "https://xiv.zone/physis"
