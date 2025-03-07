@@ -4,12 +4,16 @@
 #![allow(clippy::identity_op)]
 #![allow(unused_variables)] // for br(temp), meh
 
+use std::io::Read;
+use std::io::Seek;
 use std::io::SeekFrom;
 
 use crate::common::Platform;
 use crate::common::Region;
 use crate::crc::Jamcrc;
 use binrw::BinRead;
+use binrw::BinResult;
+use binrw::Endian;
 use binrw::binrw;
 
 /// The type of this SqPack file.
@@ -93,7 +97,7 @@ pub struct SqPackIndexHeader {
 
 #[binrw]
 #[br(import(index_type: &IndexType))]
-#[derive(PartialEq)]
+#[derive(PartialEq, Debug)]
 pub enum Hash {
     #[br(pre_assert(*index_type == IndexType::Index1))]
     SplitPath { name: u32, path: u32 },
@@ -101,57 +105,42 @@ pub enum Hash {
     FullPath(u32),
 }
 
+pub struct FileEntryData {
+    pub is_synonym: bool,
+    pub data_file_id: u8,
+    pub offset: u64,
+}
+
+impl BinRead for FileEntryData {
+    type Args<'a> = ();
+
+    fn read_options<R: Read + Seek>(
+        reader: &mut R,
+        _options: Endian,
+        (): Self::Args<'_>,
+    ) -> BinResult<Self> {
+        let data = <u8>::read(reader)?;
+        Ok(Self {
+            is_synonym: (data & 0b1) == 0b1,
+            data_file_id: (data & 0b1110) >> 1 as u8,
+            offset: (data & !0xF) as u64 * 0x08,
+        })
+    }
+}
+
 #[binrw]
 #[br(import(index_type: &IndexType))]
-pub struct IndexHashTableEntry {
+pub struct FileEntry {
     #[br(args(index_type))]
     pub hash: Hash,
 
-    #[br(temp)]
     #[bw(ignore)]
-    data: u32,
+    pub data: FileEntryData,
 
     #[br(temp)]
     #[bw(calc = 0)]
     #[br(if(*index_type == IndexType::Index1))]
     padding: u32,
-
-    #[br(calc = (data & 0b1) == 0b1)]
-    #[bw(ignore)]
-    pub is_synonym: bool,
-
-    #[br(calc = ((data & 0b1110) >> 1) as u8)]
-    #[bw(ignore)]
-    pub data_file_id: u8,
-
-    #[br(calc = (data & !0xF) as u64 * 0x08)]
-    #[bw(ignore)]
-    pub offset: u64,
-}
-
-// The only difference between index and index2 is how the path hash is stored.
-// The folder name and the filename are split in index1 (hence why it's 64-bits and not 32-bit)
-// But in index2, its both the file and folder name in one single CRC hash.
-#[binrw]
-#[derive(Debug)]
-pub struct Index2HashTableEntry {
-    pub hash: u32,
-
-    #[br(temp)]
-    #[bw(ignore)]
-    data: u32,
-
-    #[br(calc = (data & 0b1) == 0b1)]
-    #[bw(ignore)]
-    pub is_synonym: bool,
-
-    #[br(calc = ((data & 0b1110) >> 1) as u8)]
-    #[bw(ignore)]
-    pub data_file_id: u8,
-
-    #[br(calc = (data & !0xF) as u64 * 0x08)]
-    #[bw(ignore)]
-    pub offset: u64,
 }
 
 #[binrw]
@@ -187,7 +176,7 @@ pub struct IndexFile {
     index_header: SqPackIndexHeader,
 
     #[br(seek_before = SeekFrom::Start(index_header.file_descriptor.offset.into()), count = index_header.file_descriptor.size / 16, args { inner: (&index_header.index_type,) })]
-    pub entries: Vec<IndexHashTableEntry>,
+    pub entries: Vec<FileEntry>,
 
     #[br(seek_before = SeekFrom::Start(index_header.data_descriptor.offset.into()))]
     #[br(count = index_header.data_descriptor.size / 256)]
@@ -260,8 +249,8 @@ impl IndexFile {
             };
             return Some(IndexEntry {
                 hash: 0,
-                data_file_id: entry.data_file_id,
-                offset: entry.offset,
+                data_file_id: entry.data.data_file_id,
+                offset: entry.data.offset,
             });
         }
 
@@ -271,7 +260,7 @@ impl IndexFile {
 
 #[cfg(test)]
 mod tests {
-    use std::path::PathBuf;
+    use std::{io::Cursor, path::PathBuf};
 
     use super::*;
 
@@ -283,5 +272,27 @@ mod tests {
 
         // Feeding it invalid data should not panic
         IndexFile::from_existing(d.to_str().unwrap());
+    }
+
+    #[test]
+    fn read_index1_file_entry() {
+        let data = [
+            0xEF, 0x02, 0x50, 0x1C, 0x68, 0xCF, 0x4E, 0x00, 0x60, 0x01, 0x6E, 0x00, 0x00, 0x00,
+            0x00, 0x00,
+        ];
+
+        let mut cursor = Cursor::new(&data);
+
+        let file_entry =
+            FileEntry::read_options(&mut cursor, Endian::Little, (&IndexType::Index1,)).unwrap();
+
+        let expected_hash = Hash::SplitPath {
+            name: 475005679,
+            path: 5164904,
+        };
+        assert_eq!(file_entry.hash, expected_hash);
+        assert_eq!(file_entry.data.is_synonym, false);
+        assert_eq!(file_entry.data.data_file_id, 0);
+        assert_eq!(file_entry.data.offset, 768);
     }
 }
