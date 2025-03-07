@@ -7,13 +7,16 @@
 use std::io::Read;
 use std::io::Seek;
 use std::io::SeekFrom;
+use std::io::Write;
 
 use crate::common::Platform;
 use crate::common::Region;
 use crate::crc::Jamcrc;
 use binrw::BinRead;
 use binrw::BinResult;
+use binrw::BinWrite;
 use binrw::Endian;
+use binrw::Error;
 use binrw::binrw;
 
 /// The type of this SqPack file.
@@ -116,25 +119,40 @@ impl BinRead for FileEntryData {
 
     fn read_options<R: Read + Seek>(
         reader: &mut R,
-        _options: Endian,
+        endian: Endian,
         (): Self::Args<'_>,
     ) -> BinResult<Self> {
-        let data = <u8>::read(reader)?;
+        let data = <u32>::read_options(reader, endian, ())?;
         Ok(Self {
             is_synonym: (data & 0b1) == 0b1,
-            data_file_id: (data & 0b1110) >> 1 as u8,
+            data_file_id: ((data & 0b1110) >> 1) as u8,
             offset: (data & !0xF) as u64 * 0x08,
         })
     }
 }
 
+impl BinWrite for FileEntryData {
+    type Args<'a> = ();
+
+    fn write_options<W: Write + Seek>(
+        &self,
+        writer: &mut W,
+        endian: Endian,
+        (): Self::Args<'_>,
+    ) -> Result<(), Error> {
+        // TODO: support synonym and data_file_id
+        let data: u32 = self.offset.wrapping_div(0x08) as u32;
+
+        data.write_options(writer, endian, ())
+    }
+}
+
 #[binrw]
-#[br(import(index_type: &IndexType))]
+#[brw(import(index_type: &IndexType))]
 pub struct FileEntry {
     #[br(args(index_type))]
     pub hash: Hash,
 
-    #[bw(ignore)]
     pub data: FileEntryData,
 
     #[br(temp)]
@@ -176,6 +194,7 @@ pub struct IndexFile {
     index_header: SqPackIndexHeader,
 
     #[br(seek_before = SeekFrom::Start(index_header.file_descriptor.offset.into()), count = index_header.file_descriptor.size / 16, args { inner: (&index_header.index_type,) })]
+    #[bw(args(&index_header.index_type,))]
     pub entries: Vec<FileEntry>,
 
     #[br(seek_before = SeekFrom::Start(index_header.data_descriptor.offset.into()))]
@@ -262,6 +281,8 @@ impl IndexFile {
 mod tests {
     use std::{io::Cursor, path::PathBuf};
 
+    use binrw::BinWrite;
+
     use super::*;
 
     #[test]
@@ -275,7 +296,7 @@ mod tests {
     }
 
     #[test]
-    fn read_index1_file_entry() {
+    fn readwrite_index1_file_entry() {
         let data = [
             0xEF, 0x02, 0x50, 0x1C, 0x68, 0xCF, 0x4E, 0x00, 0x60, 0x01, 0x6E, 0x00, 0x00, 0x00,
             0x00, 0x00,
@@ -293,6 +314,17 @@ mod tests {
         assert_eq!(file_entry.hash, expected_hash);
         assert_eq!(file_entry.data.is_synonym, false);
         assert_eq!(file_entry.data.data_file_id, 0);
-        assert_eq!(file_entry.data.offset, 768);
+        assert_eq!(file_entry.data.offset, 57674496);
+
+        // Ensure if we write this it's identica'
+        let mut new_data = Vec::new();
+        {
+            let mut write_cursor = Cursor::new(&mut new_data);
+            file_entry
+                .write_options(&mut write_cursor, Endian::Little, (&IndexType::Index1,))
+                .unwrap();
+        }
+
+        assert_eq!(new_data, data);
     }
 }
