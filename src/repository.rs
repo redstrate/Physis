@@ -23,7 +23,7 @@ pub enum RepositoryType {
 
 /// Encapsulates a directory of game data, such as "ex1". This data is also versioned.
 /// This handles calculating the correct dat and index filenames, mainly for `GameData`.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Eq)]
 pub struct Repository {
     /// The folder name, such as "ex1".
     pub name: String,
@@ -34,8 +34,6 @@ pub struct Repository {
     /// The version of the game data.
     pub version: Option<String>,
 }
-
-impl Eq for Repository {}
 
 impl PartialEq for Repository {
     fn eq(&self, other: &Self) -> bool {
