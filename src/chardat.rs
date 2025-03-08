@@ -99,7 +99,7 @@ fn convert_subrace_dat(subrace: &Subrace) -> u8 {
 #[binrw]
 #[br(little)]
 #[repr(C)]
-#[br(magic = 0x2013FF14u32)]
+#[brw(magic = 0x2013FF14u32)]
 #[derive(Debug)]
 pub struct CharacterData {
     /// The "version" of the game this was created with.
@@ -107,7 +107,7 @@ pub struct CharacterData {
     pub version: u32,
 
     /// The checksum of the data fields.
-    #[br(pad_after = 4)]
+    #[brw(pad_after = 4)]
     pub checksum: u32,
 
     /// The race of the character.
@@ -203,11 +203,12 @@ pub struct CharacterData {
 
     /// The timestamp when the preset was created.
     /// This is a UTC time in seconds since the Unix epoch.
-    #[br(pad_before = 1)]
+    #[brw(pad_before = 1)]
     pub timestamp: u32,
 
     // TODO: this is terrible, just read until string nul terminator
     #[br(count = 164)]
+    #[bw(pad_size_to = 164)]
     #[br(map = read_string)]
     #[bw(map = write_string)]
     comment: String,
@@ -403,5 +404,16 @@ mod tests {
         assert_eq!(chardat.face_paint, 3);
         assert_eq!(chardat.voice, 160);
         assert_eq!(chardat.comment, "Shadowbringers Comment Text");
+    }
+
+    #[test]
+    fn write_shadowbringers() {
+        let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        d.push("resources/tests/chardat");
+        d.push("shadowbringers.dat");
+
+        let chardat_bytes = &read(d).unwrap();
+        let chardat = CharacterData::from_existing(chardat_bytes).unwrap();
+        assert_eq!(*chardat_bytes, chardat.write_to_buffer().unwrap());
     }
 }
