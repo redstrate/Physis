@@ -9,52 +9,14 @@ use std::io::Seek;
 use std::io::SeekFrom;
 use std::io::Write;
 
-use crate::common::Platform;
-use crate::common::Region;
 use crate::crc::Jamcrc;
+use crate::sqpack::SqPackHeader;
 use binrw::BinRead;
 use binrw::BinResult;
 use binrw::BinWrite;
 use binrw::Endian;
 use binrw::Error;
 use binrw::binrw;
-
-/// The type of this SqPack file.
-#[binrw]
-#[brw(repr = u8)]
-enum SqPackFileType {
-    /// FFXIV Explorer says "SQDB", whatever that is.
-    SQDB = 0x0,
-    /// Dat files.
-    Data = 0x1,
-    /// Index/Index2 files.
-    Index = 0x2,
-}
-
-#[binrw]
-#[brw(magic = b"SqPack\0\0")]
-pub struct SqPackHeader {
-    #[brw(pad_size_to = 4)]
-    platform_id: Platform,
-    size: u32,
-    // Have only seen version 1
-    version: u32,
-    #[brw(pad_size_to = 4)]
-    file_type: SqPackFileType,
-
-    // some unknown value, zeroed out for index files
-    // XivAlexandar says date/time, where does that come from?
-    unk1: u32,
-    unk2: u32,
-
-    #[br(pad_size_to = 4)]
-    region: Region,
-
-    #[brw(pad_before = 924)]
-    #[brw(pad_after = 44)]
-    // The SHA1 of the bytes immediately before this
-    sha1_hash: [u8; 20],
-}
 
 #[binrw]
 #[derive(Debug)]

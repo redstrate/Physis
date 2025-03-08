@@ -3,10 +3,48 @@
 
 use std::io::{Read, Seek, SeekFrom, Write};
 
-use binrw::{BinRead, BinWrite};
+use binrw::{binrw, BinRead, BinWrite};
 
+use crate::common::{Platform, Region};
 use crate::compression::no_header_decompress;
 use crate::dat::{BlockHeader, CompressionMode};
+
+/// The type of this SqPack file.
+#[binrw]
+#[brw(repr = u8)]
+enum SqPackFileType {
+    /// FFXIV Explorer says "SQDB", whatever that is.
+    SQDB = 0x0,
+    /// Dat files.
+    Data = 0x1,
+    /// Index/Index2 files.
+    Index = 0x2,
+}
+
+#[binrw]
+#[brw(magic = b"SqPack\0\0")]
+pub struct SqPackHeader {
+    #[brw(pad_size_to = 4)]
+    platform_id: Platform,
+    pub size: u32,
+    // Have only seen version 1
+    version: u32,
+    #[brw(pad_size_to = 4)]
+    file_type: SqPackFileType,
+
+    // some unknown value, zeroed out for index files
+    // XivAlexandar says date/time, where does that come from?
+    unk1: u32,
+    unk2: u32,
+
+    #[br(pad_size_to = 4)]
+    region: Region,
+
+    #[brw(pad_before = 924)]
+    #[brw(pad_after = 44)]
+    // The SHA1 of the bytes immediately before this
+    sha1_hash: [u8; 20],
+}
 
 pub fn read_data_block<T: Read + Seek>(mut buf: T, starting_position: u64) -> Option<Vec<u8>> {
     buf.seek(SeekFrom::Start(starting_position)).ok()?;
