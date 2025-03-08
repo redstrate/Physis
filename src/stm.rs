@@ -90,8 +90,6 @@ impl StainingTemplate {
                 values.push(cursor.read_le::<T>().unwrap());
             }
 
-            println!("{:#?}", cursor.position());
-
             let eof_marker = cursor.read_le::<u8>().unwrap();
             assert_eq!(eof_marker, 0xFF);
 

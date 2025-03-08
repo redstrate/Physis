@@ -98,8 +98,6 @@ impl Texture {
         let mut cursor = Cursor::new(buffer);
         let header = TexHeader::read(&mut cursor).ok()?;
 
-        println!("{:#?}", header.attribute);
-
         cursor
             .seek(SeekFrom::Start(std::mem::size_of::<TexHeader>() as u64))
             .ok()?;

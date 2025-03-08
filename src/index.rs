@@ -178,8 +178,6 @@ impl IndexFile {
     pub fn from_existing(path: &str) -> Option<Self> {
         let mut index_file = std::fs::File::open(path).ok()?;
 
-        println!("Reading {}!", path);
-
         Self::read(&mut index_file).ok()
     }
 
