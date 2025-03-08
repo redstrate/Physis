@@ -12,6 +12,7 @@ use crate::dat::{BlockHeader, CompressionMode};
 /// The type of this SqPack file.
 #[binrw]
 #[brw(repr = u8)]
+#[derive(Debug)]
 enum SqPackFileType {
     /// FFXIV Explorer says "SQDB", whatever that is.
     SQDB = 0x0,
@@ -23,6 +24,7 @@ enum SqPackFileType {
 
 #[binrw]
 #[brw(magic = b"SqPack\0\0")]
+#[derive(Debug)]
 pub struct SqPackHeader {
     #[brw(pad_size_to = 4)]
     platform_id: Platform,

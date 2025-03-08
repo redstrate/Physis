@@ -168,3 +168,6 @@ pub mod existing_dirs;
 
 /// Reading patch lists
 pub mod patchlist;
+
+/// Reading SQDB files
+pub mod sqdb;
