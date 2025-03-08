@@ -3,7 +3,7 @@
 
 use std::io::{BufWriter, Cursor};
 
-use crate::common_file_operations::{read_bool_from, write_bool_as};
+use crate::common_file_operations::{read_bool_from, read_string, write_bool_as, write_string};
 use crate::{ByteBuffer, ByteSpan};
 use binrw::binrw;
 use binrw::{BinRead, BinWrite};
@@ -102,8 +102,8 @@ fn convert_subrace_dat(subrace: &Subrace) -> u8 {
 #[br(magic = 0x2013FF14u32)]
 #[derive(Debug)]
 pub struct CharacterData {
-    // version 4
-    /// The version of the character data, the only supported version right now is 4.
+    /// The "version" of the game this was created with.
+    /// Always corresponds to the released expansion at the time, e.g. A Realm Reborn character will have a version of 1. A Shadowbringers character will have a version of 4.
     pub version: u32,
 
     /// The checksum of the data fields.
@@ -123,7 +123,7 @@ pub struct CharacterData {
     /// The age of the character. Normal = 1, Old = 3, Young = 4.
     pub age: u8,
 
-    /// The height of the character.
+    /// The height of the character from 0 to 100.
     pub height: u8,
 
     /// The character's subrace.
@@ -131,8 +131,8 @@ pub struct CharacterData {
     #[bw(map = convert_subrace_dat )]
     pub subrace: Subrace,
 
-    /// The character's selected head.
-    pub head: u8,
+    /// The character's selected face.
+    pub face: u8,
 
     /// The character's selected hair.
     pub hair: u8,
@@ -157,8 +157,8 @@ pub struct CharacterData {
     /// The selected facial features.
     pub facial_features: u8,
 
-    /// If the character has limbal eyes.
-    pub limbal_eyes: u8,
+    /// The color of the character's facial features.'
+    pub facial_feature_color: u8,
 
     /// The character's selected eyebrows.
     pub eyebrows: u8,
@@ -167,6 +167,7 @@ pub struct CharacterData {
     pub left_eye_color: u8,
 
     /// The character's selected eyes.
+    /// If the character has selected "Small Iris" then it adds 128 to this.
     pub eyes: u8,
 
     /// The character's selected nose.
@@ -181,24 +182,35 @@ pub struct CharacterData {
     /// The character's selected pattern.
     pub lips_tone_fur_pattern: u8,
 
-    /// The character's selected tail.
-    pub tail: u8,
+    /// Depending on the race, it's either the ear size, muscle size, or tail size.
+    pub ear_muscle_tail_size: u8,
+
+    /// Depending on the race, it's the selected tail or ears.
+    pub tail_ears_type: u8,
+
+    /// The size of the character's bust from 0 to 100.
+    pub bust: u8,
 
     /// The character's choice of face paint.
     pub face_paint: u8,
 
-    /// The size of the character's bust.
-    pub bust: u8,
-
     /// The color of the face paint.
+    /// If the character has selected "Light" then it adds 128 to this.
     pub face_paint_color: u8,
 
     /// The character's chosen voice.
     pub voice: u8,
 
     /// The timestamp when the preset was created.
+    /// This is a UTC time in seconds since the Unix epoch.
     #[br(pad_before = 1)]
-    pub timestamp: [u8; 4],
+    pub timestamp: u32,
+
+    // TODO: this is terrible, just read until string nul terminator
+    #[br(count = 164)]
+    #[br(map = read_string)]
+    #[bw(map = write_string)]
+    comment: String,
 }
 
 impl CharacterData {
@@ -239,5 +251,157 @@ mod tests {
 
         // Feeding it invalid data should not panic
         CharacterData::from_existing(&read(d).unwrap());
+    }
+
+    fn common_setup(name: &str) -> CharacterData {
+        let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        d.push("resources/tests/chardat");
+        d.push(name);
+
+        CharacterData::from_existing(&read(d).unwrap()).unwrap()
+    }
+
+    #[test]
+    fn read_arr() {
+        let chardat = common_setup("arr.dat");
+
+        assert_eq!(chardat.version, 1);
+        assert_eq!(chardat.checksum, 747334988);
+        assert_eq!(chardat.race, Race::Hyur);
+        assert_eq!(chardat.gender, Gender::Male);
+        assert_eq!(chardat.age, 1);
+        assert_eq!(chardat.height, 50);
+        assert_eq!(chardat.subrace, Subrace::Midlander);
+        assert_eq!(chardat.face, 5);
+        assert_eq!(chardat.hair, 1);
+        assert_eq!(chardat.enable_highlights, false);
+        assert_eq!(chardat.skin_tone, 2);
+        assert_eq!(chardat.right_eye_color, 37);
+        assert_eq!(chardat.hair_tone, 53);
+        assert_eq!(chardat.highlights, 0);
+        assert_eq!(chardat.facial_features, 2);
+        assert_eq!(chardat.facial_feature_color, 2);
+        assert_eq!(chardat.eyebrows, 0);
+        assert_eq!(chardat.left_eye_color, 37);
+        assert_eq!(chardat.eyes, 0);
+        assert_eq!(chardat.nose, 0);
+        assert_eq!(chardat.jaw, 0);
+        assert_eq!(chardat.mouth, 0);
+        assert_eq!(chardat.lips_tone_fur_pattern, 43);
+        assert_eq!(chardat.ear_muscle_tail_size, 50);
+        assert_eq!(chardat.tail_ears_type, 0);
+        assert_eq!(chardat.bust, 0);
+        assert_eq!(chardat.face_paint_color, 36);
+        assert_eq!(chardat.face_paint, 0);
+        assert_eq!(chardat.voice, 1);
+        assert_eq!(chardat.comment, "Custom Comment Text");
+    }
+
+    #[test]
+    fn read_heavensward() {
+        let chardat = common_setup("heavensward.dat");
+
+        assert_eq!(chardat.version, 2);
+        assert_eq!(chardat.checksum, 781137881);
+        assert_eq!(chardat.race, Race::AuRa);
+        assert_eq!(chardat.gender, Gender::Female);
+        assert_eq!(chardat.age, 1);
+        assert_eq!(chardat.height, 50);
+        assert_eq!(chardat.subrace, Subrace::Xaela);
+        assert_eq!(chardat.face, 3);
+        assert_eq!(chardat.hair, 5);
+        assert_eq!(chardat.enable_highlights, false);
+        assert_eq!(chardat.skin_tone, 160);
+        assert_eq!(chardat.right_eye_color, 91);
+        assert_eq!(chardat.hair_tone, 159);
+        assert_eq!(chardat.highlights, 0);
+        assert_eq!(chardat.facial_features, 127);
+        assert_eq!(chardat.facial_feature_color, 99);
+        assert_eq!(chardat.eyebrows, 0);
+        assert_eq!(chardat.left_eye_color, 91);
+        assert_eq!(chardat.eyes, 0);
+        assert_eq!(chardat.nose, 0);
+        assert_eq!(chardat.jaw, 0);
+        assert_eq!(chardat.mouth, 0);
+        assert_eq!(chardat.lips_tone_fur_pattern, 0);
+        assert_eq!(chardat.ear_muscle_tail_size, 50);
+        assert_eq!(chardat.tail_ears_type, 1);
+        assert_eq!(chardat.bust, 25);
+        assert_eq!(chardat.face_paint_color, 0);
+        assert_eq!(chardat.face_paint, 0);
+        assert_eq!(chardat.voice, 112);
+        assert_eq!(chardat.comment, "Heavensward Comment Text");
+    }
+
+    #[test]
+    fn read_stormblood() {
+        let chardat = common_setup("stormblood.dat");
+
+        assert_eq!(chardat.version, 3);
+        assert_eq!(chardat.checksum, 564060181);
+        assert_eq!(chardat.race, Race::Lalafell);
+        assert_eq!(chardat.gender, Gender::Male);
+        assert_eq!(chardat.age, 1);
+        assert_eq!(chardat.height, 50);
+        assert_eq!(chardat.subrace, Subrace::Plainsfolk);
+        assert_eq!(chardat.face, 1);
+        assert_eq!(chardat.hair, 8);
+        assert_eq!(chardat.enable_highlights, false);
+        assert_eq!(chardat.skin_tone, 25);
+        assert_eq!(chardat.right_eye_color, 11);
+        assert_eq!(chardat.hair_tone, 45);
+        assert_eq!(chardat.highlights, 0);
+        assert_eq!(chardat.facial_features, 0);
+        assert_eq!(chardat.facial_feature_color, 2);
+        assert_eq!(chardat.eyebrows, 0);
+        assert_eq!(chardat.left_eye_color, 11);
+        assert_eq!(chardat.eyes, 0);
+        assert_eq!(chardat.nose, 0);
+        assert_eq!(chardat.jaw, 0);
+        assert_eq!(chardat.mouth, 0);
+        assert_eq!(chardat.lips_tone_fur_pattern, 43);
+        assert_eq!(chardat.ear_muscle_tail_size, 25);
+        assert_eq!(chardat.tail_ears_type, 2);
+        assert_eq!(chardat.bust, 0);
+        assert_eq!(chardat.face_paint_color, 36);
+        assert_eq!(chardat.face_paint, 0);
+        assert_eq!(chardat.voice, 19);
+        assert_eq!(chardat.comment, "Stormblood Comment Text");
+    }
+
+    #[test]
+    fn read_shadowbringers() {
+        let chardat = common_setup("shadowbringers.dat");
+
+        assert_eq!(chardat.version, 4);
+        assert_eq!(chardat.checksum, 404034306);
+        assert_eq!(chardat.race, Race::Viera);
+        assert_eq!(chardat.gender, Gender::Female);
+        assert_eq!(chardat.age, 1);
+        assert_eq!(chardat.height, 50);
+        assert_eq!(chardat.subrace, Subrace::Rava);
+        assert_eq!(chardat.face, 1);
+        assert_eq!(chardat.hair, 8);
+        assert_eq!(chardat.enable_highlights, false);
+        assert_eq!(chardat.skin_tone, 12);
+        assert_eq!(chardat.right_eye_color, 43);
+        assert_eq!(chardat.hair_tone, 53);
+        assert_eq!(chardat.highlights, 0);
+        assert_eq!(chardat.facial_features, 4);
+        assert_eq!(chardat.facial_feature_color, 0);
+        assert_eq!(chardat.eyebrows, 2);
+        assert_eq!(chardat.left_eye_color, 43);
+        assert_eq!(chardat.eyes, 131);
+        assert_eq!(chardat.nose, 2);
+        assert_eq!(chardat.jaw, 1);
+        assert_eq!(chardat.mouth, 131);
+        assert_eq!(chardat.lips_tone_fur_pattern, 171);
+        assert_eq!(chardat.ear_muscle_tail_size, 50);
+        assert_eq!(chardat.tail_ears_type, 2);
+        assert_eq!(chardat.bust, 100);
+        assert_eq!(chardat.face_paint_color, 131);
+        assert_eq!(chardat.face_paint, 3);
+        assert_eq!(chardat.voice, 160);
+        assert_eq!(chardat.comment, "Shadowbringers Comment Text");
     }
 }
