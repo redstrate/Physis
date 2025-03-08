@@ -254,7 +254,6 @@ mod tests {
         );
     }
 
-    // TODO: We need to check if these console filenames are actually correct
     #[test]
     fn test_ps3_filenames() {
         let repo = Repository {
