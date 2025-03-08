@@ -192,6 +192,8 @@ pub struct CustomizeData {
     pub voice: u8,
 }
 
+const MAX_COMMENT_LENGTH: usize = 164;
+
 /// Represents the several options that make up a character data file (DAT) which is used by the game's character creation system to save and load presets.
 #[binrw]
 #[br(little)]
@@ -217,8 +219,8 @@ pub struct CharacterData {
     pub timestamp: u32,
 
     // TODO: this is terrible, just read until string nul terminator
-    #[br(count = 164)]
-    #[bw(pad_size_to = 164)]
+    #[br(count = MAX_COMMENT_LENGTH)]
+    #[bw(pad_size_to = MAX_COMMENT_LENGTH)]
     #[br(map = read_string)]
     #[bw(map = write_string)]
     comment: String,
@@ -261,7 +263,7 @@ impl CharacterData {
         buffer.extend_from_slice(&self.timestamp.to_le_bytes());
 
         let mut comment = write_string(&self.comment);
-        comment.resize(164, 0);
+        comment.resize(MAX_COMMENT_LENGTH, 0);
         buffer.extend_from_slice(&comment);
 
         let mut checksum: u32 = 0;
