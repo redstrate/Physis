@@ -60,7 +60,7 @@ Physis also supports doing some other useful things other than reading and writi
 | Endwalker (6.x)      | ✅     |                                                                                  |
 | Dawntrail (7.x)      | ✅     | Visual formats (models, materials, etc) by Physis crashes the 7.x retail client. |
 
-Note that only Windows versions of the game is supported at the moment. 
+Only Windows versions of the game is supported at the moment. Only the latest version in a patch series is supported, but benchmarks for the expansion should be supported.
 
 ## Usage
 
