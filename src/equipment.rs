@@ -124,7 +124,7 @@ pub fn get_character_category_abbreviation(category: CharacterCategory) -> &'sta
         CharacterCategory::Hair => "hir",
         CharacterCategory::Face => "fac",
         CharacterCategory::Tail => "til",
-        CharacterCategory::Ear => "ear",
+        CharacterCategory::Ear => "zer",
     }
 }
 
@@ -134,7 +134,7 @@ pub fn get_character_category_prefix(category: CharacterCategory) -> &'static st
         CharacterCategory::Hair => "h",
         CharacterCategory::Face => "f",
         CharacterCategory::Tail => "t",
-        CharacterCategory::Ear => "e",
+        CharacterCategory::Ear => "z",
     }
 }
 
