@@ -145,6 +145,7 @@ help fix bugs or add functionality. Filing issues is appreciated, but I do this 
 - [Ioncannon](http://ffxivexplorer.fragmenterworks.com/research.php) (FFXIV Data Explorer) for the first documenting the file formats
 - [binrw team](https://binrw.rs) for an awesome Rust library!
 - [sha1-smol](https://github.com/mitsuhiko/sha1-smol) for a dependency-free SHA1 implementation
+* [FFXIVTools](https://github.com/dlunch/FFXIVTools) for it's Havok parsing implementation
 
 And everyone else who writes FFXIV tools!
 
