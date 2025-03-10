@@ -91,6 +91,9 @@ pub mod cmp;
 /// Reading and writing character data files (DAT) which are used in the character creator to save presets.
 pub mod chardat;
 
+/// Reading and writing the content of gear sets (GEARSET.DAT) which are used to store a character's gear sets.
+pub mod gearsets;
+
 /// Reading and writing the plaintext config files (CFG) used by the game to store most of it's configuration.
 pub mod cfg;
 
