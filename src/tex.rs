@@ -5,11 +5,13 @@
 
 use std::io::{Cursor, Read, Seek, SeekFrom};
 
+use crate::bcn::decode_bc1;
+use crate::bcn::decode_bc3;
+use crate::bcn::decode_bc5;
 use crate::ByteSpan;
 use binrw::BinRead;
 use binrw::binrw;
 use bitflags::bitflags;
-use texture2ddecoder::{decode_bc1, decode_bc3, decode_bc5};
 
 // Attributes and Format are adapted from Lumina (https://github.com/NotAdam/Lumina/blob/master/src/Lumina/Data/Files/TexFile.cs)
 bitflags! {

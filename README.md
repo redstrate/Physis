@@ -145,6 +145,7 @@ Feel free to submit patches to help fix bugs or add functionality. Filing issues
 - [binrw team](https://binrw.rs) for an awesome Rust library!
 - [sha1-smol](https://github.com/mitsuhiko/sha1-smol) for a dependency-free SHA1 implementation
 * [FFXIVTools](https://github.com/dlunch/FFXIVTools) for it's Havok parsing implementation
+* [texture2ddecoder](https://github.com/UniversalGameExtraction/texture2ddecoder/) for it's BCn texture decoding functions.
 
 And everyone else who writes FFXIV tools!
 

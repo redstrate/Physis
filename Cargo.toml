@@ -47,7 +47,7 @@ game_install = []
 # enables support for extracting visual data, such as models, textures, materials, etc.
 # this enables a bunch of dependencies!
 # tip: can be safely turned off for launchers and other tools that simply need to extract the bare minimum of data
-visual_data = ["dep:half", "dep:bitflags", "dep:texture2ddecoder"]
+visual_data = ["dep:half", "dep:bitflags"]
 
 # testing only features
 retail_game_testing = []
@@ -69,5 +69,5 @@ half = { version = "2", optional = true }
 # cannot upgrade to 2.0.0, breaking changes that aren't recoverable: https://github.com/bitflags/bitflags/issues/314
 bitflags = { version = "1.3", optional = true }
 
-# needed for dxt/bc decompression
-texture2ddecoder = { version = "0.1", optional = true }
+# used in bcn decoding
+quote = "1.0"

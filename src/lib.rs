@@ -171,3 +171,5 @@ pub mod patchlist;
 
 /// Reading SQDB files
 pub mod sqdb;
+
+mod bcn;
