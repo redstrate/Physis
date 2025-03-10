@@ -24,7 +24,7 @@ Here is a list of supported formats and their status:
 | File Format | Read | Write | Note                                                                                               |
 | --- | --- |-------|----------------------------------------------------------------------------------------------------|
 | [Configuration files](https://docs.xiv.zone/format/cfg/) | ✅ | ✅     |                                                                                                    |
-| [Saved character data](https://docs.xiv.zone/format/chardat/) | ✅ | ❌     | Only some versions are currently supported.                                                        |
+| [Saved character data](https://docs.xiv.zone/format/chardat/) | ✅ | ✅     |                                                         |
 | [Chara make params](https://docs.xiv.zone/format/cmp/) | ✅ | ❌     |                                                                                                    |
 | Dictionaries | ✅ | ❌     |                                                                                                    |
 | [Excel data](https://docs.xiv.zone/format/exd/) | ✅ | ❌     |                                                                                                    |
