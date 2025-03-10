@@ -223,7 +223,7 @@ pub struct CharacterData {
     #[bw(pad_size_to = MAX_COMMENT_LENGTH)]
     #[br(map = read_string)]
     #[bw(map = write_string)]
-    comment: String,
+    pub comment: String,
 }
 
 impl CharacterData {
