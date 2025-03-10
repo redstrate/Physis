@@ -37,7 +37,7 @@ struct Unshield {
     _private: [u8; 0],
 }
 
-extern "C" {
+unsafe extern "C" {
     fn unshield_open(filename: *const c_char) -> *mut Unshield;
     fn unshield_close(unshield: *mut Unshield);
 
