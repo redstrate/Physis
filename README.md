@@ -137,8 +137,7 @@ versions.
 
 ## Contributing & Support
 
-The best way you can help is by [monetarily supporting me](https://redstrate.com/fund/) or by submitting patches to
-help fix bugs or add functionality. Filing issues is appreciated, but I do this in my free time so please don't expect professional support.
+Feel free to submit patches to help fix bugs or add functionality. Filing issues is appreciated, but I do this in my free time so please don't expect professional support.
 
 ## Credits & Thank You
 - [goatcorp](https://goatcorp.github.io) (XIVQuickLauncher, docs.xiv.dev, and even more)
