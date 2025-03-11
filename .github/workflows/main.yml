@@ -42,11 +42,11 @@ jobs:
         cargo install --locked cargo-deny
         cargo install --locked cargo-semver-checks
     - name: Build
-      run: cargo build --features visual_data,game_install --verbose
+      run: cargo build --verbose
     - name: Run tests
-      run: cargo test --features visual_data,game_install --verbose
+      run: cargo test --verbose
     - name: Run clippy
-      run: cargo clippy --features visual_data,game_install
+      run: cargo clippy
     - name: Set up SSH key
       if: github.ref == 'refs/heads/main'
       run: |
