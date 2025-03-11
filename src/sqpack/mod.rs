@@ -16,7 +16,7 @@ mod db;
 pub use db::SqPackDatabase;
 
 mod index;
-pub use index::{SqPackIndex, IndexEntry};
+pub use index::{IndexEntry, SqPackIndex};
 
 /// The type of this SqPack file.
 #[binrw]
@@ -57,7 +57,10 @@ pub(crate) struct SqPackHeader {
     sha1_hash: [u8; 20],
 }
 
-pub(crate) fn read_data_block<T: Read + Seek>(mut buf: T, starting_position: u64) -> Option<Vec<u8>> {
+pub(crate) fn read_data_block<T: Read + Seek>(
+    mut buf: T,
+    starting_position: u64,
+) -> Option<Vec<u8>> {
     buf.seek(SeekFrom::Start(starting_position)).ok()?;
 
     let block_header = BlockHeader::read(&mut buf).unwrap();
@@ -96,7 +99,7 @@ pub(crate) fn read_data_block_patch<T: Read + Seek>(mut buf: T) -> Option<Vec<u8
             decompressed_length,
         } => {
             let compressed_length: usize =
-            ((compressed_length as usize + 143) & 0xFFFFFF80) - (block_header.size as usize);
+                ((compressed_length as usize + 143) & 0xFFFFFF80) - (block_header.size as usize);
 
             let mut compressed_data: Vec<u8> = vec![0; compressed_length];
             buf.read_exact(&mut compressed_data).ok()?;

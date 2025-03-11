@@ -8,7 +8,6 @@ use std::path::PathBuf;
 
 use tracing::{debug, warn};
 
-use crate::sqpack::{IndexEntry, SqPackData, SqPackIndex};
 use crate::ByteBuffer;
 use crate::common::{Language, Platform, read_version};
 use crate::exd::EXD;
@@ -16,6 +15,7 @@ use crate::exh::EXH;
 use crate::exl::EXL;
 use crate::patch::{PatchError, ZiPatch};
 use crate::repository::{Category, Repository, string_to_category};
+use crate::sqpack::{IndexEntry, SqPackData, SqPackIndex};
 
 /// Framework for operating on game data.
 pub struct GameData {

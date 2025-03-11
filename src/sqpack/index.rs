@@ -87,8 +87,8 @@ impl BinRead for FileEntryData {
         let data = <u32>::read_options(reader, endian, ())?;
         Ok(Self {
             is_synonym: (data & 0b1) == 0b1,
-           data_file_id: ((data & 0b1110) >> 1) as u8,
-           offset: (data & !0xF) as u64 * 0x08,
+            data_file_id: ((data & 0b1110) >> 1) as u8,
+            offset: (data & !0xF) as u64 * 0x08,
         })
     }
 }
@@ -265,7 +265,7 @@ mod tests {
         let mut cursor = Cursor::new(&data);
 
         let file_entry =
-        FileEntry::read_options(&mut cursor, Endian::Little, (&IndexType::Index1,)).unwrap();
+            FileEntry::read_options(&mut cursor, Endian::Little, (&IndexType::Index1,)).unwrap();
 
         let expected_hash = Hash::SplitPath {
             name: 475005679,
@@ -281,8 +281,8 @@ mod tests {
         {
             let mut write_cursor = Cursor::new(&mut new_data);
             file_entry
-            .write_options(&mut write_cursor, Endian::Little, (&IndexType::Index1,))
-            .unwrap();
+                .write_options(&mut write_cursor, Endian::Little, (&IndexType::Index1,))
+                .unwrap();
         }
 
         assert_eq!(new_data, data);

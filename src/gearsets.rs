@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 use crate::ByteBuffer;
+use crate::dat::DatHeader;
 use crate::equipment::Slot;
 use binrw::NullString;
 use binrw::binrw;
@@ -9,6 +10,7 @@ use binrw::{BinRead, BinWrite};
 use std::collections::HashMap;
 use std::io::BufWriter;
 use std::io::Cursor;
+use std::io::Read;
 
 // FIXME: unclear what this is
 const UNKNOWN_FLAG: u32 = 1_000_000;
@@ -223,8 +225,16 @@ const GEARSET_KEY: u8 = 0x73;
 impl GearSets {
     /// Parses existing gearsets data.
     pub fn from_existing(buffer: &[u8]) -> Option<GearSets> {
+        let mut cursor = Cursor::new(buffer);
+
+        let header = DatHeader::read(&mut cursor).ok()?;
+
+        let mut buffer = vec![0; header.content_size as usize - 1];
+        cursor.read_exact(&mut buffer).ok()?;
+
         let decoded = buffer.iter().map(|x| *x ^ GEARSET_KEY).collect::<Vec<_>>();
         let mut cursor = Cursor::new(decoded);
+
         GearSets::read(&mut cursor).ok()
     }
 
@@ -232,15 +242,33 @@ impl GearSets {
     pub fn write_to_buffer(&self) -> Option<ByteBuffer> {
         let mut buffer = ByteBuffer::new();
 
+        // header
         {
-            let cursor = Cursor::new(&mut buffer);
-            let mut writer = BufWriter::new(cursor);
+            let mut cursor = Cursor::new(&mut buffer);
 
-            self.write_le(&mut writer).ok()?;
+            let header = DatHeader {
+                file_type: crate::dat::DatFileType::Gearset,
+                max_size: 45205,
+                content_size: 45205,
+            };
+            header.write_le(&mut cursor).ok()?
         }
 
-        let encoded = buffer.iter().map(|x| *x ^ GEARSET_KEY).collect::<Vec<_>>();
-        Some(encoded)
+        // buffer contents encoded
+        {
+            let mut cursor = Cursor::new(ByteBuffer::new());
+            self.write_le(&mut cursor).ok()?;
+
+            buffer.extend_from_slice(
+                &cursor
+                    .into_inner()
+                    .iter()
+                    .map(|x| *x ^ GEARSET_KEY)
+                    .collect::<Vec<_>>(),
+            );
+        }
+
+        Some(buffer)
     }
 }
 
