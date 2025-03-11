@@ -192,7 +192,7 @@ impl IndexFile {
     pub fn calculate_hash(&self, path: &str) -> Hash {
         let lowercase = path.to_lowercase();
 
-        return match &self.index_header.index_type {
+        match &self.index_header.index_type {
             IndexType::Index1 => {
                 if let Some(pos) = lowercase.rfind('/') {
                     let (directory, filename) = lowercase.split_at(pos);
@@ -210,7 +210,7 @@ impl IndexFile {
                 }
             }
             IndexType::Index2 => Hash::FullPath(CRC.checksum(lowercase.as_bytes())),
-        };
+        }
     }
 
     pub fn exists(&self, path: &str) -> bool {
@@ -223,7 +223,7 @@ impl IndexFile {
 
         if let Some(entry) = self.entries.iter().find(|s| s.hash == hash) {
             let full_hash = match hash {
-                Hash::SplitPath { name, path } => (path as u64) << 32 | (name as u64),
+                Hash::SplitPath { name, path } => ((path as u64) << 32) | (name as u64),
                 Hash::FullPath(hash) => hash as u64,
             };
             return Some(IndexEntry {
@@ -272,7 +272,7 @@ mod tests {
             path: 5164904,
         };
         assert_eq!(file_entry.hash, expected_hash);
-        assert_eq!(file_entry.data.is_synonym, false);
+        assert!(!file_entry.data.is_synonym);
         assert_eq!(file_entry.data.data_file_id, 0);
         assert_eq!(file_entry.data.offset, 57674496);
 

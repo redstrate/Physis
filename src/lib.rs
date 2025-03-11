@@ -30,7 +30,6 @@ mod compression;
 mod dat;
 
 /// Reading model (MDL) files.
-#[cfg(feature = "visual_data")]
 pub mod model;
 
 /// All of the races in Eorzea in a nice enum package.
@@ -53,10 +52,6 @@ pub mod blowfish;
 
 mod blowfish_constants;
 
-/// Initializing a new retail game install from the official retail installer. No execution required!
-#[cfg(feature = "game_install")]
-pub mod installer;
-
 /// Reading Excel header files (EXH).
 pub mod exh;
 
@@ -64,7 +59,6 @@ pub mod exh;
 pub mod exd;
 
 /// Reading Havok XML sidecar files.
-#[cfg(feature = "visual_data")]
 pub mod skeleton;
 
 /// Reading file info files (FIIN).
@@ -74,15 +68,12 @@ pub mod fiin;
 pub mod log;
 
 /// Reading textures (TEX).
-#[cfg(feature = "visual_data")]
 pub mod tex;
 
 /// Reading material files (MTRL)
-#[cfg(feature = "visual_data")]
 pub mod mtrl;
 
 /// Reading shader packages (SHPK)
-#[cfg(feature = "visual_data")]
 pub mod shpk;
 
 /// Reading character parameter files (CMP)
@@ -97,26 +88,20 @@ pub mod gearsets;
 /// Reading and writing the plaintext config files (CFG) used by the game to store most of it's configuration.
 pub mod cfg;
 
-#[cfg(feature = "visual_data")]
 mod havok;
 
 /// Reading bone deform matrices.
-#[cfg(feature = "visual_data")]
 pub mod pbd;
 
 mod crc;
 mod sha1;
 
-#[cfg(feature = "visual_data")]
 mod model_file_operations;
 
-#[cfg(feature = "visual_data")]
 pub mod model_vertex_declarations;
 
-#[cfg(feature = "visual_data")]
 pub mod lgb;
 
-#[cfg(feature = "visual_data")]
 pub mod tera;
 
 /// Reading data from executables

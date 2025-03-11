@@ -3,7 +3,7 @@
 
 use std::io::{Read, Seek, SeekFrom, Write};
 
-use binrw::{binrw, BinRead, BinWrite};
+use binrw::{BinRead, BinWrite, binrw};
 
 use crate::common::{Platform, Region};
 use crate::compression::no_header_decompress;

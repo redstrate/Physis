@@ -3,13 +3,13 @@
 
 use std::io::Cursor;
 
+use crate::ByteSpan;
 use crate::common_file_operations::read_string;
 use crate::common_file_operations::write_string;
 use crate::sqpack::SqPackHeader;
-use crate::ByteSpan;
-use binrw::helpers::until_eof;
 use binrw::BinRead;
 use binrw::binrw;
+use binrw::helpers::until_eof;
 
 #[binrw]
 #[derive(Debug)]
@@ -48,7 +48,7 @@ pub struct SQDB {
     header: SQDBHeader,
 
     #[br(parse_with = until_eof)]
-    entries: Vec<SQDBEntry>
+    entries: Vec<SQDBEntry>,
 }
 
 impl SQDB {

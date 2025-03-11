@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2023 Joshua Goins <josh@redstrate.com>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-use libz_sys::z_off_t;
+use libz_rs_sys::z_off_t;
 use std::ops::{Add, AddAssign, BitXor, BitXorAssign};
 
 /// CRC used for filepath hashes in index file
@@ -45,11 +45,11 @@ impl Jamcrc {
 }
 
 fn crc32(crc: u32, s: &[u8]) -> u32 {
-    unsafe { libz_sys::crc32(crc.into(), s.as_ptr(), s.len() as u32) as u32 }
+    unsafe { libz_rs_sys::crc32(crc.into(), s.as_ptr(), s.len() as u32) as u32 }
 }
 
 fn crc32_combine(crc1: u32, crc2: u32, len2: usize) -> u32 {
-    unsafe { libz_sys::crc32_combine(crc1.into(), crc2.into(), len2 as z_off_t) as u32 }
+    libz_rs_sys::crc32_combine(crc1.into(), crc2.into(), len2 as z_off_t) as u32
 }
 
 /// CRC used for shader keys

@@ -154,11 +154,11 @@ impl Dictionary {
             return 0;
         }
 
-        return if let Some(new_val) = lookup_table.get(&(higher as u16)) {
+        if let Some(new_val) = lookup_table.get(&(higher as u16)) {
             (((*new_val as u32) << 8) + lower) as i32
         } else {
             0
-        };
+        }
     }
 
     fn dump_dict_node(&self, vec: &mut Vec<String>, entry_id: i32, prev: String) {

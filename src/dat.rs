@@ -10,7 +10,6 @@ use binrw::BinWrite;
 use binrw::{BinReaderExt, binrw};
 
 use crate::common_file_operations::read_bool_from;
-#[cfg(feature = "visual_data")]
 use crate::model::ModelFileHeader;
 use crate::sqpack::read_data_block;
 
@@ -214,17 +213,7 @@ impl DatFile {
         match file_info.file_type {
             FileType::Empty => None,
             FileType::Standard => self.read_standard_file(offset, &file_info),
-            FileType::Model => {
-                #[cfg(feature = "visual_data")]
-                {
-                    self.read_model_file(offset, &file_info)
-                }
-
-                #[cfg(not(feature = "visual_data"))]
-                {
-                    panic!("Tried to extract a model without the visual_data feature enabled!")
-                }
-            }
+            FileType::Model => self.read_model_file(offset, &file_info),
             FileType::Texture => self.read_texture_file(offset, &file_info),
         }
     }
@@ -257,7 +246,6 @@ impl DatFile {
     }
 
     /// Reads a model file block.
-    #[cfg(feature = "visual_data")]
     fn read_model_file(&mut self, offset: u64, file_info: &FileInfo) -> Option<ByteBuffer> {
         let model_file_info = file_info.model_info.as_ref()?;
 

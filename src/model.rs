@@ -1352,8 +1352,8 @@ mod tests {
         assert_eq!(mdl.file_header.vertex_declaration_count, 6);
         assert_eq!(mdl.file_header.material_count, 2);
         assert_eq!(mdl.file_header.lod_count, 3);
-        assert_eq!(mdl.file_header.index_buffer_streaming_enabled, false);
-        assert_eq!(mdl.file_header.has_edge_geometry, false);
+        assert!(!mdl.file_header.index_buffer_streaming_enabled);
+        assert!(!mdl.file_header.has_edge_geometry);
 
         // model header
         assert_eq!(mdl.model_data.header.radius, 1.5340779);

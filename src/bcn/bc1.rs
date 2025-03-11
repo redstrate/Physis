@@ -23,22 +23,22 @@ pub fn decode_bc1_block(data: &[u8], outbuf: &mut [u32]) {
     if q0 > q1 {
         c[2] = color(
             ((r0 * 2 + r1) / 3) as u8,
-                     ((g0 * 2 + g1) / 3) as u8,
-                     ((b0 * 2 + b1) / 3) as u8,
-                     255,
+            ((g0 * 2 + g1) / 3) as u8,
+            ((b0 * 2 + b1) / 3) as u8,
+            255,
         );
         c[3] = color(
             ((r0 + r1 * 2) / 3) as u8,
-                     ((g0 + g1 * 2) / 3) as u8,
-                     ((b0 + b1 * 2) / 3) as u8,
-                     255,
+            ((g0 + g1 * 2) / 3) as u8,
+            ((b0 + b1 * 2) / 3) as u8,
+            255,
         );
     } else {
         c[2] = color(
             ((r0 + r1) / 2) as u8,
-                     ((g0 + g1) / 2) as u8,
-                     ((b0 + b1) / 2) as u8,
-                     255,
+            ((g0 + g1) / 2) as u8,
+            ((b0 + b1) / 2) as u8,
+            255,
         );
         c[3] = color(0, 0, 0, 255);
     }

@@ -2,16 +2,22 @@
 // SPDX-License-Identifier: MIT
 
 // macro to generate generic block decoder functions
-macro_rules! block_decoder{
+macro_rules! block_decoder {
     ($name: ident, $block_width: expr, $block_height: expr, $raw_block_size: expr, $block_decode_func: expr) => {
         //#[doc = "Decodes a " $name " encoded texture into an image"]
-        pub fn $name(data: &[u8], width: usize, height: usize, image: &mut [u32]) -> Result<(), &'static str> {
+        pub fn $name(
+            data: &[u8],
+            width: usize,
+            height: usize,
+            image: &mut [u32],
+        ) -> Result<(), &'static str> {
             const BLOCK_WIDTH: usize = $block_width;
             const BLOCK_HEIGHT: usize = $block_height;
             const BLOCK_SIZE: usize = BLOCK_WIDTH * BLOCK_HEIGHT;
             let num_blocks_x: usize = (width + BLOCK_WIDTH - 1) / BLOCK_WIDTH;
             let num_blocks_y: usize = (height + BLOCK_WIDTH - 1) / BLOCK_HEIGHT;
-            let mut buffer: [u32; BLOCK_SIZE] = [crate::bcn::color::color(0,0,0,255); BLOCK_SIZE];
+            let mut buffer: [u32; BLOCK_SIZE] =
+                [crate::bcn::color::color(0, 0, 0, 255); BLOCK_SIZE];
 
             if data.len() < num_blocks_x * num_blocks_y * $raw_block_size {
                 return Err("Not enough data to decode image!");

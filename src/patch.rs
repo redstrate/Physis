@@ -335,7 +335,7 @@ struct SqpkChunk {
     operation: SqpkOperation,
 }
 
-const WIPE_BUFFER: [u8; 1 << 16] = [0; 1 << 16];
+static WIPE_BUFFER: [u8; 1 << 16] = [0; 1 << 16];
 
 fn wipe(mut file: &File, length: usize) -> Result<(), PatchError> {
     let mut length: usize = length;
@@ -804,8 +804,6 @@ impl ZiPatch {
 mod tests {
     use std::fs::{read, write};
     use std::path::PathBuf;
-    use std::thread::sleep;
-    use std::time::Duration;
 
     use super::*;
 
@@ -830,7 +828,7 @@ mod tests {
 
         let data_dir = prepare_data_dir();
 
-        write(data_dir.clone() + "/test.patch", &read(d).unwrap()).unwrap();
+        write(data_dir.clone() + "/test.patch", read(d).unwrap()).unwrap();
 
         // Feeding it invalid data should not panic
         let Err(PatchError::ParseError) =
@@ -852,7 +850,7 @@ mod tests {
         resources_dir.push("resources/tests");
 
         // Let's create a patch that re-creates the resources dir into our data directory
-        let patch = ZiPatch::create(&*data_dir, resources_dir.to_str().unwrap()).unwrap();
+        let patch = ZiPatch::create(&data_dir, resources_dir.to_str().unwrap()).unwrap();
 
         write(data_dir.clone() + "/test.patch", &patch).unwrap();
 

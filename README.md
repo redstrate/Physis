@@ -45,7 +45,6 @@ Physis also supports doing some other useful things other than reading and writi
 * Extract game data from SqPack files, and list file hashes from index/index2.
 * Apply game patches. Indexed ZiPatch is not yet supported, though.
 * Blockfish ciphers for encrypting and decrypting [SqexArg](https://docs.xiv.zone/concept/sqexarg/).
-* Extract retail installer contents, useful on Linux for avoiding having to run the InstallShield installer.
 * Construct paths to equipment, items, faces, and other useful models.
 * Extract strings from executables.
 
@@ -81,8 +80,6 @@ C/C++ projects (or anything that can interface with C libraries) can use [libphy
 ## Building
 
 Physis only has a few dependencies, and very little if nothing is turned on by default. You need to set up [Rust](https://www.rust-lang.org/learn/get-started) and then run `cargo build`.
-
-If you want to build the `game_install` feature, you also need to install [unshield](https://github.com/twogood/unshield).
 
 ## Development
 

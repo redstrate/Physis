@@ -312,7 +312,7 @@ mod tests {
         assert_eq!(chardat.customize.subrace, Subrace::Midlander);
         assert_eq!(chardat.customize.face, 5);
         assert_eq!(chardat.customize.hair, 1);
-        assert_eq!(chardat.customize.enable_highlights, false);
+        assert!(!chardat.customize.enable_highlights);
         assert_eq!(chardat.customize.skin_tone, 2);
         assert_eq!(chardat.customize.right_eye_color, 37);
         assert_eq!(chardat.customize.hair_tone, 53);
@@ -347,7 +347,7 @@ mod tests {
         assert_eq!(chardat.customize.subrace, Subrace::Xaela);
         assert_eq!(chardat.customize.face, 3);
         assert_eq!(chardat.customize.hair, 5);
-        assert_eq!(chardat.customize.enable_highlights, false);
+        assert!(!chardat.customize.enable_highlights);
         assert_eq!(chardat.customize.skin_tone, 160);
         assert_eq!(chardat.customize.right_eye_color, 91);
         assert_eq!(chardat.customize.hair_tone, 159);
@@ -382,7 +382,7 @@ mod tests {
         assert_eq!(chardat.customize.subrace, Subrace::Plainsfolk);
         assert_eq!(chardat.customize.face, 1);
         assert_eq!(chardat.customize.hair, 8);
-        assert_eq!(chardat.customize.enable_highlights, false);
+        assert!(!chardat.customize.enable_highlights);
         assert_eq!(chardat.customize.skin_tone, 25);
         assert_eq!(chardat.customize.right_eye_color, 11);
         assert_eq!(chardat.customize.hair_tone, 45);
@@ -417,7 +417,7 @@ mod tests {
         assert_eq!(chardat.customize.subrace, Subrace::Rava);
         assert_eq!(chardat.customize.face, 1);
         assert_eq!(chardat.customize.hair, 8);
-        assert_eq!(chardat.customize.enable_highlights, false);
+        assert!(!chardat.customize.enable_highlights);
         assert_eq!(chardat.customize.skin_tone, 12);
         assert_eq!(chardat.customize.right_eye_color, 43);
         assert_eq!(chardat.customize.hair_tone, 53);

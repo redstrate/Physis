@@ -28,7 +28,7 @@ pub fn decode_bc3_alpha(data: &[u8], outbuf: &mut [u32], channel: usize) {
     let channel_shift = channel * 8;
     let channel_mask = 0xFFFFFFFF ^ (0xFF << channel_shift);
     outbuf.iter_mut().for_each(|p| {
-        *p = (*p & channel_mask) | (a[d & 7] as u32) << channel_shift;
+        *p = (*p & channel_mask) | ((a[d & 7] as u32) << channel_shift);
         d >>= 3;
     });
 }

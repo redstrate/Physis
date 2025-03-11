@@ -5,10 +5,10 @@
 
 use std::io::{Cursor, Read, Seek, SeekFrom};
 
+use crate::ByteSpan;
 use crate::bcn::decode_bc1;
 use crate::bcn::decode_bc3;
 use crate::bcn::decode_bc5;
-use crate::ByteSpan;
 use binrw::BinRead;
 use binrw::binrw;
 use bitflags::bitflags;

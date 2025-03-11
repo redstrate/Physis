@@ -1,17 +1,8 @@
 // SPDX-FileCopyrightText: 2023 Joshua Goins <josh@redstrate.com>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-use hmac_sha512::Hash;
-use std::env;
-use std::fs::{read, read_dir};
-use std::io::Write;
-use std::process::Command;
+use std::fs::read_dir;
 
-use physis::common::Platform;
-use physis::fiin::FileInfo;
-use physis::index;
-use physis::patch::ZiPatch;
-use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
 #[cfg(feature = "patch_testing")]

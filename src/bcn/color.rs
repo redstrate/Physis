@@ -46,9 +46,9 @@ pub const fn color(r: u8, g: u8, b: u8, a: u8) -> u32 {
 #[inline]
 pub const fn rgb565_le(d: u16) -> (u8, u8, u8) {
     (
-        (d >> 8 & 0xf8) as u8 | (d >> 13) as u8,
-     (d >> 3 & 0xfc) as u8 | (d >> 9 & 3) as u8,
-     (d << 3) as u8 | (d >> 2 & 7) as u8,
+        ((d >> 8) & 0xf8) as u8 | (d >> 13) as u8,
+        ((d >> 3) & 0xfc) as u8 | ((d >> 9) & 3) as u8,
+        (d << 3) as u8 | ((d >> 2) & 7) as u8,
     )
 }
 
@@ -103,7 +103,7 @@ pub fn copy_block_buffer(
     for y in y_0..y_0 + copy_height {
         let image_offset = y * w + x;
         image[image_offset..image_offset + copy_width]
-        .copy_from_slice(&buffer[buffer_offset..buffer_offset + copy_width]);
+            .copy_from_slice(&buffer[buffer_offset..buffer_offset + copy_width]);
 
         buffer_offset += bw;
     }

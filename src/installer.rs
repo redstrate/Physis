@@ -32,22 +32,6 @@ const BOOT_COMPONENT_FILES: [&str; 18] = [
 
 const GAME_COMPONENT_FILES: [&str; 1] = ["ffxivgame.ver"];
 
-#[repr(C)]
-struct Unshield {
-    _private: [u8; 0],
-}
-
-unsafe extern "C" {
-    fn unshield_open(filename: *const c_char) -> *mut Unshield;
-    fn unshield_close(unshield: *mut Unshield);
-
-    fn unshield_set_log_level(level: i32);
-
-    fn unshield_file_count(unshield: *mut Unshield) -> i32;
-    fn unshield_file_name(unshield: *mut Unshield, index: i32) -> *const c_char;
-    fn unshield_file_save(unshield: *mut Unshield, index: i32, filename: *const c_char) -> bool;
-}
-
 pub enum InstallError {
     IOFailure,
     FFIFailure,

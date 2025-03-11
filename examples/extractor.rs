@@ -39,7 +39,7 @@ fn main() {
     };
 
     /// Since GameData::extract returns a byte buffer, it's trivial to write that to a file on disk.
-    if !file.write_all(&game_file).is_ok() {
+    if file.write_all(&game_file).is_err() {
         println!("Failed to write to file {}.", destination_path);
         return;
     };
