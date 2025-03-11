@@ -20,14 +20,10 @@ pub mod repository;
 /// Handling and updating data in the "boot" directory, which contains the launcher files.
 pub mod bootdata;
 
-/// Common methods and structures relating to the SqPack data format.
+/// SqPack file formats - including Db, Data and Index/Index2 files.
 pub mod sqpack;
 
-/// Reading and writing SqPack index files.
-pub mod index;
-
 mod compression;
-mod dat;
 
 /// Reading model (MDL) files.
 pub mod model;
@@ -156,8 +152,5 @@ pub mod existing_dirs;
 
 /// Reading patch lists
 pub mod patchlist;
-
-/// Reading SQDB files
-pub mod sqdb;
 
 mod bcn;

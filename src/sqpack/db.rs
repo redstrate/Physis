@@ -42,7 +42,7 @@ pub struct SQDBEntry {
 #[binrw]
 #[derive(Debug)]
 #[brw(little)]
-pub struct SQDB {
+pub struct SqPackDatabase {
     sqpack_header: SqPackHeader,
 
     header: SQDBHeader,
@@ -51,10 +51,10 @@ pub struct SQDB {
     entries: Vec<SQDBEntry>,
 }
 
-impl SQDB {
+impl SqPackDatabase {
     /// Reads an existing SQDB file
     pub fn from_existing(buffer: ByteSpan) -> Option<Self> {
         let mut cursor = Cursor::new(buffer);
-        SQDB::read(&mut cursor).ok()
+        Self::read(&mut cursor).ok()
     }
 }

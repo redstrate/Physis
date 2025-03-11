@@ -4,16 +4,25 @@
 use std::io::{Read, Seek, SeekFrom, Write};
 
 use binrw::{BinRead, BinWrite, binrw};
+use data::{BlockHeader, CompressionMode};
 
 use crate::common::{Platform, Region};
 use crate::compression::no_header_decompress;
-use crate::dat::{BlockHeader, CompressionMode};
+
+mod data;
+pub use data::SqPackData;
+
+mod db;
+pub use db::SqPackDatabase;
+
+mod index;
+pub use index::{SqPackIndex, IndexEntry};
 
 /// The type of this SqPack file.
 #[binrw]
 #[brw(repr = u8)]
 #[derive(Debug)]
-enum SqPackFileType {
+pub(crate) enum SqPackFileType {
     /// FFXIV Explorer says "SQDB", whatever that is.
     SQDB = 0x0,
     /// Dat files.
@@ -25,7 +34,7 @@ enum SqPackFileType {
 #[binrw]
 #[brw(magic = b"SqPack\0\0")]
 #[derive(Debug)]
-pub struct SqPackHeader {
+pub(crate) struct SqPackHeader {
     #[brw(pad_size_to = 4)]
     platform_id: Platform,
     pub size: u32,
@@ -48,7 +57,7 @@ pub struct SqPackHeader {
     sha1_hash: [u8; 20],
 }
 
-pub fn read_data_block<T: Read + Seek>(mut buf: T, starting_position: u64) -> Option<Vec<u8>> {
+pub(crate) fn read_data_block<T: Read + Seek>(mut buf: T, starting_position: u64) -> Option<Vec<u8>> {
     buf.seek(SeekFrom::Start(starting_position)).ok()?;
 
     let block_header = BlockHeader::read(&mut buf).unwrap();
@@ -78,7 +87,7 @@ pub fn read_data_block<T: Read + Seek>(mut buf: T, starting_position: u64) -> Op
 }
 
 /// A fixed version of read_data_block accounting for differing compressed block sizes in ZiPatch files.
-pub fn read_data_block_patch<T: Read + Seek>(mut buf: T) -> Option<Vec<u8>> {
+pub(crate) fn read_data_block_patch<T: Read + Seek>(mut buf: T) -> Option<Vec<u8>> {
     let block_header = BlockHeader::read(&mut buf).unwrap();
 
     match block_header.compression {
@@ -87,7 +96,7 @@ pub fn read_data_block_patch<T: Read + Seek>(mut buf: T) -> Option<Vec<u8>> {
             decompressed_length,
         } => {
             let compressed_length: usize =
-                ((compressed_length as usize + 143) & 0xFFFFFF80) - (block_header.size as usize);
+            ((compressed_length as usize + 143) & 0xFFFFFF80) - (block_header.size as usize);
 
             let mut compressed_data: Vec<u8> = vec![0; compressed_length];
             buf.read_exact(&mut compressed_data).ok()?;
@@ -115,7 +124,7 @@ pub fn read_data_block_patch<T: Read + Seek>(mut buf: T) -> Option<Vec<u8>> {
     }
 }
 
-pub fn write_data_block_patch<T: Write + Seek>(mut writer: T, data: Vec<u8>) {
+pub(crate) fn write_data_block_patch<T: Write + Seek>(mut writer: T, data: Vec<u8>) {
     let new_file_size: usize = (data.len() + 143) & 0xFFFFFF80;
 
     // This only adds uncompressed data for now, to simplify implementation

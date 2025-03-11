@@ -87,8 +87,8 @@ impl BinRead for FileEntryData {
         let data = <u32>::read_options(reader, endian, ())?;
         Ok(Self {
             is_synonym: (data & 0b1) == 0b1,
-            data_file_id: ((data & 0b1110) >> 1) as u8,
-            offset: (data & !0xF) as u64 * 0x08,
+           data_file_id: ((data & 0b1110) >> 1) as u8,
+           offset: (data & !0xF) as u64 * 0x08,
         })
     }
 }
@@ -149,7 +149,7 @@ pub struct IndexEntry {
 
 #[binrw]
 #[br(little)]
-pub struct IndexFile {
+pub struct SqPackIndex {
     sqpack_header: SqPackHeader,
 
     #[br(seek_before = SeekFrom::Start(sqpack_header.size.into()))]
@@ -164,8 +164,8 @@ pub struct IndexFile {
     pub data_entries: Vec<DataEntry>,
 
     /*#[br(seek_before = SeekFrom::Start(index_header.unknown_descriptor.offset.into()))]
-    #[br(count = index_header.unknown_descriptor.size / 16)]
-    pub unknown_entries: Vec<IndexHashTableEntry>,*/
+     *    #[br(count = index_header.unknown_descriptor.size / 16)]
+     *    pub unknown_entries: Vec<IndexHashTableEntry>,*/
     #[br(seek_before = SeekFrom::Start(index_header.folder_descriptor.offset.into()))]
     #[br(count = index_header.folder_descriptor.size / 16)]
     pub folder_entries: Vec<FolderEntry>,
@@ -173,7 +173,7 @@ pub struct IndexFile {
 
 const CRC: Jamcrc = Jamcrc::new();
 
-impl IndexFile {
+impl SqPackIndex {
     /// Creates a new reference to an existing index file.
     pub fn from_existing(path: &str) -> Option<Self> {
         let mut index_file = std::fs::File::open(path).ok()?;
@@ -252,7 +252,7 @@ mod tests {
         d.push("random");
 
         // Feeding it invalid data should not panic
-        IndexFile::from_existing(d.to_str().unwrap());
+        SqPackIndex::from_existing(d.to_str().unwrap());
     }
 
     #[test]
@@ -265,7 +265,7 @@ mod tests {
         let mut cursor = Cursor::new(&data);
 
         let file_entry =
-            FileEntry::read_options(&mut cursor, Endian::Little, (&IndexType::Index1,)).unwrap();
+        FileEntry::read_options(&mut cursor, Endian::Little, (&IndexType::Index1,)).unwrap();
 
         let expected_hash = Hash::SplitPath {
             name: 475005679,
@@ -281,8 +281,8 @@ mod tests {
         {
             let mut write_cursor = Cursor::new(&mut new_data);
             file_entry
-                .write_options(&mut write_cursor, Endian::Little, (&IndexType::Index1,))
-                .unwrap();
+            .write_options(&mut write_cursor, Endian::Little, (&IndexType::Index1,))
+            .unwrap();
         }
 
         assert_eq!(new_data, data);

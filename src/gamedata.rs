@@ -8,13 +8,12 @@ use std::path::PathBuf;
 
 use tracing::{debug, warn};
 
+use crate::sqpack::{IndexEntry, SqPackData, SqPackIndex};
 use crate::ByteBuffer;
 use crate::common::{Language, Platform, read_version};
-use crate::dat::DatFile;
 use crate::exd::EXD;
 use crate::exh::EXH;
 use crate::exl::EXL;
-use crate::index::{IndexEntry, IndexFile};
 use crate::patch::{PatchError, ZiPatch};
 use crate::repository::{Category, Repository, string_to_category};
 
@@ -26,7 +25,7 @@ pub struct GameData {
     /// Repositories in the game directory.
     pub repositories: Vec<Repository>,
 
-    index_files: HashMap<String, IndexFile>,
+    index_files: HashMap<String, SqPackIndex>,
 }
 
 fn is_valid(path: &str) -> bool {
@@ -125,7 +124,7 @@ impl GameData {
         self.repositories.sort();
     }
 
-    fn get_dat_file(&self, path: &str, chunk: u8, data_file_id: u32) -> Option<DatFile> {
+    fn get_dat_file(&self, path: &str, chunk: u8, data_file_id: u32) -> Option<SqPackData> {
         let (repository, category) = self.parse_repository_category(path).unwrap();
 
         let dat_path: PathBuf = [
@@ -137,7 +136,7 @@ impl GameData {
         .iter()
         .collect();
 
-        DatFile::from_existing(dat_path.to_str()?)
+        SqPackData::from_existing(dat_path.to_str()?)
     }
 
     /// Checks if a file located at `path` exists.
@@ -395,13 +394,13 @@ impl GameData {
 
     fn cache_index_file(&mut self, filename: &str) {
         if !self.index_files.contains_key(filename) {
-            if let Some(index_file) = IndexFile::from_existing(filename) {
+            if let Some(index_file) = SqPackIndex::from_existing(filename) {
                 self.index_files.insert(filename.to_string(), index_file);
             }
         }
     }
 
-    fn get_index_file(&self, filename: &str) -> Option<&IndexFile> {
+    fn get_index_file(&self, filename: &str) -> Option<&SqPackIndex> {
         self.index_files.get(filename)
     }
 

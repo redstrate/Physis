@@ -46,17 +46,17 @@ struct TextureLodBlock {
 }
 
 pub trait AnyNumberType<'a>:
-    BinRead<Args<'a> = ()> + BinWrite<Args<'a> = ()> + std::ops::AddAssign + Copy + Default + 'static
+BinRead<Args<'a> = ()> + BinWrite<Args<'a> = ()> + std::ops::AddAssign + Copy + Default + 'static
 {
 }
 
 impl<'a, T> AnyNumberType<'a> for T where
-    T: BinRead<Args<'a> = ()>
-        + BinWrite<Args<'a> = ()>
-        + std::ops::AddAssign
-        + Copy
-        + Default
-        + 'static
+T: BinRead<Args<'a> = ()>
++ BinWrite<Args<'a> = ()>
++ std::ops::AddAssign
++ Copy
++ Default
++ 'static
 {
 }
 
@@ -181,7 +181,7 @@ pub struct BlockHeader {
     pub compression: CompressionMode,
 }
 
-pub struct DatFile {
+pub struct SqPackData {
     file: std::fs::File,
 }
 
@@ -191,10 +191,10 @@ fn to_u8_slice(slice: &mut [u16]) -> &mut [u8] {
     unsafe { std::slice::from_raw_parts_mut(slice.as_mut_ptr().cast::<u8>(), byte_len) }
 }
 
-impl DatFile {
+impl SqPackData {
     /// Creates a new reference to an existing dat file.
-    pub fn from_existing(path: &str) -> Option<DatFile> {
-        Some(DatFile {
+    pub fn from_existing(path: &str) -> Option<Self> {
+        Some(Self {
             file: std::fs::File::open(path).ok()?,
         })
     }
@@ -205,8 +205,8 @@ impl DatFile {
     /// If the block of data is successfully parsed, it returns the file data - otherwise is None.
     pub fn read_from_offset(&mut self, offset: u64) -> Option<ByteBuffer> {
         self.file
-            .seek(SeekFrom::Start(offset))
-            .expect("Unable to find offset in file.");
+        .seek(SeekFrom::Start(offset))
+        .expect("Unable to find offset in file.");
 
         let file_info = FileInfo::read(&mut self.file).ok()?;
 
@@ -272,10 +272,10 @@ impl DatFile {
         buffer.seek(SeekFrom::Start(0x44)).ok()?;
 
         self.file
-            .seek(SeekFrom::Start(
-                base_offset + (model_file_info.offset.stack_size as u64),
-            ))
-            .ok()?;
+        .seek(SeekFrom::Start(
+            base_offset + (model_file_info.offset.stack_size as u64),
+        ))
+        .ok()?;
 
         // read from stack blocks
         let mut read_model_blocks = |offset: u64, size: usize| -> Option<u64> {
@@ -285,15 +285,15 @@ impl DatFile {
                 let last_pos = &self.file.stream_position().ok()?;
 
                 let data =
-                    read_data_block(&self.file, *last_pos).expect("Unable to read block data.");
+                read_data_block(&self.file, *last_pos).expect("Unable to read block data.");
                 // write to buffer
                 buffer.write_all(data.as_slice()).ok()?;
 
                 self.file
-                    .seek(SeekFrom::Start(
-                        last_pos + (compressed_block_sizes[current_block] as u64),
-                    ))
-                    .ok()?;
+                .seek(SeekFrom::Start(
+                    last_pos + (compressed_block_sizes[current_block] as u64),
+                ))
+                .ok()?;
                 current_block += 1;
             }
 
@@ -310,43 +310,43 @@ impl DatFile {
         )? as u32;
 
         let mut process_model_data =
-            |i: usize,
-             size: u32,
-             offset: u32,
-             offsets: &mut [u32; 3],
-             data_sizes: &mut [u32; 3]| {
-                if size != 0 {
-                    let current_vertex_offset = buffer.position() as u32;
-                    if i == 0 || current_vertex_offset != offsets[i - 1] {
-                        offsets[i] = current_vertex_offset;
-                    } else {
-                        offsets[i] = 0;
-                    }
-
-                    self.file
-                        .seek(SeekFrom::Start(base_offset + (offset as u64)))
-                        .ok();
-
-                    for _ in 0..size {
-                        let last_pos = self.file.stream_position().unwrap();
-
-                        let data = read_data_block(&self.file, last_pos)
-                            .expect("Unable to read raw model block!");
-
-                        buffer
-                            .write_all(data.as_slice())
-                            .expect("Unable to write to memory buffer!");
-
-                        data_sizes[i] += data.len() as u32;
-                        self.file
-                            .seek(SeekFrom::Start(
-                                last_pos + (compressed_block_sizes[current_block] as u64),
-                            ))
-                            .expect("Unable to seek properly.");
-                        current_block += 1;
-                    }
+        |i: usize,
+        size: u32,
+        offset: u32,
+        offsets: &mut [u32; 3],
+        data_sizes: &mut [u32; 3]| {
+            if size != 0 {
+                let current_vertex_offset = buffer.position() as u32;
+                if i == 0 || current_vertex_offset != offsets[i - 1] {
+                    offsets[i] = current_vertex_offset;
+                } else {
+                    offsets[i] = 0;
                 }
-            };
+
+                self.file
+                .seek(SeekFrom::Start(base_offset + (offset as u64)))
+                .ok();
+
+                for _ in 0..size {
+                    let last_pos = self.file.stream_position().unwrap();
+
+                    let data = read_data_block(&self.file, last_pos)
+                    .expect("Unable to read raw model block!");
+
+                    buffer
+                    .write_all(data.as_slice())
+                    .expect("Unable to write to memory buffer!");
+
+                    data_sizes[i] += data.len() as u32;
+                    self.file
+                    .seek(SeekFrom::Start(
+                        last_pos + (compressed_block_sizes[current_block] as u64),
+                    ))
+                    .expect("Unable to seek properly.");
+                    current_block += 1;
+                }
+            }
+        };
 
         // process all 3 lods
         for i in 0..3 {
@@ -405,8 +405,8 @@ impl DatFile {
             let original_pos = self.file.stream_position().ok()?;
 
             self.file
-                .seek(SeekFrom::Start(offset + file_info.size as u64))
-                .ok()?;
+            .seek(SeekFrom::Start(offset + file_info.size as u64))
+            .ok()?;
 
             let mut header = vec![0u8; texture_file_info.lods[0].compressed_offset as usize];
             self.file.read_exact(&mut header).ok()?;
@@ -418,9 +418,9 @@ impl DatFile {
 
         for i in 0..texture_file_info.num_blocks {
             let mut running_block_total = (texture_file_info.lods[i as usize].compressed_offset
-                as u64)
-                + offset
-                + (file_info.size as u64);
+            as u64)
+            + offset
+            + (file_info.size as u64);
 
             for _ in 0..texture_file_info.lods[i as usize].block_count {
                 let original_pos = self.file.stream_position().ok()?;
@@ -449,7 +449,7 @@ mod tests {
         d.push("resources/tests");
         d.push("random");
 
-        let mut dat = crate::dat::DatFile::from_existing(d.to_str().unwrap()).unwrap();
+        let mut dat = SqPackData::from_existing(d.to_str().unwrap()).unwrap();
 
         let empty_file_info = FileInfo {
             size: 0,

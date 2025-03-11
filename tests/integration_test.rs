@@ -6,14 +6,14 @@ use std::fs::read;
 
 use physis::common::Platform;
 use physis::fiin::FileInfo;
-use physis::index;
+use physis::sqpack::SqPackIndex;
 
 #[test]
 #[cfg_attr(not(feature = "retail_game_testing"), ignore)]
 fn test_index_read() {
     let game_dir = env::var("FFXIV_GAME_DIR").unwrap();
 
-    index::IndexFile::from_existing(
+    SqPackIndex::from_existing(
         format!("{}/game/sqpack/ffxiv/000000.win32.index", game_dir).as_str(),
     );
 }
