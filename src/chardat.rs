@@ -192,6 +192,40 @@ pub struct CustomizeData {
     pub voice: u8,
 }
 
+impl Default for CustomizeData {
+    fn default() -> Self {
+        Self {
+            race: Race::Hyur,
+            subrace: Subrace::Midlander,
+            gender: Gender::Male,
+            age: 1,
+            height: 50,
+            face: 1,
+            hair: 1,
+            enable_highlights: false,
+            skin_tone: 1,
+            right_eye_color: 1,
+            hair_tone: 1,
+            highlights: 1,
+            facial_features: 0,
+            facial_feature_color: 1,
+            eyebrows: 1,
+            left_eye_color: 1,
+            eyes: 1,
+            nose: 1,
+            jaw: 1,
+            mouth: 1,
+            lips_tone_fur_pattern: 0,
+            race_feature_size: 0,
+            race_feature_type: 0,
+            bust: 0,
+            face_paint: 0,
+            face_paint_color: 1,
+            voice: 1,
+        }
+    }
+}
+
 const MAX_COMMENT_LENGTH: usize = 164;
 
 /// Represents the several options that make up a character data file (DAT) which is used by the game's character creation system to save and load presets.
