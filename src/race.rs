@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2023 Joshua Goins <josh@redstrate.com>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-#[derive(PartialEq, Eq, Debug)]
+#[derive(PartialEq, Eq, Clone, Debug)]
 #[repr(u8)]
 /// Gender of the character.
 pub enum Gender {
@@ -9,7 +9,7 @@ pub enum Gender {
     Female,
 }
 
-#[derive(PartialEq, Eq, Debug)]
+#[derive(PartialEq, Eq, Clone, Debug)]
 #[repr(u8)]
 /// The race's "subrace". Each race has two subraces, which are actually identical (even down to the ids!)
 /// with the exception of Hyurs, which have two unique subraces that are really two separate races.
@@ -32,7 +32,7 @@ pub enum Subrace {
     Veena,
 }
 
-#[derive(PartialEq, Eq, Debug)]
+#[derive(PartialEq, Eq, Clone, Debug)]
 #[repr(u8)]
 /// The major races of Eorzea.
 pub enum Race {

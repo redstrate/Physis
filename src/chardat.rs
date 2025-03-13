@@ -98,7 +98,7 @@ fn convert_subrace_dat(subrace: &Subrace) -> u8 {
 #[binrw]
 #[br(little)]
 #[repr(C)]
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct CustomizeData {
     /// The race of the character.
     #[br(map = convert_dat_race)]
