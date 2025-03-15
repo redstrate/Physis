@@ -69,7 +69,7 @@ pub use trigger_box::TriggerBoxShape;
 #[brw(repr = i32)]
 #[repr(i32)]
 #[derive(Debug, PartialEq)]
-enum LayerEntryType {
+pub enum LayerEntryType {
     AssetNone = 00,
     BG = 0x1,
     Attribute = 0x2,
@@ -158,7 +158,7 @@ enum LayerEntryType {
 #[binread]
 #[derive(Debug)]
 #[br(import(magic: &LayerEntryType))]
-enum LayerEntryData {
+pub enum LayerEntryData {
     #[br(pre_assert(*magic == LayerEntryType::BG))]
     BG(BGInstanceObject),
     #[br(pre_assert(*magic == LayerEntryType::LayLight))]
@@ -222,7 +222,7 @@ enum LayerEntryData {
 #[binread]
 #[derive(Debug)]
 #[br(little)]
-struct VFXInstanceObject {
+pub struct VFXInstanceObject {
     asset_path_offset: u32,
     soft_particle_fade_range: f32,
     padding: u32,
@@ -242,7 +242,7 @@ struct VFXInstanceObject {
 #[binread]
 #[derive(Debug)]
 #[br(little)]
-struct GatheringInstanceObject {
+pub struct GatheringInstanceObject {
     gathering_point_id: u32,
     padding: u32,
 }
@@ -250,7 +250,7 @@ struct GatheringInstanceObject {
 #[binread]
 #[derive(Debug)]
 #[br(little)]
-struct TreasureInstanceObject {
+pub struct TreasureInstanceObject {
     nonpop_init_zone: u8,
     padding1: [u8; 3],
     padding2: [u32; 2],
@@ -260,72 +260,72 @@ struct TreasureInstanceObject {
 #[binread]
 #[derive(Debug)]
 #[br(little)]
-struct MapRangeInstanceObject {}
+pub struct MapRangeInstanceObject {}
 
 #[binread]
 #[derive(Debug)]
 #[br(little)]
-struct EventInstanceObject {}
+pub struct EventInstanceObject {}
 
 #[binread]
 #[derive(Debug)]
 #[br(little)]
-struct EnvLocationObject {}
+pub struct EnvLocationObject {}
 
 #[binread]
 #[derive(Debug)]
 #[br(little)]
-struct EventRangeInstanceObject {}
+pub struct EventRangeInstanceObject {}
 
 #[binread]
 #[derive(Debug)]
 #[br(little)]
-struct QuestMarkerInstanceObject {}
+pub struct QuestMarkerInstanceObject {}
 
 #[binread]
 #[derive(Debug)]
 #[br(little)]
-struct CollisionBoxInstanceObject {}
+pub struct CollisionBoxInstanceObject {}
 
 #[binread]
 #[derive(Debug)]
 #[br(little)]
-struct LineVFXInstanceObject {}
+pub struct LineVFXInstanceObject {}
 
 #[binread]
 #[derive(Debug)]
 #[br(little)]
-struct ClientPathInstanceObject {}
+pub struct ClientPathInstanceObject {}
 
 #[binread]
 #[derive(Debug)]
 #[br(little)]
-struct ServerPathInstanceObject {}
+pub struct ServerPathInstanceObject {}
 
 #[binread]
 #[derive(Debug)]
 #[br(little)]
-struct GimmickRangeInstanceObject {}
+pub struct GimmickRangeInstanceObject {}
 
 #[binread]
 #[derive(Debug)]
 #[br(little)]
-struct TargetMarkerInstanceObject {}
+pub struct TargetMarkerInstanceObject {}
 
 #[binread]
 #[derive(Debug)]
 #[br(little)]
-struct ChairMarkerInstanceObject {}
+pub struct ChairMarkerInstanceObject {}
 
 #[binread]
 #[derive(Debug)]
 #[br(little)]
-struct PrefetchRangeInstanceObject {}
+pub struct PrefetchRangeInstanceObject {}
 
 #[binread]
 #[derive(Debug)]
 #[br(little)]
-struct FateRangeInstanceObject {}
+pub struct FateRangeInstanceObject {}
 
 #[binrw]
 #[brw(repr = i32)]
@@ -438,7 +438,7 @@ struct LayerChunk {
 #[br(little)]
 #[br(import(start: u64))]
 #[allow(dead_code)] // most of the fields are unused at the moment
-struct InstanceObject {
+pub struct InstanceObject {
     asset_type: LayerEntryType,
     pub instance_id: u32,
     #[br(parse_with = string_from_offset, args(start))]
