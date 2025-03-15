@@ -94,7 +94,8 @@ mod model_file_operations;
 
 pub mod model_vertex_declarations;
 
-pub mod lgb;
+/// Reading layer information for a map (LGB)
+pub mod layer;
 
 pub mod tera;
 
