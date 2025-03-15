@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2025 Joshua Goins <josh@redstrate.com>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 use binrw::{binread, binrw};
 
 use super::read_bool_from;
