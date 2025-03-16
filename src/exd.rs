@@ -4,6 +4,7 @@
 use std::io::{Cursor, Seek, SeekFrom};
 
 use binrw::binrw;
+use binrw::helpers::until_eof;
 use binrw::{BinRead, Endian};
 
 use crate::ByteSpan;
@@ -46,8 +47,8 @@ pub struct EXD {
     #[br(count = header.index_size / core::mem::size_of::<ExcelDataOffset>() as u32)]
     data_offsets: Vec<ExcelDataOffset>,
 
-    #[brw(ignore)]
-    pub rows: Vec<ExcelRow>,
+    #[br(seek_before = SeekFrom::Start(0), parse_with = until_eof)]
+    data: Vec<u8>,
 }
 
 #[derive(Debug)]
@@ -65,65 +66,69 @@ pub enum ColumnData {
     UInt64(u64),
 }
 
+#[derive(Debug)]
 pub struct ExcelRow {
     pub data: Vec<ColumnData>,
 }
 
 impl EXD {
-    pub fn from_existing(exh: &EXH, buffer: ByteSpan) -> Option<EXD> {
-        let mut cursor = Cursor::new(buffer);
-        let mut exd = EXD::read(&mut cursor).ok()?;
+    pub fn from_existing(buffer: ByteSpan) -> Option<EXD> {
+        EXD::read(&mut Cursor::new(&buffer)).ok()
+    }
 
-        for i in 0..exh.header.row_count {
-            for offset in &exd.data_offsets {
-                if offset.row_id == i {
-                    cursor.seek(SeekFrom::Start(offset.offset.into())).ok()?;
+    pub fn read_row(&self, exh: &EXH, id: u32) -> Option<Vec<ExcelRow>> {
+        let mut cursor = Cursor::new(&self.data);
 
-                    let row_header = ExcelDataRowHeader::read(&mut cursor).ok()?;
+        for offset in &self.data_offsets {
+            if offset.row_id == id {
+                cursor.seek(SeekFrom::Start(offset.offset.into())).ok()?;
 
-                    let header_offset = offset.offset + 6; // std::mem::size_of::<ExcelDataRowHeader>() as u32;
+                let row_header = ExcelDataRowHeader::read(&mut cursor).ok()?;
 
-                    let mut read_row = |row_offset: u32| -> Option<ExcelRow> {
-                        let mut subrow = ExcelRow {
-                            data: Vec::with_capacity(exh.column_definitions.len()),
-                        };
+                let header_offset = offset.offset + 6; // std::mem::size_of::<ExcelDataRowHeader>() as u32;
 
-                        for column in &exh.column_definitions {
-                            cursor
-                                .seek(SeekFrom::Start((row_offset + column.offset as u32).into()))
-                                .ok()?;
-
-                            subrow.data.push(
-                                Self::read_column(&mut cursor, exh, row_offset, column).unwrap(),
-                            );
-                        }
-
-                        Some(subrow)
+                let mut read_row = |row_offset: u32| -> Option<ExcelRow> {
+                    let mut subrow = ExcelRow {
+                        data: Vec::with_capacity(exh.column_definitions.len()),
                     };
 
-                    if row_header.row_count > 1 {
-                        for i in 0..row_header.row_count {
-                            let subrow_offset =
-                                header_offset + (i * exh.header.data_offset + 2 * (i + 1)) as u32;
+                    for column in &exh.column_definitions {
+                        cursor
+                            .seek(SeekFrom::Start((row_offset + column.offset as u32).into()))
+                            .ok()?;
 
-                            exd.rows.push(read_row(subrow_offset).unwrap());
-                        }
-                    } else {
-                        exd.rows.push(read_row(header_offset).unwrap());
+                        subrow
+                            .data
+                            .push(Self::read_column(&mut cursor, exh, row_offset, column).unwrap());
                     }
-                }
+
+                    Some(subrow)
+                };
+
+                return if row_header.row_count > 1 {
+                    let mut rows = Vec::new();
+                    for i in 0..row_header.row_count {
+                        let subrow_offset =
+                            header_offset + (i * exh.header.data_offset + 2 * (i + 1)) as u32;
+
+                        rows.push(read_row(subrow_offset).unwrap());
+                    }
+                    Some(rows)
+                } else {
+                    Some(vec![read_row(header_offset).unwrap()])
+                };
             }
         }
 
-        Some(exd)
+        None
     }
 
-    fn read_data_raw<Z: BinRead<Args<'static> = ()>>(cursor: &mut Cursor<ByteSpan>) -> Option<Z> {
+    fn read_data_raw<Z: BinRead<Args<'static> = ()>>(cursor: &mut Cursor<&Vec<u8>>) -> Option<Z> {
         Z::read_options(cursor, Endian::Big, ()).ok()
     }
 
     fn read_column(
-        cursor: &mut Cursor<ByteSpan>,
+        cursor: &mut Cursor<&Vec<u8>>,
         exh: &EXH,
         row_offset: u32,
         column: &ExcelColumnDefinition,
