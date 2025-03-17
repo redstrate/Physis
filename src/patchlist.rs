@@ -17,9 +17,9 @@ pub struct PatchEntry {
     pub hashes: Vec<String>,
 
     // TODO: figure out what this is
-    unknown_a: i32,
+    pub unknown_a: i32,
     // TODO: ditto
-    unknown_b: i32,
+    pub unknown_b: i32,
 }
 
 /// A list of patch files the client is requested to download, and install.
