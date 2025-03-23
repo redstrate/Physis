@@ -241,6 +241,6 @@ mod tests {
         };
 
         // Feeding it invalid data should not panic
-        EXD::from_existing(&exh, &read(d).unwrap());
+        EXD::from_existing(&read(d).unwrap());
     }
 }
