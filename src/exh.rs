@@ -30,6 +30,7 @@ pub struct EXHHeader {
 
 #[binrw]
 #[brw(repr(u16))]
+#[repr(C)]
 pub enum ColumnDataType {
     String = 0x0,
     Bool = 0x1,
