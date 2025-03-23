@@ -231,7 +231,6 @@ const MAX_COMMENT_LENGTH: usize = 164;
 /// Represents the several options that make up a character data file (DAT) which is used by the game's character creation system to save and load presets.
 #[binrw]
 #[br(little)]
-#[repr(C)]
 #[brw(magic = 0x2013FF14u32)]
 #[derive(Debug)]
 pub struct CharacterData {
