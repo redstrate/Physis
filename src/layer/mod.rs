@@ -466,11 +466,15 @@ impl LayerGroup {
         let mut cursor = Cursor::new(buffer);
 
         let file_header = LgbHeader::read(&mut cursor).unwrap();
-        if file_header.file_size < 0 || file_header.total_chunk_count < 0 {
+        if file_header.file_size <= 0 || file_header.total_chunk_count <= 0 {
             return None;
         }
 
         let chunk_header = LayerChunk::read(&mut cursor).unwrap();
+
+        if chunk_header.chunk_size <= 0 {
+            return None;
+        }
 
         let old_pos = cursor.position();
 

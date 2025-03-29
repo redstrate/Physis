@@ -16,7 +16,7 @@ mod db;
 pub use db::SqPackDatabase;
 
 mod index;
-pub use index::{IndexEntry, SqPackIndex, Hash};
+pub use index::{Hash, IndexEntry, SqPackIndex};
 
 /// The type of this SqPack file.
 #[binrw]
