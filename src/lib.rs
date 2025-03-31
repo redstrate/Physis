@@ -28,7 +28,7 @@ mod compression;
 /// Reading model (MDL) files.
 pub mod model;
 
-/// All of the races in Eorzea in a nice enum package.
+/// Playable race and genders.
 pub mod race;
 
 /// Reading Excel lists (EXL).

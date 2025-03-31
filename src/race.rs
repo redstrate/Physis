@@ -3,22 +3,22 @@
 
 use binrw::binrw;
 
+/// The playable genders in the game.
 #[binrw]
 #[brw(repr = u8)]
 #[derive(PartialEq, Eq, Clone, Debug)]
 #[repr(u8)]
-/// Gender of the character.
 pub enum Gender {
     Male = 0,
     Female = 1,
 }
 
+/// The playable tribes in the game.
+/// Each race has two similar-looking tribes, with the exception of Highlander Hyur which are visually distinct.
 #[binrw]
 #[brw(repr = u8)]
 #[derive(PartialEq, Eq, Clone, Copy, Debug)]
 #[repr(u8)]
-/// The race's "tribe". Each race has two tribes, which are usually very similar (even down to the ids!)
-/// with the exception of Hyurs, which have two very distinct tribes.
 pub enum Tribe {
     Midlander = 1,
     Highlander = 2,
@@ -38,11 +38,11 @@ pub enum Tribe {
     Veena = 16,
 }
 
+/// The playable races in the game.
 #[binrw]
 #[brw(repr = u8)]
 #[derive(PartialEq, Eq, Clone, Copy, Debug)]
 #[repr(u8)]
-/// The major races of Eorzea.
 pub enum Race {
     Hyur = 1,
     Elezen = 2,
@@ -96,7 +96,7 @@ pub fn get_race_id(race: Race, tribe: Tribe, gender: Gender) -> Option<i32> {
         Race::Hrothgar => {
             match gender {
                 Gender::Male => Some(1501),
-                Gender::Female => Some(1601), // TODO: is this accurate as of dawntrail?
+                Gender::Female => Some(1601),
             }
         }
         Race::Viera => match gender {
