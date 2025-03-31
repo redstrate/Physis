@@ -10,104 +10,15 @@ use binrw::{BinRead, BinWrite};
 
 use crate::race::{Gender, Race, Subrace};
 
-fn convert_dat_race(x: u8) -> Race {
-    match x {
-        1 => Race::Hyur,
-        2 => Race::Elezen,
-        3 => Race::Lalafell,
-        4 => Race::Miqote,
-        5 => Race::Roegadyn,
-        6 => Race::AuRa,
-        7 => Race::Hrothgar,
-        8 => Race::Viera,
-        _ => Race::Hyur,
-    }
-}
-
-fn convert_race_dat(race: &Race) -> u8 {
-    match race {
-        Race::Hyur => 1,
-        Race::Elezen => 2,
-        Race::Lalafell => 3,
-        Race::Miqote => 4,
-        Race::Roegadyn => 5,
-        Race::AuRa => 6,
-        Race::Hrothgar => 7,
-        Race::Viera => 8,
-    }
-}
-
-fn convert_dat_gender(x: u8) -> Gender {
-    match x {
-        0 => Gender::Male,
-        1 => Gender::Female,
-        _ => Gender::Male,
-    }
-}
-
-fn convert_gender_dat(gender: &Gender) -> u8 {
-    match gender {
-        Gender::Male => 0,
-        Gender::Female => 1,
-    }
-}
-
-fn convert_dat_subrace(x: u8) -> Subrace {
-    match x {
-        1 => Subrace::Midlander,
-        2 => Subrace::Highlander,
-        3 => Subrace::Wildwood,
-        4 => Subrace::Duskwight,
-        5 => Subrace::Plainsfolk,
-        6 => Subrace::Dunesfolk,
-        7 => Subrace::Seeker,
-        8 => Subrace::Keeper,
-        9 => Subrace::SeaWolf,
-        10 => Subrace::Hellsguard,
-        11 => Subrace::Raen,
-        12 => Subrace::Xaela,
-        13 => Subrace::Hellion,
-        14 => Subrace::Lost,
-        15 => Subrace::Rava,
-        16 => Subrace::Veena,
-        _ => Subrace::Midlander,
-    }
-}
-
-fn convert_subrace_dat(subrace: &Subrace) -> u8 {
-    match subrace {
-        Subrace::Midlander => 1,
-        Subrace::Highlander => 2,
-        Subrace::Wildwood => 3,
-        Subrace::Duskwight => 4,
-        Subrace::Plainsfolk => 5,
-        Subrace::Dunesfolk => 6,
-        Subrace::Seeker => 7,
-        Subrace::Keeper => 8,
-        Subrace::SeaWolf => 9,
-        Subrace::Hellsguard => 10,
-        Subrace::Raen => 11,
-        Subrace::Xaela => 12,
-        Subrace::Hellion => 13,
-        Subrace::Lost => 14,
-        Subrace::Rava => 15,
-        Subrace::Veena => 16,
-    }
-}
-
 #[binrw]
 #[br(little)]
 #[repr(C)]
 #[derive(Clone, Debug)]
 pub struct CustomizeData {
     /// The race of the character.
-    #[br(map = convert_dat_race)]
-    #[bw(map = convert_race_dat)]
     pub race: Race,
 
     /// The gender of the character.
-    #[br(map = convert_dat_gender)]
-    #[bw(map = convert_gender_dat)]
     pub gender: Gender,
 
     /// The age of the character. Normal = 1, Old = 3, Young = 4.
@@ -117,8 +28,6 @@ pub struct CustomizeData {
     pub height: u8,
 
     /// The character's subrace.
-    #[br(map = convert_dat_subrace)]
-    #[bw(map = convert_subrace_dat)]
     pub subrace: Subrace,
 
     /// The character's selected face.

@@ -1,49 +1,57 @@
 // SPDX-FileCopyrightText: 2023 Joshua Goins <josh@redstrate.com>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+use binrw::binrw;
+
+#[binrw]
+#[brw(repr = u8)]
 #[derive(PartialEq, Eq, Clone, Debug)]
 #[repr(u8)]
 /// Gender of the character.
 pub enum Gender {
-    Male,
-    Female,
+    Male = 0,
+    Female = 1,
 }
 
+#[binrw]
+#[brw(repr = u8)]
 #[derive(PartialEq, Eq, Clone, Debug)]
 #[repr(u8)]
 /// The race's "subrace". Each race has two subraces, which are actually identical (even down to the ids!)
 /// with the exception of Hyurs, which have two unique subraces that are really two separate races.
 pub enum Subrace {
-    Midlander,
-    Highlander,
-    Wildwood,
-    Duskwight,
-    Plainsfolk,
-    Dunesfolk,
-    Seeker,
-    Keeper,
-    SeaWolf,
-    Hellsguard,
-    Raen,
-    Xaela,
-    Hellion,
-    Lost,
-    Rava,
-    Veena,
+    Midlander = 1,
+    Highlander = 2,
+    Wildwood = 3,
+    Duskwight = 4,
+    Plainsfolk = 5,
+    Dunesfolk = 6,
+    Seeker = 7,
+    Keeper = 8,
+    SeaWolf = 9,
+    Hellsguard = 10,
+    Raen = 11,
+    Xaela = 12,
+    Hellion = 13,
+    Lost = 14,
+    Rava = 15,
+    Veena = 16,
 }
 
+#[binrw]
+#[brw(repr = u8)]
 #[derive(PartialEq, Eq, Clone, Debug)]
 #[repr(u8)]
 /// The major races of Eorzea.
 pub enum Race {
-    Hyur,
-    Elezen,
-    Lalafell,
-    Miqote,
-    Roegadyn,
-    AuRa,
-    Hrothgar,
-    Viera,
+    Hyur = 1,
+    Elezen = 2,
+    Lalafell = 3,
+    Miqote = 4,
+    Roegadyn = 5,
+    AuRa = 6,
+    Hrothgar = 7,
+    Viera = 8,
 }
 
 /// Gets a proper race identifier (such as 101, for Hyur-Midlander-Males) given a race, a subrace,
