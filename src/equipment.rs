@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2023 Joshua Goins <josh@redstrate.com>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-use crate::race::{Gender, Race, Subrace, get_race_id};
+use crate::race::{Gender, Race, Tribe, get_race_id};
 
 #[repr(u8)]
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -85,14 +85,14 @@ pub fn get_slot_from_abbreviation(abrev: &str) -> Option<Slot> {
 pub fn build_equipment_path(
     model_id: i32,
     race: Race,
-    subrace: Subrace,
+    tribe: Tribe,
     gender: Gender,
     slot: Slot,
 ) -> String {
     format!(
         "chara/equipment/e{:04}/model/c{:04}e{:04}_{}.mdl",
         model_id,
-        get_race_id(race, subrace, gender).unwrap(),
+        get_race_id(race, tribe, gender).unwrap(),
         model_id,
         get_slot_abbreviation(slot)
     )
@@ -143,11 +143,11 @@ pub fn build_character_path(
     category: CharacterCategory,
     body_ver: i32,
     race: Race,
-    subrace: Subrace,
+    tribe: Tribe,
     gender: Gender,
 ) -> String {
     let category_path = get_character_category_path(category);
-    let race_id = get_race_id(race, subrace, gender).unwrap();
+    let race_id = get_race_id(race, tribe, gender).unwrap();
     let category_abbreviation = get_character_category_abbreviation(category);
     let category_prefix = get_character_category_prefix(category);
     format!(
@@ -202,7 +202,7 @@ mod tests {
     #[test]
     fn test_equipment_path() {
         assert_eq!(
-            build_equipment_path(0, Race::Hyur, Subrace::Midlander, Gender::Male, Slot::Body),
+            build_equipment_path(0, Race::Hyur, Tribe::Midlander, Gender::Male, Slot::Body),
             "chara/equipment/e0000/model/c0101e0000_top.mdl"
         );
     }

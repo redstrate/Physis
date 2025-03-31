@@ -8,7 +8,7 @@ use crate::{ByteBuffer, ByteSpan};
 use binrw::binrw;
 use binrw::{BinRead, BinWrite};
 
-use crate::race::{Gender, Race, Subrace};
+use crate::race::{Gender, Race, Tribe};
 
 #[binrw]
 #[br(little)]
@@ -27,8 +27,8 @@ pub struct CustomizeData {
     /// The height of the character from 0 to 100.
     pub height: u8,
 
-    /// The character's subrace.
-    pub subrace: Subrace,
+    /// The character's tribe.
+    pub tribe: Tribe,
 
     /// The character's selected face.
     pub face: u8,
@@ -105,7 +105,7 @@ impl Default for CustomizeData {
     fn default() -> Self {
         Self {
             race: Race::Hyur,
-            subrace: Subrace::Midlander,
+            tribe: Tribe::Midlander,
             gender: Gender::Male,
             age: 1,
             height: 50,
@@ -251,7 +251,7 @@ mod tests {
         assert_eq!(chardat.customize.gender, Gender::Male);
         assert_eq!(chardat.customize.age, 1);
         assert_eq!(chardat.customize.height, 50);
-        assert_eq!(chardat.customize.subrace, Subrace::Midlander);
+        assert_eq!(chardat.customize.tribe, Tribe::Midlander);
         assert_eq!(chardat.customize.face, 5);
         assert_eq!(chardat.customize.hair, 1);
         assert!(!chardat.customize.enable_highlights);
@@ -286,7 +286,7 @@ mod tests {
         assert_eq!(chardat.customize.gender, Gender::Female);
         assert_eq!(chardat.customize.age, 1);
         assert_eq!(chardat.customize.height, 50);
-        assert_eq!(chardat.customize.subrace, Subrace::Xaela);
+        assert_eq!(chardat.customize.tribe, Tribe::Xaela);
         assert_eq!(chardat.customize.face, 3);
         assert_eq!(chardat.customize.hair, 5);
         assert!(!chardat.customize.enable_highlights);
@@ -321,7 +321,7 @@ mod tests {
         assert_eq!(chardat.customize.gender, Gender::Male);
         assert_eq!(chardat.customize.age, 1);
         assert_eq!(chardat.customize.height, 50);
-        assert_eq!(chardat.customize.subrace, Subrace::Plainsfolk);
+        assert_eq!(chardat.customize.tribe, Tribe::Plainsfolk);
         assert_eq!(chardat.customize.face, 1);
         assert_eq!(chardat.customize.hair, 8);
         assert!(!chardat.customize.enable_highlights);
@@ -356,7 +356,7 @@ mod tests {
         assert_eq!(chardat.customize.gender, Gender::Female);
         assert_eq!(chardat.customize.age, 1);
         assert_eq!(chardat.customize.height, 50);
-        assert_eq!(chardat.customize.subrace, Subrace::Rava);
+        assert_eq!(chardat.customize.tribe, Tribe::Rava);
         assert_eq!(chardat.customize.face, 1);
         assert_eq!(chardat.customize.hair, 8);
         assert!(!chardat.customize.enable_highlights);
