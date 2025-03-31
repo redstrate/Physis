@@ -15,7 +15,7 @@ pub enum Gender {
 
 #[binrw]
 #[brw(repr = u8)]
-#[derive(PartialEq, Eq, Clone, Debug)]
+#[derive(PartialEq, Eq, Clone, Copy, Debug)]
 #[repr(u8)]
 /// The race's "tribe". Each race has two tribes, which are usually very similar (even down to the ids!)
 /// with the exception of Hyurs, which have two very distinct tribes.
@@ -40,7 +40,7 @@ pub enum Tribe {
 
 #[binrw]
 #[brw(repr = u8)]
-#[derive(PartialEq, Eq, Clone, Debug)]
+#[derive(PartialEq, Eq, Clone, Copy, Debug)]
 #[repr(u8)]
 /// The major races of Eorzea.
 pub enum Race {
@@ -57,7 +57,10 @@ pub enum Race {
 /// Gets a proper race identifier (such as 101, for Hyur-Midlander-Males) given a race, a tribe,
 /// and a gender.
 pub fn get_race_id(race: Race, tribe: Tribe, gender: Gender) -> Option<i32> {
-    // TODO: should we check for invalid tribes like the Hyur branch does?
+    if !get_supported_tribes(race).contains(&tribe) {
+        return None;
+    }
+
     match race {
         Race::Hyur => match tribe {
             Tribe::Midlander => match gender {
@@ -131,9 +134,15 @@ mod tests {
 
     #[test]
     fn test_convert_race_num() {
+        // valid
         assert_eq!(
             get_race_id(Race::Roegadyn, Tribe::SeaWolf, Gender::Male),
             Some(901)
+        );
+        // invalid
+        assert_eq!(
+            get_race_id(Race::Roegadyn, Tribe::Midlander, Gender::Male),
+            None
         );
     }
 }
