@@ -3,8 +3,10 @@
 
 use std::io::Cursor;
 
+use crate::ByteBuffer;
 use crate::ByteSpan;
 use binrw::BinRead;
+use binrw::BinWrite;
 use binrw::binrw;
 
 #[binrw]
@@ -19,6 +21,7 @@ struct PlatePosition {
 #[derive(Debug)]
 #[brw(little)]
 struct TerrainHeader {
+    // Example: 0x1000003
     version: u32,
     plate_count: u32,
     plate_size: u32,
@@ -26,9 +29,7 @@ struct TerrainHeader {
 
     unknown: f32,
 
-    #[br(count = 32)]
-    padding: Vec<u8>,
-
+    #[brw(pad_before = 32)]
     #[br(count = plate_count)]
     positions: Vec<PlatePosition>,
 }
@@ -63,6 +64,35 @@ impl Terrain {
         }
 
         Some(Terrain { plates })
+    }
+
+    pub fn write_to_buffer(&self) -> Option<ByteBuffer> {
+        let mut buffer = ByteBuffer::new();
+
+        {
+            let mut cursor = Cursor::new(&mut buffer);
+
+            let plate_size = 128;
+
+            let header = TerrainHeader {
+                version: 0x1000003,
+                plate_count: self.plates.len() as u32,
+                plate_size,
+                clip_distance: 0.0, // TODO: make configurable
+                unknown: 1.0,       // TODO: what is this
+                positions: self
+                    .plates
+                    .iter()
+                    .map(|model| PlatePosition {
+                        x: ((model.position.0 / plate_size as f32) - 0.5) as i16,
+                        y: ((model.position.1 / plate_size as f32) - 0.5) as i16,
+                    })
+                    .collect(),
+            };
+            header.write_le(&mut cursor).ok()?;
+        }
+
+        Some(buffer)
     }
 }
 

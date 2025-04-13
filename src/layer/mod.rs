@@ -1,12 +1,14 @@
 // SPDX-FileCopyrightText: 2024 Joshua Goins <josh@redstrate.com>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-use std::io::{Cursor, Read, Seek, SeekFrom};
+use std::io::{Cursor, Read, Seek, SeekFrom, Write};
 
-use crate::ByteSpan;
-use crate::common_file_operations::{read_bool_from, string_from_offset};
-use binrw::binrw;
-use binrw::{BinRead, BinReaderExt, binread};
+use crate::common_file_operations::{
+    read_bool_from, string_from_offset, write_bool_as, write_string,
+};
+use crate::{ByteBuffer, ByteSpan};
+use binrw::{BinRead, BinReaderExt, BinWrite, binread};
+use binrw::{Endian, Error, binrw};
 
 mod aetheryte;
 pub use aetheryte::AetheryteInstanceObject;
@@ -63,6 +65,149 @@ pub use trigger_box::TriggerBoxShape;
 
 // From https://github.com/NotAdam/Lumina/tree/40dab50183eb7ddc28344378baccc2d63ae71d35/src/Lumina/Data/Parsing/Layer
 // Also see https://github.com/aers/FFXIVClientStructs/blob/6b62122cae38bfbc016bf697bef75f80f37abac1/FFXIVClientStructs/FFXIV/Client/LayoutEngine/ILayoutInstance.cs
+
+/// "LGB1"
+const LGB1_ID: u32 = u32::from_le_bytes(*b"LGB1");
+/// "LGP1"
+const LGP1_ID: u32 = u32::from_le_bytes(*b"LGP1");
+
+/// A string that exists in a different location in the file, usually a heap with a bunch of other strings.
+#[binrw]
+#[br(import(string_heap: &StringHeap), stream = r)]
+#[bw(import(string_heap: &mut StringHeap))]
+#[derive(Clone, Debug)]
+pub struct HeapString {
+    #[br(temp)]
+    // TODO: this cast is stupid
+    #[bw(calc = string_heap.get_free_offset_string(value) as u32)]
+    pub offset: u32,
+    #[br(calc = string_heap.read_string(r, offset,))]
+    #[bw(ignore)]
+    pub value: String,
+}
+
+#[derive(Debug)]
+pub struct StringHeap {
+    pub pos: u64,
+    pub bytes: Vec<u8>,
+    pub free_pos: u64,
+}
+
+impl StringHeap {
+    pub fn from(pos: u64) -> Self {
+        Self {
+            pos,
+            bytes: Vec::new(),
+            free_pos: 0, // unused, so it doesn't matter
+        }
+    }
+
+    pub fn get_free_offset_args<T>(&mut self, obj: &T) -> i32
+    where
+        T: for<'a> BinWrite<Args<'a> = (&'a mut StringHeap,)> + std::fmt::Debug,
+    {
+        // figure out size of it
+        let mut buffer = ByteBuffer::new();
+        {
+            let mut cursor = Cursor::new(&mut buffer);
+            obj.write_le_args(&mut cursor, (self,)).unwrap();
+        }
+
+        self.bytes.append(&mut buffer);
+
+        let old_pos = self.free_pos;
+        self.free_pos += buffer.len() as u64;
+
+        old_pos as i32
+    }
+
+    pub fn get_free_offset<T>(&mut self, obj: &T) -> i32
+    where
+        T: for<'a> BinWrite<Args<'a> = ()> + std::fmt::Debug,
+    {
+        // figure out size of it
+        let mut buffer = ByteBuffer::new();
+        {
+            let mut cursor = Cursor::new(&mut buffer);
+            obj.write_le(&mut cursor).unwrap();
+        }
+
+        self.bytes.append(&mut buffer);
+
+        let old_pos = self.free_pos;
+        self.free_pos += buffer.len() as u64;
+
+        old_pos as i32
+    }
+
+    pub fn get_free_offset_string(&mut self, str: &String) -> i32 {
+        let bytes = write_string(str);
+        self.get_free_offset(&bytes)
+    }
+
+    pub fn read<R, T>(&self, reader: &mut R, offset: i32) -> T
+    where
+        R: Read + Seek,
+        T: for<'a> BinRead<Args<'a> = ()>,
+    {
+        let old_pos = reader.stream_position().unwrap();
+        reader
+            .seek(SeekFrom::Start((self.pos as i32 + offset) as u64))
+            .unwrap();
+        let obj = reader.read_le::<T>().unwrap();
+        reader.seek(SeekFrom::Start(old_pos)).unwrap();
+        obj
+    }
+
+    pub fn read_args<R, T>(&self, reader: &mut R, offset: i32) -> T
+    where
+        R: Read + Seek,
+        T: for<'a> BinRead<Args<'a> = (&'a StringHeap,)>,
+    {
+        let old_pos = reader.stream_position().unwrap();
+        reader
+            .seek(SeekFrom::Start((self.pos as i32 + offset) as u64))
+            .unwrap();
+        let obj = reader.read_le_args::<T>((self,)).unwrap();
+        reader.seek(SeekFrom::Start(old_pos)).unwrap();
+        obj
+    }
+
+    pub fn read_string<R>(&self, reader: &mut R, offset: u32) -> String
+    where
+        R: Read + Seek,
+    {
+        let offset = self.pos + offset as u64;
+
+        let mut string = String::new();
+
+        let old_pos = reader.stream_position().unwrap();
+
+        reader.seek(SeekFrom::Start(offset)).unwrap();
+        let mut next_char = reader.read_le::<u8>().unwrap() as char;
+        while next_char != '\0' {
+            string.push(next_char);
+            next_char = reader.read_le::<u8>().unwrap() as char;
+        }
+        reader.seek(SeekFrom::Start(old_pos)).unwrap();
+        string
+    }
+}
+
+impl BinWrite for StringHeap {
+    type Args<'a> = ();
+
+    fn write_options<W: Write + Seek>(
+        &self,
+        writer: &mut W,
+        endian: Endian,
+        (): Self::Args<'_>,
+    ) -> Result<(), Error> {
+        self.bytes.write_options(writer, endian, ())?;
+
+        Ok(())
+    }
+}
 
 // TODO: convert these all to magic
 #[binrw]
@@ -337,51 +482,78 @@ enum LayerSetReferencedType {
     Undetermined = 0x3,
 }
 
-#[binread]
+#[binrw]
 #[derive(Debug)]
-#[br(little)]
-#[br(import(start: u64))]
+#[brw(little)]
+#[br(import(data_heap: &StringHeap, string_heap: &StringHeap), stream = r)]
+#[bw(import(data_heap: &mut StringHeap, string_heap: &mut StringHeap))]
 #[allow(dead_code)] // most of the fields are unused at the moment
 struct LayerHeader {
-    layer_id: u32,
+    pub layer_id: u32,
 
-    #[br(parse_with = string_from_offset, args(start))]
-    name: String,
+    #[brw(args(string_heap))]
+    pub name: HeapString,
 
-    instance_object_offset: i32,
-    instance_object_count: i32,
-
-    #[br(map = read_bool_from::<u8>)]
-    tool_mode_visible: bool,
-    #[br(map = read_bool_from::<u8>)]
-    tool_mode_read_only: bool,
+    pub instance_object_offset: i32,
+    pub instance_object_count: i32,
 
     #[br(map = read_bool_from::<u8>)]
-    is_bush_layer: bool,
+    #[bw(map = write_bool_as::<u8>)]
+    pub tool_mode_visible: bool,
     #[br(map = read_bool_from::<u8>)]
-    ps3_visible: bool,
-    layer_set_referenced_list_offset: i32,
-    festival_id: u16,
-    festival_phase_id: u16,
-    is_temporary: u8,
-    is_housing: u8,
-    version_mask: u16,
+    #[bw(map = write_bool_as::<u8>)]
+    pub tool_mode_read_only: bool,
 
-    #[br(pad_before = 4)]
-    ob_set_referenced_list: i32,
-    ob_set_referenced_list_count: i32,
-    ob_set_enable_referenced_list: i32,
-    ob_set_enable_referenced_list_count: i32,
+    #[br(map = read_bool_from::<u8>)]
+    #[bw(map = write_bool_as::<u8>)]
+    pub is_bush_layer: bool,
+    #[br(map = read_bool_from::<u8>)]
+    #[bw(map = write_bool_as::<u8>)]
+    pub ps3_visible: bool,
+    #[br(temp)]
+    #[bw(calc = data_heap.get_free_offset_args(&layer_set_referenced_list))]
+    pub layer_set_referenced_list_offset: i32,
+    #[br(calc = data_heap.read_args(r, layer_set_referenced_list_offset))]
+    #[bw(ignore)]
+    pub layer_set_referenced_list: LayerSetReferencedList,
+    pub festival_id: u16,
+    pub festival_phase_id: u16,
+    pub is_temporary: u8,
+    pub is_housing: u8,
+    pub version_mask: u16,
+
+    #[brw(pad_before = 4)]
+    pub ob_set_referenced_list: i32,
+    pub ob_set_referenced_list_count: i32,
+    pub ob_set_enable_referenced_list: i32,
+    pub ob_set_enable_referenced_list_count: i32,
 }
 
-#[binread]
+#[binrw]
 #[derive(Debug)]
-#[br(little)]
+#[brw(little)]
+#[allow(dead_code)] // most of the fields are unused at the moment
+struct LayerSetReferenced {
+    layer_set_id: u32,
+}
+
+#[binrw]
+#[derive(Debug)]
+#[brw(little)]
+#[br(import(data_heap: &StringHeap), stream = r)]
+#[bw(import(data_heap: &mut StringHeap))]
 #[allow(dead_code)] // most of the fields are unused at the moment
 struct LayerSetReferencedList {
     referenced_type: LayerSetReferencedType,
-    layer_sets: i32,
+    #[br(temp)]
+    #[bw(calc = data_heap.get_free_offset(&layer_sets))]
+    layer_set_offset: i32,
+    #[bw(calc = layer_sets.len() as i32)]
     layer_set_count: i32,
+
+    #[br(count = layer_set_count)]
+    #[bw(ignore)]
+    layer_sets: Vec<LayerSetReferenced>,
 }
 
 #[binread]
@@ -408,30 +580,35 @@ struct OBSetEnableReferenced {
     padding: [u8; 2],
 }
 
-#[binread]
+#[binrw]
 #[derive(Debug)]
-#[br(little)]
+#[brw(little)]
 #[allow(dead_code)] // most of the fields are unused at the moment
 struct LgbHeader {
-    #[br(count = 4)]
-    file_id: Vec<u8>,
+    // Example: "LGB1"
+    file_id: u32,
+    // File size *including* this header
     file_size: i32,
     total_chunk_count: i32,
 }
 
-#[binread]
+#[binrw]
 #[derive(Debug)]
-#[br(little)]
+#[br(import(string_heap: &StringHeap), stream = r)]
+#[bw(import(string_heap: &mut StringHeap))]
+#[brw(little)]
 #[allow(dead_code)] // most of the fields are unused at the moment
-struct LayerChunk {
-    #[br(count = 4)]
-    chunk_id: Vec<u8>,
+struct LayerChunkHeader {
+    chunk_id: u32,
     chunk_size: i32,
     layer_group_id: i32,
-    name_offset: u32,
+    #[brw(args(string_heap))]
+    pub name: HeapString,
     layer_offset: i32,
     layer_count: i32,
 }
+
+const LAYER_CHUNK_HEADER_SIZE: usize = 24;
 
 #[binread]
 #[derive(Debug)]
@@ -450,14 +627,23 @@ pub struct InstanceObject {
 
 #[derive(Debug)]
 pub struct Layer {
-    pub id: u32,
-    pub name: String,
+    pub header: LayerHeader,
     pub objects: Vec<InstanceObject>,
 }
 
 #[derive(Debug)]
-pub struct LayerGroup {
+pub struct LayerChunk {
+    // Example: "LGP1"
+    pub chunk_id: u32,
+    pub layer_group_id: i32,
+    pub name: String,
     pub layers: Vec<Layer>,
+}
+
+#[derive(Debug)]
+pub struct LayerGroup {
+    pub file_id: u32,
+    pub chunks: Vec<LayerChunk>,
 }
 
 impl LayerGroup {
@@ -470,7 +656,11 @@ impl LayerGroup {
             return None;
         }
 
-        let chunk_header = LayerChunk::read(&mut cursor).unwrap();
+        // yes, for some reason it begins at 8 bytes in?!?!
+        let chunk_string_heap = StringHeap::from(cursor.position() + 8);
+
+        let chunk_header =
+            LayerChunkHeader::read_le_args(&mut cursor, (&chunk_string_heap,)).unwrap();
 
         if chunk_header.chunk_size <= 0 {
             return None;
@@ -492,7 +682,11 @@ impl LayerGroup {
 
             let old_pos = cursor.position();
 
-            let header = LayerHeader::read_le_args(&mut cursor, (old_pos,)).unwrap();
+            let string_heap = StringHeap::from(old_pos);
+            let data_heap = StringHeap::from(old_pos);
+
+            let header =
+                LayerHeader::read_le_args(&mut cursor, (&data_heap, &string_heap)).unwrap();
 
             let mut objects = Vec::new();
             // read instance objects
@@ -515,17 +709,6 @@ impl LayerGroup {
 
                     objects.push(InstanceObject::read_le_args(&mut cursor, (start,)).unwrap());
                 }
-            }
-
-            // read layer set referenced list
-            {
-                // NOTE: this casting is INTENTIONALLY like this, layer_set_referenced_list_offset CAN be negative!
-                cursor
-                    .seek(SeekFrom::Start(
-                        (old_pos as i32 + header.layer_set_referenced_list_offset) as u64,
-                    ))
-                    .unwrap();
-                let ref_list = LayerSetReferencedList::read(&mut cursor).unwrap();
             }
 
             // read ob set referenced
@@ -552,14 +735,150 @@ impl LayerGroup {
                 }
             }
 
-            layers.push(Layer {
-                id: header.layer_id,
-                name: header.name,
-                objects,
-            });
+            layers.push(Layer { header, objects });
         }
 
-        Some(LayerGroup { layers })
+        let layer_chunk = LayerChunk {
+            chunk_id: chunk_header.chunk_id,
+            layer_group_id: chunk_header.layer_group_id,
+            name: chunk_header.name.value,
+            layers,
+        };
+
+        Some(LayerGroup {
+            file_id: file_header.file_id,
+            chunks: vec![layer_chunk],
+        })
+    }
+
+    pub fn write_to_buffer(&self) -> Option<ByteBuffer> {
+        let mut buffer = ByteBuffer::new();
+
+        {
+            let mut cursor = Cursor::new(&mut buffer);
+
+            // skip header, will be writing it later
+            cursor
+                .seek(SeekFrom::Start(std::mem::size_of::<LgbHeader>() as u64))
+                .unwrap();
+
+            // base offset for deferred data
+            let mut data_base = cursor.stream_position().unwrap();
+
+            let mut chunk_data_heap = StringHeap {
+                pos: data_base + 4,
+                bytes: Vec::new(),
+                free_pos: data_base + 4,
+            };
+
+            let mut chunk_string_heap = StringHeap {
+                pos: data_base + 4,
+                bytes: Vec::new(),
+                free_pos: data_base + 4,
+            };
+
+            // we will write this later, when we have a working string heap
+            let layer_chunk_header_pos = cursor.stream_position().unwrap();
+            cursor
+                .seek(SeekFrom::Current(LAYER_CHUNK_HEADER_SIZE as i64))
+                .unwrap();
+
+            // skip offsets for now, they will be written later
+            let offset_pos = cursor.position();
+            cursor
+                .seek(SeekFrom::Current(
+                    (std::mem::size_of::<i32>() * self.chunks[0].layers.len()) as i64,
+                ))
+                .ok()?;
+
+            let mut offsets: Vec<i32> = Vec::new();
+
+            let layer_data_offset = cursor.position();
+
+            // first pass: write layers, we want to get a correct *chunk_data_heap*
+            for layer in &self.chunks[0].layers {
+                // set offset
+                // this is also used to reference positions inside this layer
+                let layer_offset = cursor.position() as i32;
+                offsets.push(layer_offset);
+
+                layer
+                    .header
+                    .write_le_args(&mut cursor, (&mut chunk_data_heap, &mut chunk_string_heap))
+                    .ok()?;
+            }
+
+            // make sure the heaps are at the end of the layer data
+            data_base += cursor.stream_position().unwrap() - layer_data_offset;
+
+            // second pass: write layers again, we want to get a correct *chunk_string_heap* now that we know of the size of chunk_data_heap
+            chunk_string_heap = StringHeap {
+                pos: data_base + 4 + chunk_data_heap.bytes.len() as u64,
+                bytes: Vec::new(),
+                free_pos: data_base + 4 + chunk_data_heap.bytes.len() as u64,
+            };
+            chunk_data_heap = StringHeap {
+                pos: data_base + 4,
+                bytes: Vec::new(),
+                free_pos: data_base + 4,
+            };
+
+            // write header now, because it has a string
+            cursor
+                .seek(SeekFrom::Start(layer_chunk_header_pos))
+                .unwrap();
+            // TODO: support multiple layer chunks
+            let layer_chunk = LayerChunkHeader {
+                chunk_id: self.chunks[0].chunk_id,
+                chunk_size: 24, // double lol
+                layer_group_id: self.chunks[0].layer_group_id,
+                name: HeapString {
+                    value: self.chunks[0].name.clone(),
+                },
+                layer_offset: 16, // lol
+                layer_count: self.chunks[0].layers.len() as i32,
+            };
+            layer_chunk
+                .write_le_args(&mut cursor, (&mut chunk_string_heap,))
+                .ok()?;
+
+            // now write the layer data for the final time
+            cursor.seek(SeekFrom::Start(layer_data_offset)).unwrap();
+            for layer in &self.chunks[0].layers {
+                layer
+                    .header
+                    .write_le_args(&mut cursor, (&mut chunk_data_heap, &mut chunk_string_heap))
+                    .ok()?;
+            }
+
+            // write the heaps
+            chunk_data_heap.write_le(&mut cursor).ok()?;
+            chunk_string_heap.write_le(&mut cursor).ok()?;
+
+            // write offsets
+            assert_eq!(offsets.len(), self.chunks[0].layers.len());
+            cursor.seek(SeekFrom::Start(offset_pos)).ok()?;
+            for offset in offsets {
+                offset.write_le(&mut cursor).ok()?;
+            }
+        }
+
+        let file_size = buffer.len() as i32;
+
+        {
+            let mut cursor = Cursor::new(&mut buffer);
+
+            // write the header, now that we now the file size
+            cursor.seek(SeekFrom::Start(0)).ok()?;
+            let lgb_header = LgbHeader {
+                file_id: self.file_id,
+                file_size,
+                total_chunk_count: self.chunks.len() as i32,
+            };
+            lgb_header.write_le(&mut cursor).ok()?;
+        }
+
+        Some(buffer)
     }
 }
 
@@ -578,5 +897,42 @@ mod tests {
 
         // Feeding it invalid data should not panic
         LayerGroup::from_existing(&read(d).unwrap());
+    }
+
+    #[test]
+    fn read_empty_planlive() {
+        let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        d.push("resources/tests");
+        d.push("empty_planlive.lgb");
+
+        let lgb = LayerGroup::from_existing(&read(d).unwrap()).unwrap();
+        assert_eq!(lgb.file_id, LGB1_ID);
+        assert_eq!(lgb.chunks.len(), 1);
+
+        let chunk = &lgb.chunks[0];
+        assert_eq!(chunk.chunk_id, LGP1_ID);
+        assert_eq!(chunk.layer_group_id, 261);
+        assert_eq!(chunk.name, "PlanLive".to_string());
+        assert!(chunk.layers.is_empty());
+    }
+
+    #[test]
+    fn write_empty_planlive() {
+        let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        d.push("resources/tests");
+        d.push("empty_planlive.lgb");
+
+        let good_lgb_bytes = read(d).unwrap();
+
+        let lgb = LayerGroup {
+            file_id: LGB1_ID,
+            chunks: vec![LayerChunk {
+                chunk_id: LGP1_ID,
+                layer_group_id: 261,
+                name: "PlanLive".to_string(),
+                layers: Vec::new(),
+            }],
+        };
+        assert_eq!(lgb.write_to_buffer().unwrap(), good_lgb_bytes);
     }
 }
