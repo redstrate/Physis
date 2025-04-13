@@ -522,6 +522,7 @@ struct OBSetEnableReferenced {
 struct LgbHeader {
     // Example: "LGB1"
     file_id: u32,
+    // File size *including* this header
     file_size: i32,
     total_chunk_count: i32,
 }
@@ -690,12 +691,8 @@ impl LayerGroup {
         {
             let mut cursor = Cursor::new(&mut buffer);
 
-            let lgb_header = LgbHeader {
-                file_id: self.file_id,
-                file_size: 0,
-                total_chunk_count: 0,
-            };
-            lgb_header.write_le(&mut cursor).ok()?;
+            // skip header, will be writing it later
+            cursor.seek(SeekFrom::Start(std::mem::size_of::<LgbHeader>() as u64)).unwrap();
 
             let mut chunk_string_heap = StringHeap {
                 pos: 0,
@@ -751,6 +748,21 @@ impl LayerGroup {
                 let offset = 0i32;
                 offset.write_le(&mut cursor).ok()?;
             }
+        }
+
+        let file_size = buffer.len() as i32;
+
+        {
+            let mut cursor = Cursor::new(&mut buffer);
+
+            // write the header, now that we now the file size
+            cursor.seek(SeekFrom::Start(0)).ok()?;
+            let lgb_header = LgbHeader {
+                file_id: self.file_id,
+                file_size,
+                total_chunk_count: 0,
+            };
+            lgb_header.write_le(&mut cursor).ok()?;
         }
 
         Some(buffer)
