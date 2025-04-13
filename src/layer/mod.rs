@@ -527,13 +527,16 @@ struct LgbHeader {
 
 #[binrw]
 #[derive(Debug)]
+#[br(import(string_heap: &StringHeap), stream = r)]
+#[bw(import(string_heap: &mut StringHeap))]
 #[brw(little)]
 #[allow(dead_code)] // most of the fields are unused at the moment
 struct LayerChunkHeader {
     chunk_id: u32,
     chunk_size: i32,
     layer_group_id: i32,
-    name_offset: u32,
+    #[brw(args(string_heap))]
+    pub name: HeapString,
     layer_offset: i32,
     layer_count: i32,
 }
@@ -563,6 +566,7 @@ pub struct Layer {
 pub struct LayerChunk {
     pub chunk_id: u32,
     pub layer_group_id: i32,
+    pub name: String,
     pub layers: Vec<Layer>,
 }
 
@@ -582,7 +586,10 @@ impl LayerGroup {
             return None;
         }
 
-        let chunk_header = LayerChunkHeader::read(&mut cursor).unwrap();
+        // yes, for some reason it begins at 8 bytes in?!?!
+        let chunk_string_heap = StringHeap::from(cursor.position() + 8);
+
+        let chunk_header = LayerChunkHeader::read_le_args(&mut cursor, (&chunk_string_heap,)).unwrap();
 
         dbg!(&chunk_header);
 
@@ -596,6 +603,8 @@ impl LayerGroup {
         for i in 0..chunk_header.layer_count {
             layer_offsets[i as usize] = cursor.read_le::<i32>().unwrap();
         }
+
+        dbg!(&layer_offsets);
 
         let mut layers = Vec::new();
 
@@ -663,6 +672,7 @@ impl LayerGroup {
         let layer_chunk = LayerChunk {
             chunk_id: chunk_header.chunk_id,
             layer_group_id: chunk_header.layer_group_id,
+            name: chunk_header.name.value,
             layers,
         };
 
@@ -685,16 +695,22 @@ impl LayerGroup {
             };
             lgb_header.write_le(&mut cursor).ok()?;
 
+            let mut chunk_string_heap = StringHeap {
+                pos: 0,
+                bytes: Vec::new(),
+                free_pos: 0,
+            };
+
             // TODO: support multiple layer chunks
             let layer_chunk = LayerChunkHeader {
                 chunk_id: self.chunks[0].chunk_id,
                 chunk_size: 0,
                 layer_group_id: self.chunks[0].layer_group_id,
-                name_offset: 0,
-                layer_offset: 0,
+                name: HeapString { value: self.chunks[0].name.clone() },
+                layer_offset: 16, // lol
                 layer_count: self.chunks[0].layers.len() as i32,
             };
-            layer_chunk.write_le(&mut cursor).ok()?;
+            layer_chunk.write_le_args(&mut cursor, (&mut chunk_string_heap, )).ok()?;
 
             // skip offsets for now, they will be written later
             let offset_pos = cursor.position();
