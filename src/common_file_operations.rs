@@ -63,7 +63,7 @@ pub(crate) fn string_from_offset(start: u64) -> BinResult<String> {
     let old_pos = reader.stream_position()?;
 
     reader.seek(SeekFrom::Start(start + offset as u64))?;
-    reader.seek(SeekFrom::Start(start as u64))?;
+    reader.seek(SeekFrom::Start(start))?;
     let mut next_char = reader.read_le::<u8>().unwrap() as char;
     while next_char != '\0' {
         string.push(next_char);

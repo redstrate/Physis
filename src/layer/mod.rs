@@ -8,7 +8,7 @@ use crate::common_file_operations::{
 };
 use crate::{ByteBuffer, ByteSpan};
 use binrw::{BinRead, BinReaderExt, BinWrite, binread};
-use binrw::{BinResult, Endian, Error, binrw, binwrite};
+use binrw::{Endian, Error, binrw};
 
 mod aetheryte;
 pub use aetheryte::AetheryteInstanceObject;
@@ -79,12 +79,10 @@ const LGP1_ID: u32 = u32::from_le_bytes(*b"LGP1");
 pub struct HeapString {
     #[br(temp)]
     // TODO: this cast is stupid
-    #[bw(calc = string_heap.get_free_offset_string(&value) as u32)]
-    #[br(dbg)]
+    #[bw(calc = string_heap.get_free_offset_string(value) as u32)]
     pub offset: u32,
     #[br(calc = string_heap.read_string(r, offset,))]
     #[bw(ignore)]
-    #[br(dbg)]
     pub value: String,
 }
 
@@ -120,8 +118,6 @@ impl StringHeap {
         let old_pos = self.free_pos;
         self.free_pos += buffer.len() as u64;
 
-        println!("free pos for {:#?} is {}!", obj, old_pos);
-
         old_pos as i32
     }
 
@@ -140,8 +136,6 @@ impl StringHeap {
 
         let old_pos = self.free_pos;
         self.free_pos += buffer.len() as u64;
-
-        println!("free pos for {:#?} is {}!", obj, old_pos);
 
         old_pos as i32
     }
@@ -189,7 +183,7 @@ impl StringHeap {
 
         let old_pos = reader.stream_position().unwrap();
 
-        reader.seek(SeekFrom::Start(offset as u64)).unwrap();
+        reader.seek(SeekFrom::Start(offset)).unwrap();
         let mut next_char = reader.read_le::<u8>().unwrap() as char;
         while next_char != '\0' {
             string.push(next_char);
@@ -526,7 +520,6 @@ struct LayerHeader {
     pub festival_phase_id: u16,
     pub is_temporary: u8,
     pub is_housing: u8,
-    #[br(dbg)]
     pub version_mask: u16,
 
     #[brw(pad_before = 4)]
@@ -663,15 +656,11 @@ impl LayerGroup {
             return None;
         }
 
-        dbg!(&file_header);
-
         // yes, for some reason it begins at 8 bytes in?!?!
         let chunk_string_heap = StringHeap::from(cursor.position() + 8);
 
         let chunk_header =
             LayerChunkHeader::read_le_args(&mut cursor, (&chunk_string_heap,)).unwrap();
-
-        dbg!(&chunk_header);
 
         if chunk_header.chunk_size <= 0 {
             return None;
@@ -683,8 +672,6 @@ impl LayerGroup {
         for i in 0..chunk_header.layer_count {
             layer_offsets[i as usize] = cursor.read_le::<i32>().unwrap();
         }
-
-        dbg!(&layer_offsets);
 
         let mut layers = Vec::new();
 
@@ -835,9 +822,6 @@ impl LayerGroup {
                 bytes: Vec::new(),
                 free_pos: data_base + 4,
             };
-
-            println!("FINAL STRING HEAP: {:#?}", chunk_string_heap);
-            println!("FINAL DATA HEAP: {:#?}", chunk_data_heap);
 
             // write header now, because it has a string
             cursor
