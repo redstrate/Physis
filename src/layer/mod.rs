@@ -474,7 +474,7 @@ struct LayerHeader {
     pub is_housing: u8,
     pub version_mask: u16,
 
-    #[br(pad_before = 4)]
+    #[brw(pad_before = 4)]
     pub ob_set_referenced_list: i32,
     pub ob_set_referenced_list_count: i32,
     pub ob_set_enable_referenced_list: i32,
@@ -700,15 +700,15 @@ impl LayerGroup {
                 .unwrap();
 
             let mut chunk_string_heap = StringHeap {
-                pos: 0,
+                pos: cursor.stream_position().unwrap() + 4,
                 bytes: Vec::new(),
-                free_pos: 0,
+                free_pos: cursor.stream_position().unwrap() + 4,
             };
 
             // TODO: support multiple layer chunks
             let layer_chunk = LayerChunkHeader {
                 chunk_id: self.chunks[0].chunk_id,
-                chunk_size: 0,
+                chunk_size: 24, // double lol
                 layer_group_id: self.chunks[0].layer_group_id,
                 name: HeapString {
                     value: self.chunks[0].name.clone(),
@@ -739,17 +739,11 @@ impl LayerGroup {
 
                 println!("creating new heap at {}", layer_offset);
 
-                let mut heap = StringHeap {
-                    pos: layer_offset as u64,
-                    bytes: Vec::new(),
-                    free_pos: layer_offset as u64,
-                };
-
-                layer.header.write_le_args(&mut cursor, (&mut heap,)).ok()?;
-
-                // write the heap
-                heap.write_le(&mut cursor).ok()?;
+                layer.header.write_le_args(&mut cursor, (&mut chunk_string_heap,)).ok()?;
             }
+
+            // write the heap
+            chunk_string_heap.write_le(&mut cursor).ok()?;
 
             // write offsets
             cursor.seek(SeekFrom::Start(offset_pos)).ok()?;
@@ -793,5 +787,32 @@ mod tests {
 
         // Feeding it invalid data should not panic
         LayerGroup::from_existing(&read(d).unwrap());
+    }
+
+    #[test]
+    fn read_empty_planlive() {
+        let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        d.push("resources/tests");
+        d.push("empty_planlive.lgb");
+
+        let lgb = LayerGroup::from_existing(&read(d).unwrap()).unwrap();
+        assert_eq!(lgb.chunks.len(), 1);
+    }
+
+    #[test]
+    fn write_empty_planlive() {
+        let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        d.push("resources/tests");
+        d.push("empty_planlive.lgb");
+
+        let good_lgb_bytes = read(d).unwrap();
+
+        let lgb = LayerGroup {
+            file_id: 0x3142474c,
+            chunks: vec![
+                LayerChunk { chunk_id: 0x3150474c, layer_group_id: 261, name: "PlanLive".to_string(), layers: Vec::new() }
+            ],
+        };
+        assert_eq!(lgb.write_to_buffer().unwrap(), good_lgb_bytes);
     }
 }
