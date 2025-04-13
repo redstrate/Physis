@@ -183,7 +183,20 @@ impl StringHeap {
     where
         R: Read + Seek,
     {
-        string_from_offset(reader, Endian::Little, (self.pos + offset as u64,)).unwrap()
+        let offset = self.pos + offset as u64;
+
+        let mut string = String::new();
+
+        let old_pos = reader.stream_position().unwrap();
+
+        reader.seek(SeekFrom::Start(offset as u64)).unwrap();
+        let mut next_char = reader.read_le::<u8>().unwrap() as char;
+        while next_char != '\0' {
+            string.push(next_char);
+            next_char = reader.read_le::<u8>().unwrap() as char;
+        }
+        reader.seek(SeekFrom::Start(old_pos)).unwrap();
+        string
     }
 }
 
