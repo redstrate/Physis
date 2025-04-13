@@ -529,7 +529,7 @@ struct LgbHeader {
 #[derive(Debug)]
 #[brw(little)]
 #[allow(dead_code)] // most of the fields are unused at the moment
-struct LayerChunk {
+struct LayerChunkHeader {
     chunk_id: u32,
     chunk_size: i32,
     layer_group_id: i32,
@@ -560,9 +560,16 @@ pub struct Layer {
 }
 
 #[derive(Debug)]
+pub struct LayerChunk {
+    pub chunk_id: u32,
+    pub layer_group_id: i32,
+    pub layers: Vec<Layer>,
+}
+
+#[derive(Debug)]
 pub struct LayerGroup {
     pub file_id: u32,
-    pub layers: Vec<Layer>,
+    pub chunks: Vec<LayerChunk>,
 }
 
 impl LayerGroup {
@@ -575,7 +582,9 @@ impl LayerGroup {
             return None;
         }
 
-        let chunk_header = LayerChunk::read(&mut cursor).unwrap();
+        let chunk_header = LayerChunkHeader::read(&mut cursor).unwrap();
+
+        dbg!(&chunk_header);
 
         if chunk_header.chunk_size <= 0 {
             return None;
@@ -651,9 +660,15 @@ impl LayerGroup {
             layers.push(Layer { header, objects });
         }
 
+        let layer_chunk = LayerChunk {
+            chunk_id: chunk_header.chunk_id,
+            layer_group_id: chunk_header.layer_group_id,
+            layers,
+        };
+
         Some(LayerGroup {
             file_id: file_header.file_id,
-            layers,
+            chunks: vec![layer_chunk],
         })
     }
 
@@ -671,13 +686,13 @@ impl LayerGroup {
             lgb_header.write_le(&mut cursor).ok()?;
 
             // TODO: support multiple layer chunks
-            let layer_chunk = LayerChunk {
-                chunk_id: 0,
+            let layer_chunk = LayerChunkHeader {
+                chunk_id: self.chunks[0].chunk_id,
                 chunk_size: 0,
-                layer_group_id: 0,
+                layer_group_id: self.chunks[0].layer_group_id,
                 name_offset: 0,
                 layer_offset: 0,
-                layer_count: self.layers.len() as i32,
+                layer_count: self.chunks[0].layers.len() as i32,
             };
             layer_chunk.write_le(&mut cursor).ok()?;
 
@@ -685,14 +700,14 @@ impl LayerGroup {
             let offset_pos = cursor.position();
             cursor
                 .seek(SeekFrom::Current(
-                    (std::mem::size_of::<i32>() * self.layers.len()) as i64,
+                    (std::mem::size_of::<i32>() * self.chunks[0].layers.len()) as i64,
                 ))
                 .ok()?;
 
             let mut offsets: Vec<i32> = Vec::new();
 
             // write layers
-            for layer in &self.layers {
+            for layer in &self.chunks[0].layers {
                 // set offset
                 // this is also used to reference positions inside this layer
                 let layer_offset = cursor.position() as i32;
@@ -714,7 +729,7 @@ impl LayerGroup {
 
             // write offsets
             cursor.seek(SeekFrom::Start(offset_pos)).ok()?;
-            for _ in 0..self.layers.len() {
+            for _ in 0..self.chunks[0].layers.len() {
                 let offset = 0i32;
                 offset.write_le(&mut cursor).ok()?;
             }
