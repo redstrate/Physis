@@ -804,7 +804,14 @@ mod tests {
         d.push("empty_planlive.lgb");
 
         let lgb = LayerGroup::from_existing(&read(d).unwrap()).unwrap();
+        assert_eq!(lgb.file_id, LGB1_ID);
         assert_eq!(lgb.chunks.len(), 1);
+
+        let chunk = &lgb.chunks[0];
+        assert_eq!(chunk.chunk_id, LGP1_ID);
+        assert_eq!(chunk.layer_group_id, 261);
+        assert_eq!(chunk.name, "PlanLive".to_string());
+        assert!(chunk.layers.is_empty());
     }
 
     #[test]
