@@ -589,10 +589,13 @@ impl LayerGroup {
             return None;
         }
 
+        dbg!(&file_header);
+
         // yes, for some reason it begins at 8 bytes in?!?!
         let chunk_string_heap = StringHeap::from(cursor.position() + 8);
 
-        let chunk_header = LayerChunkHeader::read_le_args(&mut cursor, (&chunk_string_heap,)).unwrap();
+        let chunk_header =
+            LayerChunkHeader::read_le_args(&mut cursor, (&chunk_string_heap,)).unwrap();
 
         dbg!(&chunk_header);
 
@@ -692,7 +695,9 @@ impl LayerGroup {
             let mut cursor = Cursor::new(&mut buffer);
 
             // skip header, will be writing it later
-            cursor.seek(SeekFrom::Start(std::mem::size_of::<LgbHeader>() as u64)).unwrap();
+            cursor
+                .seek(SeekFrom::Start(std::mem::size_of::<LgbHeader>() as u64))
+                .unwrap();
 
             let mut chunk_string_heap = StringHeap {
                 pos: 0,
@@ -705,11 +710,15 @@ impl LayerGroup {
                 chunk_id: self.chunks[0].chunk_id,
                 chunk_size: 0,
                 layer_group_id: self.chunks[0].layer_group_id,
-                name: HeapString { value: self.chunks[0].name.clone() },
+                name: HeapString {
+                    value: self.chunks[0].name.clone(),
+                },
                 layer_offset: 16, // lol
                 layer_count: self.chunks[0].layers.len() as i32,
             };
-            layer_chunk.write_le_args(&mut cursor, (&mut chunk_string_heap, )).ok()?;
+            layer_chunk
+                .write_le_args(&mut cursor, (&mut chunk_string_heap,))
+                .ok()?;
 
             // skip offsets for now, they will be written later
             let offset_pos = cursor.position();
@@ -760,7 +769,7 @@ impl LayerGroup {
             let lgb_header = LgbHeader {
                 file_id: self.file_id,
                 file_size,
-                total_chunk_count: 0,
+                total_chunk_count: self.chunks.len() as i32,
             };
             lgb_header.write_le(&mut cursor).ok()?;
         }
