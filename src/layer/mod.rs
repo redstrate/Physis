@@ -66,6 +66,11 @@ pub use trigger_box::TriggerBoxShape;
 // From https://github.com/NotAdam/Lumina/tree/40dab50183eb7ddc28344378baccc2d63ae71d35/src/Lumina/Data/Parsing/Layer
 // Also see https://github.com/aers/FFXIVClientStructs/blob/6b62122cae38bfbc016bf697bef75f80f37abac1/FFXIVClientStructs/FFXIV/Client/LayoutEngine/ILayoutInstance.cs
 
+/// "LGB1"
+const LGB1_ID: u32 = u32::from_le_bytes(*b"LGB1");
+/// "LGP1"
+const LGP1_ID: u32 = u32::from_le_bytes(*b"LGP1");
+
 /// A string that exists in a different location in the file, usually a heap with a bunch of other strings.
 #[binrw]
 #[br(import(string_heap: &StringHeap), stream = r)]
@@ -739,7 +744,10 @@ impl LayerGroup {
 
                 println!("creating new heap at {}", layer_offset);
 
-                layer.header.write_le_args(&mut cursor, (&mut chunk_string_heap,)).ok()?;
+                layer
+                    .header
+                    .write_le_args(&mut cursor, (&mut chunk_string_heap,))
+                    .ok()?;
             }
 
             // write the heap
@@ -808,10 +816,13 @@ mod tests {
         let good_lgb_bytes = read(d).unwrap();
 
         let lgb = LayerGroup {
-            file_id: 0x3142474c,
-            chunks: vec![
-                LayerChunk { chunk_id: 0x3150474c, layer_group_id: 261, name: "PlanLive".to_string(), layers: Vec::new() }
-            ],
+            file_id: LGB1_ID,
+            chunks: vec![LayerChunk {
+                chunk_id: LGP1_ID,
+                layer_group_id: 261,
+                name: "PlanLive".to_string(),
+                layers: Vec::new(),
+            }],
         };
         assert_eq!(lgb.write_to_buffer().unwrap(), good_lgb_bytes);
     }
