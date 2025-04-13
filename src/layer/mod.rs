@@ -520,6 +520,7 @@ struct OBSetEnableReferenced {
 #[brw(little)]
 #[allow(dead_code)] // most of the fields are unused at the moment
 struct LgbHeader {
+    // Example: "LGB1"
     file_id: u32,
     file_size: i32,
     total_chunk_count: i32,
@@ -564,6 +565,7 @@ pub struct Layer {
 
 #[derive(Debug)]
 pub struct LayerChunk {
+    // Example: "LGP1"
     pub chunk_id: u32,
     pub layer_group_id: i32,
     pub name: String,
