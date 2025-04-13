@@ -56,13 +56,11 @@ pub(crate) fn strings_parser(
 
 #[binrw::parser(reader)]
 pub(crate) fn string_from_offset(start: u64) -> BinResult<String> {
-    let offset: u32 = reader.read_le::<u32>()?;
-
     let mut string = String::new();
 
     let old_pos = reader.stream_position()?;
 
-    reader.seek(SeekFrom::Start(start + offset as u64))?;
+    reader.seek(SeekFrom::Start(start as u64))?;
     let mut next_char = reader.read_le::<u8>().unwrap() as char;
     while next_char != '\0' {
         string.push(next_char);

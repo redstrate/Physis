@@ -1,12 +1,14 @@
 // SPDX-FileCopyrightText: 2024 Joshua Goins <josh@redstrate.com>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-use std::io::{Cursor, Read, Seek, SeekFrom};
+use std::io::{Cursor, Read, Seek, SeekFrom, Write};
 
-use crate::ByteSpan;
-use crate::common_file_operations::{read_bool_from, string_from_offset};
-use binrw::binrw;
-use binrw::{BinRead, BinReaderExt, binread};
+use crate::common_file_operations::{
+    read_bool_from, string_from_offset, write_bool_as, write_string,
+};
+use crate::{ByteBuffer, ByteSpan};
+use binrw::{BinRead, BinReaderExt, BinWrite, binread};
+use binrw::{BinResult, Endian, Error, binrw, binwrite};
 
 mod aetheryte;
 pub use aetheryte::AetheryteInstanceObject;
@@ -63,6 +65,107 @@ pub use trigger_box::TriggerBoxShape;
 
 // From https://github.com/NotAdam/Lumina/tree/40dab50183eb7ddc28344378baccc2d63ae71d35/src/Lumina/Data/Parsing/Layer
 // Also see https://github.com/aers/FFXIVClientStructs/blob/6b62122cae38bfbc016bf697bef75f80f37abac1/FFXIVClientStructs/FFXIV/Client/LayoutEngine/ILayoutInstance.cs
+
+/// A string that exists in a different location in the file, usually a heap with a bunch of other strings.
+#[binrw]
+#[br(import(string_heap: &StringHeap), stream = r)]
+#[bw(import(string_heap: &mut StringHeap))]
+#[derive(Clone, Debug)]
+pub struct HeapString {
+    #[br(temp)]
+    // TODO: this cast is stupid
+    #[bw(calc = string_heap.get_free_offset_string(&value) as u32)]
+    #[br(dbg)]
+    pub offset: u32,
+    #[br(calc = string_heap.read_string(r, offset,))]
+    #[bw(ignore)]
+    #[br(dbg)]
+    pub value: String,
+}
+
+#[derive(Debug)]
+pub struct StringHeap {
+    pub pos: u64,
+    pub strings: Vec<HeapString>,
+    pub free_pos: u64,
+}
+
+impl StringHeap {
+    pub fn from(pos: u64) -> Self {
+        Self {
+            pos,
+            strings: Vec::new(),
+            free_pos: 0, // unused, so it doesn't matter
+        }
+    }
+
+    pub fn add_string(&mut self, string: &HeapString) {
+        self.strings.push(string.clone());
+    }
+
+    pub fn get_free_offset<T>(&mut self, obj: &T) -> i32
+    where
+        T: for<'a> BinWrite<Args<'a> = ()> + std::fmt::Debug,
+    {
+        // figure out size of it
+        let mut buffer = ByteBuffer::new();
+        {
+            let mut cursor = Cursor::new(&mut buffer);
+            obj.write_le(&mut cursor).unwrap();
+        }
+
+        let old_pos = self.free_pos;
+        self.free_pos += buffer.len() as u64;
+
+        println!("free pos for {:#?} is {}!", obj, old_pos);
+
+        old_pos as i32
+    }
+
+    pub fn get_free_offset_string(&mut self, str: &String) -> i32 {
+        let bytes = write_string(str);
+        self.get_free_offset(&bytes)
+    }
+
+    pub fn read<R, T>(&self, reader: &mut R, offset: i32) -> T
+    where
+        R: Read + Seek,
+        T: for<'a> BinRead<Args<'a> = ()>,
+    {
+        let old_pos = reader.stream_position().unwrap();
+        reader
+            .seek(SeekFrom::Start((self.pos as i32 + offset) as u64))
+            .unwrap();
+        let obj = reader.read_le::<T>().unwrap();
+        reader.seek(SeekFrom::Start(old_pos)).unwrap();
+        obj
+    }
+
+    pub fn read_string<R>(&self, reader: &mut R, offset: u32) -> String
+    where
+        R: Read + Seek,
+    {
+        string_from_offset(reader, Endian::Little, (self.pos + offset as u64,)).unwrap()
+    }
+}
+
+impl BinWrite for StringHeap {
+    type Args<'a> = ();
+
+    fn write_options<W: Write + Seek>(
+        &self,
+        writer: &mut W,
+        endian: Endian,
+        (): Self::Args<'_>,
+    ) -> Result<(), Error> {
+        for string in &self.strings {
+            let bytes = write_string(&string.value);
+            bytes.write_options(writer, endian, ())?;
+        }
+
+        Ok(())
+    }
+}
 
 // TODO: convert these all to magic
 #[binrw]
@@ -337,46 +440,55 @@ enum LayerSetReferencedType {
     Undetermined = 0x3,
 }
 
-#[binread]
+#[binrw]
 #[derive(Debug)]
-#[br(little)]
-#[br(import(start: u64))]
+#[brw(little)]
+#[br(import(string_heap: &StringHeap), stream = r)]
+#[bw(import(string_heap: &mut StringHeap))]
 #[allow(dead_code)] // most of the fields are unused at the moment
 struct LayerHeader {
-    layer_id: u32,
+    pub layer_id: u32,
 
-    #[br(parse_with = string_from_offset, args(start))]
-    name: String,
+    #[brw(args(string_heap))]
+    pub name: HeapString,
 
-    instance_object_offset: i32,
-    instance_object_count: i32,
-
-    #[br(map = read_bool_from::<u8>)]
-    tool_mode_visible: bool,
-    #[br(map = read_bool_from::<u8>)]
-    tool_mode_read_only: bool,
+    pub instance_object_offset: i32,
+    pub instance_object_count: i32,
 
     #[br(map = read_bool_from::<u8>)]
-    is_bush_layer: bool,
+    #[bw(map = write_bool_as::<u8>)]
+    pub tool_mode_visible: bool,
     #[br(map = read_bool_from::<u8>)]
-    ps3_visible: bool,
-    layer_set_referenced_list_offset: i32,
-    festival_id: u16,
-    festival_phase_id: u16,
-    is_temporary: u8,
-    is_housing: u8,
-    version_mask: u16,
+    #[bw(map = write_bool_as::<u8>)]
+    pub tool_mode_read_only: bool,
+
+    #[br(map = read_bool_from::<u8>)]
+    #[bw(map = write_bool_as::<u8>)]
+    pub is_bush_layer: bool,
+    #[br(map = read_bool_from::<u8>)]
+    #[bw(map = write_bool_as::<u8>)]
+    pub ps3_visible: bool,
+    #[br(temp)]
+    #[bw(calc = string_heap.get_free_offset(&layer_set_referenced_list))]
+    pub layer_set_referenced_list_offset: i32,
+    #[br(calc = string_heap.read(r, layer_set_referenced_list_offset))]
+    pub layer_set_referenced_list: LayerSetReferencedList,
+    pub festival_id: u16,
+    pub festival_phase_id: u16,
+    pub is_temporary: u8,
+    pub is_housing: u8,
+    pub version_mask: u16,
 
     #[br(pad_before = 4)]
-    ob_set_referenced_list: i32,
-    ob_set_referenced_list_count: i32,
-    ob_set_enable_referenced_list: i32,
-    ob_set_enable_referenced_list_count: i32,
+    pub ob_set_referenced_list: i32,
+    pub ob_set_referenced_list_count: i32,
+    pub ob_set_enable_referenced_list: i32,
+    pub ob_set_enable_referenced_list_count: i32,
 }
 
-#[binread]
+#[binrw]
 #[derive(Debug)]
-#[br(little)]
+#[brw(little)]
 #[allow(dead_code)] // most of the fields are unused at the moment
 struct LayerSetReferencedList {
     referenced_type: LayerSetReferencedType,
@@ -408,24 +520,22 @@ struct OBSetEnableReferenced {
     padding: [u8; 2],
 }
 
-#[binread]
+#[binrw]
 #[derive(Debug)]
-#[br(little)]
+#[brw(little)]
 #[allow(dead_code)] // most of the fields are unused at the moment
 struct LgbHeader {
-    #[br(count = 4)]
-    file_id: Vec<u8>,
+    file_id: u32,
     file_size: i32,
     total_chunk_count: i32,
 }
 
-#[binread]
+#[binrw]
 #[derive(Debug)]
-#[br(little)]
+#[brw(little)]
 #[allow(dead_code)] // most of the fields are unused at the moment
 struct LayerChunk {
-    #[br(count = 4)]
-    chunk_id: Vec<u8>,
+    chunk_id: u32,
     chunk_size: i32,
     layer_group_id: i32,
     name_offset: u32,
@@ -450,13 +560,13 @@ pub struct InstanceObject {
 
 #[derive(Debug)]
 pub struct Layer {
-    pub id: u32,
-    pub name: String,
+    pub header: LayerHeader,
     pub objects: Vec<InstanceObject>,
 }
 
 #[derive(Debug)]
 pub struct LayerGroup {
+    pub file_id: u32,
     pub layers: Vec<Layer>,
 }
 
@@ -492,7 +602,9 @@ impl LayerGroup {
 
             let old_pos = cursor.position();
 
-            let header = LayerHeader::read_le_args(&mut cursor, (old_pos,)).unwrap();
+            let string_heap = StringHeap::from(old_pos);
+
+            let header = LayerHeader::read_le_args(&mut cursor, (&string_heap,)).unwrap();
 
             let mut objects = Vec::new();
             // read instance objects
@@ -515,17 +627,6 @@ impl LayerGroup {
 
                     objects.push(InstanceObject::read_le_args(&mut cursor, (start,)).unwrap());
                 }
-            }
-
-            // read layer set referenced list
-            {
-                // NOTE: this casting is INTENTIONALLY like this, layer_set_referenced_list_offset CAN be negative!
-                cursor
-                    .seek(SeekFrom::Start(
-                        (old_pos as i32 + header.layer_set_referenced_list_offset) as u64,
-                    ))
-                    .unwrap();
-                let ref_list = LayerSetReferencedList::read(&mut cursor).unwrap();
             }
 
             // read ob set referenced
@@ -552,14 +653,82 @@ impl LayerGroup {
                 }
             }
 
-            layers.push(Layer {
-                id: header.layer_id,
-                name: header.name,
-                objects,
-            });
+            layers.push(Layer { header, objects });
         }
 
-        Some(LayerGroup { layers })
+        Some(LayerGroup {
+            file_id: file_header.file_id,
+            layers,
+        })
+    }
+
+    pub fn write_to_buffer(&self) -> Option<ByteBuffer> {
+        let mut buffer = ByteBuffer::new();
+
+        {
+            let mut cursor = Cursor::new(&mut buffer);
+
+            let lgb_header = LgbHeader {
+                file_id: self.file_id,
+                file_size: 0,
+                total_chunk_count: 0,
+            };
+            lgb_header.write_le(&mut cursor).ok()?;
+
+            // TODO: support multiple layer chunks
+            let layer_chunk = LayerChunk {
+                chunk_id: 0,
+                chunk_size: 0,
+                layer_group_id: 0,
+                name_offset: 0,
+                layer_offset: 0,
+                layer_count: self.layers.len() as i32,
+            };
+            layer_chunk.write_le(&mut cursor).ok()?;
+
+            // skip offsets for now, they will be written later
+            let offset_pos = cursor.position();
+            cursor
+                .seek(SeekFrom::Current(
+                    (std::mem::size_of::<i32>() * self.layers.len()) as i64,
+                ))
+                .ok()?;
+
+            let mut offsets: Vec<i32> = Vec::new();
+
+            // write layers
+            for layer in &self.layers {
+                // set offset
+                // this is also used to reference positions inside this layer
+                let layer_offset = cursor.position() as i32;
+                offsets.push(layer_offset);
+
+                println!("creating new heap at {}", layer_offset);
+
+                let mut heap = StringHeap {
+                    pos: layer_offset as u64,
+                    strings: Vec::new(),
+                    free_pos: layer_offset as u64,
+                };
+
+                layer.header.write_le_args(&mut cursor, (&mut heap,)).ok()?;
+
+                // TODO: maybe do this in the binrw definition?
+                heap.add_string(&layer.header.name);
+
+                // write the heap
+                heap.write_le(&mut cursor).ok()?;
+            }
+
+            // write offsets
+            cursor.seek(SeekFrom::Start(offset_pos)).ok()?;
+            for _ in 0..self.layers.len() {
+                let offset = 0i32;
+                offset.write_le(&mut cursor).ok()?;
+            }
+        }
+
+        Some(buffer)
     }
 }
 
