@@ -86,7 +86,7 @@ pub struct HeapString {
 #[derive(Debug)]
 pub struct StringHeap {
     pub pos: u64,
-    pub strings: Vec<HeapString>,
+    pub bytes: Vec<u8>,
     pub free_pos: u64,
 }
 
@@ -94,13 +94,9 @@ impl StringHeap {
     pub fn from(pos: u64) -> Self {
         Self {
             pos,
-            strings: Vec::new(),
+            bytes: Vec::new(),
             free_pos: 0, // unused, so it doesn't matter
         }
-    }
-
-    pub fn add_string(&mut self, string: &HeapString) {
-        self.strings.push(string.clone());
     }
 
     pub fn get_free_offset<T>(&mut self, obj: &T) -> i32
@@ -113,6 +109,8 @@ impl StringHeap {
             let mut cursor = Cursor::new(&mut buffer);
             obj.write_le(&mut cursor).unwrap();
         }
+
+        self.bytes.append(&mut buffer);
 
         let old_pos = self.free_pos;
         self.free_pos += buffer.len() as u64;
@@ -158,10 +156,7 @@ impl BinWrite for StringHeap {
         endian: Endian,
         (): Self::Args<'_>,
     ) -> Result<(), Error> {
-        for string in &self.strings {
-            let bytes = write_string(&string.value);
-            bytes.write_options(writer, endian, ())?;
-        }
+        self.bytes.write_options(writer, endian, ())?;
 
         Ok(())
     }
@@ -707,14 +702,11 @@ impl LayerGroup {
 
                 let mut heap = StringHeap {
                     pos: layer_offset as u64,
-                    strings: Vec::new(),
+                    bytes: Vec::new(),
                     free_pos: layer_offset as u64,
                 };
 
                 layer.header.write_le_args(&mut cursor, (&mut heap,)).ok()?;
-
-                // TODO: maybe do this in the binrw definition?
-                heap.add_string(&layer.header.name);
 
                 // write the heap
                 heap.write_le(&mut cursor).ok()?;
