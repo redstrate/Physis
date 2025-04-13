@@ -104,6 +104,27 @@ impl StringHeap {
         }
     }
 
+    pub fn get_free_offset_args<T>(&mut self, obj: &T) -> i32
+    where
+        T: for<'a> BinWrite<Args<'a> = (&'a mut StringHeap,)> + std::fmt::Debug,
+    {
+        // figure out size of it
+        let mut buffer = ByteBuffer::new();
+        {
+            let mut cursor = Cursor::new(&mut buffer);
+            obj.write_le_args(&mut cursor, (self,)).unwrap();
+        }
+
+        self.bytes.append(&mut buffer);
+
+        let old_pos = self.free_pos;
+        self.free_pos += buffer.len() as u64;
+
+        println!("free pos for {:#?} is {}!", obj, old_pos);
+
+        old_pos as i32
+    }
+
     pub fn get_free_offset<T>(&mut self, obj: &T) -> i32
     where
         T: for<'a> BinWrite<Args<'a> = ()> + std::fmt::Debug,
@@ -140,6 +161,20 @@ impl StringHeap {
             .seek(SeekFrom::Start((self.pos as i32 + offset) as u64))
             .unwrap();
         let obj = reader.read_le::<T>().unwrap();
+        reader.seek(SeekFrom::Start(old_pos)).unwrap();
+        obj
+    }
+
+    pub fn read_args<R, T>(&self, reader: &mut R, offset: i32) -> T
+    where
+        R: Read + Seek,
+        T: for<'a> BinRead<Args<'a> = (&'a StringHeap,)>,
+    {
+        let old_pos = reader.stream_position().unwrap();
+        reader
+            .seek(SeekFrom::Start((self.pos as i32 + offset) as u64))
+            .unwrap();
+        let obj = reader.read_le_args::<T>((self,)).unwrap();
         reader.seek(SeekFrom::Start(old_pos)).unwrap();
         obj
     }
@@ -443,8 +478,8 @@ enum LayerSetReferencedType {
 #[binrw]
 #[derive(Debug)]
 #[brw(little)]
-#[br(import(string_heap: &StringHeap), stream = r)]
-#[bw(import(string_heap: &mut StringHeap))]
+#[br(import(data_heap: &StringHeap, string_heap: &StringHeap), stream = r)]
+#[bw(import(data_heap: &mut StringHeap, string_heap: &mut StringHeap))]
 #[allow(dead_code)] // most of the fields are unused at the moment
 struct LayerHeader {
     pub layer_id: u32,
@@ -469,14 +504,16 @@ struct LayerHeader {
     #[bw(map = write_bool_as::<u8>)]
     pub ps3_visible: bool,
     #[br(temp)]
-    #[bw(calc = string_heap.get_free_offset(&layer_set_referenced_list))]
+    #[bw(calc = data_heap.get_free_offset_args(&layer_set_referenced_list))]
     pub layer_set_referenced_list_offset: i32,
-    #[br(calc = string_heap.read(r, layer_set_referenced_list_offset))]
+    #[br(calc = data_heap.read_args(r, layer_set_referenced_list_offset))]
+    #[bw(ignore)]
     pub layer_set_referenced_list: LayerSetReferencedList,
     pub festival_id: u16,
     pub festival_phase_id: u16,
     pub is_temporary: u8,
     pub is_housing: u8,
+    #[br(dbg)]
     pub version_mask: u16,
 
     #[brw(pad_before = 4)]
@@ -490,10 +527,27 @@ struct LayerHeader {
 #[derive(Debug)]
 #[brw(little)]
 #[allow(dead_code)] // most of the fields are unused at the moment
+struct LayerSetReferenced {
+    layer_set_id: u32,
+}
+
+#[binrw]
+#[derive(Debug)]
+#[brw(little)]
+#[br(import(data_heap: &StringHeap), stream = r)]
+#[bw(import(data_heap: &mut StringHeap))]
+#[allow(dead_code)] // most of the fields are unused at the moment
 struct LayerSetReferencedList {
     referenced_type: LayerSetReferencedType,
-    layer_sets: i32,
+    #[br(temp)]
+    #[bw(calc = data_heap.get_free_offset(&layer_sets))]
+    layer_set_offset: i32,
+    #[bw(calc = layer_sets.len() as i32)]
     layer_set_count: i32,
+
+    #[br(count = layer_set_count)]
+    #[bw(ignore)]
+    layer_sets: Vec<LayerSetReferenced>,
 }
 
 #[binread]
@@ -547,6 +601,8 @@ struct LayerChunkHeader {
     layer_offset: i32,
     layer_count: i32,
 }
+
+const LAYER_CHUNK_HEADER_SIZE: usize = 24;
 
 #[binread]
 #[derive(Debug)]
@@ -627,8 +683,10 @@ impl LayerGroup {
             let old_pos = cursor.position();
 
             let string_heap = StringHeap::from(old_pos);
+            let data_heap = StringHeap::from(old_pos);
 
-            let header = LayerHeader::read_le_args(&mut cursor, (&string_heap,)).unwrap();
+            let header =
+                LayerHeader::read_le_args(&mut cursor, (&data_heap, &string_heap)).unwrap();
 
             let mut objects = Vec::new();
             // read instance objects
@@ -704,12 +762,74 @@ impl LayerGroup {
                 .seek(SeekFrom::Start(std::mem::size_of::<LgbHeader>() as u64))
                 .unwrap();
 
-            let mut chunk_string_heap = StringHeap {
-                pos: cursor.stream_position().unwrap() + 4,
+            // base offset for deferred data
+            let mut data_base = cursor.stream_position().unwrap();
+
+            let mut chunk_data_heap = StringHeap {
+                pos: data_base + 4,
                 bytes: Vec::new(),
-                free_pos: cursor.stream_position().unwrap() + 4,
+                free_pos: data_base + 4,
             };
 
+            let mut chunk_string_heap = StringHeap {
+                pos: data_base + 4,
+                bytes: Vec::new(),
+                free_pos: data_base + 4,
+            };
+
+            // we will write this later, when we have a working string heap
+            let layer_chunk_header_pos = cursor.stream_position().unwrap();
+            cursor
+                .seek(SeekFrom::Current(LAYER_CHUNK_HEADER_SIZE as i64))
+                .unwrap();
+
+            // skip offsets for now, they will be written later
+            let offset_pos = cursor.position();
+            cursor
+                .seek(SeekFrom::Current(
+                    (std::mem::size_of::<i32>() * self.chunks[0].layers.len()) as i64,
+                ))
+                .ok()?;
+
+            let mut offsets: Vec<i32> = Vec::new();
+
+            let layer_data_offset = cursor.position();
+
+            // first pass: write layers, we want to get a correct *chunk_data_heap*
+            for layer in &self.chunks[0].layers {
+                // set offset
+                // this is also used to reference positions inside this layer
+                let layer_offset = cursor.position() as i32;
+                offsets.push(layer_offset);
+
+                layer
+                    .header
+                    .write_le_args(&mut cursor, (&mut chunk_data_heap, &mut chunk_string_heap))
+                    .ok()?;
+            }
+
+            // make sure the heaps are at the end of the layer data
+            data_base += cursor.stream_position().unwrap() - layer_data_offset;
+
+            // second pass: write layers again, we want to get a correct *chunk_string_heap* now that we know of the size of chunk_data_heap
+            chunk_string_heap = StringHeap {
+                pos: data_base + 4 + chunk_data_heap.bytes.len() as u64,
+                bytes: Vec::new(),
+                free_pos: data_base + 4 + chunk_data_heap.bytes.len() as u64,
+            };
+            chunk_data_heap = StringHeap {
+                pos: data_base + 4,
+                bytes: Vec::new(),
+                free_pos: data_base + 4,
+            };
+
+            println!("FINAL STRING HEAP: {:#?}", chunk_string_heap);
+            println!("FINAL DATA HEAP: {:#?}", chunk_data_heap);
+
+            // write header now, because it has a string
+            cursor
+                .seek(SeekFrom::Start(layer_chunk_header_pos))
+                .unwrap();
             // TODO: support multiple layer chunks
             let layer_chunk = LayerChunkHeader {
                 chunk_id: self.chunks[0].chunk_id,
@@ -725,38 +845,23 @@ impl LayerGroup {
                 .write_le_args(&mut cursor, (&mut chunk_string_heap,))
                 .ok()?;
 
-            // skip offsets for now, they will be written later
-            let offset_pos = cursor.position();
-            cursor
-                .seek(SeekFrom::Current(
-                    (std::mem::size_of::<i32>() * self.chunks[0].layers.len()) as i64,
-                ))
-                .ok()?;
-
-            let mut offsets: Vec<i32> = Vec::new();
-
-            // write layers
+            // now write the layer data for the final time
+            cursor.seek(SeekFrom::Start(layer_data_offset)).unwrap();
             for layer in &self.chunks[0].layers {
-                // set offset
-                // this is also used to reference positions inside this layer
-                let layer_offset = cursor.position() as i32;
-                offsets.push(layer_offset);
-
-                println!("creating new heap at {}", layer_offset);
-
                 layer
                     .header
-                    .write_le_args(&mut cursor, (&mut chunk_string_heap,))
+                    .write_le_args(&mut cursor, (&mut chunk_data_heap, &mut chunk_string_heap))
                     .ok()?;
             }
 
-            // write the heap
+            // write the heaps
+            chunk_data_heap.write_le(&mut cursor).ok()?;
             chunk_string_heap.write_le(&mut cursor).ok()?;
 
             // write offsets
+            assert_eq!(offsets.len(), self.chunks[0].layers.len());
             cursor.seek(SeekFrom::Start(offset_pos)).ok()?;
-            for _ in 0..self.chunks[0].layers.len() {
-                let offset = 0i32;
+            for offset in offsets {
                 offset.write_le(&mut cursor).ok()?;
             }
         }
