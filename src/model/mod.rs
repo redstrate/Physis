@@ -1240,7 +1240,7 @@ mod tests {
     use std::mem::size_of;
     use std::path::PathBuf;
 
-    use crate::model_vertex_declarations::VERTEX_ELEMENT_SIZE;
+    use vertex_declarations::VERTEX_ELEMENT_SIZE;
 
     use super::*;
 
