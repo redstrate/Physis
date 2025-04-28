@@ -58,9 +58,6 @@ pub mod skeleton;
 /// Reading file info files (FIIN).
 pub mod fiin;
 
-/// Reading and writing chat logs (LOG).
-pub mod log;
-
 /// Reading textures (TEX).
 pub mod tex;
 

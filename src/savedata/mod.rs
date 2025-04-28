@@ -6,3 +6,6 @@ pub mod chardat;
 
 /// Reading and writing the content of gear sets (GEARSET.DAT) which are used to store a character's gear sets.
 pub mod gearsets;
+
+/// Reading and writing chat logs (LOG).
+pub mod log;
