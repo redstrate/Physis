@@ -48,6 +48,10 @@ Physis also supports doing some other useful things other than reading and writi
 
 Only Windows versions of the game is supported at the moment. Only the latest version in a patch series is supported, but benchmarks for the expansion should be supported.
 
+## Supported Platforms
+
+Physis compiles and runs on all major platforms including Windows, macOS, Linux and WebAssembly.
+
 ## Usage
 
 If you want to use Physis in your Rust project, you can simply add it as a dependency in `Cargo.toml`:
