@@ -27,7 +27,7 @@ required-features = ["retail_game_testing"]
 hmac-sha512 = "1"
 
 # used while rust doesn't have native benchmarking capability
-brunch = { version = "0.5.3", default-features = false }
+brunch = { version = "0.9", default-features = false }
 
 # used for testing our crc implementations
 crc = "3"
@@ -43,10 +43,11 @@ patch_testing = []
 # amazing binary parsing/writing library
 binrw = { version = "0.14", features = ["std"], default-features = false }
 
+# for logging
 tracing = { version = "0.1", features = ["std"], default-features = false }
 
 # used for zlib compression in sqpack files
-libz-rs-sys = { version = "0.4", features = ["std", "rust-allocator"], default-features = false }
+libz-rs-sys = { version = "0.5", features = ["std", "rust-allocator"], default-features = false }
 
 # needed for half-float support which FFXIV uses in its model data
 half = { version = "2", features = ["std"], default-features = false }
