@@ -31,11 +31,6 @@ jobs:
           ~/.cargo/git/db/
           target/
         key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.toml') }}
-    - name: Install dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install \
-          libunshield-dev \
     - name: Install Cargo dependencies
       if: steps.cache-deps.outputs.cache-hit != 'true'
       run: |
@@ -64,3 +59,21 @@ jobs:
     - name: Run semver-checks
       run: |
         cargo semver-checks check-release
+
+    retail-test:
+        runs-on: retail
+
+        steps:
+        - uses: actions/checkout@v4
+        - uses: actions/cache@v4
+          id: cache-deps
+          with:
+            path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+            key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.toml') }}
+        - name: Build
+          run: cargo build --verbose
