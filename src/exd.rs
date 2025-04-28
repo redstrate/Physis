@@ -3,12 +3,12 @@
 
 use std::io::{BufWriter, Cursor, Read, Seek, SeekFrom, Write};
 
-use binrw::{binrw, BinResult, BinWrite};
 use binrw::{BinRead, Endian};
+use binrw::{BinResult, BinWrite, binrw};
 
-use crate::{ByteBuffer, ByteSpan};
 use crate::common::Language;
 use crate::exh::{ColumnDataType, EXH, ExcelColumnDefinition, ExcelDataPagination};
+use crate::{ByteBuffer, ByteSpan};
 
 #[binrw]
 #[brw(magic = b"EXDF")]
@@ -74,8 +74,7 @@ fn parse_rows(exh: &EXH, data_offsets: &Vec<ExcelDataOffset>) -> BinResult<Vec<E
         let new_row = if row_header.row_count > 1 {
             let mut rows = Vec::new();
             for i in 0..row_header.row_count {
-                let subrow_offset =
-                    data_offset + (i * exh.header.data_offset + 2 * (i + 1)) as u32;
+                let subrow_offset = data_offset + (i * exh.header.data_offset + 2 * (i + 1)) as u32;
 
                 rows.push(read_row(subrow_offset).unwrap());
             }
@@ -85,7 +84,7 @@ fn parse_rows(exh: &EXH, data_offsets: &Vec<ExcelDataOffset>) -> BinResult<Vec<E
         };
         rows.push(ExcelRow {
             row_id: offset.row_id,
-            kind: new_row
+            kind: new_row,
         });
     }
 
@@ -93,25 +92,26 @@ fn parse_rows(exh: &EXH, data_offsets: &Vec<ExcelDataOffset>) -> BinResult<Vec<E
 }
 
 #[binrw::writer(writer)]
-fn write_rows(
-    rows: &Vec<ExcelRow>,
-    exh: &EXH,
-) -> BinResult<()> {
+fn write_rows(rows: &Vec<ExcelRow>, exh: &EXH) -> BinResult<()> {
     // seek past the data offsets, which we will write later
     let data_offsets_pos = writer.stream_position().unwrap();
-    writer.seek(SeekFrom::Current((core::mem::size_of::<ExcelDataOffset>() * rows.len()) as i64)).unwrap();
+    writer
+        .seek(SeekFrom::Current(
+            (core::mem::size_of::<ExcelDataOffset>() * rows.len()) as i64,
+        ))
+        .unwrap();
 
     let mut data_offsets = Vec::new();
 
     for row in rows {
         data_offsets.push(ExcelDataOffset {
             row_id: row.row_id,
-            offset: writer.stream_position().unwrap() as u32
+            offset: writer.stream_position().unwrap() as u32,
         });
 
         let row_header = ExcelDataRowHeader {
             data_size: 0,
-            row_count: 0
+            row_count: 0,
         };
         row_header.write(writer).unwrap();
 
@@ -129,7 +129,7 @@ fn write_rows(
                     for row in excel_single_rows {
                         write_row(row);
                     }
-                },
+                }
             }
         }
 
@@ -141,7 +141,7 @@ fn write_rows(
                         ColumnData::String(val) => {
                             let bytes = val.as_bytes();
                             bytes.write(writer).unwrap();
-                        },
+                        }
                         _ => {}
                     }
                 }
@@ -153,7 +153,7 @@ fn write_rows(
                     for row in excel_single_rows {
                         write_row_strings(row);
                     }
-                },
+                }
             }
         }
 
@@ -208,7 +208,7 @@ pub struct ExcelSingleRow {
 #[derive(Debug)]
 pub enum ExcelRowKind {
     SingleRow(ExcelSingleRow),
-    SubRows(Vec<ExcelSingleRow>)
+    SubRows(Vec<ExcelSingleRow>),
 }
 
 #[derive(Debug)]
@@ -272,12 +272,20 @@ impl EXD {
             ColumnDataType::Int8 => Some(ColumnData::Int8(Self::read_data_raw(cursor).unwrap())),
             ColumnDataType::UInt8 => Some(ColumnData::UInt8(Self::read_data_raw(cursor).unwrap())),
             ColumnDataType::Int16 => Some(ColumnData::Int16(Self::read_data_raw(cursor).unwrap())),
-            ColumnDataType::UInt16 => Some(ColumnData::UInt16(Self::read_data_raw(cursor).unwrap())),
+            ColumnDataType::UInt16 => {
+                Some(ColumnData::UInt16(Self::read_data_raw(cursor).unwrap()))
+            }
             ColumnDataType::Int32 => Some(ColumnData::Int32(Self::read_data_raw(cursor).unwrap())),
-            ColumnDataType::UInt32 => Some(ColumnData::UInt32(Self::read_data_raw(cursor).unwrap())),
-            ColumnDataType::Float32 => Some(ColumnData::Float32(Self::read_data_raw(cursor).unwrap())),
+            ColumnDataType::UInt32 => {
+                Some(ColumnData::UInt32(Self::read_data_raw(cursor).unwrap()))
+            }
+            ColumnDataType::Float32 => {
+                Some(ColumnData::Float32(Self::read_data_raw(cursor).unwrap()))
+            }
             ColumnDataType::Int64 => Some(ColumnData::Int64(Self::read_data_raw(cursor).unwrap())),
-            ColumnDataType::UInt64 => Some(ColumnData::UInt64(Self::read_data_raw(cursor).unwrap())),
+            ColumnDataType::UInt64 => {
+                Some(ColumnData::UInt64(Self::read_data_raw(cursor).unwrap()))
+            }
             ColumnDataType::PackedBool0 => Some(ColumnData::Bool(read_packed_bool(0))),
             ColumnDataType::PackedBool1 => Some(ColumnData::Bool(read_packed_bool(1))),
             ColumnDataType::PackedBool2 => Some(ColumnData::Bool(read_packed_bool(2))),
@@ -293,11 +301,11 @@ impl EXD {
         value.write_options(cursor, Endian::Big, ()).unwrap()
     }
 
-     fn write_column<T: Write + Seek>(
+    fn write_column<T: Write + Seek>(
         cursor: &mut T,
         column: &ColumnData,
         column_definition: &ExcelColumnDefinition,
-     ) {
+    ) {
         let write_packed_bool = |cursor: &mut T, shift: i32, boolean: &bool| {
             let val = 0i32; // TODO
             Self::write_data_raw(cursor, &val);
@@ -307,20 +315,18 @@ impl EXD {
             ColumnData::String(_) => {
                 let string_offset = 0u32; // TODO, but 0 is fine for single string column data
                 Self::write_data_raw(cursor, &string_offset);
-            },
-            ColumnData::Bool(val) => {
-                match column_definition.data_type {
-                    ColumnDataType::Bool => todo!(),
-                    ColumnDataType::PackedBool0 => write_packed_bool(cursor, 0, val),
-                    ColumnDataType::PackedBool1 => write_packed_bool(cursor, 1, val),
-                    ColumnDataType::PackedBool2 => write_packed_bool(cursor, 2, val),
-                    ColumnDataType::PackedBool3 => write_packed_bool(cursor, 3, val),
-                    ColumnDataType::PackedBool4 => write_packed_bool(cursor, 4, val),
-                    ColumnDataType::PackedBool5 => write_packed_bool(cursor, 5, val),
-                    ColumnDataType::PackedBool6 => write_packed_bool(cursor, 6, val),
-                    ColumnDataType::PackedBool7 => write_packed_bool(cursor, 7, val),
-                    _ => panic!("This makes no sense!")
-                }
+            }
+            ColumnData::Bool(val) => match column_definition.data_type {
+                ColumnDataType::Bool => todo!(),
+                ColumnDataType::PackedBool0 => write_packed_bool(cursor, 0, val),
+                ColumnDataType::PackedBool1 => write_packed_bool(cursor, 1, val),
+                ColumnDataType::PackedBool2 => write_packed_bool(cursor, 2, val),
+                ColumnDataType::PackedBool3 => write_packed_bool(cursor, 3, val),
+                ColumnDataType::PackedBool4 => write_packed_bool(cursor, 4, val),
+                ColumnDataType::PackedBool5 => write_packed_bool(cursor, 5, val),
+                ColumnDataType::PackedBool6 => write_packed_bool(cursor, 6, val),
+                ColumnDataType::PackedBool7 => write_packed_bool(cursor, 7, val),
+                _ => panic!("This makes no sense!"),
             },
             ColumnData::Int8(val) => Self::write_data_raw(cursor, val),
             ColumnData::UInt8(val) => Self::write_data_raw(cursor, val),
@@ -351,7 +357,7 @@ impl EXD {
         }
     }
 
-      pub fn write_to_buffer(&self, exh: &EXH) -> Option<ByteBuffer> {
+    pub fn write_to_buffer(&self, exh: &EXH) -> Option<ByteBuffer> {
         let mut buffer = ByteBuffer::new();
 
         {

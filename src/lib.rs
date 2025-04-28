@@ -90,10 +90,6 @@ pub mod pbd;
 mod crc;
 mod sha1;
 
-mod model_file_operations;
-
-pub mod model_vertex_declarations;
-
 /// Reading layer information for a map (LGB)
 pub mod layer;
 

@@ -3,6 +3,10 @@
 
 #![allow(clippy::unnecessary_fallible_conversions)] // This wrongly trips on binrw code
 
+mod file_operations;
+
+pub mod vertex_declarations;
+
 use std::io::{Cursor, Seek, SeekFrom};
 use std::mem::size_of;
 
@@ -11,11 +15,11 @@ use binrw::BinReaderExt;
 use binrw::{BinWrite, BinWriterExt, binrw};
 
 use crate::common_file_operations::{read_bool_from, write_bool_as};
-use crate::model_vertex_declarations::{
+use crate::{ByteBuffer, ByteSpan};
+use vertex_declarations::{
     VERTEX_ELEMENT_SIZE, VertexDeclaration, VertexType, VertexUsage, vertex_element_parser,
     vertex_element_writer,
 };
-use crate::{ByteBuffer, ByteSpan};
 
 pub const NUM_VERTICES: u32 = 17;
 
