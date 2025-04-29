@@ -28,8 +28,6 @@ name = "retail_test"
 required-features = ["retail_game_testing"]
 
 [dev-dependencies]
-hmac-sha512 = "1"
-
 # used while rust doesn't have native benchmarking capability
 brunch = { version = "0.9", default-features = false }
 
