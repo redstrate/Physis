@@ -5,6 +5,7 @@ use std::fs::read;
 use std::io::Cursor;
 use std::path::Path;
 
+use crate::common_file_operations::{read_string, write_string};
 use crate::{ByteBuffer, ByteSpan};
 use binrw::binrw;
 use binrw::{BinRead, BinWrite};
@@ -42,8 +43,8 @@ pub struct FIINEntry {
     #[brw(pad_before = 4)]
     #[br(count = 64)]
     #[bw(pad_size_to = 64)]
-    #[bw(map = |x : &String | x.as_bytes())]
-    #[br(map = | x: Vec<u8> | String::from_utf8(x).unwrap().trim_matches(char::from(0)).to_string())]
+    #[bw(map = write_string)]
+    #[br(map = read_string)]
     pub file_name: String,
 
     /// SHA1 of the file
