@@ -2,13 +2,12 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 use crate::ByteBuffer;
-use crate::dat::DatHeader;
 use crate::equipment::Slot;
+use crate::savedata::dat::DatHeader;
 use binrw::NullString;
 use binrw::binrw;
 use binrw::{BinRead, BinWrite};
 use std::collections::HashMap;
-use std::io::BufWriter;
 use std::io::Cursor;
 use std::io::Read;
 
@@ -247,7 +246,7 @@ impl GearSets {
             let mut cursor = Cursor::new(&mut buffer);
 
             let header = DatHeader {
-                file_type: crate::dat::DatFileType::Gearset,
+                file_type: crate::savedata::dat::DatFileType::Gearset,
                 max_size: 45205,
                 content_size: 45205,
             };

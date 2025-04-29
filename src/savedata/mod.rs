@@ -9,3 +9,6 @@ pub mod gearsets;
 
 /// Reading and writing chat logs (LOG).
 pub mod log;
+
+/// Reading the binary .dat files in the user folder (e.g. GEARSET.dat)
+pub mod dat;

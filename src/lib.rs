@@ -144,8 +144,5 @@ pub mod patchlist;
 
 mod bcn;
 
-/// Reading the binary .dat files in the user folder (e.g. GEARSET.dat)
-pub mod dat;
-
 mod error;
 pub use error::Error;
