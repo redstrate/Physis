@@ -26,6 +26,11 @@ fn test_gamedata_extract() {
 #[test]
 fn test_item_read() {
     let game_dir = env::var("FFXIV_GAME_DIR").unwrap();
+    let is_benchmark = env::var("FFXIV_IS_BENCHMARK").unwrap_or_default();
+    if is_benchmark == "1" {
+        // Skip this test because this benchmarks don't have item names.
+        return;
+    }
 
     let mut game_data = physis::gamedata::GameData::from_existing(
         Platform::Win32,
