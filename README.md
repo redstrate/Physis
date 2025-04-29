@@ -33,20 +33,10 @@ Physis also supports doing some other useful things other than reading and writi
 * Apply game patches. Indexed ZiPatch is not yet supported, though.
 * Blockfish ciphers for encrypting and decrypting [SqexArg](https://docs.xiv.zone/concept/sqexarg/).
 * Construct paths to equipment, items, faces, and other useful models.
-* Extract strings from executables.
 
 ## Supported Game Versions
 
-| Version              | Works | Note                                                                             |
-|----------------------|-------|----------------------------------------------------------------------------------|
-| A Realm Reborn (2.x) | ???   | Have yet to test.                                                                |
-| Heavensward (3.x)    | ???   | Have yet to test.                                                                |
-| Stormblood (4.x)     | ???   | Have yet to test.                                                                |
-| Shadowbringers (5.x) | ✅     |                                                                                  |
-| Endwalker (6.x)      | ✅     |                                                                                  |
-| Dawntrail (7.x)      | ✅     | Visual formats (models, materials, etc) by Physis crashes the 7.x retail client. |
-
-Only Windows versions of the game is supported at the moment. Only the latest version in a patch series is supported, but benchmarks for the expansion should be supported.
+All game versions are supported, including benchmark versions of the game. Only the Windows client data is tested and other platforms probably won't work.
 
 ## Supported Platforms
 
