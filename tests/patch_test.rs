@@ -5,7 +5,6 @@ use std::fs::read_dir;
 
 use std::path::{Path, PathBuf};
 
-#[cfg(feature = "patch_testing")]
 fn make_temp_install_dir(name: &str) -> String {
     use physis::installer::install_game;
 
@@ -50,7 +49,6 @@ fn recurse(path: impl AsRef<Path>) -> Vec<PathBuf> {
         .collect()
 }
 
-#[cfg(feature = "patch_testing")]
 fn fill_dir_hash(game_dir: &str) -> HashMap<String, [u8; 64]> {
     let mut file_hashes: HashMap<String, [u8; 64]> = HashMap::new();
 
@@ -71,7 +69,6 @@ fn fill_dir_hash(game_dir: &str) -> HashMap<String, [u8; 64]> {
     file_hashes
 }
 
-#[cfg(feature = "patch_testing")]
 fn physis_install_patch(game_directory: &str, data_directory: &str, patch_name: &str) {
     let patch_dir = env::var("FFXIV_PATCH_DIR").unwrap();
 
@@ -81,7 +78,6 @@ fn physis_install_patch(game_directory: &str, data_directory: &str, patch_name: 
     ZiPatch::apply(&data_dir, &patch_path).unwrap();
 }
 
-#[cfg(feature = "patch_testing")]
 fn xivlauncher_install_patch(game_directory: &str, data_directory: &str, patch_name: &str) {
     let patch_dir = env::var("FFXIV_PATCH_DIR").unwrap();
     let patcher_exe = env::var("FFXIV_XIV_LAUNCHER_PATCHER")
@@ -106,7 +102,6 @@ fn xivlauncher_install_patch(game_directory: &str, data_directory: &str, patch_n
     assert!(output.status.success());
 }
 
-#[cfg(feature = "patch_testing")]
 fn check_if_files_match(xivlauncher_dir: &str, physis_dir: &str) {
     let xivlauncher_files = fill_dir_hash(xivlauncher_dir);
     let physis_files = fill_dir_hash(physis_dir);
@@ -121,7 +116,6 @@ fn check_if_files_match(xivlauncher_dir: &str, physis_dir: &str) {
 }
 
 #[test]
-#[cfg(feature = "patch_testing")]
 fn test_patching() {
     println!("Beginning game installation...");
 

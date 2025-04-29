@@ -21,11 +21,15 @@ harness = false
 [[bench]]
 name = "retail_benchmark"
 harness = false
-required-features = ["retail_game_testing"]
+required-features = ["retail_testing"]
 
 [[test]]
 name = "retail_test"
-required-features = ["retail_game_testing"]
+required-features = ["retail_testing"]
+
+[[test]]
+name = "patch_test"
+required-features = ["patch_testing"]
 
 [dev-dependencies]
 # used while rust doesn't have native benchmarking capability
@@ -38,7 +42,7 @@ crc = "3"
 default = []
 
 # testing only features
-retail_game_testing = []
+retail_testing = []
 patch_testing = []
 
 [dependencies]
