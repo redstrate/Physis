@@ -17,8 +17,10 @@ run automatically by the CI.
 ### Retail Testing
 
 There are some tests and benchmarks require the environment variable `FFXIV_GAME_DIR` to be set. By default, these are disabled
-since they require a legitimate copy of the retail game data. These tests can be turned on via the `retail_game_testing`
+since they require a legitimate copy of the retail game data. These tests can be turned on via the `retail_testing`
 feature.
+
+I have a testing platform that tests Physis against multiple game versions. Currently it has to be manually run, and it's lacking a results web page.
 
 ### Patch Testing
 
