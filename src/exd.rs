@@ -185,7 +185,7 @@ pub struct EXD {
     pub rows: Vec<ExcelRow>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum ColumnData {
     String(String),
     Bool(bool),
@@ -200,12 +200,12 @@ pub enum ColumnData {
     UInt64(u64),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ExcelSingleRow {
     pub columns: Vec<ColumnData>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum ExcelRowKind {
     SingleRow(ExcelSingleRow),
     SubRows(Vec<ExcelSingleRow>),
@@ -220,6 +220,16 @@ pub struct ExcelRow {
 impl EXD {
     pub fn from_existing(exh: &EXH, buffer: ByteSpan) -> Option<EXD> {
         EXD::read_args(&mut Cursor::new(&buffer), (exh,)).ok()
+    }
+
+    pub fn get_row(&self, row_id: u32) -> Option<ExcelRowKind> {
+        for row in &self.rows {
+            if row.row_id == row_id {
+                return Some(row.kind.clone());
+            }
+        }
+
+        return None;
     }
 
     fn read_data_raw<T: Read + Seek, Z: BinRead<Args<'static> = ()>>(cursor: &mut T) -> Option<Z> {
