@@ -6,6 +6,8 @@ use std::env;
 use physis::{
     common::{Language, Platform},
     exd::{ColumnData, ExcelRowKind},
+    race::{Gender, Race, Tribe, build_skeleton_path},
+    skeleton::Skeleton,
 };
 
 /// Test to see if we can find the root EXL. It exists in every version, and is a pretty safe indicator whether our SqPack reading works.
@@ -57,4 +59,27 @@ fn test_item_read() {
     }
 
     panic!("Item not found!");
+}
+
+/// Test to see if we can parse Havok skeletons.
+#[test]
+fn test_parse_skeleton() {
+    let game_dir = env::var("FFXIV_GAME_DIR").unwrap();
+
+    let mut game_data = physis::gamedata::GameData::from_existing(
+        Platform::Win32,
+        format!("{}/game", game_dir).as_str(),
+    )
+    .unwrap();
+
+    let sklb_path = build_skeleton_path(Race::Hyur, Tribe::Midlander, Gender::Male);
+    let sklb = game_data.extract(&sklb_path).unwrap();
+    let skeleton = Skeleton::from_existing(&sklb).unwrap();
+    for bone in &skeleton.bones {
+        if bone.name == "j_kosi" {
+            return;
+        }
+    }
+
+    panic!("Could not find bone!");
 }
