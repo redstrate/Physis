@@ -12,7 +12,7 @@ use binrw::binrw;
 #[derive(Debug, Copy, Clone)]
 /// The language the game data is written for. Some of these languages are supported in the Global region.
 pub enum Language {
-    /// Used for data that is language-agnostic, such as item data.
+    /// Used for data that is language-agnostic.
     None,
     /// Japanese language.
     Japanese,
