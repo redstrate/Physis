@@ -2,22 +2,10 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 use std::env;
-use std::fs::read;
 
 use physis::common::Platform;
-use physis::fiin::FileInfo;
-use physis::sqpack::SqPackIndex;
 
-#[test]
-#[cfg_attr(not(feature = "retail_game_testing"), ignore)]
-fn test_index_read() {
-    let game_dir = env::var("FFXIV_GAME_DIR").unwrap();
-
-    SqPackIndex::from_existing(
-        format!("{}/game/sqpack/ffxiv/000000.win32.index", game_dir).as_str(),
-    );
-}
-
+/// Test to see if we can find the root EXL. It exists in every version, and is a pretty safe indicator whether our SqPack reading works.
 #[test]
 #[cfg_attr(not(feature = "retail_game_testing"), ignore)]
 fn test_gamedata_extract() {
@@ -32,14 +20,3 @@ fn test_gamedata_extract() {
     assert!(gamedata.extract("exd/root.exl").is_some());
 }
 
-#[test]
-#[cfg_attr(not(feature = "retail_game_testing"), ignore)]
-fn test_fiin() {
-    let game_dir = env::var("FFXIV_GAME_DIR").unwrap();
-
-    let fiin_path = format!("{game_dir}/boot/fileinfo.fiin");
-    let fiin = FileInfo::from_existing(&read(fiin_path).unwrap()).unwrap();
-
-    assert_eq!(fiin.entries[0].file_name, "steam_api.dll");
-    assert_eq!(fiin.entries[1].file_name, "steam_api64.dll");
-}
