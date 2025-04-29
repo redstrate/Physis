@@ -65,7 +65,7 @@ fn parse_rows(exh: &EXH, data_offsets: &Vec<ExcelDataOffset>) -> BinResult<Vec<E
 
                 subrow
                     .columns
-                    .push(EXD::read_column(reader, exh, column).unwrap());
+                    .push(EXD::read_column(reader, exh, row_offset, column).unwrap());
             }
 
             Some(subrow)
@@ -182,7 +182,7 @@ pub struct EXD {
 
     #[br(parse_with = parse_rows, args(&exh, &data_offsets))]
     #[bw(write_with = write_rows, args(&exh))]
-    rows: Vec<ExcelRow>,
+    pub rows: Vec<ExcelRow>,
 }
 
 #[derive(Debug)]
@@ -229,6 +229,7 @@ impl EXD {
     fn read_column<T: Read + Seek>(
         cursor: &mut T,
         exh: &EXH,
+        row_offset: u32,
         column: &ExcelColumnDefinition,
     ) -> Option<ColumnData> {
         let mut read_packed_bool = |shift: i32| -> bool {
@@ -242,12 +243,9 @@ impl EXD {
             ColumnDataType::String => {
                 let string_offset: u32 = Self::read_data_raw(cursor).unwrap();
 
-                let old_pos = cursor.stream_position().unwrap();
-
-                // -4 to take into account reading string_offset
                 cursor
-                    .seek(SeekFrom::Current(
-                        (exh.header.data_offset as u32 + string_offset - 4).into(),
+                    .seek(SeekFrom::Start(
+                        (row_offset + exh.header.data_offset as u32 + string_offset).into(),
                     ))
                     .ok()?;
 
@@ -258,8 +256,6 @@ impl EXD {
                     string.push(byte as char);
                     byte = Self::read_data_raw(cursor).unwrap();
                 }
-
-                cursor.seek(SeekFrom::Start(old_pos)).unwrap();
 
                 Some(ColumnData::String(string))
             }
