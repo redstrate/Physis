@@ -23,6 +23,10 @@ name = "retail_benchmark"
 harness = false
 required-features = ["retail_game_testing"]
 
+[[test]]
+name = "retail_test"
+required-features = ["retail_game_testing"]
+
 [dev-dependencies]
 hmac-sha512 = "1"
 

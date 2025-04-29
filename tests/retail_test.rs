@@ -7,7 +7,6 @@ use physis::common::Platform;
 
 /// Test to see if we can find the root EXL. It exists in every version, and is a pretty safe indicator whether our SqPack reading works.
 #[test]
-#[cfg_attr(not(feature = "retail_game_testing"), ignore)]
 fn test_gamedata_extract() {
     let game_dir = env::var("FFXIV_GAME_DIR").unwrap();
 
@@ -19,4 +18,3 @@ fn test_gamedata_extract() {
 
     assert!(gamedata.extract("exd/root.exl").is_some());
 }
-
