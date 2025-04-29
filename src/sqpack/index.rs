@@ -29,11 +29,11 @@ pub struct SegementDescriptor {
 }
 
 #[binrw]
-#[brw(repr = u8)]
+#[brw(repr = u32)]
 #[derive(Debug, PartialEq)]
 pub enum IndexType {
-    Index1,
-    Index2,
+    Index1 = 0,
+    Index2 = 2,
 }
 
 #[binrw]
@@ -49,12 +49,12 @@ pub struct SqPackIndexHeader {
 
     unknown_descriptor: SegementDescriptor,
 
+    #[brw(pad_after = 4)]
     folder_descriptor: SegementDescriptor,
 
-    #[brw(pad_size_to = 4)]
     pub(crate) index_type: IndexType,
 
-    #[brw(pad_before = 656)]
+    #[brw(pad_before = 652)]
     #[brw(pad_after = 44)]
     // The SHA1 of the bytes immediately before this
     sha1_hash: [u8; 20],
