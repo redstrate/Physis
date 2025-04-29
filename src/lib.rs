@@ -89,9 +89,6 @@ pub mod layer;
 
 pub mod tera;
 
-/// Reading data from executables
-pub mod execlookup;
-
 mod common_file_operations;
 
 /// Reading word dictionaries, such as the vulgar word list.
@@ -135,9 +132,6 @@ pub mod avfx;
 
 /// Reading STM files
 pub mod stm;
-
-/// Find existing installation directories
-pub mod existing_dirs;
 
 /// Reading patch lists
 pub mod patchlist;
