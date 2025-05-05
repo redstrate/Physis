@@ -21,10 +21,7 @@ fn main() {
     let destination_path = &args[3];
 
     /// Create a GameData struct, this manages the repositories. It allows us to easily extract files.
-    let Some(mut game_data) = GameData::from_existing(Platform::Win32, game_dir) else {
-        println!("Invalid game directory ({})!", game_dir);
-        return;
-    };
+    let mut game_data = GameData::from_existing(Platform::Win32, game_dir);
 
     /// Extract said file:
     let Some(game_file) = game_data.extract(file_path) else {

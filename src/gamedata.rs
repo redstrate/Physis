@@ -58,8 +58,8 @@ pub enum RepairError<'a> {
 impl GameData {
     /// Read game data from an existing game installation.
     ///
-    /// This will return _None_ if the game directory is not valid, but it does not check the validity
-    /// of each individual file.
+    /// This will return a GameData even if the game directory is technically
+    /// invalid, but it won't have any repositories.
     ///
     /// # Example
     ///
@@ -68,7 +68,7 @@ impl GameData {
     /// use physis::gamedata::GameData;
     /// GameData::from_existing(Platform::Win32, "$FFXIV/game");
     /// ```
-    pub fn from_existing(platform: Platform, directory: &str) -> Option<GameData> {
+    pub fn from_existing(platform: Platform, directory: &str) -> GameData {
         debug!(directory, "Loading game directory");
 
         match is_valid(directory) {
@@ -79,11 +79,15 @@ impl GameData {
                     index_files: HashMap::new(),
                 };
                 data.reload_repositories(platform);
-                Some(data)
+                data
             }
             false => {
-                warn!("Game data is not valid!");
-                None
+                warn!("Game data is not valid! Treating it as a new install...");
+                Self {
+                    game_directory: String::from(directory),
+                    repositories: vec![],
+                    index_files: HashMap::new(),
+                }
             }
         }
     }
@@ -146,7 +150,7 @@ impl GameData {
     /// ```should_panic
     /// # use physis::common::Platform;
     /// use physis::gamedata::GameData;
-    /// # let mut game = GameData::from_existing(Platform::Win32, "SquareEnix/Final Fantasy XIV - A Realm Reborn/game").unwrap();
+    /// # let mut game = GameData::from_existing(Platform::Win32, "SquareEnix/Final Fantasy XIV - A Realm Reborn/game");
     /// if game.exists("exd/cid.exl") {
     ///     println!("Cid really does exist!");
     /// } else {
@@ -170,7 +174,7 @@ impl GameData {
     /// # use physis::gamedata::GameData;
     /// # use std::io::Write;
     /// use physis::common::Platform;
-    /// # let mut game = GameData::from_existing(Platform::Win32, "SquareEnix/Final Fantasy XIV - A Realm Reborn/game").unwrap();
+    /// # let mut game = GameData::from_existing(Platform::Win32, "SquareEnix/Final Fantasy XIV - A Realm Reborn/game");
     /// let data = game.extract("exd/root.exl").unwrap();
     ///
     /// let mut file = std::fs::File::create("root.exl").unwrap();
@@ -433,7 +437,7 @@ mod tests {
         d.push("valid_sqpack");
         d.push("game");
 
-        GameData::from_existing(Platform::Win32, d.to_str().unwrap()).unwrap()
+        GameData::from_existing(Platform::Win32, d.to_str().unwrap())
     }
 
     #[test]
