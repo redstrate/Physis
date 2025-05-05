@@ -202,6 +202,10 @@ impl GameData {
 
     /// Parses a path structure and spits out the corresponding category and repository.
     fn parse_repository_category(&self, path: &str) -> Option<(&Repository, Category)> {
+        if self.repositories.is_empty() {
+            return None
+        }
+
         let tokens = path.split_once('/')?;
 
         let repository_token = tokens.1;
