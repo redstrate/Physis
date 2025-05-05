@@ -147,7 +147,7 @@ impl GameData {
     ///
     /// # Example
     ///
-    /// ```should_panic
+    /// ```
     /// # use physis::common::Platform;
     /// use physis::gamedata::GameData;
     /// # let mut game = GameData::from_existing(Platform::Win32, "SquareEnix/Final Fantasy XIV - A Realm Reborn/game");
@@ -203,7 +203,7 @@ impl GameData {
     /// Parses a path structure and spits out the corresponding category and repository.
     fn parse_repository_category(&self, path: &str) -> Option<(&Repository, Category)> {
         if self.repositories.is_empty() {
-            return None
+            return None;
         }
 
         let tokens = path.split_once('/')?;

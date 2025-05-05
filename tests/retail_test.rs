@@ -18,8 +18,7 @@ fn test_gamedata_extract() {
     let mut game_data = physis::gamedata::GameData::from_existing(
         Platform::Win32,
         format!("{}/game", game_dir).as_str(),
-    )
-    .unwrap();
+    );
 
     assert!(game_data.extract("exd/root.exl").is_some());
 }
@@ -37,8 +36,7 @@ fn test_item_read() {
     let mut game_data = physis::gamedata::GameData::from_existing(
         Platform::Win32,
         format!("{}/game", game_dir).as_str(),
-    )
-    .unwrap();
+    );
 
     let exh = game_data.read_excel_sheet_header("Item").unwrap();
     let exd = game_data
