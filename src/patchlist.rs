@@ -54,7 +54,7 @@ impl PatchList {
 
         let mut patch_length = 0;
         if let Some(patch_length_index) = encoded.find("X-Patch-Length: ") {
-            let rest_of_string = &encoded[patch_length_index..];
+            let rest_of_string = &encoded[patch_length_index + 16..];
             if let Some(end_of_number_index) = rest_of_string.find("\r\n") {
                 let patch_length_parse: Result<u64, _> =
                     rest_of_string[0..end_of_number_index].parse();
@@ -193,6 +193,7 @@ mod tests {
             "http://patch-dl.ffxiv.com/boot/2b5cbc63/D2023.09.14.0000.0001.patch"
         );
         assert_eq!(patch_list.patches[0].size_on_disk, 69674819);
+        assert_eq!(patch_list.patch_length, 22221335);
     }
 
     #[test]
@@ -260,6 +261,7 @@ mod tests {
             "http://patch-dl.ffxiv.com/game/ex1/6b936f08/D2023.07.26.0000.0001.patch"
         );
         assert_eq!(patch_list.patches[5].size_on_disk, 5854598228);
+        assert_eq!(patch_list.patch_length, 1664916486);
     }
 
     #[test]
