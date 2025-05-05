@@ -18,25 +18,29 @@ pub struct BootData {
 impl BootData {
     /// Reads from an existing boot data location.
     ///
-    /// This will return _None_ if the boot directory is not valid, but it does not check the validity
-    /// of each individual file.
+    /// This will return a BootData even if the game directory is technically
+    /// invalid, but it won't have a valid version.
     ///
     /// # Example
     ///
     /// ```
     /// # use physis::bootdata::BootData;
     /// let boot = BootData::from_existing("SquareEnix/Final Fantasy XIV - A Realm Reborn/boot");
-    /// # assert!(boot.is_none())
     /// ```
-    pub fn from_existing(directory: &str) -> Option<BootData> {
+    pub fn from_existing(directory: &str) -> BootData {
         match Self::is_valid(directory) {
-            true => Some(BootData {
-                path: directory.parse().ok()?,
-                version: fs::read_to_string(format!("{directory}/ffxivboot.ver")).ok()?,
-            }),
+            true => BootData {
+                path: directory.parse().ok().unwrap(),
+                version: fs::read_to_string(format!("{directory}/ffxivboot.ver"))
+                    .ok()
+                    .unwrap(),
+            },
             false => {
-                warn!("Boot data is not valid!");
-                None
+                warn!("Boot data is not valid! Returning one anyway, but without a version.");
+                BootData {
+                    path: directory.parse().ok().unwrap(),
+                    version: String::default(),
+                }
             }
         }
     }
@@ -67,7 +71,8 @@ mod tests {
         d.push("resources/tests");
         d.push("valid_boot");
 
-        assert!(BootData::from_existing(d.as_path().to_str().unwrap()).is_some());
+        let boot_data = BootData::from_existing(d.as_path().to_str().unwrap());
+        assert_eq!(boot_data.version, "2012.01.01.0000.0000");
     }
 
     #[test]
@@ -76,6 +81,7 @@ mod tests {
         d.push("resources/tests");
         d.push("invalid_boot"); // intentionally missing so it doesn't have a .ver
 
-        assert!(BootData::from_existing(d.as_path().to_str().unwrap()).is_none());
+        let boot_data = BootData::from_existing(d.as_path().to_str().unwrap());
+        assert_eq!(boot_data.version, "");
     }
 }
