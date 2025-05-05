@@ -51,8 +51,15 @@ impl BootData {
     }
 
     fn is_valid(path: &str) -> bool {
-        let d = PathBuf::from(path);
+        let mut d = PathBuf::from(path);
 
+        // Check if directory exists
+        if fs::metadata(d.as_path()).is_err() {
+            return false;
+        }
+
+        // Check if it has a version file
+        d.push("ffxivboot.ver");
         if fs::metadata(d.as_path()).is_err() {
             return false;
         }
