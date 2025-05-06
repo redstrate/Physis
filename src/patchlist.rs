@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 /// Represents a patch to be downloaded.
+#[derive(Debug)]
 pub struct PatchEntry {
     /// The URL of the patch file. Usually an HTTP URL.
     pub url: String,
@@ -23,11 +24,12 @@ pub struct PatchEntry {
 }
 
 /// A list of patch files the client is requested to download, and install.
+#[derive(Debug)]
 pub struct PatchList {
     /// The id of the patch list.
     // FIXME: this is most likely auto-generated, not set?
     pub id: String,
-    /// Size of all the patch files by size (in bytes.)
+    /// Size of the **ffxiv** repository patches only! In bytes.
     pub patch_length: u64,
     /// The content location, usually from an HTTP URL.
     pub content_location: String,
@@ -64,6 +66,14 @@ impl PatchList {
             }
         };
 
+        let mut content_location = String::default();
+        if let Some(patch_length_index) = encoded.find("Content-Location: ") {
+            let rest_of_string = &encoded[patch_length_index + 18..];
+            if let Some(end_of_number_index) = rest_of_string.find("\r\n") {
+                content_location = rest_of_string[0..end_of_number_index].to_string();
+            }
+        };
+
         let parts: Vec<_> = encoded.split("\r\n").collect();
         for i in 5..parts.len() - 2 {
             let patch_parts: Vec<_> = parts[i].split('\t').collect();
@@ -87,15 +97,15 @@ impl PatchList {
                     length: patch_parts[0].parse().unwrap(),
                     size_on_disk: patch_parts[1].parse().unwrap(),
                     hashes: patch_parts[7].split(',').map(|x| x.to_string()).collect(),
-                    unknown_a: 0,
-                    unknown_b: 0,
+                    unknown_a: patch_parts[2].parse().unwrap(),
+                    unknown_b: patch_parts[3].parse().unwrap(),
                 });
             }
         }
 
         Self {
             id: "".to_string(),
-            content_location: "".to_string(),
+            content_location,
             requested_version: "".to_string(),
             patch_length,
             patches,
@@ -171,6 +181,16 @@ impl PatchList {
         str.push_str("--\r\n");
 
         str
+    }
+
+    /// Size of all the patch files by size (in bytes.)
+    pub fn total_size_downloaded(&self) -> i64 {
+        let mut size = 0;
+        for patch in &self.patches {
+            size += patch.length;
+        }
+
+        return size;
     }
 }
 
