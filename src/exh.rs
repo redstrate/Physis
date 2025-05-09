@@ -32,7 +32,7 @@ pub struct EXHHeader {
 #[binrw]
 #[brw(repr(u16))]
 #[repr(u16)]
-#[derive(PartialEq, Eq, Clone, Debug)]
+#[derive(PartialEq, Eq, Clone, Copy, Debug)]
 pub enum ColumnDataType {
     String = 0x0,
     Bool = 0x1,
@@ -58,7 +58,7 @@ pub enum ColumnDataType {
 
 #[binrw]
 #[brw(big)]
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub struct ExcelColumnDefinition {
     pub data_type: ColumnDataType,
     pub offset: u16,
