@@ -200,6 +200,96 @@ pub enum ColumnData {
     UInt64(u64),
 }
 
+impl ColumnData {
+    // Returns a Some(String) if this column was a String, otherwise None.
+    pub fn into_string(&self) -> Option<&String> {
+        if let ColumnData::String(value) = self {
+            return Some(value);
+        }
+        None
+    }
+
+    // Returns a Some(bool) if this column was a Bool, otherwise None.
+    pub fn into_bool(&self) -> Option<&bool> {
+        if let ColumnData::Bool(value) = self {
+            return Some(value);
+        }
+        None
+    }
+
+    // Returns a Some(i8) if this column was a Int8, otherwise None.
+    pub fn into_i8(&self) -> Option<&i8> {
+        if let ColumnData::Int8(value) = self {
+            return Some(value);
+        }
+        None
+    }
+
+    // Returns a Some(u8) if this column was a UInt8, otherwise None.
+    pub fn into_u8(&self) -> Option<&u8> {
+        if let ColumnData::UInt8(value) = self {
+            return Some(value);
+        }
+        None
+    }
+
+    // Returns a Some(i16) if this column was a Int16, otherwise None.
+    pub fn into_i16(&self) -> Option<&i16> {
+        if let ColumnData::Int16(value) = self {
+            return Some(value);
+        }
+        None
+    }
+
+    // Returns a Some(u16) if this column was a UInt16, otherwise None.
+    pub fn into_u16(&self) -> Option<&u16> {
+        if let ColumnData::UInt16(value) = self {
+            return Some(value);
+        }
+        None
+    }
+
+    // Returns a Some(i32) if this column was a Int32, otherwise None.
+    pub fn into_i32(&self) -> Option<&i32> {
+        if let ColumnData::Int32(value) = self {
+            return Some(value);
+        }
+        None
+    }
+
+    // Returns a Some(u32) if this column was a UInt32, otherwise None.
+    pub fn into_u32(&self) -> Option<&u32> {
+        if let ColumnData::UInt32(value) = self {
+            return Some(value);
+        }
+        None
+    }
+
+    // Returns a Some(f32) if this column was a Float32, otherwise None.
+    pub fn into_f32(&self) -> Option<&f32> {
+        if let ColumnData::Float32(value) = self {
+            return Some(value);
+        }
+        None
+    }
+
+    // Returns a Some(i64) if this column was a Int64, otherwise None.
+    pub fn into_i64(&self) -> Option<&i64> {
+        if let ColumnData::Int64(value) = self {
+            return Some(value);
+        }
+        None
+    }
+
+    // Returns a Some(u64) if this column was a UInt64, otherwise None.
+    pub fn into_u64(&self) -> Option<&u64> {
+        if let ColumnData::UInt64(value) = self {
+            return Some(value);
+        }
+        None
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct ExcelSingleRow {
     pub columns: Vec<ColumnData>,
