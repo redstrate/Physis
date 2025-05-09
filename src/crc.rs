@@ -120,37 +120,19 @@ impl BitXorAssign<XivCrc32> for XivCrc32 {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crc::{Algorithm, Crc};
 
     #[test]
     fn check_jamcrc() {
-        use crc::{CRC_32_JAMCRC, Crc};
-
-        const JAMCR: Crc<u32> = Crc::<u32>::new(&CRC_32_JAMCRC);
-
+        const CRC: Jamcrc = Jamcrc::new();
         let bytes: [u8; 9] = [1, 1, 2, 4, 5, 6, 12, 12, 12];
 
-        const CRC: Jamcrc = Jamcrc::new();
-
-        assert_eq!(JAMCR.checksum(&bytes), CRC.checksum(&bytes))
+        assert_eq!(2411431516, CRC.checksum(&bytes))
     }
 
     #[test]
     fn check_xivcrc() {
-        const CRC_32_TEST: Algorithm<u32> = Algorithm {
-            width: 32,
-            poly: 0x04c11db7,
-            init: 0x00000000,
-            refin: true,
-            refout: true,
-            xorout: 0x00000000,
-            check: 0x765e7680,
-            residue: 0xc704dd7b,
-        };
-        const JAMCR: Crc<u32> = Crc::<u32>::new(&CRC_32_TEST);
-
         let str = "Default";
 
-        assert_eq!(XivCrc32::from(str).crc, JAMCR.checksum(str.as_bytes()));
+        assert_eq!(XivCrc32::from(str).crc, 2978997821);
     }
 }

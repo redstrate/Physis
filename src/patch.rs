@@ -10,7 +10,6 @@ use std::path::{Path, PathBuf};
 use crate::ByteBuffer;
 use binrw::BinRead;
 use binrw::{BinWrite, binrw};
-use tracing::{debug, warn};
 
 use crate::common::{Platform, Region, get_platform_string};
 use crate::common_file_operations::{
@@ -634,12 +633,12 @@ impl ZiPatch {
                                         file.seek(SeekFrom::Start(fop.offset))?;
                                         file.write_all(&data)?;
                                     } else {
-                                        warn!("{file_path} does not exist, skipping.");
+                                        // silently skip if it does not exist
                                     }
                                 }
                                 SqpkFileOperation::DeleteFile => {
                                     if fs::remove_file(file_path.as_str()).is_err() {
-                                        warn!("Failed to remove {file_path}");
+                                        // TODO: return an error if we failed to remove the file
                                     }
                                 }
                                 SqpkFileOperation::RemoveAll => {
@@ -662,30 +661,26 @@ impl ZiPatch {
                         }
                         SqpkOperation::PatchInfo(_) => {
                             // Currently, there's nothing we need from PatchInfo. Intentional NOP.
-                            debug!("PATCH: NOP PatchInfo");
                         }
                         SqpkOperation::TargetInfo(new_target_info) => {
                             target_info = Some(new_target_info);
                         }
                         SqpkOperation::Index(_) => {
                             // Currently, there's nothing we need from Index command. Intentional NOP.
-                            debug!("PATCH: NOP Index");
                         }
                     }
                 }
                 ChunkType::FileHeader(_) => {
                     // Currently there's nothing very useful in the FileHeader, so it's an intentional NOP.
-                    debug!("PATCH: NOP FileHeader");
                 }
                 ChunkType::ApplyOption(_) => {
                     // Currently, IgnoreMissing and IgnoreOldMismatch is not used in XIVQuickLauncher either. This stays as an intentional NOP.
-                    debug!("PATCH: NOP ApplyOption");
                 }
                 ChunkType::AddDirectory(_) => {
-                    debug!("PATCH: NOP AddDirectory");
+                    // another NOP
                 }
                 ChunkType::DeleteDirectory(_) => {
-                    debug!("PATCH: NOP DeleteDirectory");
+                    // another NOP
                 }
                 ChunkType::EndOfFile => {
                     return Ok(());

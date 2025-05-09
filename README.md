@@ -2,7 +2,7 @@
 
 [![Crates.io](https://img.shields.io/crates/v/physis)](https://crates.io/crates/physis) [![Docs Badge](https://img.shields.io/badge/docs-latest-blue)](https://docs.xiv.zone/docs/physis)
 
-Physis is a library for reading and writing FFXIV data. It doesn't only know how to read many formats, but it can write some of them too.
+Physis is a library for reading and writing FFXIV data. It knows how to read many of the game's formats, and can write some of them too.
 
 ## Supported Game Versions
 
@@ -14,6 +14,10 @@ Physis compiles and runs on all major platforms including Windows, macOS, Linux 
 
 ## Usage
 
+Physis exposes it's API in a few different languages:
+
+### Rust
+
 If you want to use Physis in your Rust project, you can simply add it as a dependency in `Cargo.toml`:
 
 ```toml
@@ -24,9 +28,13 @@ physis = "0.4"
 Documentation is available online at [docs.xiv.zone](https://docs.xiv.zone/docs/physis). It's automatically updated as new
 commits are pushed to the main branch.
 
-C# projects can use [PhysisSharp](https://github.com/redstrate/PhysisSharp) which exposes Physis in C#.
+### C/C++
 
-C/C++ projects (or anything that can interface with C libraries) can use [libphysis](https://github.com/redstrate/libphysis).
+C/C++ projects (or any language that can interface with C) can use [libphysis](https://github.com/redstrate/libphysis).
+
+### C#
+
+C# projects can use [PhysisSharp](https://github.com/redstrate/PhysisSharp) which exposes part of the Physis API to C#.
 
 ## Building
 
@@ -36,7 +44,7 @@ You need to set up [Rust](https://www.rust-lang.org/learn/get-started) and then 
 
 Feel free to submit patches to help fix bugs or add functionality. Filing issues is appreciated, but I do this in my free time so please don't expect professional support.
 
-See [CONTRIBUTING](CONTRIBUTING.md) for more information about the project.
+See [CONTRIBUTING](CONTRIBUTING.md) for more information about contributing back to the project!
 
 ## Credits & Thank You
 

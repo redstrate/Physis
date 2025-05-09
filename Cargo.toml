@@ -5,59 +5,30 @@ authors = ["Joshua Goins <josh@redstrate.com>"]
 edition = "2024"
 description = "Library for reading and writing FFXIV data."
 license = "GPL-3.0"
-homepage = "https://xiv.zone/physis"
 repository = "https://github.com/redstrate/Physis"
 keywords = ["ffxiv", "modding"]
 documentation = "https://docs.xiv.zone/docs/physis/"
 readme = "README.md"
 
-[profile.release]
-lto = true
-
-[[bench]]
-name = "benchmark"
-harness = false
-
-[[bench]]
-name = "retail_benchmark"
-harness = false
-required-features = ["retail_testing"]
-
 [[test]]
 name = "retail_test"
 required-features = ["retail_testing"]
-
-[[test]]
-name = "patch_test"
-required-features = ["patch_testing"]
-
-[dev-dependencies]
-# used while rust doesn't have native benchmarking capability
-brunch = { version = "0.9", default-features = false }
-
-# used for testing our crc implementations
-crc = "3"
 
 [features]
 default = []
 
 # testing only features
 retail_testing = []
-patch_testing = []
 
 [dependencies]
 # amazing binary parsing/writing library
-binrw = { version = "0.14", features = ["std"], default-features = false }
-
-# for logging
-tracing = { version = "0.1", features = ["std"], default-features = false }
+binrw = { version = "0.15", features = ["std"], default-features = false }
 
 # used for zlib compression in sqpack files
 libz-rs-sys = { version = "0.5", features = ["std", "rust-allocator"], default-features = false }
 
 # needed for half-float support which FFXIV uses in its model data
-half = { version = "2", features = ["std"], default-features = false }
+half = { version = "2.6", features = ["std"], default-features = false }
 
 # needed for c-style bitflags used in some formats (such as tex files)
-# cannot upgrade to 2.0.0, breaking changes that aren't recoverable: https://github.com/bitflags/bitflags/issues/314
-bitflags = { version = "1.3", default-features = false }
+bitflags = { version = "2.9", default-features = false }

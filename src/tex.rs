@@ -13,10 +13,13 @@ use binrw::BinRead;
 use binrw::binrw;
 use bitflags::bitflags;
 
+#[binrw]
+#[derive(Debug)]
+struct TextureAttribute(u32);
+
 // Attributes and Format are adapted from Lumina (https://github.com/NotAdam/Lumina/blob/master/src/Lumina/Data/Files/TexFile.cs)
 bitflags! {
-    #[binrw]
-    struct TextureAttribute : u32 {
+    impl TextureAttribute : u32 {
         const DISCARD_PER_FRAME = 0x1;
         const DISCARD_PER_MAP = 0x2;
 

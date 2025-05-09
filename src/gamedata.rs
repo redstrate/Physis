@@ -6,8 +6,6 @@ use std::fs;
 use std::fs::{DirEntry, ReadDir};
 use std::path::PathBuf;
 
-use tracing::{debug, warn};
-
 use crate::ByteBuffer;
 use crate::common::{Language, Platform, read_version};
 use crate::exd::EXD;
@@ -32,7 +30,6 @@ fn is_valid(path: &str) -> bool {
     let d = PathBuf::from(path);
 
     if fs::metadata(d.as_path()).is_err() {
-        warn!("Game directory not found.");
         return false;
     }
 
@@ -69,8 +66,6 @@ impl GameData {
     /// GameData::from_existing(Platform::Win32, "$FFXIV/game");
     /// ```
     pub fn from_existing(platform: Platform, directory: &str) -> GameData {
-        debug!(directory, "Loading game directory");
-
         match is_valid(directory) {
             true => {
                 let mut data = Self {
@@ -82,7 +77,7 @@ impl GameData {
                 data
             }
             false => {
-                warn!("Game data is not valid! Treating it as a new install...");
+                // Game data is not valid! Treating it as a new install...
                 Self {
                     game_directory: String::from(directory),
                     repositories: vec![],
@@ -181,8 +176,6 @@ impl GameData {
     /// file.write(data.as_slice()).unwrap();
     /// ```
     pub fn extract(&mut self, path: &str) -> Option<ByteBuffer> {
-        debug!(file = path, "Extracting file");
-
         let slice = self.find_entry(path);
         match slice {
             Some((entry, chunk)) => {

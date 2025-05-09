@@ -10,8 +10,11 @@ use std::sync::Arc;
 
 use bitflags::bitflags;
 
+#[derive(PartialEq, Eq, Clone, Copy)]
+pub struct HavokValueType(u32);
+
 bitflags! {
-    pub struct HavokValueType: u32 {
+    impl HavokValueType: u32 {
         const EMPTY = 0;
         const BYTE = 1;
         const INT = 2;
@@ -25,42 +28,42 @@ bitflags! {
         const STRING = 10;
 
         const ARRAY = 0x10;
-        const ARRAYBYTE = Self::ARRAY.bits | Self::BYTE.bits;
-        const ARRAYINT = Self::ARRAY.bits | Self::INT.bits;
-        const ARRAYREAL = Self::ARRAY.bits | Self::REAL.bits;
-        const ARRAYVEC4 = Self::ARRAY.bits | Self::VEC4.bits;
-        const ARRAYVEC8 = Self::ARRAY.bits | Self::VEC8.bits;
-        const ARRAYVEC12 = Self::ARRAY.bits | Self::VEC12.bits;
-        const ARRAYVEC16 = Self::ARRAY.bits | Self::VEC16.bits;
-        const ARRAYOBJECT = Self::ARRAY.bits | Self::OBJECT.bits;
-        const ARRAYSTRUCT = Self::ARRAY.bits | Self::STRUCT.bits;
-        const ARRAYSTRING = Self::ARRAY.bits | Self::STRING.bits;
+        const ARRAYBYTE = Self::ARRAY.bits() | Self::BYTE.bits();
+        const ARRAYINT = Self::ARRAY.bits() | Self::INT.bits();
+        const ARRAYREAL = Self::ARRAY.bits() | Self::REAL.bits();
+        const ARRAYVEC4 = Self::ARRAY.bits() | Self::VEC4.bits();
+        const ARRAYVEC8 = Self::ARRAY.bits() | Self::VEC8.bits();
+        const ARRAYVEC12 = Self::ARRAY.bits() | Self::VEC12.bits();
+        const ARRAYVEC16 = Self::ARRAY.bits() | Self::VEC16.bits();
+        const ARRAYOBJECT = Self::ARRAY.bits() | Self::OBJECT.bits();
+        const ARRAYSTRUCT = Self::ARRAY.bits() | Self::STRUCT.bits();
+        const ARRAYSTRING = Self::ARRAY.bits() | Self::STRING.bits();
 
         const TUPLE = 0x20;
-        const TUPLEBYTE = Self::TUPLE.bits | Self::BYTE.bits;
-        const TUPLEINT = Self::TUPLE.bits | Self::INT.bits;
-        const TUPLEREAL = Self::TUPLE.bits | Self::REAL.bits;
-        const TUPLEVEC4 = Self::TUPLE.bits | Self::VEC4.bits;
-        const TUPLEVEC8 = Self::TUPLE.bits | Self::VEC8.bits;
-        const TUPLEVEC12 = Self::TUPLE.bits | Self::VEC12.bits;
-        const TUPLEVEC16 = Self::TUPLE.bits | Self::VEC16.bits;
-        const TUPLEOBJECT = Self::TUPLE.bits | Self::OBJECT.bits;
-        const TUPLESTRUCT = Self::TUPLE.bits | Self::STRUCT.bits;
-        const TUPLESTRING = Self::TUPLE.bits | Self::STRING.bits;
+        const TUPLEBYTE = Self::TUPLE.bits() | Self::BYTE.bits();
+        const TUPLEINT = Self::TUPLE.bits() | Self::INT.bits();
+        const TUPLEREAL = Self::TUPLE.bits() | Self::REAL.bits();
+        const TUPLEVEC4 = Self::TUPLE.bits() | Self::VEC4.bits();
+        const TUPLEVEC8 = Self::TUPLE.bits() | Self::VEC8.bits();
+        const TUPLEVEC12 = Self::TUPLE.bits() | Self::VEC12.bits();
+        const TUPLEVEC16 = Self::TUPLE.bits() | Self::VEC16.bits();
+        const TUPLEOBJECT = Self::TUPLE.bits() | Self::OBJECT.bits();
+        const TUPLESTRUCT = Self::TUPLE.bits() | Self::STRUCT.bits();
+        const TUPLESTRING = Self::TUPLE.bits() | Self::STRING.bits();
     }
 }
 
 impl HavokValueType {
     pub fn is_tuple(self) -> bool {
-        (self.bits & HavokValueType::TUPLE.bits) != 0
+        (self.bits() & HavokValueType::TUPLE.bits()) != 0
     }
 
     pub fn is_array(self) -> bool {
-        (self.bits & HavokValueType::ARRAY.bits) != 0
+        (self.bits() & HavokValueType::ARRAY.bits()) != 0
     }
 
     pub fn base_type(self) -> HavokValueType {
-        HavokValueType::from_bits(self.bits & 0x0f).unwrap()
+        HavokValueType::from_bits(self.bits() & 0x0f).unwrap()
     }
 
     pub fn is_vec(self) -> bool {

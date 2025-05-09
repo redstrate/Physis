@@ -3,7 +3,6 @@
 
 use std::fs;
 use std::path::PathBuf;
-use tracing::warn;
 
 use crate::patch::{PatchError, ZiPatch};
 
@@ -36,7 +35,7 @@ impl BootData {
                     .unwrap(),
             },
             false => {
-                warn!("Boot data is not valid! Returning one anyway, but without a version.");
+                // Boot data is not valid! Returning one anyway, but without a version.
                 BootData {
                     path: directory.parse().ok().unwrap(),
                     version: String::default(),
