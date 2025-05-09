@@ -1,0 +1,10 @@
+version = 1
+SPDX-PackageName = "physis"
+SPDX-PackageSupplier = "Joshua Goins <josh@redstrate.com>"
+SPDX-PackageDownloadLocation = "https://github.com/redstrate/Physis"
+
+[[annotations]]
+path = ["README.md", "deny.toml", "Cargo.toml", "resources/**", ".github/**", "CONTRIBUTING.md", "REUSE.toml"]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "Joshua Goins <josh@redstrate.com>"
+SPDX-License-Identifier = "CC0-1.0"
