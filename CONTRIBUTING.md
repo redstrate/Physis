@@ -17,7 +17,7 @@ We have several tests to ensure Physis is able to read and write the game's vari
 
 ### Unit Testing
 
-Our standalone tests are run with `cargo test`. You can find the relevant resources that it reads under `resources/tests`. Test data should be creatable with Physis, and not simply copied from the retail game. These tests are run automatically by the CI, and you are expected to keep them working. (Unless the test itself is wrong, of course!)
+Our standalone tests are run with `cargo test`. You can find the relevant resources that it reads under `resources/tests`. Test data should be recreatable with Physis, and not simply copied from the retail game. These tests are run automatically by the CI, and you are expected to keep them working. (Unless the test itself is wrong, of course!)
 
 When adding new functionality, I highly encourage adding new test cases but this is not a hard requirement.
 
