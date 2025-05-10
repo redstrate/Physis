@@ -28,6 +28,8 @@ physis = "0.4"
 Documentation is available online at [docs.xiv.zone](https://docs.xiv.zone/docs/physis). It's automatically updated as new
 commits are pushed to the main branch.
 
+If you need a high-level Excel API, see [Icarus](https://github.com/redstrate/Icarus) which is based off of Physis.
+
 ### C/C++
 
 C/C++ projects (or any language that can interface with C) can use [libphysis](https://github.com/redstrate/libphysis).
