@@ -3,11 +3,14 @@
 
 #![allow(clippy::unnecessary_fallible_conversions)] // This wrongly trips on binrw code
 
+use std::io::BufWriter;
 use std::io::Cursor;
 
 use binrw::BinRead;
+use binrw::BinWrite;
 use binrw::binrw;
 
+use crate::ByteBuffer;
 use crate::ByteSpan;
 use crate::common::Language;
 
@@ -24,8 +27,13 @@ pub struct EXHHeader {
     pub(crate) page_count: u16,
     pub(crate) language_count: u16,
 
-    #[br(pad_before = 6)]
-    #[br(pad_after = 8)]
+    pub unk1: u16,
+
+    #[br(temp)]
+    #[bw(calc = 0x010000)] // always this value??
+    pub unk2: u32,
+
+    #[brw(pad_after = 8)] // padding
     pub row_count: u32,
 }
 
@@ -87,12 +95,26 @@ pub struct EXH {
     pub pages: Vec<ExcelDataPagination>,
 
     #[br(count = header.language_count)]
+    #[brw(pad_after = 1)] // \0
     pub languages: Vec<Language>,
 }
 
 impl EXH {
     pub fn from_existing(buffer: ByteSpan) -> Option<EXH> {
         EXH::read(&mut Cursor::new(&buffer)).ok()
+    }
+
+    pub fn write_to_buffer(&self) -> Option<ByteBuffer> {
+        let mut buffer = ByteBuffer::new();
+
+        {
+            let cursor = Cursor::new(&mut buffer);
+            let mut writer = BufWriter::new(cursor);
+
+            self.write_args(&mut writer, ()).unwrap();
+        }
+
+        Some(buffer)
     }
 }
 
@@ -111,5 +133,52 @@ mod tests {
 
         // Feeding it invalid data should not panic
         EXH::from_existing(&read(d).unwrap());
+    }
+
+    // simple EXH to read, just one page
+    #[test]
+    fn test_read() {
+        let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        d.push("resources/tests");
+        d.push("gcshop.exh");
+
+        let exh = EXH::from_existing(&read(d).unwrap()).unwrap();
+
+        // header
+        assert_eq!(exh.header.version, 3);
+        assert_eq!(exh.header.data_offset, 4);
+        assert_eq!(exh.header.column_count, 1);
+        assert_eq!(exh.header.page_count, 1);
+        assert_eq!(exh.header.language_count, 1);
+        assert_eq!(exh.header.row_count, 4);
+
+        // column definitions
+        assert_eq!(exh.column_definitions.len(), 1);
+        assert_eq!(exh.column_definitions[0].data_type, ColumnDataType::Int8);
+        assert_eq!(exh.column_definitions[0].offset, 0);
+
+        // pages
+        assert_eq!(exh.pages.len(), 1);
+        assert_eq!(exh.pages[0].start_id, 1441792);
+        assert_eq!(exh.pages[0].row_count, 4);
+
+        // languages
+        assert_eq!(exh.languages.len(), 1);
+        assert_eq!(exh.languages[0], Language::None);
+    }
+
+    // simple EXH to write, only one page
+    #[test]
+    fn test_write() {
+        let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        d.push("resources/tests");
+        d.push("gcshop.exh");
+
+        let expected_exh_bytes = read(d).unwrap();
+        let expected_exh = EXH::from_existing(&expected_exh_bytes).unwrap();
+
+        let actual_exh_bytes = expected_exh.write_to_buffer().unwrap();
+
+        assert_eq!(actual_exh_bytes, expected_exh_bytes);
     }
 }

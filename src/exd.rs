@@ -489,6 +489,7 @@ mod tests {
                 page_count: 0,
                 language_count: 0,
                 row_count: 0,
+                unk1: 0,
             },
             column_definitions: vec![],
             pages: vec![],

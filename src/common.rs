@@ -9,7 +9,7 @@ use binrw::binrw;
 #[binrw]
 #[brw(repr(u8))]
 #[repr(u8)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 /// The language the game data is written for. Some of these languages are supported in the Global region.
 pub enum Language {
     /// Used for data that is language-agnostic.
