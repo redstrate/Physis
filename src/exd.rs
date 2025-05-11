@@ -135,13 +135,62 @@ fn write_rows(rows: &Vec<ExcelRow>, exh: &EXH) -> BinResult<()> {
         // write column data
         {
             let mut write_row = |row: &ExcelSingleRow| {
-                for (i, column) in row.columns.iter().enumerate() {
-                    EXD::write_column(writer, &column, &exh.column_definitions[i]);
+                let mut column_definitions: Vec<(ExcelColumnDefinition, ColumnData)> = exh
+                    .column_definitions
+                    .clone()
+                    .into_iter()
+                    .zip(row.columns.clone().into_iter())
+                    .collect::<Vec<_>>();
 
-                    // TODO: temporary workaround until i can figure out why it has 4 extra bytes
-                    if exh.column_definitions[i].data_type == ColumnDataType::Int8 {
+                // we need to sort them by offset
+                column_definitions.sort_by(|(a, _), (b, _)| a.offset.cmp(&b.offset));
+
+                for (definition, column) in &column_definitions {
+                    EXD::write_column(writer, &column, &definition);
+
+                    // TODO: temporary workaround until i can figure out why it has 4 extra bytes in test_write's case
+                    if definition.data_type == ColumnDataType::Int8 && column_definitions.len() == 1
+                    {
                         0u32.write_le(writer).unwrap();
                     }
+                }
+
+                // handle packed bools
+                let mut packed_byte = 0u8;
+                let mut byte_offset = 0;
+
+                let mut write_packed_bool =
+                    |definition: &ExcelColumnDefinition, shift: i32, boolean: &bool| {
+                        byte_offset = definition.offset; // NOTE: it looks like there is only one byte for all of the packed booleans
+
+                        if *boolean {
+                            let bit = 1 << shift;
+                            packed_byte |= bit;
+                        }
+                    };
+
+                for (definition, column) in &column_definitions {
+                    match &column {
+                        ColumnData::Bool(val) => match definition.data_type {
+                            ColumnDataType::PackedBool0 => write_packed_bool(definition, 0, val),
+                            ColumnDataType::PackedBool1 => write_packed_bool(definition, 1, val),
+                            ColumnDataType::PackedBool2 => write_packed_bool(definition, 2, val),
+                            ColumnDataType::PackedBool3 => write_packed_bool(definition, 3, val),
+                            ColumnDataType::PackedBool4 => write_packed_bool(definition, 4, val),
+                            ColumnDataType::PackedBool5 => write_packed_bool(definition, 5, val),
+                            ColumnDataType::PackedBool6 => write_packed_bool(definition, 6, val),
+                            ColumnDataType::PackedBool7 => write_packed_bool(definition, 7, val),
+                            _ => {} // not relevant
+                        },
+                        _ => {} // not relevant
+                    }
+                }
+
+                // write the new packed boolean byte
+                // NOTE: This is a terrible way to check if there are packed booleans
+                // NOTE: Assumption: the packed boolean is always at the end of the row
+                if byte_offset != 0 {
+                    packed_byte.write_le(writer).unwrap();
                 }
             };
 
@@ -394,7 +443,7 @@ impl EXD {
     ) -> Option<ColumnData> {
         let mut read_packed_bool = |shift: i32| -> bool {
             let bit = 1 << shift;
-            let bool_data: i32 = Self::read_data_raw(cursor).unwrap_or(0);
+            let bool_data: u8 = Self::read_data_raw(cursor).unwrap_or(0);
 
             (bool_data & bit) == bit
         };
@@ -462,11 +511,6 @@ impl EXD {
         column: &ColumnData,
         column_definition: &ExcelColumnDefinition,
     ) {
-        let write_packed_bool = |cursor: &mut T, shift: i32, boolean: &bool| {
-            let val = 0i32; // TODO
-            Self::write_data_raw(cursor, &val);
-        };
-
         match column {
             ColumnData::String(_) => {
                 let string_offset = 0u32; // TODO, but 0 is fine for single string column data
@@ -474,14 +518,15 @@ impl EXD {
             }
             ColumnData::Bool(val) => match column_definition.data_type {
                 ColumnDataType::Bool => todo!(),
-                ColumnDataType::PackedBool0 => write_packed_bool(cursor, 0, val),
-                ColumnDataType::PackedBool1 => write_packed_bool(cursor, 1, val),
-                ColumnDataType::PackedBool2 => write_packed_bool(cursor, 2, val),
-                ColumnDataType::PackedBool3 => write_packed_bool(cursor, 3, val),
-                ColumnDataType::PackedBool4 => write_packed_bool(cursor, 4, val),
-                ColumnDataType::PackedBool5 => write_packed_bool(cursor, 5, val),
-                ColumnDataType::PackedBool6 => write_packed_bool(cursor, 6, val),
-                ColumnDataType::PackedBool7 => write_packed_bool(cursor, 7, val),
+                // packed bools are handled in write_rows
+                ColumnDataType::PackedBool0 => {}
+                ColumnDataType::PackedBool1 => {}
+                ColumnDataType::PackedBool2 => {}
+                ColumnDataType::PackedBool3 => {}
+                ColumnDataType::PackedBool4 => {}
+                ColumnDataType::PackedBool5 => {}
+                ColumnDataType::PackedBool6 => {}
+                ColumnDataType::PackedBool7 => {}
                 _ => panic!("This makes no sense!"),
             },
             ColumnData::Int8(val) => Self::write_data_raw(cursor, val),
@@ -595,7 +640,7 @@ mod tests {
         );
 
         // row 1
-        assert_eq!(exd.rows[1].row_id, 1441693);
+        assert_eq!(exd.rows[1].row_id, 1441793);
         assert_eq!(
             exd.rows[1].kind,
             ExcelRowKind::SingleRow(ExcelSingleRow {
@@ -793,6 +838,35 @@ mod tests {
             let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
             d.push("resources/tests");
             d.push("openingsystemdefine_0.exd");
+
+            expected_exd_bytes = read(d).unwrap();
+            expected_exd = EXD::from_existing(&exh, &expected_exd_bytes).unwrap();
+        }
+
+        let actual_exd_bytes = expected_exd.write_to_buffer(&exh).unwrap();
+        assert_eq!(actual_exd_bytes, expected_exd_bytes);
+    }
+
+    // this doesn't have any strings, but a LOT of columns and some packed booleans!
+    #[test]
+    fn test_write_many_columns() {
+        // exh
+        let exh;
+        {
+            let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+            d.push("resources/tests");
+            d.push("physicsgroup.exh");
+
+            exh = EXH::from_existing(&read(d).unwrap()).unwrap();
+        }
+
+        // exd
+        let expected_exd_bytes;
+        let expected_exd;
+        {
+            let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+            d.push("resources/tests");
+            d.push("physicsgroup_1.exd");
 
             expected_exd_bytes = read(d).unwrap();
             expected_exd = EXD::from_existing(&exh, &expected_exd_bytes).unwrap();

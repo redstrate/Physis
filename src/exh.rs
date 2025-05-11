@@ -27,7 +27,7 @@ pub struct EXHHeader {
     pub(crate) page_count: u16,
     pub(crate) language_count: u16,
 
-    #[br(dbg)]
+    /// Usually 0
     pub unk1: u16,
 
     #[br(temp)]
