@@ -16,12 +16,14 @@ use crate::{ByteBuffer, ByteSpan};
 #[allow(dead_code)]
 #[derive(Debug)]
 struct EXDHeader {
+    /// Usually 2, I don't think I've seen any other version
     version: u16,
+    /// Seems to be 0?
     unk1: u16,
-    /// Size of the ExcelDataOffset array
-    index_size: u32,
+    /// Size of the data offsets in bytes
+    data_offset_size: u32,
     #[brw(pad_after = 16)] // padding
-    /// Total size of the string data?
+    /// Size of the data sections in bytes
     data_section_size: u32,
 }
 
@@ -123,18 +125,23 @@ fn write_rows(rows: &Vec<ExcelRow>, exh: &EXH) -> BinResult<()> {
             offset: writer.stream_position().unwrap() as u32,
         });
 
-        let row_header = DataSection {
-            size: 6,          // TODO: hardcoded
-            row_count: 1,     // TODO: hardcoded
-            data: Vec::new(), // TOOD: not used here
-        };
-        row_header.write(writer).unwrap();
+        // skip row header for now, because we don't know the size yet!
+        let row_header_pos = writer.stream_position().unwrap();
+
+        writer.seek(SeekFrom::Current(6)).unwrap(); // u32 + u16
+
+        let old_pos = writer.stream_position().unwrap();
 
         // write column data
         {
             let mut write_row = |row: &ExcelSingleRow| {
                 for (i, column) in row.columns.iter().enumerate() {
                     EXD::write_column(writer, &column, &exh.column_definitions[i]);
+
+                    // TODO: temporary workaround until i can figure out why it has 4 extra bytes
+                    if exh.column_definitions[i].data_type == ColumnDataType::Int8 {
+                        0u32.write_le(writer).unwrap();
+                    }
                 }
             };
 
@@ -146,11 +153,6 @@ fn write_rows(rows: &Vec<ExcelRow>, exh: &EXH) -> BinResult<()> {
                     }
                 }
             }
-
-            // TODO: temporary padding for now
-            for _ in 0..4 {
-                0u8.write_le(writer).unwrap();
-            }
         }
 
         // write strings at the end of column data
@@ -161,6 +163,9 @@ fn write_rows(rows: &Vec<ExcelRow>, exh: &EXH) -> BinResult<()> {
                         ColumnData::String(val) => {
                             let bytes = val.as_bytes();
                             bytes.write(writer).unwrap();
+
+                            // nul terminator
+                            0u8.write_le(writer).unwrap();
                         }
                         _ => {}
                     }
@@ -177,8 +182,27 @@ fn write_rows(rows: &Vec<ExcelRow>, exh: &EXH) -> BinResult<()> {
             }
         }
 
-        // There's an empty byte between each row... for some reason
-        0u8.write_le(writer).unwrap();
+        // aligned to the next 4 byte boundary
+        let boundary_pos = writer.stream_position().unwrap();
+        let remainder = (boundary_pos + 4 - 1) / 4 * 4;
+        for _ in 0..remainder - boundary_pos {
+            0u8.write_le(writer).unwrap();
+        }
+
+        let new_pos = writer.stream_position().unwrap();
+
+        // write row header
+        writer.seek(SeekFrom::Start(row_header_pos)).unwrap();
+
+        let row_header = DataSection {
+            size: (new_pos - old_pos) as u32,
+            row_count: 1,     // TODO: hardcoded
+            data: Vec::new(), // NOTE: not used here
+        };
+        row_header.write(writer).unwrap();
+
+        // restore pos
+        writer.seek(SeekFrom::Start(new_pos)).unwrap();
     }
 
     // now write the data offsets
@@ -193,7 +217,6 @@ fn write_rows(rows: &Vec<ExcelRow>, exh: &EXH) -> BinResult<()> {
 #[allow(dead_code)]
 #[derive(Debug)]
 pub struct DataSection {
-    #[br(dbg)]
     size: u32,
     row_count: u16,
     #[br(count = size)]
@@ -207,15 +230,12 @@ pub struct DataSection {
 #[derive(Debug)]
 #[brw(import(exh: &EXH))]
 pub struct EXD {
-    #[br(dbg)]
     header: EXDHeader,
 
-    #[br(count = header.index_size / core::mem::size_of::<ExcelDataOffset>() as u32)]
+    #[br(count = header.data_offset_size / core::mem::size_of::<ExcelDataOffset>() as u32)]
     #[bw(ignore)] // write_rows handles writing this
-    #[br(dbg)]
     data_offsets: Vec<ExcelDataOffset>,
 
-    #[br(dbg)]
     #[br(parse_with = read_data_sections, args(&header))]
     #[bw(ignore)] // write_rows handles writing this
     data: Vec<DataSection>,
@@ -575,7 +595,7 @@ mod tests {
         );
 
         // row 1
-        assert_eq!(exd.rows[1].row_id, 1441793);
+        assert_eq!(exd.rows[1].row_id, 1441693);
         assert_eq!(
             exd.rows[1].kind,
             ExcelRowKind::SingleRow(ExcelSingleRow {
@@ -628,7 +648,157 @@ mod tests {
         }
 
         let actual_exd_bytes = expected_exd.write_to_buffer(&exh).unwrap();
+        assert_eq!(actual_exd_bytes, expected_exd_bytes);
+    }
 
+    // slightly more complex to read, because it has STRINGS
+    #[test]
+    fn test_read_strings() {
+        // exh
+        let exh;
+        {
+            let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+            d.push("resources/tests");
+            d.push("openingsystemdefine.exh");
+
+            exh = EXH::from_existing(&read(d).unwrap()).unwrap();
+        }
+
+        // exd
+        let exd;
+        {
+            let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+            d.push("resources/tests");
+            d.push("openingsystemdefine_0.exd");
+
+            exd = EXD::from_existing(&exh, &read(d).unwrap()).unwrap();
+        }
+
+        assert_eq!(exd.rows.len(), 8);
+
+        // row 0
+        assert_eq!(exd.rows[0].row_id, 0);
+        assert_eq!(
+            exd.rows[0].kind,
+            ExcelRowKind::SingleRow(ExcelSingleRow {
+                columns: vec![
+                    ColumnData::String("HOWTO_MOVE_AND_CAMERA".to_string()),
+                    ColumnData::UInt32(1)
+                ]
+            })
+        );
+
+        // row 1
+        assert_eq!(exd.rows[1].row_id, 1);
+        assert_eq!(
+            exd.rows[1].kind,
+            ExcelRowKind::SingleRow(ExcelSingleRow {
+                columns: vec![
+                    ColumnData::String("HOWTO_ANNOUNCE_AND_QUEST".to_string()),
+                    ColumnData::UInt32(2)
+                ]
+            })
+        );
+
+        // row 2
+        assert_eq!(exd.rows[2].row_id, 2);
+        assert_eq!(
+            exd.rows[2].kind,
+            ExcelRowKind::SingleRow(ExcelSingleRow {
+                columns: vec![
+                    ColumnData::String("HOWTO_QUEST_REWARD".to_string()),
+                    ColumnData::UInt32(11)
+                ]
+            })
+        );
+
+        // row 3
+        assert_eq!(exd.rows[3].row_id, 3);
+        assert_eq!(
+            exd.rows[3].kind,
+            ExcelRowKind::SingleRow(ExcelSingleRow {
+                columns: vec![
+                    ColumnData::String("BGM_MUSIC_NO_MUSIC".to_string()),
+                    ColumnData::UInt32(1001)
+                ]
+            })
+        );
+
+        // row 4
+        assert_eq!(exd.rows[4].row_id, 4);
+        assert_eq!(
+            exd.rows[4].kind,
+            ExcelRowKind::SingleRow(ExcelSingleRow {
+                columns: vec![
+                    ColumnData::String("ITEM_INITIAL_RING_A".to_string()),
+                    ColumnData::UInt32(4423)
+                ]
+            })
+        );
+
+        // row 5
+        assert_eq!(exd.rows[5].row_id, 5);
+        assert_eq!(
+            exd.rows[5].kind,
+            ExcelRowKind::SingleRow(ExcelSingleRow {
+                columns: vec![
+                    ColumnData::String("ITEM_INITIAL_RING_B".to_string()),
+                    ColumnData::UInt32(4424)
+                ]
+            })
+        );
+
+        // row 6
+        assert_eq!(exd.rows[6].row_id, 6);
+        assert_eq!(
+            exd.rows[6].kind,
+            ExcelRowKind::SingleRow(ExcelSingleRow {
+                columns: vec![
+                    ColumnData::String("ITEM_INITIAL_RING_C".to_string()),
+                    ColumnData::UInt32(4425)
+                ]
+            })
+        );
+
+        // row 7
+        assert_eq!(exd.rows[7].row_id, 7);
+        assert_eq!(
+            exd.rows[7].kind,
+            ExcelRowKind::SingleRow(ExcelSingleRow {
+                columns: vec![
+                    ColumnData::String("ITEM_INITIAL_RING_D".to_string()),
+                    ColumnData::UInt32(4426)
+                ]
+            })
+        );
+    }
+
+    // slightly more complex to write, because it has STRINGS
+    #[test]
+    fn test_write_strings() {
+        // exh
+        let exh;
+        {
+            let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+            d.push("resources/tests");
+            d.push("openingsystemdefine.exh");
+
+            exh = EXH::from_existing(&read(d).unwrap()).unwrap();
+        }
+
+        // exd
+        let expected_exd_bytes;
+        let expected_exd;
+        {
+            let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+            d.push("resources/tests");
+            d.push("openingsystemdefine_0.exd");
+
+            expected_exd_bytes = read(d).unwrap();
+            expected_exd = EXD::from_existing(&exh, &expected_exd_bytes).unwrap();
+        }
+
+        let actual_exd_bytes = expected_exd.write_to_buffer(&exh).unwrap();
         assert_eq!(actual_exd_bytes, expected_exd_bytes);
     }
 }
