@@ -90,6 +90,7 @@ pub mod layer;
 pub mod tera;
 
 mod common_file_operations;
+mod exd_file_operations;
 
 /// Reading word dictionaries, such as the vulgar word list.
 pub mod dic;

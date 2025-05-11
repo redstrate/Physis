@@ -292,7 +292,7 @@ impl GameData {
 
         let exd_file = self.extract(&exd_path)?;
 
-        EXD::from_existing(&exh, &exd_file)
+        EXD::from_existing(exh, &exd_file)
     }
 
     /// Applies the patch to game data and returns any errors it encounters. This function will not update the version in the GameData struct.

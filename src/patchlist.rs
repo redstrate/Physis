@@ -190,7 +190,7 @@ impl PatchList {
             size += patch.length;
         }
 
-        return size;
+        size
     }
 }
 
