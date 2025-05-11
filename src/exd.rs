@@ -17,11 +17,10 @@ use crate::{ByteBuffer, ByteSpan};
 #[derive(Debug)]
 struct EXDHeader {
     version: u16,
-
-    #[brw(pad_before = 2)] // empty
+    unk1: u16,
     /// Size of the ExcelDataOffset array
     index_size: u32,
-    #[brw(pad_after = 16)] // empty
+    #[brw(pad_after = 16)] // padding
     /// Total size of the string data?
     data_section_size: u32,
 }
@@ -31,15 +30,27 @@ struct EXDHeader {
 #[derive(Debug)]
 struct ExcelDataOffset {
     row_id: u32,
-    pub offset: u32,
+    pub offset: u32, // offset to it's data section in bytes from the start of the file
 }
 
-#[binrw]
-#[brw(big)]
-#[allow(dead_code)]
-struct ExcelDataRowHeader {
-    data_size: u32,
-    row_count: u16,
+#[binrw::parser(reader)]
+fn read_data_sections(header: &EXDHeader) -> BinResult<Vec<DataSection>> {
+    let mut rows = Vec::new();
+
+    // we have to do this annoying thing because they specified it in bytes,
+    // not an actual count of data sections
+    let begin_pos = reader.stream_position().unwrap();
+    loop {
+        let current_pos = reader.stream_position().unwrap();
+        if current_pos - begin_pos >= header.data_section_size as u64 {
+            break;
+        }
+
+        let data_section = DataSection::read_be(reader).unwrap();
+        rows.push(data_section);
+    }
+
+    Ok(rows)
 }
 
 #[binrw::parser(reader)]
@@ -49,7 +60,10 @@ fn parse_rows(exh: &EXH, data_offsets: &Vec<ExcelDataOffset>) -> BinResult<Vec<E
     for offset in data_offsets {
         reader.seek(SeekFrom::Start(offset.offset.into()))?;
 
-        let row_header = ExcelDataRowHeader::read(reader)?;
+        // TODO: use DataSection here
+        let size: u32 = u32::read_be(reader).unwrap();
+        let row_count: u16 = u16::read_be(reader).unwrap();
+        //let row_header = DataSection::read(reader)?;
 
         let data_offset = reader.stream_position().unwrap() as u32;
 
@@ -71,9 +85,9 @@ fn parse_rows(exh: &EXH, data_offsets: &Vec<ExcelDataOffset>) -> BinResult<Vec<E
             Some(subrow)
         };
 
-        let new_row = if row_header.row_count > 1 {
+        let new_row = if row_count > 1 {
             let mut rows = Vec::new();
-            for i in 0..row_header.row_count {
+            for i in 0..row_count {
                 let subrow_offset = data_offset + (i * exh.header.data_offset + 2 * (i + 1)) as u32;
 
                 rows.push(read_row(subrow_offset).unwrap());
@@ -109,9 +123,10 @@ fn write_rows(rows: &Vec<ExcelRow>, exh: &EXH) -> BinResult<()> {
             offset: writer.stream_position().unwrap() as u32,
         });
 
-        let row_header = ExcelDataRowHeader {
-            data_size: 0,
-            row_count: 0,
+        let row_header = DataSection {
+            size: 6,          // TODO: hardcoded
+            row_count: 1,     // TODO: hardcoded
+            data: Vec::new(), // TOOD: not used here
         };
         row_header.write(writer).unwrap();
 
@@ -130,6 +145,11 @@ fn write_rows(rows: &Vec<ExcelRow>, exh: &EXH) -> BinResult<()> {
                         write_row(row);
                     }
                 }
+            }
+
+            // TODO: temporary padding for now
+            for _ in 0..4 {
+                0u8.write_le(writer).unwrap();
             }
         }
 
@@ -172,20 +192,40 @@ fn write_rows(rows: &Vec<ExcelRow>, exh: &EXH) -> BinResult<()> {
 #[brw(big)]
 #[allow(dead_code)]
 #[derive(Debug)]
+pub struct DataSection {
+    #[br(dbg)]
+    size: u32,
+    row_count: u16,
+    #[br(count = size)]
+    #[bw(ignore)]
+    data: Vec<u8>,
+}
+
+#[binrw]
+#[brw(big)]
+#[allow(dead_code)]
+#[derive(Debug)]
 #[brw(import(exh: &EXH))]
 pub struct EXD {
+    #[br(dbg)]
     header: EXDHeader,
 
     #[br(count = header.index_size / core::mem::size_of::<ExcelDataOffset>() as u32)]
-    #[bw(ignore)]
+    #[bw(ignore)] // write_rows handles writing this
+    #[br(dbg)]
     data_offsets: Vec<ExcelDataOffset>,
+
+    #[br(dbg)]
+    #[br(parse_with = read_data_sections, args(&header))]
+    #[bw(ignore)] // write_rows handles writing this
+    data: Vec<DataSection>,
 
     #[br(parse_with = parse_rows, args(&exh, &data_offsets))]
     #[bw(write_with = write_rows, args(&exh))]
     pub rows: Vec<ExcelRow>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum ColumnData {
     String(String),
     Bool(bool),
@@ -290,12 +330,12 @@ impl ColumnData {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct ExcelSingleRow {
     pub columns: Vec<ColumnData>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum ExcelRowKind {
     SingleRow(ExcelSingleRow),
     SubRows(Vec<ExcelSingleRow>),
@@ -498,5 +538,97 @@ mod tests {
 
         // Feeding it invalid data should not panic
         EXD::from_existing(&exh, &read(d).unwrap());
+    }
+
+    // super simple EXD to read, it's just a few rows of only int8's
+    #[test]
+    fn test_read() {
+        // exh
+        let exh;
+        {
+            let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+            d.push("resources/tests");
+            d.push("gcshop.exh");
+
+            exh = EXH::from_existing(&read(d).unwrap()).unwrap();
+        }
+
+        // exd
+        let exd;
+        {
+            let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+            d.push("resources/tests");
+            d.push("gcshop_1441792.exd");
+
+            exd = EXD::from_existing(&exh, &read(d).unwrap()).unwrap();
+        }
+
+        assert_eq!(exd.rows.len(), 4);
+
+        // row 0
+        assert_eq!(exd.rows[0].row_id, 1441792);
+        assert_eq!(
+            exd.rows[0].kind,
+            ExcelRowKind::SingleRow(ExcelSingleRow {
+                columns: vec![ColumnData::Int8(0)]
+            })
+        );
+
+        // row 1
+        assert_eq!(exd.rows[1].row_id, 1441793);
+        assert_eq!(
+            exd.rows[1].kind,
+            ExcelRowKind::SingleRow(ExcelSingleRow {
+                columns: vec![ColumnData::Int8(1)]
+            })
+        );
+
+        // row 2
+        assert_eq!(exd.rows[2].row_id, 1441794);
+        assert_eq!(
+            exd.rows[2].kind,
+            ExcelRowKind::SingleRow(ExcelSingleRow {
+                columns: vec![ColumnData::Int8(2)]
+            })
+        );
+
+        // row 3
+        assert_eq!(exd.rows[3].row_id, 1441795);
+        assert_eq!(
+            exd.rows[3].kind,
+            ExcelRowKind::SingleRow(ExcelSingleRow {
+                columns: vec![ColumnData::Int8(3)]
+            })
+        );
+    }
+
+    // super simple EXD to write, it's just a few rows of only int8's
+    #[test]
+    fn test_write() {
+        // exh
+        let exh;
+        {
+            let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+            d.push("resources/tests");
+            d.push("gcshop.exh");
+
+            exh = EXH::from_existing(&read(d).unwrap()).unwrap();
+        }
+
+        // exd
+        let expected_exd_bytes;
+        let expected_exd;
+        {
+            let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+            d.push("resources/tests");
+            d.push("gcshop_1441792.exd");
+
+            expected_exd_bytes = read(d).unwrap();
+            expected_exd = EXD::from_existing(&exh, &expected_exd_bytes).unwrap();
+        }
+
+        let actual_exd_bytes = expected_exd.write_to_buffer(&exh).unwrap();
+
+        assert_eq!(actual_exd_bytes, expected_exd_bytes);
     }
 }

@@ -22,11 +22,12 @@ use crate::common::Language;
 pub struct EXHHeader {
     pub(crate) version: u16,
 
-    pub data_offset: u16,
+    pub data_offset: u16, // TODO: might not be an offset
     pub(crate) column_count: u16,
     pub(crate) page_count: u16,
     pub(crate) language_count: u16,
 
+    #[br(dbg)]
     pub unk1: u16,
 
     #[br(temp)]
