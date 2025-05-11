@@ -123,8 +123,9 @@ pub fn write_rows(rows: &Vec<ExcelRow>, exh: &EXH) -> BinResult<()> {
                 // we need to sort them by offset
                 column_definitions.sort_by(|(a, _), (b, _)| a.offset.cmp(&b.offset));
 
+                let mut strings_len = 0;
                 for (definition, column) in &column_definitions {
-                    EXD::write_column(writer, column, definition);
+                    EXD::write_column(writer, column, definition, &mut strings_len);
 
                     // TODO: temporary workaround until i can figure out why it has 4 extra bytes in test_write's case
                     if definition.data_type == ColumnDataType::Int8 && column_definitions.len() == 1
@@ -315,11 +316,13 @@ impl EXD {
         cursor: &mut T,
         column: &ColumnData,
         column_definition: &ExcelColumnDefinition,
+        strings_len: &mut u32,
     ) {
         match column {
-            ColumnData::String(_) => {
-                let string_offset = 0u32; // TODO, but 0 is fine for single string column data
+            ColumnData::String(val) => {
+                let string_offset = *strings_len;
                 Self::write_data_raw(cursor, &string_offset);
+                *strings_len += val.len() as u32 + 1;
             }
             ColumnData::Bool(_) => match column_definition.data_type {
                 ColumnDataType::Bool => todo!(),
