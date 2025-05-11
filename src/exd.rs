@@ -31,8 +31,10 @@ struct EXDHeader {
 #[brw(big)]
 #[derive(Debug)]
 struct ExcelDataOffset {
+    /// The row ID associated with this data offset
     row_id: u32,
-    pub offset: u32, // offset to it's data section in bytes from the start of the file
+    /// Offset to it's data section in bytes from the start of the file.
+    pub offset: u32,
 }
 
 #[binrw::parser(reader)]
@@ -245,8 +247,7 @@ fn write_rows(rows: &Vec<ExcelRow>, exh: &EXH) -> BinResult<()> {
 
         let row_header = DataSection {
             size: (new_pos - old_pos) as u32,
-            row_count: 1,     // TODO: hardcoded
-            data: Vec::new(), // NOTE: not used here
+            row_count: 1, // TODO: hardcoded
         };
         row_header.write(writer).unwrap();
 
@@ -265,14 +266,19 @@ fn write_rows(rows: &Vec<ExcelRow>, exh: &EXH) -> BinResult<()> {
 #[brw(big)]
 #[allow(dead_code)]
 #[derive(Debug)]
-pub struct DataSection {
+struct DataSection {
+    /// Size of the data section in bytes.
     size: u32,
+    /// The number of rows in this data section.
     row_count: u16,
-    #[br(count = size)]
+    /// The bytes of this data section.
+    /// We currently don't use this in our parsing, see parse_rows.
+    #[br(temp, count = size)]
     #[bw(ignore)]
     data: Vec<u8>,
 }
 
+/// An Excel data file. Represents a page in an Excel Sheet.
 #[binrw]
 #[brw(big)]
 #[allow(dead_code)]
@@ -289,6 +295,7 @@ pub struct EXD {
     #[bw(ignore)] // write_rows handles writing this
     data: Vec<DataSection>,
 
+    /// The rows contained in this EXD.
     #[br(parse_with = parse_rows, args(&exh, &data_offsets))]
     #[bw(write_with = write_rows, args(&exh))]
     pub rows: Vec<ExcelRow>,
@@ -410,17 +417,22 @@ pub enum ExcelRowKind {
     SubRows(Vec<ExcelSingleRow>),
 }
 
+/// Represents an entry in the EXD.
 #[derive(Debug)]
 pub struct ExcelRow {
+    /// The row ID associated with this entry.
     pub row_id: u32,
+    /// The kind of entry.
     pub kind: ExcelRowKind,
 }
 
 impl EXD {
+    /// Parse an EXD from an existing file.
     pub fn from_existing(exh: &EXH, buffer: ByteSpan) -> Option<EXD> {
         EXD::read_args(&mut Cursor::new(&buffer), (exh,)).ok()
     }
 
+    /// Finds the entry with the specified ID, otherwise returns `None`.
     pub fn get_row(&self, row_id: u32) -> Option<ExcelRowKind> {
         for row in &self.rows {
             if row.row_id == row_id {
@@ -516,7 +528,7 @@ impl EXD {
                 let string_offset = 0u32; // TODO, but 0 is fine for single string column data
                 Self::write_data_raw(cursor, &string_offset);
             }
-            ColumnData::Bool(val) => match column_definition.data_type {
+            ColumnData::Bool(_) => match column_definition.data_type {
                 ColumnDataType::Bool => todo!(),
                 // packed bools are handled in write_rows
                 ColumnDataType::PackedBool0 => {}
@@ -541,6 +553,7 @@ impl EXD {
         }
     }
 
+    /// Calculate the filename of an EXD from the `name`, `language`, and `page`.
     pub fn calculate_filename(
         name: &str,
         language: Language,
@@ -558,6 +571,7 @@ impl EXD {
         }
     }
 
+    /// Write this EXD back to it's serialized binary form.
     pub fn write_to_buffer(&self, exh: &EXH) -> Option<ByteBuffer> {
         let mut buffer = ByteBuffer::new();
 
