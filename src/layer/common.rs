@@ -12,7 +12,7 @@ pub struct RelativePositions {
 }
 
 #[binrw]
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 #[brw(little)]
 #[repr(C)]
 #[allow(dead_code)] // most of the fields are unused at the moment
