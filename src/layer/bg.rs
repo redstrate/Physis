@@ -3,7 +3,7 @@
 
 use binrw::{binread, binrw};
 
-use super::read_bool_from;
+use super::{HeapString, StringHeap, read_bool_from};
 
 #[binrw]
 #[brw(repr = i32)]
@@ -16,10 +16,13 @@ pub enum ModelCollisionType {
 
 #[binread]
 #[derive(Debug)]
+#[br(import(string_heap: &StringHeap))]
 #[br(little)]
 pub struct BGInstanceObject {
-    pub asset_path_string_offset: u32,
-    pub collision_asset_path_string_offset: u32,
+    #[br(args(string_heap))]
+    pub asset_path: HeapString,
+    #[br(args(string_heap))]
+    pub collision_asset_path: HeapString,
     pub collision_type: ModelCollisionType,
     pub attribute_mask: u32,
     pub attribute: u32,
@@ -30,6 +33,6 @@ pub struct BGInstanceObject {
     pub render_shadow_enabled: bool,
     #[br(map = read_bool_from::<u8>)]
     pub render_light_shadow_enabeld: bool,
-    padding: u8,
+    #[brw(pad_before = 1)] // padding
     pub render_model_clip_range: f32,
 }

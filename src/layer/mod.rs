@@ -302,10 +302,10 @@ pub enum LayerEntryType {
 
 #[binread]
 #[derive(Debug)]
-#[br(import(magic: &LayerEntryType))]
+#[br(import(magic: &LayerEntryType, string_heap: &StringHeap))]
 pub enum LayerEntryData {
     #[br(pre_assert(*magic == LayerEntryType::BG))]
-    BG(BGInstanceObject),
+    BG(#[br(args(string_heap))] BGInstanceObject),
     #[br(pre_assert(*magic == LayerEntryType::LayLight))]
     LayLight(LightInstanceObject),
     #[br(pre_assert(*magic == LayerEntryType::Vfx))]
@@ -488,7 +488,7 @@ enum LayerSetReferencedType {
 #[br(import(data_heap: &StringHeap, string_heap: &StringHeap), stream = r)]
 #[bw(import(data_heap: &mut StringHeap, string_heap: &mut StringHeap))]
 #[allow(dead_code)] // most of the fields are unused at the moment
-struct LayerHeader {
+pub struct LayerHeader {
     pub layer_id: u32,
 
     #[brw(args(string_heap))]
@@ -613,15 +613,15 @@ const LAYER_CHUNK_HEADER_SIZE: usize = 24;
 #[binread]
 #[derive(Debug)]
 #[br(little)]
-#[br(import(start: u64))]
+#[br(import(start: u64, string_heap: &StringHeap))]
 #[allow(dead_code)] // most of the fields are unused at the moment
 pub struct InstanceObject {
     asset_type: LayerEntryType,
     pub instance_id: u32,
-    #[br(parse_with = string_from_offset, args(start))]
-    pub name: String,
+    #[br(args(string_heap))]
+    pub name: HeapString,
     pub transform: Transformation,
-    #[br(args(&asset_type))]
+    #[br(args(&asset_type, string_heap))]
     pub data: LayerEntryData,
 }
 
@@ -706,8 +706,11 @@ impl LayerGroup {
                         .unwrap();
 
                     let start = cursor.stream_position().unwrap();
+                    let string_heap = StringHeap::from(start);
 
-                    objects.push(InstanceObject::read_le_args(&mut cursor, (start,)).unwrap());
+                    objects.push(
+                        InstanceObject::read_le_args(&mut cursor, (start, &string_heap)).unwrap(),
+                    );
                 }
             }
 
