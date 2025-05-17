@@ -55,6 +55,7 @@ pub struct ModelFileHeader {
 #[brw(repr = u8)]
 #[derive(Debug, Clone, PartialEq)]
 enum ModelFlags1 {
+    None = 0x0,
     ShadowDisabled = 0x01,
     LightShadowDisabled = 0x02,
     WavingAnimationDisabled = 0x04,
