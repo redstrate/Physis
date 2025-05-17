@@ -9,6 +9,7 @@ use crate::ByteSpan;
 use crate::bcn::decode_bc1;
 use crate::bcn::decode_bc3;
 use crate::bcn::decode_bc5;
+use crate::bcn::decode_bc7;
 use binrw::BinRead;
 use binrw::binrw;
 use bitflags::bitflags;
@@ -39,6 +40,7 @@ bitflags! {
         const TEXTURE_TYPE1_D = 0x400000;
         const TEXTURE_TYPE2_D = 0x800000;
         const TEXTURE_TYPE3_D = 0x1000000;
+        const TEXTURE_TYPE2_D_ARRAY = 0x10000000;
         const TEXTURE_TYPE_CUBE = 0x2000000;
         const TEXTURE_TYPE_MASK = 0x3C00000;
         const TEXTURE_SWIZZLE = 0x4000000;
@@ -47,15 +49,45 @@ bitflags! {
     }
 }
 
+// From https://github.com/aers/FFXIVClientStructs/blob/344f5d488197e9c9d5fd78e92439e7104f25e2e0/FFXIVClientStructs/FFXIV/Client/Graphics/Kernel/Texture.cs#L97
 #[binrw]
 #[brw(repr = u32)]
 #[derive(Debug)]
 enum TextureFormat {
-    B4G4R4A4 = 0x1440,
-    B8G8R8A8 = 0x1450,
-    BC1 = 0x3420,
-    BC3 = 0x3431,
-    BC5 = 0x6230,
+    L8_UNORM = 0x1130,
+    A8_UNORM = 0x1131,
+    R8_UNORM = 0x1132,
+    R8_UINT = 0x1133,
+    R16_UINT = 0x1140,
+    R32_UINT = 0x1150,
+    R8G8_UNORM = 0x1240,
+    B4G4R4A4_UNORM = 0x1440,
+    B5G5R5A1_UNORM = 0x1441,
+    B8G8R8A8_UNORM = 0x1450,
+    B8G8R8X8_UNORM = 0x1451,
+    R16_FLOAT = 0x2140,
+    R32_FLOAT = 0x2150,
+    R16G16_FLOAT = 0x2250,
+    R32G32_FLOAT = 0x2260,
+    R11G11B10_FLOAT = 0x2350,
+    R16G16B16A16_FLOAT = 0x2460,
+    R32G32B32A32_FLOAT = 0x2470,
+    BC1_UNORM = 0x3420,
+    BC2_UNORM = 0x3430,
+    BC3_UNORM = 0x3431,
+    D16_UNORM = 0x4140,
+    D24_UNORM_S8_UINT = 0x4250,
+    D16_UNORM_2 = 0x5140,
+    D24_UNORM_S8_UINT_2 = 0x5150,
+    BC4_UNORM = 0x6120,
+    BC5_UNORM = 0x6230,
+    BC6H_SF16 = 0x6330,
+    BC7_UNORM = 0x6432,
+    R16_UNORM = 0x7140,
+    R16G16_UNORM = 0x7250,
+    R10G10B10A2_UNORM_2 = 0x7350,
+    R10G10B10A2_UNORM = 0x7450,
+    D24_UNORM_S8_UINT_3 = 0x8250,
 }
 
 #[binrw]
@@ -101,7 +133,7 @@ impl Texture {
     /// Reads an existing TEX file
     pub fn from_existing(buffer: ByteSpan) -> Option<Texture> {
         let mut cursor = Cursor::new(buffer);
-        let header = TexHeader::read(&mut cursor).ok()?;
+        let header = TexHeader::read(&mut cursor).unwrap();
 
         cursor
             .seek(SeekFrom::Start(std::mem::size_of::<TexHeader>() as u64))
@@ -113,7 +145,7 @@ impl Texture {
         let mut dst: Vec<u8>;
 
         match header.format {
-            TextureFormat::B4G4R4A4 => {
+            TextureFormat::B4G4R4A4_UNORM => {
                 dst =
                     vec![
                         0u8;
@@ -140,7 +172,7 @@ impl Texture {
                     dst_offset += 4;
                 }
             }
-            TextureFormat::B8G8R8A8 => {
+            TextureFormat::B8G8R8A8_UNORM => {
                 dst =
                     vec![
                         0u8;
@@ -163,7 +195,7 @@ impl Texture {
                     offset += 4;
                 }
             }
-            TextureFormat::BC1 => {
+            TextureFormat::BC1_UNORM => {
                 dst = Texture::decode(
                     &src,
                     header.width as usize,
@@ -171,7 +203,7 @@ impl Texture {
                     decode_bc1,
                 );
             }
-            TextureFormat::BC3 => {
+            TextureFormat::BC3_UNORM => {
                 dst = Texture::decode(
                     &src,
                     header.width as usize,
@@ -179,7 +211,7 @@ impl Texture {
                     decode_bc3,
                 );
             }
-            TextureFormat::BC5 => {
+            TextureFormat::BC5_UNORM => {
                 dst = Texture::decode(
                     &src,
                     header.width as usize,
@@ -187,6 +219,15 @@ impl Texture {
                     decode_bc5,
                 );
             }
+            TextureFormat::BC7_UNORM => {
+                dst = Texture::decode(
+                    &src,
+                    header.width as usize,
+                    header.height as usize * header.depth as usize,
+                    decode_bc7,
+                );
+            }
+            _ => panic!("Unsupported texture format {:?}!", header.format),
         }
 
         Some(Texture {
