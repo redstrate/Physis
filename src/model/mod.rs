@@ -10,8 +10,8 @@ pub mod vertex_declarations;
 use std::io::{Cursor, Seek, SeekFrom};
 use std::mem::size_of;
 
-use binrw::BinRead;
 use binrw::BinReaderExt;
+use binrw::{BinRead, VecArgs};
 use binrw::{BinWrite, BinWriterExt, binrw};
 
 use crate::common_file_operations::{read_bool_from, write_bool_as};
@@ -694,12 +694,10 @@ impl MDL {
                     ))
                     .ok()?;
 
-                // TODO: optimize!
-                let mut indices: Vec<u16> =
-                    Vec::with_capacity(model.meshes[j as usize].index_count as usize);
-                for _ in 0..model.meshes[j as usize].index_count {
-                    indices.push(cursor.read_le::<u16>().ok()?);
-                }
+                let index_count = model.meshes[j as usize].index_count as usize;
+                let indices: Vec<u16> = cursor
+                    .read_le_args(VecArgs::builder().count(index_count).finalize())
+                    .ok()?;
 
                 let mut submeshes: Vec<SubMesh> =
                     Vec::with_capacity(model.meshes[j as usize].submesh_count as usize);
