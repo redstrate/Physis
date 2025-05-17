@@ -63,6 +63,7 @@ enum ModelFlags1 {
     WavingAnimationDisabled = 0x04,
     LightShadowDisabled = 0x02,
     ShadowDisabled = 0x01,
+    Unknown2 = 0x5, // TODO: seen in some bgparts
 }
 
 #[binrw]
