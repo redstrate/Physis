@@ -55,19 +55,20 @@ pub struct ModelFileHeader {
 #[brw(repr = u8)]
 #[derive(Debug, Clone, PartialEq)]
 enum ModelFlags1 {
-    DustOcclusionEnabled = 0x80,
-    SnowOcclusionEnabled = 0x40,
-    RainOcclusionEnabled = 0x20,
-    LightingReflectionEnabled = 0x08,
-    WavingAnimationDisabled = 0x04,
-    LightShadowDisabled = 0x02,
     ShadowDisabled = 0x01,
+    LightShadowDisabled = 0x02,
+    WavingAnimationDisabled = 0x04,
+    LightingReflectionEnabled = 0x08,
+    RainOcclusionEnabled = 0x20,
+    SnowOcclusionEnabled = 0x40,
+    DustOcclusionEnabled = 0x80,
 
     // NOTE: these are most likely a combination of other flags
     Unknown1 = 0x10,
     Unknown2 = 0x5, // TODO: seen in some bgparts
     Unknown3 = 0xE4, // TODO: seen in some bgparts
     Unknown4 = 0xE5, // TODO: seen in some bgparts
+    Unknown5 = 0x6,
 }
 
 #[binrw]
