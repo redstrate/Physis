@@ -5,8 +5,8 @@
 
 use std::io::{Cursor, SeekFrom};
 
-use crate::ByteSpan;
 use crate::crc::XivCrc32;
+use crate::{ByteSpan, common_file_operations::read_bool_from};
 use binrw::{BinRead, binread};
 
 #[binread]
@@ -35,6 +35,7 @@ pub struct ResourceParameter {
 
 #[binread]
 #[br(little, import {
+    version: u32,
     shader_data_offset: u32,
     strings_offset: u32,
     is_vertex: bool
@@ -49,6 +50,9 @@ pub struct Shader {
     resource_parameter_count: u16,
     uav_parameter_count: u16,
     texture_count: u16,
+
+    #[br(count = if version >= 0x0D01 { 4 } else { 0 } )]
+    unk_data: Vec<u8>,
 
     #[br(args { count: scalar_parameter_count as usize, inner: ResourceParameterBinReadArgs { strings_offset }})]
     pub scalar_parameters: Vec<ResourceParameter>,
@@ -93,11 +97,15 @@ pub struct Key {
 
 #[binread]
 #[repr(C)]
+#[br(little, import {
+    version: u32,
+})]
 #[derive(Debug, Clone, Copy)]
 #[allow(unused)]
 pub struct Pass {
     id: u32,
     vertex_shader: u32,
+    #[brw(pad_after = if version >= 0x0D01 { 12 } else { 0 })]
     pixel_shader: u32,
 }
 
@@ -111,6 +119,7 @@ pub struct NodeAlias {
 
 #[binread]
 #[br(little, import {
+    version: u32,
     system_key_count: u32,
     scene_key_count: u32,
     material_key_count: u32,
@@ -122,6 +131,10 @@ pub struct Node {
     pub selector: u32,
     pub pass_count: u32,
     pub pass_indices: [u8; 16],
+
+    #[br(count = if version >= 0x0D01 { 8 } else { 0 } )]
+    unk_data: Vec<u8>,
+
     #[br(count = system_key_count)]
     pub system_keys: Vec<u32>,
     #[br(count = scene_key_count)]
@@ -130,7 +143,7 @@ pub struct Node {
     pub material_keys: Vec<u32>,
     #[br(count = subview_key_count)]
     pub subview_keys: Vec<u32>,
-    #[br(count = pass_count)]
+    #[br(args { count: pass_count as usize, inner: PassBinReadArgs { version }})]
     pub passes: Vec<Pass>,
 }
 
@@ -140,6 +153,7 @@ pub struct Node {
 #[derive(Debug)]
 #[allow(dead_code, unused)]
 pub struct ShaderPackage {
+    /// For example, 3329
     version: u32,
 
     // "DX9\0" or "DX11"
@@ -159,15 +173,12 @@ pub struct ShaderPackage {
     pub material_parameters_size: u32,
     material_parameter_count: u16,
 
-    has_mat_param_defaults: u16,
-    scalar_parameter_count: u16,
-    #[br(temp)]
-    unknown1: u16,
+    #[br(map = read_bool_from::<u16>)]
+    has_mat_param_defaults: bool,
+    scalar_parameter_count: u32,
     sampler_count: u16,
     texture_count: u16,
-    uav_count: u16,
-    #[br(temp)]
-    unknown2: u16,
+    uav_count: u32,
 
     system_key_count: u32,
     scene_key_count: u32,
@@ -175,16 +186,19 @@ pub struct ShaderPackage {
     node_count: u32,
     node_alias_count: u32,
 
+    #[br(count = if version >= 0x0D01 { 12 } else { 0 } )]
+    unk_data: Vec<u8>,
+
     // TODO: dx9 needs 4 bytes of padding, dx11 is 8 (correct)
-    #[br(args { count: vertex_shader_count as usize, inner : ShaderBinReadArgs { is_vertex: true, shader_data_offset, strings_offset }})]
+    #[br(args { count: vertex_shader_count as usize, inner : ShaderBinReadArgs { version, is_vertex: true, shader_data_offset, strings_offset }})]
     pub vertex_shaders: Vec<Shader>,
-    #[br(args { count: pixel_shader_count as usize, inner: ShaderBinReadArgs { is_vertex: false, shader_data_offset, strings_offset } })]
+    #[br(args { count: pixel_shader_count as usize, inner: ShaderBinReadArgs { version, is_vertex: false, shader_data_offset, strings_offset } })]
     pub pixel_shaders: Vec<Shader>,
 
     #[br(count = material_parameter_count)]
     pub material_parameters: Vec<MaterialParameter>,
 
-    #[br(count = if has_mat_param_defaults == 0x1 { (material_parameters_size as i32) >> 2i32 } else { 0 })]
+    #[br(count = if has_mat_param_defaults { (material_parameters_size as i32) >> 2i32 } else { 0 })]
     mat_param_defaults: Vec<f32>,
 
     #[br(args { count: scalar_parameter_count as usize, inner: ResourceParameterBinReadArgs { strings_offset }})]
@@ -206,7 +220,7 @@ pub struct ShaderPackage {
     pub sub_view_key1_default: u32,
     pub sub_view_key2_default: u32,
 
-    #[br(args { count: node_count as usize, inner: NodeBinReadArgs { system_key_count, scene_key_count, material_key_count, subview_key_count: 2 }})]
+    #[br(args { count: node_count as usize, inner: NodeBinReadArgs { version, system_key_count, scene_key_count, material_key_count, subview_key_count: 2 }})]
     pub nodes: Vec<Node>,
 
     #[br(ignore)]
