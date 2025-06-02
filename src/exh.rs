@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #![allow(clippy::unnecessary_fallible_conversions)] // This wrongly trips on binrw code
+#![allow(unused_variables)] // just binrw things with br(temp)
 
 use std::io::BufWriter;
 use std::io::Cursor;
@@ -17,7 +18,6 @@ use crate::common::Language;
 #[binrw]
 #[brw(magic = b"EXHF")]
 #[brw(big)]
-#[allow(dead_code)]
 #[derive(Debug)]
 pub struct EXHHeader {
     pub(crate) version: u16,

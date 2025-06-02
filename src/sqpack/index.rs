@@ -198,7 +198,7 @@ impl SqPackIndex {
                     let (directory, filename) = lowercase.split_at(pos);
 
                     let directory_crc = CRC.checksum(directory.as_bytes());
-                    let filename_crc = CRC.checksum(filename[1..filename.len()].as_bytes());
+                    let filename_crc = CRC.checksum(&filename.as_bytes()[1..filename.len()]);
 
                     Hash::SplitPath {
                         name: filename_crc,

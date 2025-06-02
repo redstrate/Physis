@@ -54,25 +54,6 @@ pub(crate) fn strings_parser(
     Ok(strings)
 }
 
-#[binrw::parser(reader)]
-pub(crate) fn string_from_offset(start: u64) -> BinResult<String> {
-    let offset: u32 = reader.read_le::<u32>()?;
-
-    let mut string = String::new();
-
-    let old_pos = reader.stream_position()?;
-
-    reader.seek(SeekFrom::Start(start + offset as u64))?;
-    reader.seek(SeekFrom::Start(start))?;
-    let mut next_char = reader.read_le::<u8>().unwrap() as char;
-    while next_char != '\0' {
-        string.push(next_char);
-        next_char = reader.read_le::<u8>().unwrap() as char;
-    }
-    reader.seek(SeekFrom::Start(old_pos))?;
-    Ok(string)
-}
-
 fn read_half1(data: [u16; 1]) -> Half1 {
     Half1 {
         value: f16::from_bits(data[0]),

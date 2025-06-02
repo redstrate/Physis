@@ -9,23 +9,23 @@ use super::common::RelativePositions;
 #[derive(Debug)]
 #[br(little)]
 pub struct GameInstanceObject {
-    base_id: u32,
+    pub base_id: u32,
 }
 
 #[binread]
 #[derive(Debug)]
 #[br(little)]
 pub struct NPCInstanceObject {
-    parent_data: GameInstanceObject,
-    pop_weather: u32,
-    pop_time_start: u8,
-    pop_time_end: u8,
-    padding: u16,
-    move_ai: u32,
-    wandering_range: u8,
-    route: u8,
-    event_group: u16,
-    padding1: [u32; 2],
+    pub parent_data: GameInstanceObject,
+    pub pop_weather: u32,
+    pub pop_time_start: u8,
+    #[brw(pad_after = 2)] // padding
+    pub pop_time_end: u8,
+    pub move_ai: u32,
+    pub wandering_range: u8,
+    pub route: u8,
+    #[brw(pad_after = 8)] // padding
+    pub event_group: u16,
 }
 
 #[binread]
@@ -33,8 +33,8 @@ pub struct NPCInstanceObject {
 #[br(little)]
 pub struct ENPCInstanceObject {
     pub parent_data: NPCInstanceObject,
+    #[brw(pad_after = 8)] // padding
     pub behavior: u32,
-    padding: [u32; 2],
 }
 
 #[binread]

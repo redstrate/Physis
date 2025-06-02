@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: 2023 Joshua Goins <josh@redstrate.com>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+#![allow(unused_variables)] // shut up a nonsensical error in binrw for checksum
+
 use std::io::{BufWriter, Cursor};
 
 use crate::common_file_operations::{read_bool_from, read_string, write_bool_as, write_string};

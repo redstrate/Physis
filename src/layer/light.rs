@@ -39,19 +39,18 @@ pub struct LightInstanceObject {
     pub texture_path_offset: u32,
     pub diffuse_color_hdri: ColorHDRI,
     #[br(map = read_bool_from::<u8>)]
+    #[brw(pad_after = 3)] // padding
     pub follows_directional_light: bool,
-    padding1: u8,
-    padding2: u16,
     #[br(map = read_bool_from::<u8>)]
     pub specular_enabled: bool,
     #[br(map = read_bool_from::<u8>)]
     pub bg_shadow_enabled: bool,
     #[br(map = read_bool_from::<u8>)]
+    #[brw(pad_after = 1)] // padding
     pub character_shadow_enabled: bool,
-    padding3: u8,
     pub shadow_clip_range: f32,
     pub plane_light_rotation_x: f32,
     pub plane_light_rotation_y: f32,
+    #[brw(pad_after = 1)] // padding
     pub merge_group_id: u16,
-    padding4: u8,
 }

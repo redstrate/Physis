@@ -23,8 +23,8 @@ pub struct EnvSetInstanceObject {
     pub shape: EnvSetShape,
     #[br(map = read_bool_from::<u8>)]
     pub is_env_map_shooting_point: bool,
+    #[brw(pad_after = 2)] // padding
     pub priority: u8,
-    padding: u16,
     pub effective_range: f32,
     pub interpolation_time: i32,
     pub reverb: f32,

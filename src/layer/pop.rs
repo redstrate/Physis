@@ -21,8 +21,7 @@ pub struct PopRangeInstanceObject {
     pub pop_type: PopType,
     pub relative_positions: RelativePositions,
     pub inner_radius_ratio: f32,
+    #[brw(pad_after = 7)] // padding
     pub index: u8,
-    padding1: [u8; 3],
-    padding2: u32,
     // TODO: read relative positions
 }

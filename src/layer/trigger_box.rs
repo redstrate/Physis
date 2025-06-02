@@ -24,7 +24,6 @@ pub struct TriggerBoxInstanceObject {
     pub trigger_box_shape: TriggerBoxShape,
     pub priority: i16,
     #[br(map = read_bool_from::<u8>)]
+    #[brw(pad_after = 5)] // padding
     pub enabled: bool,
-    padidng: u8,
-    padding1: u32,
 }

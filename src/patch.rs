@@ -807,10 +807,10 @@ mod tests {
         let mut dir = std::env::temp_dir();
         dir.push("physis-patch-tests");
         if dir.exists() {
-            fs::remove_dir_all(&dir);
+            fs::remove_dir_all(&dir).unwrap();
         }
 
-        fs::create_dir_all(&dir);
+        fs::create_dir_all(&dir).unwrap();
 
         dir.to_str().unwrap().to_string()
     }

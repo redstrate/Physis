@@ -3,28 +3,6 @@
 
 #![allow(clippy::too_many_arguments)]
 
-pub static TRANSPARENT_MASK: u32 = {
-    #[cfg(target_endian = "little")]
-    {
-        0x00ffffff
-    }
-    #[cfg(target_endian = "big")]
-    {
-        0xffffff00
-    }
-};
-
-pub static TRANSPARENT_SHIFT: u32 = {
-    #[cfg(target_endian = "little")]
-    {
-        24
-    }
-    #[cfg(target_endian = "big")]
-    {
-        0
-    }
-};
-
 #[inline]
 pub const fn color(r: u8, g: u8, b: u8, a: u8) -> u32 {
     u32::from_le_bytes([b, g, r, a])

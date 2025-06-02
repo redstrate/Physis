@@ -10,6 +10,6 @@ use super::GameInstanceObject;
 #[br(little)]
 pub struct AetheryteInstanceObject {
     pub parent_data: GameInstanceObject,
+    #[brw(pad_after = 4)] // padding
     pub bound_instance_id: u32,
-    padding: u32,
 }

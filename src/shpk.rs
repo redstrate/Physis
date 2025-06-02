@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: 2023 Joshua Goins <josh@redstrate.com>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+#![allow(unused_variables)] // just binrw things with br(temp)
+
 use std::io::{Cursor, SeekFrom};
 
 use crate::ByteSpan;
@@ -136,7 +138,7 @@ pub struct Node {
 #[br(little)]
 #[br(magic = b"ShPk")]
 #[derive(Debug)]
-#[allow(dead_code, unused_variables)]
+#[allow(dead_code, unused)]
 pub struct ShaderPackage {
     version: u32,
 

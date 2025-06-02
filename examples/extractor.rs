@@ -15,27 +15,27 @@ fn main() {
         return;
     }
 
-    /// Collect our arguments
+    // Collect our arguments
     let game_dir = &args[1];
     let file_path = &args[2];
     let destination_path = &args[3];
 
-    /// Create a GameData struct, this manages the repositories. It allows us to easily extract files.
+    // Create a GameData struct, this manages the repositories. It allows us to easily extract files.
     let mut game_data = GameData::from_existing(Platform::Win32, game_dir);
 
-    /// Extract said file:
+    // Extract said file:
     let Some(game_file) = game_data.extract(file_path) else {
         println!("File {} not found!", file_path);
         return;
     };
 
-    /// Create the file to write into.
+    // Create the file to write into.
     let Ok(mut file) = File::create(destination_path) else {
         println!("Failed to open file {} for writing.", destination_path);
         return;
     };
 
-    /// Since GameData::extract returns a byte buffer, it's trivial to write that to a file on disk.
+    // Since GameData::extract returns a byte buffer, it's trivial to write that to a file on disk.
     if file.write_all(&game_file).is_err() {
         println!("Failed to write to file {}.", destination_path);
         return;

@@ -41,7 +41,7 @@ pub fn parse_rows(exh: &EXH, data_offsets: &Vec<ExcelDataOffset>) -> BinResult<V
         reader.seek(SeekFrom::Start(offset.offset.into()))?;
 
         // TODO: use DataSection here
-        let size: u32 = u32::read_be(reader).unwrap();
+        let _size: u32 = u32::read_be(reader).unwrap();
         let row_count: u16 = u16::read_be(reader).unwrap();
         //let row_header = DataSection::read(reader)?;
 

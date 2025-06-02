@@ -53,6 +53,7 @@ bitflags! {
 #[binrw]
 #[brw(repr = u32)]
 #[derive(Debug)]
+#[allow(non_camel_case_types)] // NOTE: It's currently allowed to make updating this list not a giant pain
 enum TextureFormat {
     L8_UNORM = 0x1130,
     A8_UNORM = 0x1131,

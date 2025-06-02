@@ -56,13 +56,13 @@ pub struct SharedGroupInstance {
     #[br(map = read_bool_from::<u8>)]
     pub random_timeline_loop_playback: bool,
     #[br(map = read_bool_from::<u8>)]
+    #[brw(pad_after = 1)] // padding
     pub collision_controllable_without_eobj: bool,
-    padding: u8,
     pub bound_client_path_instance_id: u32,
     pub move_path_settings: i32,
     #[br(map = read_bool_from::<u8>)]
+    #[brw(pad_after = 3)] // padding
     pub not_create_navimesh_door: bool,
-    padding1: [u8; 3],
     pub initial_transform_state: TransformState,
     pub initial_color_state: ColourState,
     // TODO: read move path settings

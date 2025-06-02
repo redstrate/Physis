@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: 2023 Joshua Goins <josh@redstrate.com>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+#![allow(unused_variables)] // just binrw things with br(temp)
+
 use std::io::{BufWriter, Cursor};
 
 use binrw::BinRead;

@@ -1,11 +1,11 @@
 // SPDX-FileCopyrightText: 2024 Joshua Goins <josh@redstrate.com>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+#![allow(unused_variables)] // just binrw things with br(temp)
+
 use std::io::{Cursor, Read, Seek, SeekFrom, Write};
 
-use crate::common_file_operations::{
-    read_bool_from, string_from_offset, write_bool_as, write_string,
-};
+use crate::common_file_operations::{read_bool_from, write_bool_as, write_string};
 use crate::{ByteBuffer, ByteSpan};
 use binrw::{BinRead, BinReaderExt, BinWrite, binread};
 use binrw::{Endian, Error, binrw};
@@ -67,9 +67,9 @@ pub use trigger_box::TriggerBoxShape;
 // Also see https://github.com/aers/FFXIVClientStructs/blob/6b62122cae38bfbc016bf697bef75f80f37abac1/FFXIVClientStructs/FFXIV/Client/LayoutEngine/ILayoutInstance.cs
 
 /// "LGB1"
-const LGB1_ID: u32 = u32::from_le_bytes(*b"LGB1");
+pub const LGB1_ID: u32 = u32::from_le_bytes(*b"LGB1");
 /// "LGP1"
-const LGP1_ID: u32 = u32::from_le_bytes(*b"LGP1");
+pub const LGP1_ID: u32 = u32::from_le_bytes(*b"LGP1");
 
 /// A string that exists in a different location in the file, usually a heap with a bunch of other strings.
 #[binrw]
@@ -368,37 +368,36 @@ pub enum LayerEntryData {
 #[derive(Debug)]
 #[br(little)]
 pub struct VFXInstanceObject {
-    asset_path_offset: u32,
-    soft_particle_fade_range: f32,
-    padding: u32,
-    color: Color,
+    pub asset_path_offset: u32,
+    #[brw(pad_after = 4)] // padding
+    pub soft_particle_fade_range: f32,
+    pub color: Color,
     #[br(map = read_bool_from::<u8>)]
-    auto_play: bool,
+    pub auto_play: bool,
     #[br(map = read_bool_from::<u8>)]
-    no_far_clip: bool,
-    padding1: u16,
-    fade_near_start: f32,
-    fade_near_end: f32,
-    fade_far_start: f32,
-    fade_far_end: f32,
-    z_correct: f32,
+    #[brw(pad_after = 2)] // padding
+    pub no_far_clip: bool,
+    pub fade_near_start: f32,
+    pub fade_near_end: f32,
+    pub fade_far_start: f32,
+    pub fade_far_end: f32,
+    pub z_correct: f32,
 }
 
 #[binread]
 #[derive(Debug)]
 #[br(little)]
 pub struct GatheringInstanceObject {
-    gathering_point_id: u32,
-    padding: u32,
+    #[brw(pad_after = 4)] // padding
+    pub gathering_point_id: u32,
 }
 
 #[binread]
 #[derive(Debug)]
 #[br(little)]
 pub struct TreasureInstanceObject {
-    nonpop_init_zone: u8,
-    padding1: [u8; 3],
-    padding2: [u32; 2],
+    #[brw(pad_after = 11)] // padding
+    pub nonpop_init_zone: u8,
 }
 
 // Unimplemented because I haven't needed it yet:
@@ -533,8 +532,8 @@ pub struct LayerHeader {
 #[derive(Debug)]
 #[brw(little)]
 #[allow(dead_code)] // most of the fields are unused at the moment
-struct LayerSetReferenced {
-    layer_set_id: u32,
+pub struct LayerSetReferenced {
+    pub layer_set_id: u32,
 }
 
 #[binrw]
@@ -542,18 +541,17 @@ struct LayerSetReferenced {
 #[brw(little)]
 #[br(import(data_heap: &StringHeap), stream = r)]
 #[bw(import(data_heap: &mut StringHeap))]
-#[allow(dead_code)] // most of the fields are unused at the moment
-struct LayerSetReferencedList {
+pub struct LayerSetReferencedList {
     referenced_type: LayerSetReferencedType,
     #[br(temp)]
     #[bw(calc = data_heap.get_free_offset(&layer_sets))]
     layer_set_offset: i32,
     #[bw(calc = layer_sets.len() as i32)]
-    layer_set_count: i32,
+    pub layer_set_count: i32,
 
     #[br(count = layer_set_count)]
     #[bw(ignore)]
-    layer_sets: Vec<LayerSetReferenced>,
+    pub layer_sets: Vec<LayerSetReferenced>,
 }
 
 #[binread]
@@ -613,7 +611,7 @@ const LAYER_CHUNK_HEADER_SIZE: usize = 24;
 #[binread]
 #[derive(Debug)]
 #[br(little)]
-#[br(import(start: u64, string_heap: &StringHeap))]
+#[br(import(string_heap: &StringHeap))]
 #[allow(dead_code)] // most of the fields are unused at the moment
 pub struct InstanceObject {
     asset_type: LayerEntryType,
@@ -708,9 +706,8 @@ impl LayerGroup {
                     let start = cursor.stream_position().unwrap();
                     let string_heap = StringHeap::from(start);
 
-                    objects.push(
-                        InstanceObject::read_le_args(&mut cursor, (start, &string_heap)).unwrap(),
-                    );
+                    objects
+                        .push(InstanceObject::read_le_args(&mut cursor, (&string_heap,)).unwrap());
                 }
             }
 
