@@ -305,6 +305,7 @@ mod tests {
     fn test_crc() {
         assert_eq!(ShaderPackage::crc("PASS_0"), 0xC5A5389C);
         assert_eq!(ShaderPackage::crc("DecodeDepthBuffer"), 0x2C6C023C);
+        assert_eq!(ShaderPackage::crc("g_Sampler"), 0x88408C04);
     }
 
     #[test]
