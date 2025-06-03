@@ -63,14 +63,9 @@ pub struct Shader {
     #[br(args { count: texture_count as usize, inner: ResourceParameterBinReadArgs { strings_offset }})]
     pub texture_parameters: Vec<ResourceParameter>,
 
-    /// Additional data specific to the shader type
-    #[br(seek_before = SeekFrom::Start(shader_data_offset as u64 + data_offset as u64))]
-    #[br(count = if is_vertex { shader_data_offset } else { 0 } )]
-    #[br(restore_position)]
-    pub additional_data: Vec<u8>,
-
     /// The HLSL bytecode of this shader. The DX level used varies.
-    #[br(seek_before = SeekFrom::Start(shader_data_offset as u64 + data_offset as u64 + if is_vertex { 8 } else { 0 } ))]
+    // TODO: dx9 is 4, not 8
+    #[br(seek_before = SeekFrom::Start(shader_data_offset as u64 + data_offset as u64 + if is_vertex { 8 } else { 0 }))]
     #[br(count = data_size)]
     #[br(restore_position)]
     pub bytecode: Vec<u8>,
