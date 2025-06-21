@@ -1,7 +1,10 @@
 // SPDX-FileCopyrightText: 2025 Joshua Goins <josh@redstrate.com>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-use std::io::{Read, Seek, SeekFrom, Write};
+use std::{
+    collections::HashMap,
+    io::{Read, Seek, SeekFrom, Write},
+};
 
 use binrw::{BinRead, BinResult, BinWrite, Endian};
 
@@ -123,31 +126,22 @@ pub fn write_rows(rows: &Vec<ExcelRow>, exh: &EXH) -> BinResult<()> {
                 // we need to sort them by offset
                 column_definitions.sort_by(|(a, _), (b, _)| a.offset.cmp(&b.offset));
 
-                let mut strings_len = 0;
-                for (definition, column) in &column_definitions {
-                    EXD::write_column(writer, column, definition, &mut strings_len);
-
-                    // TODO: temporary workaround until i can figure out why it has 4 extra bytes in test_write's case
-                    if definition.data_type == ColumnDataType::Int8 && column_definitions.len() == 1
-                    {
-                        0u32.write_le(writer).unwrap();
-                    }
-                }
-
                 // handle packed bools
-                let mut packed_byte = 0u8;
-                let mut byte_offset = 0;
+                let mut packed_bools: HashMap<u16, u8> = HashMap::new();
 
                 let mut write_packed_bool =
                     |definition: &ExcelColumnDefinition, shift: i32, boolean: &bool| {
-                        byte_offset = definition.offset; // NOTE: it looks like there is only one byte for all of the packed booleans
+                        if !packed_bools.contains_key(&definition.offset) {
+                            packed_bools.insert(definition.offset, 0u8);
+                        }
 
                         if *boolean {
                             let bit = 1 << shift;
-                            packed_byte |= bit;
+                            *packed_bools.get_mut(&definition.offset).unwrap() |= bit;
                         }
                     };
 
+                // process packed bools before continuing, since we need to know what their final byte form is
                 for (definition, column) in &column_definitions {
                     match &column {
                         ColumnData::Bool(val) => match definition.data_type {
@@ -165,11 +159,21 @@ pub fn write_rows(rows: &Vec<ExcelRow>, exh: &EXH) -> BinResult<()> {
                     }
                 }
 
-                // write the new packed boolean byte
-                // NOTE: This is a terrible way to check if there are packed booleans
-                // NOTE: Assumption: the packed boolean is always at the end of the row
-                if byte_offset != 0 {
-                    packed_byte.write_le(writer).unwrap();
+                let mut strings_len = 0;
+                for (definition, column) in &column_definitions {
+                    EXD::write_column(
+                        writer,
+                        column,
+                        definition,
+                        &mut strings_len,
+                        &mut packed_bools,
+                    );
+
+                    // TODO: temporary workaround until i can figure out why it has 4 extra bytes in test_write's case
+                    if definition.data_type == ColumnDataType::Int8 && column_definitions.len() == 1
+                    {
+                        0u32.write_le(writer).unwrap();
+                    }
                 }
             };
 
@@ -317,6 +321,7 @@ impl EXD {
         column: &ColumnData,
         column_definition: &ExcelColumnDefinition,
         strings_len: &mut u32,
+        packed_bools: &mut HashMap<u16, u8>,
     ) {
         match column {
             ColumnData::String(val) => {
@@ -327,14 +332,21 @@ impl EXD {
             ColumnData::Bool(_) => match column_definition.data_type {
                 ColumnDataType::Bool => todo!(),
                 // packed bools are handled in write_rows
-                ColumnDataType::PackedBool0 => {}
-                ColumnDataType::PackedBool1 => {}
-                ColumnDataType::PackedBool2 => {}
-                ColumnDataType::PackedBool3 => {}
-                ColumnDataType::PackedBool4 => {}
-                ColumnDataType::PackedBool5 => {}
-                ColumnDataType::PackedBool6 => {}
-                ColumnDataType::PackedBool7 => {}
+                ColumnDataType::PackedBool0
+                | ColumnDataType::PackedBool1
+                | ColumnDataType::PackedBool2
+                | ColumnDataType::PackedBool3
+                | ColumnDataType::PackedBool4
+                | ColumnDataType::PackedBool5
+                | ColumnDataType::PackedBool6
+                | ColumnDataType::PackedBool7 => {
+                    if let Some(byte) = packed_bools.get(&column_definition.offset) {
+                        byte.write_le(cursor).unwrap();
+
+                        // then remove it so the next packed bool column doesn't write it again
+                        packed_bools.remove(&column_definition.offset);
+                    }
+                }
                 _ => panic!("This makes no sense!"),
             },
             ColumnData::Int8(val) => Self::write_data_raw(cursor, val),
