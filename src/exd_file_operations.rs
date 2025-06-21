@@ -174,6 +174,14 @@ pub fn write_rows(rows: &Vec<ExcelRow>, exh: &EXH) -> BinResult<()> {
                     {
                         0u32.write_le(writer).unwrap();
                     }
+
+                    // TODO: temporary workaround until i can figure out why this *specific* packed boolean column in TerritoryType has three extra bytes at the end
+                    if definition.offset == 60
+                        && definition.data_type == ColumnDataType::PackedBool0
+                        && column_definitions.len() == 44
+                    {
+                        [0u8; 3].write_le(writer).unwrap();
+                    }
                 }
             };
 
