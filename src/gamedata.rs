@@ -126,8 +126,6 @@ impl GameData {
     fn get_dat_file(&self, path: &str, chunk: u8, data_file_id: u32) -> Option<SqPackData> {
         let (repository, category) = self.parse_repository_category(path).unwrap();
 
-        dbg!(repository);
-
         let dat_path: PathBuf = [
             self.game_directory.clone(),
             "sqpack".to_string(),
@@ -136,8 +134,6 @@ impl GameData {
         ]
         .iter()
         .collect();
-
-        dbg!(&dat_path);
 
         SqPackData::from_existing(dat_path.to_str()?)
     }
