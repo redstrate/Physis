@@ -707,7 +707,7 @@ impl LayerGroup {
                     let string_heap = StringHeap::from(start);
 
                     objects
-                        .push(InstanceObject::read_le_args(&mut cursor, (&string_heap,)).unwrap());
+                        .push(InstanceObject::read_le_args(&mut cursor, (&string_heap,)).ok()?);
                 }
             }
 
