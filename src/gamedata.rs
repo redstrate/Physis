@@ -126,6 +126,8 @@ impl GameData {
     fn get_dat_file(&self, path: &str, chunk: u8, data_file_id: u32) -> Option<SqPackData> {
         let (repository, category) = self.parse_repository_category(path).unwrap();
 
+        dbg!(repository);
+
         let dat_path: PathBuf = [
             self.game_directory.clone(),
             "sqpack".to_string(),
@@ -134,6 +136,8 @@ impl GameData {
         ]
         .iter()
         .collect();
+
+        dbg!(&dat_path);
 
         SqPackData::from_existing(dat_path.to_str()?)
     }
@@ -199,17 +203,18 @@ impl GameData {
             return None;
         }
 
-        let tokens = path.split_once('/')?;
+        let tokens: Vec<&str> = path.split('/').collect();
 
-        let repository_token = tokens.1;
-
+        // Search for expansions
+        let repository_token = tokens[1];
         for repository in &self.repositories {
             if repository.name == repository_token {
-                return Some((repository, string_to_category(tokens.0)?));
+                return Some((repository, string_to_category(tokens[0])?));
             }
         }
 
-        Some((&self.repositories[0], string_to_category(tokens.0)?))
+        // Fallback to ffxiv
+        Some((&self.repositories[0], string_to_category(tokens[0])?))
     }
 
     fn get_index_filenames(&self, path: &str) -> Option<Vec<(String, u8)>> {
@@ -424,7 +429,7 @@ impl GameData {
 
 #[cfg(test)]
 mod tests {
-    use crate::repository::Category::EXD;
+    use crate::repository::Category::*;
 
     use super::*;
 
@@ -450,10 +455,24 @@ mod tests {
     fn repository_and_category_parsing() {
         let data = common_setup_data();
 
+        // fallback to ffxiv
         assert_eq!(
             data.parse_repository_category("exd/root.exl").unwrap(),
             (&data.repositories[0], EXD)
         );
+        // ex1
+        assert_eq!(
+            data.parse_repository_category("bg/ex1/01_roc_r2/twn/r2t1/level/planevent.lgb")
+                .unwrap(),
+            (&data.repositories[1], Background)
+        );
+        // ex2
+        assert_eq!(
+            data.parse_repository_category("bg/ex2/01_gyr_g3/fld/g3fb/level/planner.lgb")
+                .unwrap(),
+            (&data.repositories[2], Background)
+        );
+        // invalid but should still parse I guess
         assert!(
             data.parse_repository_category("what/some_font.dat")
                 .is_none()
