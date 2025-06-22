@@ -10,6 +10,7 @@ use super::TriggerBoxInstanceObject;
 #[derive(Debug, PartialEq)]
 pub enum ExitType {
     ZoneLine = 0x1,
+    Unk = 0x2, // seen in bg/ex5/02_ykt_y6/fld/y6f1/level/planmap.lgb
 }
 
 #[binread]
