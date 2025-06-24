@@ -1,6 +1,6 @@
 [package]
 name = "physis"
-version = "0.4.0"
+version = "0.5.0"
 authors = ["Joshua Goins <josh@redstrate.com>"]
 edition = "2024"
 description = "Library for reading and writing FFXIV data."
