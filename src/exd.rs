@@ -44,14 +44,30 @@ pub(crate) struct ExcelDataOffset {
 #[brw(big)]
 #[allow(dead_code)]
 #[derive(Debug)]
-pub(crate) struct DataSection {
+pub(crate) struct DataSectionHeader {
     /// Size of the data section in bytes.
     pub(crate) size: u32,
     /// The number of rows in this data section.
     pub(crate) row_count: u16,
-    /// The bytes of this data section.
-    /// We currently don't use this in our parsing, see parse_rows.
-    #[br(temp, count = size)]
+}
+
+#[binrw]
+#[brw(big)]
+#[allow(dead_code)]
+#[derive(Debug)]
+pub(crate) struct SubRowHeader {
+    pub(crate) subrow_id: u16,
+}
+
+#[binrw]
+#[brw(big)]
+#[allow(dead_code)]
+#[derive(Debug)]
+pub(crate) struct DataSection {
+    /// Header of the section.
+    pub(crate) header: DataSectionHeader,
+    /// Data part of this section.
+    #[br(temp, count = header.size)]
     #[bw(ignore)]
     data: Vec<u8>,
 }
@@ -192,7 +208,7 @@ pub struct ExcelSingleRow {
 #[derive(Debug, Clone, PartialEq)]
 pub enum ExcelRowKind {
     SingleRow(ExcelSingleRow),
-    SubRows(Vec<ExcelSingleRow>),
+    SubRows(Vec<(u16, ExcelSingleRow)>),
 }
 
 /// Represents an entry in the EXD.

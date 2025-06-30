@@ -10,8 +10,8 @@ use binrw::{BinRead, BinResult, BinWrite, Endian};
 
 use crate::{
     exd::{
-        ColumnData, DataSection, EXD, EXDHeader, ExcelDataOffset, ExcelRow, ExcelRowKind,
-        ExcelSingleRow,
+        ColumnData, DataSection, DataSectionHeader, EXD, EXDHeader, ExcelDataOffset, ExcelRow,
+        ExcelRowKind, ExcelSingleRow, SubRowHeader,
     },
     exh::{ColumnDataType, EXH, ExcelColumnDefinition},
 };
@@ -36,6 +36,24 @@ pub fn read_data_sections(header: &EXDHeader) -> BinResult<Vec<DataSection>> {
     Ok(rows)
 }
 
+fn read_row<T: Read + Seek>(reader: &mut T, exh: &EXH, row_offset: u32) -> Option<ExcelSingleRow> {
+    let mut subrow = ExcelSingleRow {
+        columns: Vec::with_capacity(exh.column_definitions.len()),
+    };
+
+    for column in &exh.column_definitions {
+        reader
+            .seek(SeekFrom::Start((row_offset + column.offset as u32).into()))
+            .ok()?;
+
+        subrow
+            .columns
+            .push(EXD::read_column(reader, exh, row_offset, column).unwrap());
+    }
+
+    Some(subrow)
+}
+
 #[binrw::parser(reader)]
 pub fn parse_rows(exh: &EXH, data_offsets: &Vec<ExcelDataOffset>) -> BinResult<Vec<ExcelRow>> {
     let mut rows = Vec::new();
@@ -43,41 +61,24 @@ pub fn parse_rows(exh: &EXH, data_offsets: &Vec<ExcelDataOffset>) -> BinResult<V
     for offset in data_offsets {
         reader.seek(SeekFrom::Start(offset.offset.into()))?;
 
-        // TODO: use DataSection here
-        let _size: u32 = u32::read_be(reader).unwrap();
-        let row_count: u16 = u16::read_be(reader).unwrap();
-        //let row_header = DataSection::read(reader)?;
+        let row_header = DataSectionHeader::read(reader)?;
 
         let data_offset = reader.stream_position().unwrap() as u32;
 
-        let mut read_row = |row_offset: u32| -> Option<ExcelSingleRow> {
-            let mut subrow = ExcelSingleRow {
-                columns: Vec::with_capacity(exh.column_definitions.len()),
-            };
-
-            for column in &exh.column_definitions {
-                reader
-                    .seek(SeekFrom::Start((row_offset + column.offset as u32).into()))
-                    .ok()?;
-
-                subrow
-                    .columns
-                    .push(EXD::read_column(reader, exh, row_offset, column).unwrap());
-            }
-
-            Some(subrow)
-        };
-
-        let new_row = if row_count > 1 {
+        let new_row = if row_header.row_count > 1 {
             let mut rows = Vec::new();
-            for i in 0..row_count {
+            for i in 0..row_header.row_count {
                 let subrow_offset = data_offset + (i * exh.header.data_offset + 2 * (i + 1)) as u32;
 
-                rows.push(read_row(subrow_offset).unwrap());
+                let subrow_header = SubRowHeader::read(reader)?;
+                rows.push((
+                    subrow_header.subrow_id,
+                    read_row(reader, &exh, subrow_offset).unwrap(),
+                ));
             }
             ExcelRowKind::SubRows(rows)
         } else {
-            ExcelRowKind::SingleRow(read_row(data_offset).unwrap())
+            ExcelRowKind::SingleRow(read_row(reader, &exh, data_offset).unwrap())
         };
         rows.push(ExcelRow {
             row_id: offset.row_id,
@@ -86,6 +87,74 @@ pub fn parse_rows(exh: &EXH, data_offsets: &Vec<ExcelDataOffset>) -> BinResult<V
     }
 
     Ok(rows)
+}
+
+fn write_row<T: Write + Seek>(writer: &mut T, exh: &EXH, row: &ExcelSingleRow) {
+    let mut column_definitions: Vec<(ExcelColumnDefinition, ColumnData)> = exh
+        .column_definitions
+        .clone()
+        .into_iter()
+        .zip(row.columns.clone().into_iter())
+        .collect::<Vec<_>>();
+
+    // we need to sort them by offset
+    column_definitions.sort_by(|(a, _), (b, _)| a.offset.cmp(&b.offset));
+
+    // handle packed bools
+    let mut packed_bools: HashMap<u16, u8> = HashMap::new();
+
+    let mut write_packed_bool = |definition: &ExcelColumnDefinition, shift: i32, boolean: &bool| {
+        if !packed_bools.contains_key(&definition.offset) {
+            packed_bools.insert(definition.offset, 0u8);
+        }
+
+        if *boolean {
+            let bit = 1 << shift;
+            *packed_bools.get_mut(&definition.offset).unwrap() |= bit;
+        }
+    };
+
+    // process packed bools before continuing, since we need to know what their final byte form is
+    for (definition, column) in &column_definitions {
+        match &column {
+            ColumnData::Bool(val) => match definition.data_type {
+                ColumnDataType::PackedBool0 => write_packed_bool(definition, 0, val),
+                ColumnDataType::PackedBool1 => write_packed_bool(definition, 1, val),
+                ColumnDataType::PackedBool2 => write_packed_bool(definition, 2, val),
+                ColumnDataType::PackedBool3 => write_packed_bool(definition, 3, val),
+                ColumnDataType::PackedBool4 => write_packed_bool(definition, 4, val),
+                ColumnDataType::PackedBool5 => write_packed_bool(definition, 5, val),
+                ColumnDataType::PackedBool6 => write_packed_bool(definition, 6, val),
+                ColumnDataType::PackedBool7 => write_packed_bool(definition, 7, val),
+                _ => {} // not relevant
+            },
+            _ => {} // not relevant
+        }
+    }
+
+    let mut strings_len = 0;
+    for (definition, column) in &column_definitions {
+        EXD::write_column(
+            writer,
+            column,
+            definition,
+            &mut strings_len,
+            &mut packed_bools,
+        );
+
+        // TODO: temporary workaround until i can figure out why it has 4 extra bytes in test_write's case
+        if definition.data_type == ColumnDataType::Int8 && column_definitions.len() == 1 {
+            0u32.write_le(writer).unwrap();
+        }
+
+        // TODO: temporary workaround until i can figure out why this *specific* packed boolean column in TerritoryType has three extra bytes at the end
+        if definition.offset == 60
+            && definition.data_type == ColumnDataType::PackedBool0
+            && column_definitions.len() == 44
+        {
+            [0u8; 3].write_le(writer).unwrap();
+        }
+    }
 }
 
 #[binrw::writer(writer)]
@@ -114,83 +183,14 @@ pub fn write_rows(rows: &Vec<ExcelRow>, exh: &EXH) -> BinResult<()> {
         let old_pos = writer.stream_position().unwrap();
 
         // write column data
-        {
-            let mut write_row = |row: &ExcelSingleRow| {
-                let mut column_definitions: Vec<(ExcelColumnDefinition, ColumnData)> = exh
-                    .column_definitions
-                    .clone()
-                    .into_iter()
-                    .zip(row.columns.clone().into_iter())
-                    .collect::<Vec<_>>();
+        match &row.kind {
+            ExcelRowKind::SingleRow(excel_single_row) => write_row(writer, &exh, excel_single_row),
+            ExcelRowKind::SubRows(excel_single_rows) => {
+                for (id, row) in excel_single_rows {
+                    let subrow_header = SubRowHeader { subrow_id: *id };
+                    subrow_header.write_ne(writer)?;
 
-                // we need to sort them by offset
-                column_definitions.sort_by(|(a, _), (b, _)| a.offset.cmp(&b.offset));
-
-                // handle packed bools
-                let mut packed_bools: HashMap<u16, u8> = HashMap::new();
-
-                let mut write_packed_bool =
-                    |definition: &ExcelColumnDefinition, shift: i32, boolean: &bool| {
-                        if !packed_bools.contains_key(&definition.offset) {
-                            packed_bools.insert(definition.offset, 0u8);
-                        }
-
-                        if *boolean {
-                            let bit = 1 << shift;
-                            *packed_bools.get_mut(&definition.offset).unwrap() |= bit;
-                        }
-                    };
-
-                // process packed bools before continuing, since we need to know what their final byte form is
-                for (definition, column) in &column_definitions {
-                    match &column {
-                        ColumnData::Bool(val) => match definition.data_type {
-                            ColumnDataType::PackedBool0 => write_packed_bool(definition, 0, val),
-                            ColumnDataType::PackedBool1 => write_packed_bool(definition, 1, val),
-                            ColumnDataType::PackedBool2 => write_packed_bool(definition, 2, val),
-                            ColumnDataType::PackedBool3 => write_packed_bool(definition, 3, val),
-                            ColumnDataType::PackedBool4 => write_packed_bool(definition, 4, val),
-                            ColumnDataType::PackedBool5 => write_packed_bool(definition, 5, val),
-                            ColumnDataType::PackedBool6 => write_packed_bool(definition, 6, val),
-                            ColumnDataType::PackedBool7 => write_packed_bool(definition, 7, val),
-                            _ => {} // not relevant
-                        },
-                        _ => {} // not relevant
-                    }
-                }
-
-                let mut strings_len = 0;
-                for (definition, column) in &column_definitions {
-                    EXD::write_column(
-                        writer,
-                        column,
-                        definition,
-                        &mut strings_len,
-                        &mut packed_bools,
-                    );
-
-                    // TODO: temporary workaround until i can figure out why it has 4 extra bytes in test_write's case
-                    if definition.data_type == ColumnDataType::Int8 && column_definitions.len() == 1
-                    {
-                        0u32.write_le(writer).unwrap();
-                    }
-
-                    // TODO: temporary workaround until i can figure out why this *specific* packed boolean column in TerritoryType has three extra bytes at the end
-                    if definition.offset == 60
-                        && definition.data_type == ColumnDataType::PackedBool0
-                        && column_definitions.len() == 44
-                    {
-                        [0u8; 3].write_le(writer).unwrap();
-                    }
-                }
-            };
-
-            match &row.kind {
-                ExcelRowKind::SingleRow(excel_single_row) => write_row(excel_single_row),
-                ExcelRowKind::SubRows(excel_single_rows) => {
-                    for row in excel_single_rows {
-                        write_row(row);
-                    }
+                    write_row(writer, &exh, row);
                 }
             }
         }
@@ -212,7 +212,7 @@ pub fn write_rows(rows: &Vec<ExcelRow>, exh: &EXH) -> BinResult<()> {
             match &row.kind {
                 ExcelRowKind::SingleRow(excel_single_row) => write_row_strings(excel_single_row),
                 ExcelRowKind::SubRows(excel_single_rows) => {
-                    for row in excel_single_rows {
+                    for (_, row) in excel_single_rows {
                         write_row_strings(row);
                     }
                 }
@@ -231,7 +231,7 @@ pub fn write_rows(rows: &Vec<ExcelRow>, exh: &EXH) -> BinResult<()> {
         // write row header
         writer.seek(SeekFrom::Start(row_header_pos)).unwrap();
 
-        let row_header = DataSection {
+        let row_header = DataSectionHeader {
             size: (new_pos - old_pos) as u32,
             row_count: 1, // TODO: hardcoded
         };
