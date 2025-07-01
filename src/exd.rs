@@ -308,7 +308,7 @@ mod tests {
         let exh = EXH {
             header: EXHHeader {
                 version: 0,
-                data_offset: 0,
+                row_size: 0,
                 column_count: 0,
                 page_count: 0,
                 language_count: 0,

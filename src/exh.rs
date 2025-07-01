@@ -147,7 +147,7 @@ mod tests {
 
         // header
         assert_eq!(exh.header.version, 3);
-        assert_eq!(exh.header.data_offset, 4);
+        assert_eq!(exh.header.row_size, 4);
         assert_eq!(exh.header.column_count, 1);
         assert_eq!(exh.header.page_count, 1);
         assert_eq!(exh.header.language_count, 1);
