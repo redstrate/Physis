@@ -13,7 +13,7 @@ use crate::{
         ColumnData, DataSection, DataSectionHeader, EXD, EXDHeader, ExcelDataOffset, ExcelRow,
         ExcelRowKind, ExcelSingleRow, SubRowHeader,
     },
-    exh::{ColumnDataType, EXH, ExcelColumnDefinition},
+    exh::{ColumnDataType, EXH, ExcelColumnDefinition, SheetRowKind},
 };
 
 #[binrw::parser(reader)]
@@ -65,7 +65,7 @@ pub fn parse_rows(exh: &EXH, data_offsets: &Vec<ExcelDataOffset>) -> BinResult<V
 
         let data_offset = reader.stream_position().unwrap() as u64;
 
-        let new_row = if row_header.row_count > 1 {
+        let new_row = if exh.header.row_kind == SheetRowKind::SubRows {
             let mut rows = Vec::new();
             for i in 0..row_header.row_count {
                 let subrow_offset = data_offset + i as u64 * (2 + exh.header.row_size as u64);

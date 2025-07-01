@@ -200,6 +200,7 @@ impl ColumnData {
     }
 }
 
+// TODO: Rename to ExcelRow
 #[derive(Debug, Clone, PartialEq)]
 pub struct ExcelSingleRow {
     pub columns: Vec<ColumnData>,
@@ -293,7 +294,7 @@ impl EXD {
 
 #[cfg(test)]
 mod tests {
-    use crate::exh::EXHHeader;
+    use crate::exh::{EXHHeader, SheetRowKind};
     use std::fs::read;
     use std::path::PathBuf;
 
@@ -314,6 +315,9 @@ mod tests {
                 language_count: 0,
                 row_count: 0,
                 unk1: 0,
+                row_kind: SheetRowKind::SingleRow,
+                unk2: 0,
+                unk3: 0,
             },
             column_definitions: vec![],
             pages: vec![],

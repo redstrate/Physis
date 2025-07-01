@@ -16,6 +16,14 @@ use crate::ByteSpan;
 use crate::common::Language;
 
 #[binrw]
+#[derive(Debug, PartialEq, Eq)]
+#[brw(repr = u8)]
+pub enum SheetRowKind {
+    SingleRow = 1,
+    SubRows = 2,
+}
+
+#[binrw]
 #[brw(magic = b"EXHF")]
 #[brw(big)]
 #[derive(Debug)]
@@ -30,9 +38,12 @@ pub struct EXHHeader {
     /// Usually 0
     pub unk1: u16,
 
-    #[br(temp)]
-    #[bw(calc = 0x010000)] // always this value??
-    pub unk2: u32,
+    pub unk2: u8,
+
+    /// Whether this Excel sheet uses subrows or just single rows.
+    pub row_kind: SheetRowKind,
+
+    pub unk3: u16,
 
     #[brw(pad_after = 8)] // padding
     pub row_count: u32,
