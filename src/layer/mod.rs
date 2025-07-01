@@ -298,6 +298,7 @@ pub enum LayerEntryType {
     StableChocobo = 0x4F,
     MaxAssetType = 0x50,
     Unk1 = 90,
+    Unk4 = 83, // seen in bg/ex5/01_xkt_x6/twn/x6t1/level/bg.lgb
     Unk2 = 86, // seen in bg/ex5/02_ykt_y6/fld/y6f1/level/bg.lgb
     Unk3 = 89, // seen in bg/ffxiv/sea_s1/fld/s1f3/level/planevent.lgb
 }
@@ -368,6 +369,8 @@ pub enum LayerEntryData {
     Unk2(),
     #[br(pre_assert(*magic == LayerEntryType::Unk3))]
     Unk3(),
+    #[br(pre_assert(*magic == LayerEntryType::Unk4))]
+    Unk4(),
 }
 
 #[binread]
