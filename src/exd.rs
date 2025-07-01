@@ -237,6 +237,27 @@ impl EXD {
         None
     }
 
+    /// Finds the entry with the specified ID, otherwise returns `None`.
+    pub fn get_subrow(&self, row_id: u32, subrow_id: u16) -> Option<ExcelSingleRow> {
+        for row in &self.rows {
+            if row.row_id == row_id {
+                match &row.kind {
+                    ExcelRowKind::SingleRow(_) => {}
+                    ExcelRowKind::SubRows(subrows) => {
+                        dbg!(subrows);
+                        if let Some(subrow) =
+                            subrows.iter().filter(|(id, _)| *id == subrow_id).next()
+                        {
+                            return Some(subrow.1.clone());
+                        }
+                    }
+                }
+            }
+        }
+
+        None
+    }
+
     /// Calculate the filename of an EXD from the `name`, `language`, and `page`.
     pub fn calculate_filename(
         name: &str,

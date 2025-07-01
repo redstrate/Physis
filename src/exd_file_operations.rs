@@ -36,14 +36,14 @@ pub fn read_data_sections(header: &EXDHeader) -> BinResult<Vec<DataSection>> {
     Ok(rows)
 }
 
-fn read_row<T: Read + Seek>(reader: &mut T, exh: &EXH, row_offset: u32) -> Option<ExcelSingleRow> {
+fn read_row<T: Read + Seek>(reader: &mut T, exh: &EXH, row_offset: u64) -> Option<ExcelSingleRow> {
     let mut subrow = ExcelSingleRow {
         columns: Vec::with_capacity(exh.column_definitions.len()),
     };
 
     for column in &exh.column_definitions {
         reader
-            .seek(SeekFrom::Start((row_offset + column.offset as u32).into()))
+            .seek(SeekFrom::Start((row_offset + column.offset as u64).into()))
             .ok()?;
 
         subrow
@@ -63,17 +63,18 @@ pub fn parse_rows(exh: &EXH, data_offsets: &Vec<ExcelDataOffset>) -> BinResult<V
 
         let row_header = DataSectionHeader::read(reader)?;
 
-        let data_offset = reader.stream_position().unwrap() as u32;
+        let data_offset = reader.stream_position().unwrap() as u64;
 
         let new_row = if row_header.row_count > 1 {
             let mut rows = Vec::new();
             for i in 0..row_header.row_count {
-                let subrow_offset = data_offset + (i * exh.header.data_offset + 2 * (i + 1)) as u32;
+                let subrow_offset = data_offset + i as u64 * (2 + exh.header.row_size as u64);
+                reader.seek(SeekFrom::Start(subrow_offset))?;
 
                 let subrow_header = SubRowHeader::read(reader)?;
                 rows.push((
                     subrow_header.subrow_id,
-                    read_row(reader, &exh, subrow_offset).unwrap(),
+                    read_row(reader, &exh, subrow_offset + 2).unwrap(),
                 ));
             }
             ExcelRowKind::SubRows(rows)
@@ -256,7 +257,7 @@ impl EXD {
     pub(crate) fn read_column<T: Read + Seek>(
         cursor: &mut T,
         exh: &EXH,
-        row_offset: u32,
+        row_offset: u64,
         column: &ExcelColumnDefinition,
     ) -> Option<ColumnData> {
         let mut read_packed_bool = |shift: i32| -> bool {
@@ -272,7 +273,7 @@ impl EXD {
 
                 cursor
                     .seek(SeekFrom::Start(
-                        (row_offset + exh.header.data_offset as u32 + string_offset).into(),
+                        (row_offset + exh.header.row_size as u64 + string_offset as u64).into(),
                     ))
                     .ok()?;
 
