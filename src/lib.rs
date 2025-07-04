@@ -137,6 +137,9 @@ pub mod stm;
 /// Reading patch lists
 pub mod patchlist;
 
+/// Reading UWB files
+pub mod uwb;
+
 mod bcn;
 
 mod error;
