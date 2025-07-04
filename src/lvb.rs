@@ -173,7 +173,6 @@ impl ScnUnknown1Section {
 #[derive(Debug)]
 #[br(little)]
 pub struct ScnUnknown2Section {
-    #[br(dbg)]
     unk1: i32,
     unk2: i32,
 }
