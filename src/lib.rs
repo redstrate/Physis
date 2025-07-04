@@ -140,6 +140,9 @@ pub mod patchlist;
 /// Reading UWB files
 pub mod uwb;
 
+/// Reading LCB files
+pub mod lcb;
+
 mod bcn;
 
 mod error;
