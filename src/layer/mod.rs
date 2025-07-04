@@ -371,6 +371,8 @@ pub enum LayerEntryData {
     Unk3(),
     #[br(pre_assert(*magic == LayerEntryType::Unk4))]
     Unk4(),
+    #[br(pre_assert(*magic == LayerEntryType::DoorRange))]
+    DoorRange(),
 }
 
 #[binread]
