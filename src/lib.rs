@@ -143,6 +143,9 @@ pub mod uwb;
 /// Reading LCB files
 pub mod lcb;
 
+/// Reading LVB files
+pub mod lvb;
+
 mod bcn;
 
 mod error;

@@ -54,6 +54,18 @@ pub(crate) fn strings_parser(
     Ok(strings)
 }
 
+#[binrw::parser(reader)]
+pub(crate) fn read_string_until_null() -> BinResult<String> {
+    let mut string = String::new();
+
+    let mut next_char = reader.read_le::<u8>().unwrap() as char;
+    while next_char != '\0' {
+        string.push(next_char);
+        next_char = reader.read_le::<u8>().unwrap() as char;
+    }
+    Ok(string)
+}
+
 fn read_half1(data: [u16; 1]) -> Half1 {
     Half1 {
         value: f16::from_bits(data[0]),
