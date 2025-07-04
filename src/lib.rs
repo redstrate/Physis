@@ -146,6 +146,9 @@ pub mod lcb;
 /// Reading LVB files
 pub mod lvb;
 
+/// Reading SVB files
+pub mod svb;
+
 mod bcn;
 
 mod error;
