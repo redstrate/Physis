@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 use physis::common::Platform;
-use physis::resource::SqPackResource;
+use physis::resource::{Resource, SqPackResource};
 use std::env;
 use std::fs::File;
 use std::io::Write;
@@ -24,7 +24,7 @@ fn main() {
     let mut game_data = SqPackResource::from_existing(Platform::Win32, game_dir);
 
     // Extract said file:
-    let Some(game_file) = game_data.extract(file_path) else {
+    let Some(game_file) = game_data.read(file_path) else {
         println!("File {} not found!", file_path);
         return;
     };

@@ -6,10 +6,7 @@ use std::{
 
 use crate::{
     ByteBuffer,
-    common::{Language, Platform, read_version},
-    exd::EXD,
-    exh::EXH,
-    exl::EXL,
+    common::{Platform, read_version},
     patch::{PatchError, ZiPatch},
     repository::{Category, Repository, string_to_category},
     sqpack::{IndexEntry, SqPackData, SqPackIndex},
@@ -118,18 +115,6 @@ impl SqPackResource {
         SqPackData::from_existing(dat_path.to_str()?)
     }
 
-    pub fn extract(&mut self, path: &str) -> Option<ByteBuffer> {
-        let slice = self.find_entry(path);
-        match slice {
-            Some((entry, chunk)) => {
-                let mut dat_file = self.get_dat_file(path, chunk, entry.data_file_id.into())?;
-
-                dat_file.read_from_offset(entry.offset)
-            }
-            None => None,
-        }
-    }
-
     /// Finds the offset inside of the DAT file for `path`.
     pub fn find_offset(&mut self, path: &str) -> Option<u64> {
         let slice = self.find_entry(path);
@@ -186,57 +171,6 @@ impl SqPackResource {
         }
 
         Some(index_filenames)
-    }
-
-    /// Read an excel sheet by name (e.g. "Achievement")
-    pub fn read_excel_sheet_header(&mut self, name: &str) -> Option<EXH> {
-        let root_exl_file = self.extract("exd/root.exl")?;
-
-        let root_exl = EXL::from_existing(&root_exl_file)?;
-
-        for (row, _) in root_exl.entries {
-            if row == name {
-                let new_filename = name.to_lowercase();
-
-                let path = format!("exd/{new_filename}.exh");
-
-                return EXH::from_existing(&self.extract(&path)?);
-            }
-        }
-
-        None
-    }
-
-    /// Returns all known sheet names listed in the root list
-    pub fn get_all_sheet_names(&mut self) -> Option<Vec<String>> {
-        let root_exl_file = self.extract("exd/root.exl")?;
-
-        let root_exl = EXL::from_existing(&root_exl_file)?;
-
-        let mut names = vec![];
-        for (row, _) in root_exl.entries {
-            names.push(row);
-        }
-
-        Some(names)
-    }
-
-    /// Read an excel sheet
-    pub fn read_excel_sheet(
-        &mut self,
-        name: &str,
-        exh: &EXH,
-        language: Language,
-        page: usize,
-    ) -> Option<EXD> {
-        let exd_path = format!(
-            "exd/{}",
-            EXD::calculate_filename(name, language, &exh.pages[page])
-        );
-
-        let exd_file = self.extract(&exd_path)?;
-
-        EXD::from_existing(exh, &exd_file)
     }
 
     /// Applies the patch to game data and returns any errors it encounters. This function will not update the version in the GameData struct.
