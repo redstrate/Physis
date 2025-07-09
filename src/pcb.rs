@@ -8,75 +8,104 @@ use crate::ByteSpan;
 use binrw::BinRead;
 use binrw::BinResult;
 use binrw::binrw;
-use binrw::helpers::until_eof;
 
 #[binrw]
 #[derive(Debug)]
 #[brw(little)]
 struct PcbResourceHeader {
-    magic: u32,   // pretty terrible magic if you ask me, lumina calls it so but it's just 0000
-    version: u32, // usually 0x1?
+    pcb_type: u32, // Lumina: 0x0 is resource, 0x1 is list?
+    version: u32,  // ClientStructs: 0 is 'legacy', 1/4 are 'normal', rest unsupported
     total_nodes: u32,
     total_polygons: u32,
 }
 
-// TODO: this is adapted from lumina and could probably be implemented better
 #[binrw::parser(reader)]
 fn parse_resource_node_children(
-    group_length: u32,
-    header_skip: u32,
+    child1_offset: u32,
+    child2_offset: u32,
 ) -> BinResult<Vec<ResourceNode>> {
-    if group_length == 0 {
-        return Ok(Vec::default());
-    }
-
-    assert!(header_skip > 0);
+    let initial_position = reader.stream_position().unwrap();
+    let struct_start = initial_position - ResourceNode::HEADER_SIZE as u64;
 
     let mut children = Vec::new();
-    let initial_position = reader.stream_position().unwrap() - header_skip as u64;
-    let final_position = initial_position + group_length as u64;
-
-    while reader.stream_position().unwrap() + (header_skip as u64) < final_position {
+    if child1_offset != 0 {
+        reader
+            .seek(SeekFrom::Start(struct_start + child1_offset as u64))
+            .unwrap();
         children.push(ResourceNode::read_le(reader).unwrap());
     }
 
-    reader.seek(SeekFrom::Start(final_position)).unwrap();
+    if child2_offset != 0 {
+        reader
+            .seek(SeekFrom::Start(struct_start + child2_offset as u64))
+            .unwrap();
+        children.push(ResourceNode::read_le(reader).unwrap());
+    }
 
     Ok(children)
+}
+
+/// Transform compressed vertices from 0-65535 to local_bounds.min-local_bounds.max
+fn uncompress_vertices(local_bounds: &AABB, vertex: &[u16; 3]) -> [f32; 3] {
+    let x_scale = (local_bounds.max[0] - local_bounds.min[0]) / u16::MAX as f32;
+    let y_scale = (local_bounds.max[1] - local_bounds.min[1]) / u16::MAX as f32;
+    let z_scale = (local_bounds.max[2] - local_bounds.min[2]) / u16::MAX as f32;
+
+    [
+        local_bounds.min[0] + x_scale * (vertex[0] as f32),
+        local_bounds.min[1] + y_scale * (vertex[1] as f32),
+        local_bounds.min[2] + z_scale * (vertex[2] as f32),
+    ]
 }
 
 #[binrw]
 #[derive(Debug)]
 #[brw(little)]
 pub struct ResourceNode {
+    // TODO: figure out what these two values are
     magic: u32,   // pretty terrible magic if you ask me, lumina calls it so
     version: u32, // usually 0x0, is this really a version?!
-    header_skip: u32,
-    group_length: u32,
-    pub bounding_box: BoundingBox,
+
+    child1_offset: u32,
+    child2_offset: u32,
+
+    /// The bounding box of this node.
+    pub local_bounds: AABB,
 
     num_vert_f16: u16,
     num_polygons: u16,
-    #[brw(pad_after = 2)] // padding
+    #[brw(pad_after = 2)] // padding, supposedly
     num_vert_f32: u16,
 
-    #[br(parse_with = parse_resource_node_children, args(group_length, header_skip))]
+    /// The children of this node.
+    #[br(parse_with = parse_resource_node_children, args(child1_offset, child2_offset))]
+    #[br(restore_position)]
     pub children: Vec<ResourceNode>,
 
-    // TODO: combine these
     #[br(count = num_vert_f32)]
-    pub f32_vertices: Vec<[f32; 3]>,
+    f32_vertices: Vec<[f32; 3]>,
     #[br(count = num_vert_f16)]
-    pub f16_vertices: Vec<[u16; 3]>,
+    #[bw(ignore)]
+    f16_vertices: Vec<[u16; 3]>,
+
+    /// This node's vertices.
+    #[br(calc = f32_vertices.clone().into_iter().chain(f16_vertices.iter().map(|vec| uncompress_vertices(&local_bounds, vec))).collect())]
+    #[bw(ignore)]
+    pub vertices: Vec<[f32; 3]>,
+
+    /// This node's polygons, which include index data.
     #[br(count = num_polygons)]
     pub polygons: Vec<Polygon>,
 }
 
-// TODO: de-duplicate with MDL?
+impl ResourceNode {
+    pub const HEADER_SIZE: usize = 0x30;
+}
+
 #[binrw]
 #[derive(Debug, Clone, PartialEq)]
 #[allow(dead_code)]
-pub struct BoundingBox {
+pub struct AABB {
     pub min: [f32; 3],
     pub max: [f32; 3],
 }
@@ -84,10 +113,10 @@ pub struct BoundingBox {
 #[binrw]
 #[derive(Debug, Clone, PartialEq)]
 #[allow(dead_code)]
-struct Polygon {
+pub struct Polygon {
+    #[brw(pad_after = 1)] // padding
     pub vertex_indices: [u8; 3],
-    #[brw(pad_before = 2, pad_after = 5)] // padding
-    unk1: u16,
+    pub material: u64,
 }
 
 #[binrw]
@@ -95,9 +124,8 @@ struct Polygon {
 #[brw(little)]
 pub struct Pcb {
     header: PcbResourceHeader,
-    // NOTE: this is technically wrong, we should be counting each node until we get total_nodes but im lazy
-    #[br(parse_with = until_eof)]
-    pub children: Vec<ResourceNode>,
+    /// The root node of this PCB.
+    pub root_node: ResourceNode,
 }
 
 impl Pcb {
