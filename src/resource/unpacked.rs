@@ -20,14 +20,14 @@ impl UnpackedResource {
 impl Resource for UnpackedResource {
     fn read(&mut self, path: &str) -> Option<ByteBuffer> {
         let mut new_path = PathBuf::from(&self.base_directory);
-        new_path.push(path);
+        new_path.push(path.to_lowercase());
 
         std::fs::read(new_path).ok()
     }
 
     fn exists(&mut self, path: &str) -> bool {
         let mut new_path = PathBuf::from(&self.base_directory);
-        new_path.push(path);
+        new_path.push(path.to_lowercase());
 
         std::fs::exists(new_path).unwrap_or_default()
     }
