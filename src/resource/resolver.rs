@@ -5,7 +5,7 @@ use crate::ByteBuffer;
 
 use super::Resource;
 
-/// Allows chaining multiple FileSources together.
+/// Allows chaining multiple Resources together.
 ///
 /// # Example
 ///
