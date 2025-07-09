@@ -39,6 +39,9 @@ pub struct Scn {
     #[br(seek_before = SeekFrom::Current(header.offset_general as i64 - ScnHeader::SIZE as i64))]
     #[br(restore_position)]
     pub general: ScnGeneralSection,
+    #[br(seek_before = SeekFrom::Current(header.offset_filters as i64 - ScnHeader::SIZE as i64))]
+    #[br(restore_position)]
+    pub unk3: ScnUnknown3Section,
     #[br(seek_before = SeekFrom::Current(header.offset_unk1 as i64 - ScnHeader::SIZE as i64))]
     #[br(restore_position)]
     pub unk1: ScnUnknown1Section,
@@ -117,7 +120,7 @@ impl ScnHeader {
 #[br(little)]
 pub struct ScnGeneralSection {
     #[br(map = read_bool_from::<i32>)]
-    pub have_layer_groups: bool,
+    pub have_layer_groups: bool, // TODO: this is probably not what is according to Sapphire?
     offset_path_terrain: i32,
     offset_env_spaces: i32,
     num_env_spaces: i32,
@@ -181,6 +184,44 @@ pub struct ScnUnknown2Section {
 
 impl ScnUnknown2Section {
     pub const SIZE: usize = 0x8;
+}
+
+// TODO: definitely not correct
+#[binread]
+#[derive(Debug)]
+#[br(little)]
+pub struct ScnUnknown3Section {
+    layer_sets_offset: i32,
+    layer_sets_count: i32,
+
+    #[br(seek_before = SeekFrom::Current(layer_sets_offset as i64 - ScnUnknown3Section::SIZE as i64))]
+    #[br(count = layer_sets_count, restore_position)]
+    pub unk2: Vec<ScnUnknown4Section>,
+}
+
+impl ScnUnknown3Section {
+    pub const SIZE: usize = 0x8;
+}
+
+// TODO: definitely not correct
+#[binread]
+#[derive(Debug)]
+#[br(little)]
+pub struct ScnUnknown4Section {
+    nvm_path_offset: i32,
+    unk1: i32,
+    unk2: i32,
+    unk3: i32,
+    unk4: i32,
+    unk5: i32,
+
+    #[br(seek_before = SeekFrom::Current(nvm_path_offset as i64 - ScnUnknown4Section::SIZE as i64))]
+    #[br(restore_position, parse_with = read_string_until_null)]
+    pub path_nvm: String,
+}
+
+impl ScnUnknown4Section {
+    pub const SIZE: usize = 0x18;
 }
 
 impl Lvb {
