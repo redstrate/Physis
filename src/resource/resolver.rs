@@ -16,7 +16,7 @@ use super::Resource;
 /// resolver.add_source(Box::new(sqpack_source)); // this is the fallback
 /// ```
 pub struct ResourceResolver {
-    resolvers: Vec<Box<dyn Resource>>,
+    resolvers: Vec<Box<dyn Resource + Send + Sync>>,
 }
 
 impl ResourceResolver {
@@ -26,7 +26,7 @@ impl ResourceResolver {
         }
     }
 
-    pub fn add_source(&mut self, source: Box<dyn Resource>) {
+    pub fn add_source(&mut self, source: Box<dyn Resource + Send + Sync>) {
         self.resolvers.push(source);
     }
 }
