@@ -149,6 +149,9 @@ pub mod svb;
 /// File resource handling.
 pub mod resource;
 
+/// Reading PCB files.
+pub mod pcb;
+
 mod bcn;
 
 mod error;
