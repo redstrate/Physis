@@ -82,7 +82,7 @@ pub(crate) struct Half1 {
 fn read_half2(data: [u16; 2]) -> Half2 {
     Half2 {
         x: f16::from_bits(data[0]),
-        y: f16::from_bits(data[0]),
+        y: f16::from_bits(data[1]),
     }
 }
 
@@ -97,8 +97,8 @@ pub(crate) struct Half2 {
 fn read_half3(data: [u16; 3]) -> Half3 {
     Half3 {
         r: f16::from_bits(data[0]),
-        g: f16::from_bits(data[0]),
-        b: f16::from_bits(data[0]),
+        g: f16::from_bits(data[1]),
+        b: f16::from_bits(data[2]),
     }
 }
 
