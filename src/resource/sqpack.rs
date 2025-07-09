@@ -1,40 +1,21 @@
-// SPDX-FileCopyrightText: 2023 Joshua Goins <josh@redstrate.com>
-// SPDX-License-Identifier: GPL-3.0-or-later
+use std::{
+    collections::HashMap,
+    fs::{self, DirEntry, ReadDir},
+    path::PathBuf,
+};
 
-use std::collections::HashMap;
-use std::fs;
-use std::fs::{DirEntry, ReadDir};
-use std::path::PathBuf;
+use crate::{
+    ByteBuffer,
+    common::{Language, Platform, read_version},
+    exd::EXD,
+    exh::EXH,
+    exl::EXL,
+    patch::{PatchError, ZiPatch},
+    repository::{Category, Repository, string_to_category},
+    sqpack::{IndexEntry, SqPackData, SqPackIndex},
+};
 
-use crate::ByteBuffer;
-use crate::common::{Language, Platform, read_version};
-use crate::exd::EXD;
-use crate::exh::EXH;
-use crate::exl::EXL;
-use crate::patch::{PatchError, ZiPatch};
-use crate::repository::{Category, Repository, string_to_category};
-use crate::sqpack::{IndexEntry, SqPackData, SqPackIndex};
-
-/// Framework for operating on game data.
-pub struct GameData {
-    /// The game directory to operate on.
-    pub game_directory: String,
-
-    /// Repositories in the game directory.
-    pub repositories: Vec<Repository>,
-
-    index_files: HashMap<String, SqPackIndex>,
-}
-
-fn is_valid(path: &str) -> bool {
-    let d = PathBuf::from(path);
-
-    if fs::metadata(d.as_path()).is_err() {
-        return false;
-    }
-
-    true
-}
+use super::Resource;
 
 /// Possible actions to repair game files
 #[derive(Debug)]
@@ -52,20 +33,19 @@ pub enum RepairError<'a> {
     FailedRepair(&'a Repository),
 }
 
-impl GameData {
-    /// Read game data from an existing game installation.
-    ///
-    /// This will return a GameData even if the game directory is technically
-    /// invalid, but it won't have any repositories.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use physis::common::Platform;
-    /// use physis::gamedata::GameData;
-    /// GameData::from_existing(Platform::Win32, "$FFXIV/game");
-    /// ```
-    pub fn from_existing(platform: Platform, directory: &str) -> GameData {
+/// Used to read files from the retail game, in their SqPack-compressed format.
+pub struct SqPackResource {
+    /// The game directory to operate on.
+    pub game_directory: String,
+
+    /// Repositories in the game directory.
+    pub repositories: Vec<Repository>,
+
+    index_files: HashMap<String, SqPackIndex>,
+}
+
+impl SqPackResource {
+    pub fn from_existing(platform: Platform, directory: &str) -> Self {
         match is_valid(directory) {
             true => {
                 let mut data = Self {
@@ -138,43 +118,6 @@ impl GameData {
         SqPackData::from_existing(dat_path.to_str()?)
     }
 
-    /// Checks if a file located at `path` exists.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use physis::common::Platform;
-    /// use physis::gamedata::GameData;
-    /// # let mut game = GameData::from_existing(Platform::Win32, "SquareEnix/Final Fantasy XIV - A Realm Reborn/game");
-    /// if game.exists("exd/cid.exl") {
-    ///     println!("Cid really does exist!");
-    /// } else {
-    ///     println!("Oh noes!");
-    /// }
-    /// ```
-    pub fn exists(&mut self, path: &str) -> bool {
-        let Some(_) = self.get_index_filenames(path) else {
-            return false;
-        };
-
-        self.find_entry(path).is_some()
-    }
-
-    /// Extracts the file located at `path`. This is returned as an in-memory buffer, and will usually
-    /// have to be further parsed.
-    ///
-    /// # Example
-    ///
-    /// ```should_panic
-    /// # use physis::gamedata::GameData;
-    /// # use std::io::Write;
-    /// use physis::common::Platform;
-    /// # let mut game = GameData::from_existing(Platform::Win32, "SquareEnix/Final Fantasy XIV - A Realm Reborn/game");
-    /// let data = game.extract("exd/root.exl").unwrap();
-    ///
-    /// let mut file = std::fs::File::create("root.exl").unwrap();
-    /// file.write(data.as_slice()).unwrap();
-    /// ```
     pub fn extract(&mut self, path: &str) -> Option<ByteBuffer> {
         let slice = self.find_entry(path);
         match slice {
@@ -423,19 +366,51 @@ impl GameData {
     }
 }
 
+impl Resource for SqPackResource {
+    fn read(&mut self, path: &str) -> Option<ByteBuffer> {
+        let slice = self.find_entry(path);
+        match slice {
+            Some((entry, chunk)) => {
+                let mut dat_file = self.get_dat_file(path, chunk, entry.data_file_id.into())?;
+
+                dat_file.read_from_offset(entry.offset)
+            }
+            None => None,
+        }
+    }
+
+    fn exists(&mut self, path: &str) -> bool {
+        let Some(_) = self.get_index_filenames(path) else {
+            return false;
+        };
+
+        self.find_entry(path).is_some()
+    }
+}
+
+fn is_valid(path: &str) -> bool {
+    let d = PathBuf::from(path);
+
+    if fs::metadata(d.as_path()).is_err() {
+        return false;
+    }
+
+    true
+}
+
 #[cfg(test)]
 mod tests {
     use crate::repository::Category::*;
 
     use super::*;
 
-    fn common_setup_data() -> GameData {
+    fn common_setup_data() -> SqPackResource {
         let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
         d.push("resources/tests");
         d.push("valid_sqpack");
         d.push("game");
 
-        GameData::from_existing(Platform::Win32, d.to_str().unwrap())
+        SqPackResource::from_existing(Platform::Win32, d.to_str().unwrap())
     }
 
     #[test]

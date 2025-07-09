@@ -11,9 +11,6 @@ pub type ByteSpan<'a> = &'a [u8];
 /// Represents a continuous block of memory which is owned.
 pub type ByteBuffer = Vec<u8>;
 
-/// Reading and writing game data repositories, such as "ffxiv" and "ex1", and so on.
-pub mod gamedata;
-
 /// Parsing game repositories, such as "ffxiv", "ex1" and their version information.
 pub mod repository;
 
@@ -148,6 +145,9 @@ pub mod lvb;
 
 /// Reading SVB files
 pub mod svb;
+
+/// File resource handling.
+pub mod resource;
 
 mod bcn;
 
