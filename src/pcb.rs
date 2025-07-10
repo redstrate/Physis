@@ -32,14 +32,14 @@ fn parse_resource_node_children(
         reader
             .seek(SeekFrom::Start(struct_start + child1_offset as u64))
             .unwrap();
-        children.push(ResourceNode::read_le(reader).unwrap());
+        children.push(ResourceNode::read_le(reader)?);
     }
 
     if child2_offset != 0 {
         reader
             .seek(SeekFrom::Start(struct_start + child2_offset as u64))
             .unwrap();
-        children.push(ResourceNode::read_le(reader).unwrap());
+        children.push(ResourceNode::read_le(reader)?);
     }
 
     Ok(children)
