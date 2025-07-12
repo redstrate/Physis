@@ -214,14 +214,19 @@ pub struct ScnUnknown4Section {
     unk3: i32,
     unk4: i32,
     unk5: i32,
+    nvx_path_offset: i32,
 
     #[br(seek_before = SeekFrom::Current(nvm_path_offset as i64 - ScnUnknown4Section::SIZE as i64))]
     #[br(restore_position, parse_with = read_string_until_null)]
     pub path_nvm: String,
+
+    #[br(seek_before = SeekFrom::Current(nvx_path_offset as i64 - ScnUnknown4Section::SIZE as i64))]
+    #[br(restore_position, parse_with = read_string_until_null)]
+    pub path_nvx: String,
 }
 
 impl ScnUnknown4Section {
-    pub const SIZE: usize = 0x18;
+    pub const SIZE: usize = 0x1C;
 }
 
 impl Lvb {
