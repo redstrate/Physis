@@ -2,12 +2,15 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 use core::cmp::min;
+use std::cmp::max;
+use std::error::Error;
 use std::fs;
 use std::fs::{File, OpenOptions, read, read_dir};
 use std::io::{BufWriter, Cursor, Seek, SeekFrom, Write};
 use std::path::{Path, PathBuf};
 
 use crate::ByteBuffer;
+use crate::compression::{header_decompress, no_header_decompress};
 use binrw::BinRead;
 use binrw::{BinWrite, binrw};
 
@@ -32,6 +35,7 @@ struct PatchHeader {
 #[binrw]
 #[allow(dead_code)]
 #[brw(little)]
+#[derive(Debug)]
 struct PatchChunk {
     #[brw(big)]
     size: u32,
@@ -58,6 +62,8 @@ enum ChunkType {
     DeleteDirectory(DirectoryChunk),
     #[brw(magic = b"SQPK")]
     Sqpk(SqpkChunk),
+    #[brw(magic = b"ETRY")]
+    Entry(EntryChunks),
     #[brw(magic = b"EOF_")]
     EndOfFile,
 }
@@ -132,9 +138,11 @@ struct ApplyOptionChunk {
 #[derive(PartialEq, Debug)]
 struct DirectoryChunk {
     #[br(temp)]
+    #[brw(big)]
     #[bw(calc = get_string_len(name) as u32)]
     name_length: u32,
 
+    #[brw(pad_after = 8)]
     #[br(count = name_length)]
     #[br(map = read_string)]
     #[bw(map = write_string)]
@@ -334,6 +342,68 @@ struct SqpkChunk {
     operation: SqpkOperation,
 }
 
+#[binrw]
+#[derive(PartialEq, Debug)]
+#[brw(little)]
+struct EntryChunks {
+    #[bw(calc = path.len() as u32)]
+    #[brw(big)]
+    path_size: u32,
+
+    #[br(count = path_size)]
+    #[br(map = read_string)]
+    #[bw(map = write_string)]
+    path: String,
+
+    #[brw(big)]
+    #[bw(calc = chunks.len() as u32)]
+    count: u32,
+
+    #[br(count = count)]
+    chunks: Vec<EntryChunk>,
+}
+
+#[binrw]
+#[derive(PartialEq, Debug)]
+enum EntryOperation {
+    #[brw(magic = b'A')]
+    Add,
+    #[brw(magic = b'D')]
+    Delete,
+    #[brw(magic = b'M')]
+    Modify,
+}
+
+#[binrw]
+#[derive(PartialEq, Debug)]
+enum EntryCompressionMode {
+    #[brw(magic = b'N')]
+    NoCompression,
+    #[brw(magic = b'Z')]
+    ZLib,
+}
+
+#[binrw]
+#[derive(PartialEq, Debug)]
+#[brw(little)]
+struct EntryChunk {
+    #[brw(pad_size_to = 4)]
+    operation: EntryOperation,
+    prev_hash: [u8; 20],
+    next_hash: [u8; 20],
+    #[brw(pad_size_to = 4)]
+    compression_mode: EntryCompressionMode,
+    #[bw(calc = data.len() as u32)]
+    #[brw(big)]
+    size: u32,
+    #[brw(big)]
+    prev_size: u32,
+    #[brw(big)]
+    next_size: u32,
+    #[br(count = size)]
+    data: Vec<u8>,
+}
+
 static WIPE_BUFFER: [u8; 1 << 16] = [0; 1 << 16];
 
 fn wipe(mut file: &File, length: usize) -> Result<(), PatchError> {
@@ -403,7 +473,7 @@ pub enum PatchError {
 
 impl From<std::io::Error> for PatchError {
     // TODO: implement specific PatchErrors for stuff like out of storage space. invalidpatchfile is a bad name for this
-    fn from(_: std::io::Error) -> Self {
+    fn from(io: std::io::Error) -> Self {
         PatchError::InvalidPatchFile
     }
 }
@@ -441,6 +511,8 @@ impl ZiPatch {
     /// Applies a boot or a game patch to the specified _data_dir_.
     pub fn apply(data_dir: &str, patch_path: &str) -> Result<(), PatchError> {
         let mut file = File::open(patch_path)?;
+
+        let file_length = file.metadata()?.len();
 
         PatchHeader::read(&mut file)?;
 
@@ -494,6 +566,11 @@ impl ZiPatch {
             };
 
         loop {
+            // for 1.x patches, break at the end because it doesn't have an EOF marker
+            if file.stream_position()? == file_length {
+                return Ok(());
+            }
+
             let chunk = PatchChunk::read(&mut file)?;
 
             match chunk.chunk_type {
@@ -507,7 +584,7 @@ impl ZiPatch {
                                 add.file_id,
                             );
 
-                            let (left, _) = filename.rsplit_once('/').unwrap();
+                            let (left, _) = filename.rsplit_once('/').ok_or(PatchError::ParseError)?;
                             fs::create_dir_all(left)?;
 
                             let mut new_file = OpenOptions::new()
@@ -581,8 +658,7 @@ impl ZiPatch {
                                 ),
                             };
 
-                            let (left, _) =
-                                file_path.rsplit_once('/').ok_or(PatchError::ParseError)?;
+                            let (left, _) = file_path.rsplit_once('/').unwrap();
                             fs::create_dir_all(left)?;
 
                             let mut new_file = OpenOptions::new()
@@ -637,9 +713,8 @@ impl ZiPatch {
                                     }
                                 }
                                 SqpkFileOperation::DeleteFile => {
-                                    if fs::remove_file(file_path.as_str()).is_err() {
-                                        // TODO: return an error if we failed to remove the file
-                                    }
+                                    // it's okay to let this fail.
+                                    let _ = std::fs::remove_file(file_path.as_str());
                                 }
                                 SqpkFileOperation::RemoveAll => {
                                     let path: PathBuf = [
@@ -676,15 +751,61 @@ impl ZiPatch {
                 ChunkType::ApplyOption(_) => {
                     // Currently, IgnoreMissing and IgnoreOldMismatch is not used in XIVQuickLauncher either. This stays as an intentional NOP.
                 }
-                ChunkType::AddDirectory(_) => {
-                    // another NOP
+                ChunkType::AddDirectory(add_dir) => {
+                    std::fs::create_dir_all(format!("{}/{}", data_dir, add_dir.name))?;
                 }
-                ChunkType::DeleteDirectory(_) => {
-                    // another NOP
+                ChunkType::DeleteDirectory(remove_dir) => {
+                    // it's okay to let this be fallible
+                    let _ = std::fs::remove_dir_all(format!("{}/{}", data_dir, remove_dir.name));
+                }
+                ChunkType::Entry(entry) => {
+                    let mut data = Vec::new();
+                    for chunk in &entry.chunks {
+                        match chunk.operation {
+                            EntryOperation::Delete => {
+                                // it's okay to let this be fallible
+                                let _ =
+                                    std::fs::remove_file(format!("{}/{}", data_dir, entry.path));
+                            }
+                            _ => {
+                                if !chunk.data.is_empty() {
+                                    let mut chunk_data = match chunk.compression_mode {
+                                        EntryCompressionMode::NoCompression => chunk.data.clone(),
+                                        EntryCompressionMode::ZLib => {
+                                            let decompressed_size =
+                                                max(chunk.next_size, chunk.prev_size);
+                                            let mut decompressed_data: Vec<u8> =
+                                                vec![0; decompressed_size as usize];
+                                            let mut compressed_data = chunk.data.clone();
+                                            let len = header_decompress(
+                                                &mut compressed_data,
+                                                &mut decompressed_data,
+                                            )
+                                            .unwrap();
+                                            decompressed_data[..len as usize].to_vec()
+                                        }
+                                    };
+                                    data.append(&mut chunk_data);
+                                }
+                            }
+                        }
+                    }
+
+                    // Sometimes, the patch asks for a directory it didn't make yet.
+                    let filename = format!("{}/{}", data_dir, entry.path);
+                    let (left, _) = filename.rsplit_once('/').unwrap();
+                    fs::create_dir_all(left)?;
+
+                    std::fs::write(filename, data).unwrap();
                 }
                 ChunkType::EndOfFile => {
                     return Ok(());
                 }
+            }
+
+            // for 1.x patches, break at the last four bytes as they don't have an EOF marker
+            if file.stream_position()? == file_length - 4 {
+                return Ok(());
             }
         }
     }
