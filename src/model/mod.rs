@@ -88,6 +88,9 @@ enum ModelFlags2 {
     ForceLodRangeEnabled = 0x04,
     EdgeGeometryEnabled = 0x02,
     Unknown3 = 0x01,
+
+    // NOTE: these are most likely a combination of other flags
+    Unknown4 = 0x41, // TODO: seen in some bgparts
 }
 
 #[binrw]
