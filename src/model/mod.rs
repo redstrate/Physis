@@ -72,6 +72,7 @@ enum ModelFlags1 {
     Unknown5 = 0x6,  // TODO: seen in some bgparts
     Unknown6 = 0x3,  // TODO: seen in some bgparts
     Unknown7 = 0x60, // TODO: seen in some bgparts
+    Unknown8 = 0x7,  // TODO: seen in some bgparts
 }
 
 #[binrw]
