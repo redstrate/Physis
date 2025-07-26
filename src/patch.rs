@@ -584,7 +584,8 @@ impl ZiPatch {
                                 add.file_id,
                             );
 
-                            let (left, _) = filename.rsplit_once('/').ok_or(PatchError::ParseError)?;
+                            let (left, _) =
+                                filename.rsplit_once('/').ok_or(PatchError::ParseError)?;
                             fs::create_dir_all(left)?;
 
                             let mut new_file = OpenOptions::new()

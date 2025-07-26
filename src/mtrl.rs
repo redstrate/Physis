@@ -374,7 +374,7 @@ struct MaterialData {
 
     #[br(count = file_header.additional_data_size)]
     #[br(pad_size_to = 4)]
-    #[br(map = |x: Vec<u8>| u32::from_le_bytes(x[0..4].try_into().unwrap()))]
+    #[br(map = |x: Vec<u8>| if x.len() >= 4 { u32::from_le_bytes(x[0..4].try_into().unwrap()) } else { 0 })]
     table_flags: u32,
 
     #[br(calc = (table_flags & 0x4) != 0)]
@@ -421,7 +421,7 @@ struct MaterialData {
     constants: Vec<ConstantStruct>,
     #[br(count = header.sampler_count)]
     samplers: Vec<Sampler>,
-    #[br(count = header.shader_value_list_size / 4)]
+    #[br(count = header.shader_value_list_size as usize / std::mem::size_of::<f32>())]
     shader_values: Vec<f32>,
 }
 
@@ -471,21 +471,25 @@ impl Material {
             next_char = mat_data.strings[offset] as char;
         }
 
+        // bg/ffxiv/wil_w1/evt/w1eb/material/w1eb_f1_vfog1a.mtrl has a shader value list of 9, which doesn't make sense in this system
+        // eventually we need to un-hardcode it from vec4 or whatever
         let mut constants = Vec::new();
-        for constant in mat_data.constants {
-            let mut values: [f32; 4] = [0.0; 4];
+        if mat_data.header.shader_value_list_size % 4 == 0 {
+            for constant in mat_data.constants {
+                let mut values: [f32; 4] = [0.0; 4];
 
-            // TODO: use mem::size_of
-            let num_floats = constant.value_size / 4;
-            for i in 0..num_floats as usize {
-                values[i] = mat_data.shader_values[(constant.value_offset as usize / 4) + i];
+                // TODO: use mem::size_of
+                let num_floats = constant.value_size / 4;
+                for i in 0..num_floats as usize {
+                    values[i] = mat_data.shader_values[(constant.value_offset as usize / 4) + i];
+                }
+
+                constants.push(Constant {
+                    id: constant.constant_id,
+                    num_values: num_floats as u32,
+                    values,
+                });
             }
-
-            constants.push(Constant {
-                id: constant.constant_id,
-                num_values: num_floats as u32,
-                values,
-            });
         }
 
         Some(Material {
