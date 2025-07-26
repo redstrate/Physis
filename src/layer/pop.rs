@@ -7,6 +7,7 @@ use super::common::RelativePositions;
 
 #[binread]
 #[brw(repr = i32)]
+#[repr(C)]
 #[derive(Debug, PartialEq)]
 pub enum PopType {
     PC = 0x1,
