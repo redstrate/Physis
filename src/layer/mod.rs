@@ -420,7 +420,13 @@ pub struct MapRangeInstanceObject {}
 #[binread]
 #[derive(Debug)]
 #[br(little)]
-pub struct EventInstanceObject {}
+pub struct EventInstanceObject {
+    pub parent_data: GameInstanceObject,
+    /// A reference to another object, most likely.
+    pub bound_instance_id: u32,
+    #[brw(pad_after = 8)] // padding?
+    pub linked_instance_id: u32,
+}
 
 #[binread]
 #[derive(Debug)]
