@@ -91,6 +91,7 @@ enum ModelFlags2 {
 
     // NOTE: these are most likely a combination of other flags
     Unknown4 = 0x41, // TODO: seen in some bgparts
+    Unknown5 = 0x50, // TODO: seen in some bgparts
 }
 
 #[binrw]
