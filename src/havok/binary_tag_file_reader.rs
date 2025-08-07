@@ -165,6 +165,40 @@ impl<'a> HavokBinaryTagFileReader<'a> {
                 HavokValueType::OBJECT => {
                     HavokValue::ObjectReference(self.read_packed_int() as usize)
                 }
+                HavokValueType::STRUCT => {
+                    let target_type = self.find_type(member.class_name.as_ref().unwrap());
+                    let data_existence = self.read_bit_field(target_type.member_count());
+
+                    let object = Arc::new(RefCell::new(HavokObject::new(
+                        target_type.clone(),
+                        HashMap::new(),
+                    )));
+                    self.objects.push(object.clone());
+
+                    for (member_index, member) in target_type.members().into_iter().enumerate() {
+                        if data_existence[member_index] {
+                            if member.type_.is_tuple() {
+                                panic!()
+                            } else {
+                                let item = self.read_object_member_value(member);
+                                object.borrow_mut().set(member_index, item);
+                            }
+                        }
+                    }
+                    
+                    HavokValue::Object(object)
+                }
+                HavokValueType::VEC4
+                | HavokValueType::VEC8
+                | HavokValueType::VEC12
+                | HavokValueType::VEC16 => {
+                    let vec_size = member.type_.base_type().vec_size() as usize;
+                    HavokValue::Vec(
+                        (0..vec_size)
+                            .map(|_| self.reader.read_f32_le())
+                            .collect::<Vec<_>>(),
+                    )
+                }
                 _ => panic!("unimplemented {}", member.type_.bits()),
             }
         }
