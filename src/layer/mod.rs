@@ -436,7 +436,10 @@ pub struct EnvLocationObject {}
 #[binread]
 #[derive(Debug)]
 #[br(little)]
-pub struct EventRangeInstanceObject {}
+pub struct EventRangeInstanceObject {
+    parent_data: TriggerBoxInstanceObject,
+    unk1: [u8; 12],
+}
 
 #[binread]
 #[derive(Debug)]
