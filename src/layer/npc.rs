@@ -9,7 +9,8 @@ use super::common::RelativePositions;
 #[derive(Debug)]
 #[br(little)]
 pub struct GameInstanceObject {
-    /// The row ID reference to EObj/EObjName
+    /// For IDs >= 1000000, index into the ENpcBase
+    /// For IDs >= 2000000, the row ID reference to EObj/EObjName
     pub base_id: u32,
 }
 
