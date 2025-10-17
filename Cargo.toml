@@ -28,7 +28,7 @@ binrw = { version = "0.15", features = ["std"], default-features = false }
 libz-rs-sys = { version = "0.5", features = ["std", "rust-allocator"], default-features = false }
 
 # needed for half-float support which FFXIV uses in its model data
-half = { version = "2.6", features = ["std"], default-features = false }
+half = { version = "2.7", features = ["std"], default-features = false }
 
 # needed for c-style bitflags used in some formats (such as tex files)
 bitflags = { version = "2.9", default-features = false }
