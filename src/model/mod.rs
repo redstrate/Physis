@@ -241,7 +241,7 @@ struct BoneTableV2 {
 
     // align to 4 bytes
     // TODO: use br align_to?
-    #[br(if(bone_count % 2 == 0))]
+    #[br(if(bone_count.is_multiple_of(2)))]
     padding: u16,
 }
 

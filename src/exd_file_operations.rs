@@ -43,7 +43,7 @@ fn read_row<T: Read + Seek>(reader: &mut T, exh: &EXH, row_offset: u64) -> Optio
 
     for column in &exh.column_definitions {
         reader
-            .seek(SeekFrom::Start((row_offset + column.offset as u64).into()))
+            .seek(SeekFrom::Start(row_offset + column.offset as u64))
             .ok()?;
 
         subrow
@@ -63,7 +63,7 @@ pub fn parse_rows(exh: &EXH, data_offsets: &Vec<ExcelDataOffset>) -> BinResult<V
 
         let row_header = DataSectionHeader::read(reader)?;
 
-        let data_offset = reader.stream_position().unwrap() as u64;
+        let data_offset = reader.stream_position().unwrap();
 
         let new_row = if exh.header.row_kind == SheetRowKind::SubRows {
             let mut rows = Vec::new();
@@ -74,12 +74,12 @@ pub fn parse_rows(exh: &EXH, data_offsets: &Vec<ExcelDataOffset>) -> BinResult<V
                 let subrow_header = SubRowHeader::read(reader)?;
                 rows.push((
                     subrow_header.subrow_id,
-                    read_row(reader, &exh, subrow_offset + 2).unwrap(),
+                    read_row(reader, exh, subrow_offset + 2).unwrap(),
                 ));
             }
             ExcelRowKind::SubRows(rows)
         } else {
-            ExcelRowKind::SingleRow(read_row(reader, &exh, data_offset).unwrap())
+            ExcelRowKind::SingleRow(read_row(reader, exh, data_offset).unwrap())
         };
         rows.push(ExcelRow {
             row_id: offset.row_id,
@@ -95,7 +95,7 @@ fn write_row<T: Write + Seek>(writer: &mut T, exh: &EXH, row: &ExcelSingleRow) {
         .column_definitions
         .clone()
         .into_iter()
-        .zip(row.columns.clone().into_iter())
+        .zip(row.columns.clone())
         .collect::<Vec<_>>();
 
     // we need to sort them by offset
@@ -105,9 +105,7 @@ fn write_row<T: Write + Seek>(writer: &mut T, exh: &EXH, row: &ExcelSingleRow) {
     let mut packed_bools: HashMap<u16, u8> = HashMap::new();
 
     let mut write_packed_bool = |definition: &ExcelColumnDefinition, shift: i32, boolean: &bool| {
-        if !packed_bools.contains_key(&definition.offset) {
-            packed_bools.insert(definition.offset, 0u8);
-        }
+        packed_bools.entry(definition.offset).or_insert(0u8);
 
         if *boolean {
             let bit = 1 << shift;
@@ -185,13 +183,13 @@ pub fn write_rows(rows: &Vec<ExcelRow>, exh: &EXH) -> BinResult<()> {
 
         // write column data
         match &row.kind {
-            ExcelRowKind::SingleRow(excel_single_row) => write_row(writer, &exh, excel_single_row),
+            ExcelRowKind::SingleRow(excel_single_row) => write_row(writer, exh, excel_single_row),
             ExcelRowKind::SubRows(excel_single_rows) => {
                 for (id, row) in excel_single_rows {
                     let subrow_header = SubRowHeader { subrow_id: *id };
                     subrow_header.write_ne(writer)?;
 
-                    write_row(writer, &exh, row);
+                    write_row(writer, exh, row);
                 }
             }
         }
@@ -273,7 +271,7 @@ impl EXD {
 
                 cursor
                     .seek(SeekFrom::Start(
-                        (row_offset + exh.header.row_size as u64 + string_offset as u64).into(),
+                        row_offset + exh.header.row_size as u64 + string_offset as u64,
                     ))
                     .ok()?;
 

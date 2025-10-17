@@ -24,7 +24,7 @@ pub use index::{Hash, IndexEntry, SqPackIndex};
 #[derive(Debug)]
 pub(crate) enum SqPackFileType {
     /// FFXIV Explorer says "SQDB", whatever that is.
-    SQDB = 0x0,
+    Sqdb = 0x0,
     /// Dat files.
     Data = 0x1,
     /// Index/Index2 files.

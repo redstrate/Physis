@@ -185,7 +185,7 @@ impl<'a> HavokBinaryTagFileReader<'a> {
                             }
                         }
                     }
-                    
+
                     HavokValue::Object(object)
                 }
                 HavokValueType::VEC4

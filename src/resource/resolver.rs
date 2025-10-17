@@ -22,6 +22,12 @@ pub struct ResourceResolver {
     resolvers: Vec<Box<dyn Resource + Send + Sync>>,
 }
 
+impl Default for ResourceResolver {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ResourceResolver {
     pub fn new() -> Self {
         Self {
@@ -42,7 +48,7 @@ impl Resource for ResourceResolver {
             }
         }
 
-        return None;
+        None
     }
 
     fn exists(&mut self, path: &str) -> bool {
@@ -52,6 +58,6 @@ impl Resource for ResourceResolver {
             }
         }
 
-        return false;
+        false
     }
 }

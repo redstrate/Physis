@@ -99,7 +99,7 @@ impl Blowfish {
 
     fn pad_buffer(data: &[u8]) -> Vec<u8> {
         let mut padded_length = data.len();
-        if data.len() % 8 != 0 {
+        if !data.len().is_multiple_of(8) {
             padded_length = data.len() + (8 - (data.len() % 8));
         }
 

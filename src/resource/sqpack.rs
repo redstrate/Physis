@@ -275,10 +275,10 @@ impl SqPackResource {
     }
 
     fn cache_index_file(&mut self, filename: &str) {
-        if !self.index_files.contains_key(filename) {
-            if let Some(index_file) = SqPackIndex::from_existing(filename) {
-                self.index_files.insert(filename.to_string(), index_file);
-            }
+        if !self.index_files.contains_key(filename)
+            && let Some(index_file) = SqPackIndex::from_existing(filename)
+        {
+            self.index_files.insert(filename.to_string(), index_file);
         }
     }
 
@@ -292,10 +292,10 @@ impl SqPackResource {
         for (index_path, chunk) in index_paths {
             self.cache_index_file(&index_path);
 
-            if let Some(index_file) = self.get_index_file(&index_path) {
-                if let Some(entry) = index_file.find_entry(path) {
-                    return Some((entry, chunk));
-                }
+            if let Some(index_file) = self.get_index_file(&index_path)
+                && let Some(entry) = index_file.find_entry(path)
+            {
+                return Some((entry, chunk));
             }
         }
 

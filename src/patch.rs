@@ -3,14 +3,13 @@
 
 use core::cmp::min;
 use std::cmp::max;
-use std::error::Error;
 use std::fs;
 use std::fs::{File, OpenOptions, read, read_dir};
 use std::io::{BufWriter, Cursor, Seek, SeekFrom, Write};
 use std::path::{Path, PathBuf};
 
 use crate::ByteBuffer;
-use crate::compression::{header_decompress, no_header_decompress};
+use crate::compression::header_decompress;
 use binrw::BinRead;
 use binrw::{BinWrite, binrw};
 
@@ -473,7 +472,7 @@ pub enum PatchError {
 
 impl From<std::io::Error> for PatchError {
     // TODO: implement specific PatchErrors for stuff like out of storage space. invalidpatchfile is a bad name for this
-    fn from(io: std::io::Error) -> Self {
+    fn from(_io: std::io::Error) -> Self {
         PatchError::InvalidPatchFile
     }
 }

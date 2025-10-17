@@ -92,6 +92,6 @@ pub fn header_decompress(in_data: &mut [u8], out_data: &mut [u8]) -> Option<usiz
 
         inflateEnd(&mut strm);
 
-        return Some(out_data.len() - strm.avail_out as usize);
+        Some(out_data.len() - strm.avail_out as usize)
     }
 }

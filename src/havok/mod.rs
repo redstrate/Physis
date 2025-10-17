@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: 2020 Inseok Lee
 // SPDX-License-Identifier: MIT
 
+#![allow(unused)] // This isn't public API, so I don't care about the unused bits.
+
 extern crate alloc;
 
 mod animation;
