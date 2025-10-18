@@ -459,7 +459,34 @@ pub struct LineVFXInstanceObject {}
 #[binread]
 #[derive(Debug)]
 #[br(little)]
-pub struct ClientPathInstanceObject {}
+pub struct PathControlPoint {
+    pub position: [f32; 3],
+    pub point_id: u16,
+    pub select: u8,
+    pub _padding: u8,
+}
+
+#[binread]
+#[derive(Debug)]
+#[br(little)]
+pub struct PathInstanceObject {
+    pub control_points_unk: i32,
+    #[br(temp)]
+    #[bw(calc = control_points.size() as i32)]
+    control_point_count: i32,
+    _padding: [u32; 2],
+    #[br(count = control_point_count)]
+    pub control_points: Vec<PathControlPoint>,
+}
+
+#[binread]
+#[derive(Debug)]
+#[br(little)]
+pub struct ClientPathInstanceObject {
+    pub parent_data: PathInstanceObject,
+    pub ring: u8,
+    _padding: u8,
+}
 
 #[binread]
 #[derive(Debug)]
