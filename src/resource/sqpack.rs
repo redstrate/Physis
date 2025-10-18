@@ -301,6 +301,34 @@ impl SqPackResource {
 
         None
     }
+
+    /// Tries to find and preload all available index files.
+    /// This is useful if you absolutely do not want to pay the overhead cost on each cache miss when looking up a new file.
+    pub fn preload_index_files(&mut self) {
+        fn list_files(vec: &mut Vec<PathBuf>, path: &PathBuf) -> std::io::Result<()> {
+            if path.is_dir() {
+                let paths = fs::read_dir(&path)?;
+                for path_result in paths {
+                    let full_path = path_result?.path();
+                    let _ = list_files(vec, &full_path);
+                }
+            } else {
+                vec.push(path.clone());
+            }
+            Ok(())
+        }
+
+        let mut index_paths = Vec::new();
+        let _ = list_files(&mut index_paths, &PathBuf::from(&self.game_directory));
+
+        for index_path in index_paths {
+            if index_path.extension().unwrap_or_default() == "index"
+                || index_path.extension().unwrap_or_default() == "index2"
+            {
+                self.cache_index_file(&index_path.into_os_string().into_string().unwrap());
+            }
+        }
+    }
 }
 
 impl Resource for SqPackResource {

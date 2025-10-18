@@ -178,7 +178,12 @@ impl SqPackIndex {
     pub fn from_existing(path: &str) -> Option<Self> {
         let mut index_file = std::fs::File::open(path).ok()?;
 
-        Self::read(&mut index_file).ok()
+        // Index files are individually small, so we can easily load them entirely to memory.
+        // Our current index-reading code uses seeking, and that's *very* slow when reading from a disk.
+        let mut buf = Vec::new();
+        index_file.read_to_end(&mut buf).ok()?;
+
+        Self::read(&mut std::io::Cursor::new(buf)).ok()
     }
 
     /// Calculates a partial hash for a given path
