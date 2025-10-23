@@ -333,7 +333,6 @@ impl SqPackResource {
         let index_file = self.get_index_file(&index_path)?;
 
         let slice = index_file.find_entry_from_hash(hash);
-        dbg!(&slice);
         match slice {
             Some(entry) => {
                 let mut dat_file = self.get_dat_file(&index_path, entry.data_file_id.into())?;
