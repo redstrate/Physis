@@ -12,7 +12,7 @@ use crate::{
     common::{Platform, read_version},
     patch::{PatchError, ZiPatch},
     repository::{Category, Repository, string_to_category},
-    sqpack::{IndexEntry, SqPackData, SqPackIndex},
+    sqpack::{Hash, IndexEntry, SqPackData, SqPackIndex},
 };
 
 use super::Resource;
@@ -103,19 +103,15 @@ impl SqPackResource {
         self.repositories.sort();
     }
 
-    fn get_dat_file(&self, path: &str, chunk: u8, data_file_id: u32) -> Option<SqPackData> {
-        let (repository, category) = self.parse_repository_category(path).unwrap();
+    fn get_dat_file(&self, index_path: &str, data_file_id: u32) -> Option<SqPackData> {
+        // Remove the index or index2 from the last bit of the path
+        let dat_path = index_path.replace(".index2", "");
+        let dat_path = dat_path.replace(".index", "");
 
-        let dat_path: PathBuf = [
-            self.game_directory.clone(),
-            "sqpack".to_string(),
-            repository.name.clone(),
-            repository.dat_filename(chunk, category, data_file_id),
-        ]
-        .iter()
-        .collect();
+        // Append the new dat extension
+        let dat_path = format!("{dat_path}.dat{data_file_id}",);
 
-        SqPackData::from_existing(dat_path.to_str()?)
+        SqPackData::from_existing(&dat_path)
     }
 
     /// Finds the offset inside of the DAT file for `path`.
@@ -144,7 +140,7 @@ impl SqPackResource {
         Some((&self.repositories[0], string_to_category(tokens[0])?))
     }
 
-    fn get_index_filenames(&self, path: &str) -> Option<Vec<(String, u8)>> {
+    fn get_index_filenames(&self, path: &str) -> Option<Vec<String>> {
         let (repository, category) = self.parse_repository_category(path)?;
 
         let mut index_filenames = vec![];
@@ -159,7 +155,7 @@ impl SqPackResource {
             .iter()
             .collect();
 
-            index_filenames.push((index_path.into_os_string().into_string().unwrap(), chunk));
+            index_filenames.push(index_path.into_os_string().into_string().unwrap());
 
             let index2_path: PathBuf = [
                 &self.game_directory,
@@ -170,7 +166,7 @@ impl SqPackResource {
             .iter()
             .collect();
 
-            index_filenames.push((index2_path.into_os_string().into_string().unwrap(), chunk));
+            index_filenames.push(index2_path.into_os_string().into_string().unwrap());
         }
 
         Some(index_filenames)
@@ -286,16 +282,17 @@ impl SqPackResource {
         self.index_files.get(filename)
     }
 
-    fn find_entry(&mut self, path: &str) -> Option<(IndexEntry, u8)> {
+    /// Finds the index entry for `path`, if it exists. Also returns the path of the index file it was found in.
+    fn find_entry(&mut self, path: &str) -> Option<(IndexEntry, String)> {
         let index_paths = self.get_index_filenames(path)?;
 
-        for (index_path, chunk) in index_paths {
+        for index_path in index_paths {
             self.cache_index_file(&index_path);
 
             if let Some(index_file) = self.get_index_file(&index_path)
                 && let Some(entry) = index_file.find_entry(path)
             {
-                return Some((entry, chunk));
+                return Some((entry, index_path));
             }
         }
 
@@ -329,14 +326,30 @@ impl SqPackResource {
             }
         }
     }
+
+    /// Reads a file based on an index hash and the index file you want to read from.
+    pub fn read_from_hash(&mut self, index_path: &str, hash: Hash) -> Option<ByteBuffer> {
+        self.cache_index_file(&index_path);
+        let index_file = self.get_index_file(&index_path)?;
+
+        let slice = index_file.find_entry_from_hash(hash);
+        dbg!(&slice);
+        match slice {
+            Some(entry) => {
+                let mut dat_file = self.get_dat_file(&index_path, entry.data_file_id.into())?;
+                dat_file.read_from_offset(entry.offset)
+            }
+            None => None,
+        }
+    }
 }
 
 impl Resource for SqPackResource {
     fn read(&mut self, path: &str) -> Option<ByteBuffer> {
         let slice = self.find_entry(path);
         match slice {
-            Some((entry, chunk)) => {
-                let mut dat_file = self.get_dat_file(path, chunk, entry.data_file_id.into())?;
+            Some((entry, index_path)) => {
+                let mut dat_file = self.get_dat_file(&index_path, entry.data_file_id.into())?;
 
                 dat_file.read_from_offset(entry.offset)
             }

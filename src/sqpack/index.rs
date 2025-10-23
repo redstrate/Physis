@@ -62,7 +62,8 @@ pub struct SqPackIndexHeader {
 
 #[binrw]
 #[br(import(index_type: &IndexType))]
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Clone, Copy)]
+#[repr(C)]
 pub enum Hash {
     #[br(pre_assert(*index_type == IndexType::Index1))]
     SplitPath { name: u32, path: u32 },
@@ -225,7 +226,10 @@ impl SqPackIndex {
 
     pub fn find_entry(&self, path: &str) -> Option<IndexEntry> {
         let hash = self.calculate_hash(path);
+        self.find_entry_from_hash(hash)
+    }
 
+    pub fn find_entry_from_hash(&self, hash: Hash) -> Option<IndexEntry> {
         if let Some(entry) = self.entries.iter().find(|s| s.hash == hash) {
             let full_hash = match hash {
                 Hash::SplitPath { name, path } => ((path as u64) << 32) | (name as u64),

@@ -183,17 +183,6 @@ impl Repository {
         format!("{}2", self.index_filename(chunk, category))
     }
 
-    /// Calculate a dat filename given a category and a data file id, returns something like _"0a0000.win32.dat0"_.
-    pub fn dat_filename(&self, chunk: u8, category: Category, data_file_id: u32) -> String {
-        let expansion = self.expansion();
-        let platform = get_platform_string(&self.platform);
-
-        format!(
-            "{:02x}{expansion:02}{chunk:02}.{platform}.dat{data_file_id}",
-            category as u32
-        )
-    }
-
     fn expansion(&self) -> i32 {
         match self.repo_type {
             Base => 0,
@@ -248,10 +237,6 @@ mod tests {
             repo.index2_filename(0, Category::Music),
             "0c0000.win32.index2"
         );
-        assert_eq!(
-            repo.dat_filename(0, Category::GameScript, 1),
-            "0b0000.win32.dat1"
-        );
     }
 
     #[test]
@@ -268,10 +253,6 @@ mod tests {
             repo.index2_filename(0, Category::Music),
             "0c0000.ps3.index2"
         );
-        assert_eq!(
-            repo.dat_filename(0, Category::GameScript, 1),
-            "0b0000.ps3.dat1"
-        );
     }
 
     #[test]
@@ -287,10 +268,6 @@ mod tests {
         assert_eq!(
             repo.index2_filename(0, Category::Music),
             "0c0000.ps4.index2"
-        );
-        assert_eq!(
-            repo.dat_filename(0, Category::GameScript, 1),
-            "0b0000.ps4.dat1"
         );
     }
 }
