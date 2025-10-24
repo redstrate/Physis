@@ -194,7 +194,7 @@ pub struct ShaderPackage {
     pub material_parameters: Vec<MaterialParameter>,
 
     #[br(count = if has_mat_param_defaults { (material_parameters_size as i32) >> 2i32 } else { 0 })]
-    mat_param_defaults: Vec<f32>,
+    pub mat_param_defaults: Vec<f32>,
 
     #[br(args { count: scalar_parameter_count as usize, inner: ResourceParameterBinReadArgs { strings_offset }})]
     scalar_parameters: Vec<ResourceParameter>,
