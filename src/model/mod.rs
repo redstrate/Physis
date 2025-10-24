@@ -573,7 +573,7 @@ impl MDL {
                                 }
                                 VertexType::Byte4 => {
                                     vertices[k as usize].bone_weight =
-                                        MDL::read_tangent(&mut cursor).unwrap();
+                                        MDL::read_byte_float4(&mut cursor).unwrap();
                                 }
                                 VertexType::UnsignedShort4 => {
                                     let bytes = MDL::read_unsigned_short4(&mut cursor).unwrap();
@@ -796,6 +796,11 @@ impl MDL {
                 let mut vertex_stream_strides = vec![];
                 let mesh = &model.meshes[j as usize];
                 for stream in 0..mesh.vertex_stream_count {
+                    if stream >= 3 {
+                        // TODO: extra strides aren't supported yet!
+                        continue;
+                    }
+
                     let mut vertex_data = vec![];
                     let stride = mesh.vertex_buffer_strides[stream as usize];
                     for z in 0..mesh.vertex_count {
