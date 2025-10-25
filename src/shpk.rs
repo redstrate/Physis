@@ -24,11 +24,11 @@ pub struct ResourceParameter {
     string_length: u16,
 
     // Seems to only be 0x1 for textures.
-    unknown1: u16,
+    is_texture: u16,
 
-    // May be a flag of some sort?
-    unknown2: u16,
-    /// In vec4s, e.g. a size of 1 means its one vec4.
+    // May be a flag of some sort? Everyone keeps saying its a slot, but that doesn't make sense.
+    slot: u16,
+    /// In vec4s, e.g. a size of 1 means its one vec4. When is_texture == 1, becomes something I don't know. Maybe the sampler it wants?
     pub size: u16,
 
     #[br(seek_before = SeekFrom::Start(strings_offset as u64 + local_string_offset as u64))]
