@@ -205,13 +205,13 @@ pub struct ShaderPackage {
     pub mat_param_defaults: Vec<f32>,
 
     #[br(args { count: scalar_parameter_count as usize, inner: ResourceParameterBinReadArgs { strings_offset }})]
-    scalar_parameters: Vec<ResourceParameter>,
+    pub scalar_parameters: Vec<ResourceParameter>,
     #[br(args { count: sampler_count as usize, inner: ResourceParameterBinReadArgs { strings_offset }})]
-    sampler_parameters: Vec<ResourceParameter>,
+    pub sampler_parameters: Vec<ResourceParameter>,
     #[br(args { count: texture_count as usize, inner: ResourceParameterBinReadArgs { strings_offset }})]
-    texture_parameters: Vec<ResourceParameter>,
+    pub texture_parameters: Vec<ResourceParameter>,
     #[br(args { count: uav_count as usize, inner: ResourceParameterBinReadArgs { strings_offset }})]
-    uav_parameters: Vec<ResourceParameter>,
+    pub uav_parameters: Vec<ResourceParameter>,
 
     #[br(count = system_key_count)]
     pub system_keys: Vec<Key>,
