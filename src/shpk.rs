@@ -16,16 +16,20 @@ use binrw::{BinRead, binread};
 #[derive(Debug)]
 #[allow(unused)]
 pub struct ResourceParameter {
-    id: u32,
+    /// CRC32 of `name`.
+    crc32: u32,
     #[br(temp)]
     local_string_offset: u32,
     #[br(temp)]
     string_length: u16,
 
-    unknown: u16,
+    // Seems to only be 0x1 for textures.
+    unknown1: u16,
 
-    pub slot: u16,
-    size: u16,
+    // May be a flag of some sort?
+    unknown2: u16,
+    /// In vec4s, e.g. a size of 1 means its one vec4.
+    pub size: u16,
 
     #[br(seek_before = SeekFrom::Start(strings_offset as u64 + local_string_offset as u64))]
     #[br(count = string_length, map = | x: Vec<u8> | String::from_utf8(x).unwrap().trim_matches(char::from(0)).to_string())]
@@ -51,8 +55,10 @@ pub struct Shader {
     uav_parameter_count: u16,
     texture_count: u16,
 
-    #[br(count = if version >= 0x0D01 { 4 } else { 0 } )]
-    unk_data: Vec<u8>,
+    #[br(if(version >= 0x0D01))]
+    unk1: Option<u16>,
+    #[br(if(version >= 0x0D01))]
+    unk2: Option<u16>,
 
     #[br(args { count: scalar_parameter_count as usize, inner: ResourceParameterBinReadArgs { strings_offset }})]
     pub scalar_parameters: Vec<ResourceParameter>,
@@ -86,7 +92,9 @@ pub struct MaterialParameter {
 #[repr(C)]
 #[allow(unused)]
 pub struct Key {
+    /// CRC32 of the key.
     pub id: u32,
+    /// Default value you should provide (also a CRC32) if the material doesn't have this `id`.
     pub default_value: u32,
 }
 
@@ -212,7 +220,9 @@ pub struct ShaderPackage {
     #[br(count = material_key_count)]
     pub material_keys: Vec<Key>,
 
+    /// CRC32 of the default SUB_VIEW key.
     pub sub_view_key1_default: u32,
+    /// CRC32 of the default SUB_VIEW key.
     pub sub_view_key2_default: u32,
 
     #[br(args { count: node_count as usize, inner: NodeBinReadArgs { version, system_key_count, scene_key_count, material_key_count, subview_key_count: 2 }})]

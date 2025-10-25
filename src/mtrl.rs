@@ -325,10 +325,8 @@ pub struct Sampler {
     /// This is a CRC hash, it can be calculated via ShaderPackage::crc
     pub texture_usage: u32,
     flags: u32, // TODO: unknown
+    #[brw(pad_after = 3)] // empty bytes/padding
     texture_index: u8,
-    unknown1: u8,
-    unknown2: u8,
-    unknown3: u8,
 }
 
 #[binrw::parser(reader, endian)]
