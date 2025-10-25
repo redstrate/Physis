@@ -27,7 +27,7 @@ pub struct ResourceParameter {
     is_texture: u16,
 
     // May be a flag of some sort? Everyone keeps saying its a slot, but that doesn't make sense.
-    slot: u16,
+    pub slot: u16,
     /// In vec4s, e.g. a size of 1 means its one vec4. When is_texture == 1, becomes something I don't know. Maybe the sampler it wants?
     pub size: u16,
 
