@@ -228,7 +228,10 @@ impl Texture {
                     decode_bc7,
                 );
             }
-            _ => panic!("Unsupported texture format {:?}!", header.format),
+            _ => {
+                println!("Unsupported texture format {:?}!", header.format);
+                return None;
+            }
         }
 
         Some(Texture {
