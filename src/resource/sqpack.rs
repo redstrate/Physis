@@ -304,7 +304,7 @@ impl SqPackResource {
     pub fn preload_index_files(&mut self) {
         fn list_files(vec: &mut Vec<PathBuf>, path: &PathBuf) -> std::io::Result<()> {
             if path.is_dir() {
-                let paths = fs::read_dir(&path)?;
+                let paths = fs::read_dir(path)?;
                 for path_result in paths {
                     let full_path = path_result?.path();
                     let _ = list_files(vec, &full_path);
@@ -329,13 +329,13 @@ impl SqPackResource {
 
     /// Reads a file based on an index hash and the index file you want to read from.
     pub fn read_from_hash(&mut self, index_path: &str, hash: Hash) -> Option<ByteBuffer> {
-        self.cache_index_file(&index_path);
-        let index_file = self.get_index_file(&index_path)?;
+        self.cache_index_file(index_path);
+        let index_file = self.get_index_file(index_path)?;
 
         let slice = index_file.find_entry_from_hash(hash);
         match slice {
             Some(entry) => {
-                let mut dat_file = self.get_dat_file(&index_path, entry.data_file_id.into())?;
+                let mut dat_file = self.get_dat_file(index_path, entry.data_file_id.into())?;
                 dat_file.read_from_offset(entry.offset)
             }
             None => None,
