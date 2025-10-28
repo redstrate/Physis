@@ -295,7 +295,7 @@ struct SqpkTargetInfo {
     #[brw(pad_before = 3)]
     #[brw(pad_size_to = 2)]
     platform: Platform, // Platform is read as a u16, but the enum is u8
-    region: Region,
+    region: Region, // TODO: unsure if this is actually true, this seems to return Global for Korean patches.
     #[br(map = read_bool_from::<u16>)]
     #[bw(map = write_bool_as::<u16>)]
     is_debug: bool,
@@ -439,7 +439,10 @@ fn write_empty_file_block_at(
     let file_size: i32 = 0;
     file.write_all(file_size.to_le_bytes().as_slice())?;
 
-    let num_blocks: i32 = (block_number - 1).try_into().unwrap();
+    let num_blocks: i32 = (block_number - 1)
+        .try_into()
+        .ok()
+        .ok_or(PatchError::ParseError)?;
     file.write_all(num_blocks.to_le_bytes().as_slice())?;
 
     let used_blocks: i32 = 0;
@@ -518,7 +521,7 @@ impl ZiPatch {
         let mut target_info: Option<SqpkTargetInfo> = None;
 
         let get_dat_path =
-            |target_info: &SqpkTargetInfo, main_id: u16, sub_id: u16, file_id: u32| -> String {
+            |target_info: &SqpkTargetInfo, main_id: u16, sub_id: u16, file_id: u32| -> PathBuf {
                 let filename = format!(
                     "{:02x}{:04x}.{}.dat{}",
                     main_id,
@@ -535,11 +538,11 @@ impl ZiPatch {
                 .iter()
                 .collect();
 
-                path.to_str().unwrap().to_string()
+                path
             };
 
         let get_index_path =
-            |target_info: &SqpkTargetInfo, main_id: u16, sub_id: u16, file_id: u32| -> String {
+            |target_info: &SqpkTargetInfo, main_id: u16, sub_id: u16, file_id: u32| -> PathBuf {
                 let mut filename = format!(
                     "{:02x}{:04x}.{}.index",
                     main_id,
@@ -561,7 +564,7 @@ impl ZiPatch {
                 .iter()
                 .collect();
 
-                path.to_str().unwrap().to_string()
+                path
             };
 
         loop {
@@ -577,15 +580,13 @@ impl ZiPatch {
                     match pchunk.operation {
                         SqpkOperation::AddData(add) => {
                             let filename = get_dat_path(
-                                target_info.as_ref().unwrap(),
+                                target_info.as_ref().ok_or(PatchError::ParseError)?,
                                 add.main_id,
                                 add.sub_id,
                                 add.file_id,
                             );
 
-                            let (left, _) =
-                                filename.rsplit_once('/').ok_or(PatchError::ParseError)?;
-                            fs::create_dir_all(left)?;
+                            fs::create_dir_all(filename.parent().ok_or(PatchError::ParseError)?)?;
 
                             let mut new_file = OpenOptions::new()
                                 .write(true)
@@ -601,7 +602,7 @@ impl ZiPatch {
                         }
                         SqpkOperation::DeleteData(delete) => {
                             let filename = get_dat_path(
-                                target_info.as_ref().unwrap(),
+                                target_info.as_ref().ok_or(PatchError::ParseError)?,
                                 delete.main_id,
                                 delete.sub_id,
                                 delete.file_id,
@@ -621,14 +622,13 @@ impl ZiPatch {
                         }
                         SqpkOperation::ExpandData(expand) => {
                             let filename = get_dat_path(
-                                target_info.as_ref().unwrap(),
+                                target_info.as_ref().ok_or(PatchError::ParseError)?,
                                 expand.main_id,
                                 expand.sub_id,
                                 expand.file_id,
                             );
 
-                            let (left, _) = filename.rsplit_once('/').unwrap();
-                            fs::create_dir_all(left)?;
+                            fs::create_dir_all(filename.parent().ok_or(PatchError::ParseError)?)?;
 
                             let new_file = OpenOptions::new()
                                 .write(true)
@@ -645,21 +645,20 @@ impl ZiPatch {
                         SqpkOperation::HeaderUpdate(header) => {
                             let file_path = match header.file_kind {
                                 TargetFileKind::Dat => get_dat_path(
-                                    target_info.as_ref().unwrap(),
+                                    target_info.as_ref().ok_or(PatchError::ParseError)?,
                                     header.main_id,
                                     header.sub_id,
                                     header.file_id,
                                 ),
                                 TargetFileKind::Index => get_index_path(
-                                    target_info.as_ref().unwrap(),
+                                    target_info.as_ref().ok_or(PatchError::ParseError)?,
                                     header.main_id,
                                     header.sub_id,
                                     header.file_id,
                                 ),
                             };
 
-                            let (left, _) = file_path.rsplit_once('/').unwrap();
-                            fs::create_dir_all(left)?;
+                            fs::create_dir_all(file_path.parent().ok_or(PatchError::ParseError)?)?;
 
                             let mut new_file = OpenOptions::new()
                                 .write(true)
@@ -674,8 +673,10 @@ impl ZiPatch {
                             new_file.write_all(&header.header_data)?;
                         }
                         SqpkOperation::FileOperation(fop) => {
-                            let file_path = format!("{}/{}", data_dir, fop.path);
-                            let (parent_directory, _) = file_path.rsplit_once('/').unwrap();
+                            let file_path: PathBuf = [data_dir, &fop.path].iter().collect();
+
+                            let parent_directory =
+                                file_path.parent().ok_or(PatchError::ParseError)?;
 
                             match fop.operation {
                                 SqpkFileOperation::AddFile => {
@@ -688,7 +689,10 @@ impl ZiPatch {
                                         Vec::with_capacity(fop.file_size as usize);
 
                                     while data.len() < fop.file_size as usize {
-                                        data.append(&mut read_data_block_patch(&mut file).unwrap());
+                                        data.append(
+                                            &mut read_data_block_patch(&mut file)
+                                                .ok_or(PatchError::ParseError)?,
+                                        );
                                     }
 
                                     // re-apply crc32
@@ -714,7 +718,7 @@ impl ZiPatch {
                                 }
                                 SqpkFileOperation::DeleteFile => {
                                     // it's okay to let this fail.
-                                    let _ = std::fs::remove_file(file_path.as_str());
+                                    let _ = std::fs::remove_file(file_path);
                                 }
                                 SqpkFileOperation::RemoveAll => {
                                     let path: PathBuf = [
@@ -752,11 +756,13 @@ impl ZiPatch {
                     // Currently, IgnoreMissing and IgnoreOldMismatch is not used in XIVQuickLauncher either. This stays as an intentional NOP.
                 }
                 ChunkType::AddDirectory(add_dir) => {
-                    std::fs::create_dir_all(format!("{}/{}", data_dir, add_dir.name))?;
+                    std::fs::create_dir_all([data_dir, &add_dir.name].iter().collect::<PathBuf>())?;
                 }
                 ChunkType::DeleteDirectory(remove_dir) => {
                     // it's okay to let this be fallible
-                    let _ = std::fs::remove_dir_all(format!("{}/{}", data_dir, remove_dir.name));
+                    let _ = std::fs::remove_dir_all(
+                        [data_dir, &remove_dir.name].iter().collect::<PathBuf>(),
+                    );
                 }
                 ChunkType::Entry(entry) => {
                     let mut data = Vec::new();
@@ -764,8 +770,9 @@ impl ZiPatch {
                         match chunk.operation {
                             EntryOperation::Delete => {
                                 // it's okay to let this be fallible
-                                let _ =
-                                    std::fs::remove_file(format!("{}/{}", data_dir, entry.path));
+                                let _ = std::fs::remove_file(
+                                    [data_dir, &entry.path].iter().collect::<PathBuf>(),
+                                );
                             }
                             _ => {
                                 if !chunk.data.is_empty() {
@@ -781,7 +788,7 @@ impl ZiPatch {
                                                 &mut compressed_data,
                                                 &mut decompressed_data,
                                             )
-                                            .unwrap();
+                                            .ok_or(PatchError::ParseError)?;
                                             decompressed_data[..len as usize].to_vec()
                                         }
                                     };
@@ -791,12 +798,12 @@ impl ZiPatch {
                         }
                     }
 
-                    // Sometimes, the patch asks for a directory it didn't make yet.
-                    let filename = format!("{}/{}", data_dir, entry.path);
-                    let (left, _) = filename.rsplit_once('/').unwrap();
-                    fs::create_dir_all(left)?;
+                    let filename: PathBuf = [data_dir, &entry.path].iter().collect();
 
-                    std::fs::write(filename, data).unwrap();
+                    // Sometimes, the patch asks for a directory it didn't make yet.
+                    fs::create_dir_all(filename.parent().ok_or(PatchError::ParseError)?)?;
+
+                    std::fs::write(filename, data)?;
                 }
                 ChunkType::EndOfFile => {
                     return Ok(());
