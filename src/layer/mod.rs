@@ -316,7 +316,7 @@ pub enum LayerEntryData {
     #[br(pre_assert(*magic == LayerEntryType::PositionMarker))]
     PositionMarker(PositionMarkerInstanceObject),
     #[br(pre_assert(*magic == LayerEntryType::SharedGroup))]
-    SharedGroup(SharedGroupInstance),
+    SharedGroup(#[br(args(string_heap))] SharedGroupInstance),
     #[br(pre_assert(*magic == LayerEntryType::Sound))]
     Sound(SoundInstanceObject),
     #[br(pre_assert(*magic == LayerEntryType::EventNPC))]

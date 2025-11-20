@@ -3,6 +3,8 @@
 
 use binrw::{binread, binrw};
 
+use crate::layer::{HeapString, StringHeap};
+
 use super::read_bool_from;
 
 #[binrw]
@@ -44,9 +46,11 @@ pub enum ColourState {
 
 #[binread]
 #[derive(Debug)]
+#[br(import(string_heap: &StringHeap))]
 #[br(little)]
 pub struct SharedGroupInstance {
-    pub asset_path_offset: u32,
+    #[br(args(string_heap))]
+    pub asset_path: HeapString,
     pub initial_door_state: DoorState,
     pub overriden_members: i32,
     pub overriden_members_count: i32,
@@ -59,11 +63,12 @@ pub struct SharedGroupInstance {
     #[brw(pad_after = 1)] // padding
     pub collision_controllable_without_eobj: bool,
     pub bound_client_path_instance_id: u32,
+    // TODO: read move path settings from this offset
     pub move_path_settings: i32,
     #[br(map = read_bool_from::<u8>)]
     #[brw(pad_after = 3)] // padding
     pub not_create_navimesh_door: bool,
     pub initial_transform_state: TransformState,
     pub initial_color_state: ColourState,
-    // TODO: read move path settings
+    pub unk1: [u8; 60],
 }
