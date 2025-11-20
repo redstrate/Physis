@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 use std::io::Cursor;
+use std::io::SeekFrom;
 
 use crate::ByteSpan;
 use binrw::BinRead;
@@ -20,34 +21,38 @@ pub enum ShaderStage {
 #[binread]
 #[derive(Debug)]
 #[brw(little)]
+#[brw(magic = b"ShCd")]
 #[allow(dead_code)]
-struct SchdHeader {
-    magic: i32, // TODO: what magic?
+pub struct SHCD {
+    version: i32,
 
-    #[br(count = 3)]
-    #[bw(pad_size_to = 3)]
+    // "DX9\0" or "DX11"
+    #[br(count = 4)]
+    #[bw(pad_size_to = 4)]
     #[bw(map = |x : &String | x.as_bytes())]
     #[br(map = | x: Vec<u8> | String::from_utf8(x).unwrap().trim_matches(char::from(0)).to_string())]
-    version: String,
+    format: String,
 
-    stage: ShaderStage,
-
-    dxc_magic: u32, // TODO: WHAT MAGIC??
-
-    file_length: i32,
+    file_length: u32,
     shader_offset: u32,
     parameter_offset: u32,
+    #[brw(pad_size_to = 4)]
+    stage: ShaderStage,
+    shader_data_length: u32,
+
+    // TODO: there's other interesting data in here
+    // TODO: read parameters
+    /// DXBC bytecode.
+    #[br(seek_before = SeekFrom::Start(shader_offset as u64))]
+    #[br(count = shader_data_length)]
+    #[br(restore_position)]
+    pub bytecode: Vec<u8>,
 }
 
-#[derive(Debug)]
-pub struct Schd {}
-
-impl Schd {
+impl SHCD {
     /// Reads an existing ULD file
     pub fn from_existing(buffer: ByteSpan) -> Option<Self> {
         let mut cursor = Cursor::new(buffer);
-        SchdHeader::read(&mut cursor).ok()?;
-
-        Some(Schd {})
+        SHCD::read(&mut cursor).ok()
     }
 }

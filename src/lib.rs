@@ -116,8 +116,8 @@ pub mod tmb;
 /// Reading SKP files
 pub mod skp;
 
-/// Reading SCHD files
-pub mod schd;
+/// Reading SHCD files
+pub mod shcd;
 
 /// Reading PHYB files
 pub mod phyb;
