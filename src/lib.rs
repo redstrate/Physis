@@ -152,6 +152,9 @@ pub mod resource;
 /// Reading PCB files.
 pub mod pcb;
 
+/// Reading CUTB files.
+pub mod cutb;
+
 mod bcn;
 
 mod error;
