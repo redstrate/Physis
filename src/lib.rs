@@ -1,14 +1,14 @@
 // SPDX-FileCopyrightText: 2023 Joshua Goins <josh@redstrate.com>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-//! Crate for reading and writing the file formats used by FFXIV.
+#![doc = include_str!("../README.md")]
 
 extern crate core;
 
-/// Represents a continuous block of memory which is not owned, and comes either from an in-memory location or from a file.
+/// A continuous block of memory which is not owned, and comes either from an in-memory location or from a file.
 pub type ByteSpan<'a> = &'a [u8];
 
-/// Represents a continuous block of memory which is owned.
+/// Acontinuous block of memory which is owned.
 pub type ByteBuffer = Vec<u8>;
 
 /// Parsing game repositories, such as "ffxiv", "ex1" and their version information.
@@ -84,6 +84,7 @@ mod sha1;
 /// Reading layer information for a map (LGB)
 pub mod layer;
 
+/// Reading terrain model data (TERA).
 pub mod tera;
 
 mod common_file_operations;

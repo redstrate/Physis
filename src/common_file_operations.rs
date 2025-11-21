@@ -15,12 +15,12 @@ pub(crate) fn write_bool_as<T: std::convert::From<u8>>(x: &bool) -> T {
 }
 
 pub(crate) fn read_string(byte_stream: Vec<u8>) -> String {
-    let str = String::from_utf8(byte_stream).unwrap();
+    let str = String::from_utf8(byte_stream).unwrap_or_default();
     str.trim_matches(char::from(0)).to_string() // trim \0 from the end of strings
 }
 
 pub(crate) fn write_string(str: &String) -> Vec<u8> {
-    let c_string = CString::new(&**str).unwrap();
+    let c_string = CString::new(&**str).unwrap_or_default();
     c_string.as_bytes_with_nul().to_vec()
 }
 
