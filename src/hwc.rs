@@ -10,11 +10,15 @@ use crate::ByteSpan;
 /// Contains a pixmap meant to be used as a hardware cursor.
 #[derive(Debug)]
 pub struct Hwc {
+    /// RGBA8888 data for the cursor.
     pub rgba: Vec<u8>,
 }
 
-const CURSOR_WIDTH: usize = 64;
-const CURSOR_HEIGHT: usize = 64;
+/// The width of all hardware cursors.
+pub const CURSOR_WIDTH: usize = 64;
+
+/// The height of all hardware cursors.
+pub const CURSOR_HEIGHT: usize = 64;
 
 impl Hwc {
     /// Reads an existing HWC file
@@ -25,5 +29,23 @@ impl Hwc {
         cursor.read_exact(&mut rgba).ok()?;
 
         Some(Self { rgba })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::fs::read;
+    use std::path::PathBuf;
+
+    use super::*;
+
+    #[test]
+    fn test_invalid() {
+        let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        d.push("resources/tests");
+        d.push("random");
+
+        // Feeding it invalid data should not panic
+        Hwc::from_existing(&read(d).unwrap());
     }
 }
