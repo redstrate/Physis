@@ -9,7 +9,7 @@ use constants::{BLOWFISH_P, BLOWFISH_S};
 const ROUNDS: usize = 16;
 const KEYBITS: u32 = 64u32 >> 3;
 
-/// Implementation of the Blowfish block cipher, specialized for encrypting and decrypting SqexArg - the technique used to encrypt game arguments by the launcher.
+/// Implementation of the Blowfish block cipher, used for SqexArg (used to encrypt game arguments.)
 ///
 /// # Example
 ///

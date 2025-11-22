@@ -74,6 +74,9 @@ struct PreBoneDeformerHeader {
     links: Vec<PreBoneDeformerLink>,
 }
 
+/// Pre-bone deformer file, usually with the `.pbd` file extension.
+///
+/// Used to transform or "deform" a base skeleton. For example, various races use pre-bone deformers to create their unique body shapes.
 pub struct PreBoneDeformer {
     header: PreBoneDeformerHeader,
 }

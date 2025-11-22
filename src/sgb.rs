@@ -21,6 +21,9 @@ struct SgbHeader {
     total_chunk_count: i32,
 }
 
+/// Shared group binary file, usually with the `.sgb` file extension.
+///
+/// This is basically a "prefab".
 #[derive(Debug)]
 pub struct Sgb {}
 

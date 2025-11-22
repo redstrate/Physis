@@ -7,46 +7,50 @@ use crate::ByteSpan;
 use binrw::BinRead;
 use binrw::binrw;
 
+/// A set of scaling parameters for a race.
 #[binrw]
 #[br(little)]
 #[repr(C)]
 #[derive(Debug, Clone, Copy)]
 pub struct RacialScalingParameters {
-    /// Male minimum height
+    /// Male minimum height.
     pub male_min_size: f32,
-    /// Male maximum height
+    /// Male maximum height.
     pub male_max_size: f32,
 
-    /// Male minimum tail size
+    /// Male minimum tail size.
     pub male_min_tail: f32,
-    /// Male maximum tail size
+    /// Male maximum tail size.
     pub male_max_tail: f32,
 
-    /// Female minimum height
+    /// Female minimum height.
     pub female_min_size: f32,
-    /// Female maximum height
+    /// Female maximum height.
     pub female_max_size: f32,
 
-    /// Female minimum tail size
+    /// Female minimum tail size.
     pub female_min_tail: f32,
-    /// Female maximum tail size
+    /// Female maximum tail size.
     pub female_max_tail: f32,
 
-    /// Minimum bust size on the X-axis
+    /// Minimum bust size on the X-axis.
     pub bust_min_x: f32,
-    /// Minimum bust size on the Y-axis
+    /// Minimum bust size on the Y-axis.
     pub bust_min_y: f32,
-    /// Minimum bust size on the Z-axis
+    /// Minimum bust size on the Z-axis.
     pub bust_min_z: f32,
 
-    /// Maximum bust size on the X-axis
+    /// Maximum bust size on the X-axis.
     pub bust_max_x: f32,
-    /// Maximum bust size on the Y-axis
+    /// Maximum bust size on the Y-axis.
     pub bust_max_y: f32,
-    /// Maximum bust size on the Z-axis
+    /// Maximum bust size on the Z-axis.
     pub bust_max_z: f32,
 }
 
+/// Character multiplier parameter file, usually with the `.cmp` file extension.
+///
+/// This is used to determine various scaling limits for height, and so on.
 #[derive(Debug)]
 pub struct CMP {
     /// The racial scaling parameters

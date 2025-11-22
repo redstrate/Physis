@@ -72,7 +72,9 @@ pub(crate) struct DataSection {
     data: Vec<u8>,
 }
 
-/// An Excel data file. Represents a page in an Excel Sheet.
+/// Excel data file, usually with the `.exd` file extension.
+///
+/// Represents a page in an Excel Sheet.
 #[binrw]
 #[brw(big)]
 #[allow(dead_code)]

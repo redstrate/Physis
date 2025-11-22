@@ -423,6 +423,9 @@ struct MaterialData {
     shader_values: Vec<f32>,
 }
 
+/// Material file, usually with the `.mtrl` file extension.
+///
+/// Contains general information about a material, such as which textures it uses.
 #[derive(Debug)]
 pub struct Material {
     pub shader_package_name: String,

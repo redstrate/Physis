@@ -14,6 +14,9 @@ use binrw::BinReaderExt;
 use binrw::BinResult;
 use binrw::binread;
 
+/// Level variable binary file, usually with the `.lvb` file extension.
+///
+/// Contains general information about the level, such as which layer groups it has.
 #[binread]
 #[derive(Debug)]
 #[brw(little)]

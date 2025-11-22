@@ -67,6 +67,9 @@ pub struct Bone {
     pub scale: [f32; 3],
 }
 
+/// Skeleton file, usually with the `.sklb` file extension.
+///
+/// Contains a tree of bones.
 #[derive(Debug)]
 pub struct Skeleton {
     /// Bones of this skeleton

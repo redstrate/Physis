@@ -12,7 +12,9 @@ pub struct ConfigMap {
     pub keys: Vec<(String, String)>,
 }
 
-/// Represents a config file, which is made up of categories and settings. Categories may have zero to one setting.
+/// Plain-text config file, usually with the `.cfg` file extension.
+///
+/// This is used to store various user settings. Each config file is made up of several categories and settings. Categories may have zero to one setting.
 #[derive(Debug)]
 pub struct ConfigFile {
     /// The categories present in this config file.

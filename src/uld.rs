@@ -302,7 +302,9 @@ struct UldHeader {
     widget_offset: u32,
 }
 
-/// May stand for "UI Layout Definition", and does what it says: lays out UI elements.
+/// UI layout definition file, usually with the `.ulb` file extension.
+///
+/// Does what it says: lays out UI elements.
 #[binrw]
 #[derive(Debug)]
 #[brw(little)]

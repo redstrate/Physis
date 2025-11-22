@@ -15,7 +15,7 @@ use binrw::{BinRead, BinReaderExt};
 #[binrw]
 #[derive(Debug)]
 #[brw(little)]
-pub struct EntryItem {
+struct EntryItem {
     flag: u32,
     sibling: u32,
     child: u32,
@@ -62,6 +62,9 @@ struct DictionaryHeader {
     entries: Vec<EntryItem>,
 }
 
+/// Dictionary containing words, usually with the `.dic` file extension.
+///
+/// This is used to store a list of forbidden (or vulgar) words blocked in chat.
 pub struct Dictionary {
     header: DictionaryHeader,
     pub words: Vec<String>,

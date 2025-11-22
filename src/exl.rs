@@ -4,7 +4,9 @@
 use crate::{ByteBuffer, ByteSpan};
 use std::io::{BufRead, BufReader, BufWriter, Cursor, Write};
 
-/// Represents an Excel List.
+/// Excel list file, usually with the `.exl` file extension.
+///
+/// Contains a list of every Excel sheet available in-game.
 pub struct EXL {
     /// The version of the list.
     pub version: i32,

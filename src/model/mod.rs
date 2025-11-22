@@ -461,6 +461,9 @@ pub struct Lod {
     pub parts: Vec<Part>,
 }
 
+/// Model file, usually with the `.mdl` file extension.
+///
+/// Contains vertices, indices and anything else to store 3D model information.
 #[derive(Debug, Clone)]
 pub struct MDL {
     file_header: ModelFileHeader,

@@ -64,7 +64,7 @@ pub mod mtrl;
 /// Types for shader packages (`.shpk`) files.
 pub mod shpk;
 
-/// Types for character parameter (`.cmp`) files.
+/// Types for character multiplier parameter (`.cmp`) files.
 pub mod cmp;
 
 /// Types for and writing various saved data formats from the game.
@@ -75,22 +75,22 @@ pub mod cfg;
 
 mod havok;
 
-/// Types for bone deform matrices (`.pbd`) files.
+/// Types for pre-bone deform (`.pbd`) files.
 pub mod pbd;
 
 mod crc;
 mod sha1;
 
-/// Types for layer information (`.lgb`) files.
+/// Types for layer group binary (`.lgb`) files.
 pub mod layer;
 
-/// Types for terrain information (`.tera`) files.
+/// Types for terrain (`.tera`) files.
 pub mod tera;
 
 mod common_file_operations;
 mod exd_file_operations;
 
-/// Types for vulgar word dictionary (`.dic`) files.
+/// Types for word dictionary (`.dic`) files.
 pub mod dic;
 
 #[doc(hidden)]
@@ -129,7 +129,7 @@ pub mod pap;
 /// Types for animated VFX (`.avfx`) files.
 pub mod avfx;
 
-/// Types for staining (`.stm`) files.
+/// Types for staining template material (`.stm`) files.
 pub mod stm;
 
 /// Types for patch lists.
@@ -141,7 +141,7 @@ pub mod uwb;
 /// Types for `.lcb` files.
 pub mod lcb;
 
-/// Types for `.lvb` files.
+/// Types for level variable binary (`.lvb`) files.
 pub mod lvb;
 
 /// Types for `.svb` files.
@@ -150,10 +150,10 @@ pub mod svb;
 /// File resource handling.
 pub mod resource;
 
-/// Types for `.pcb` files.
+/// Types for player collision binary (`.pcb`) files.
 pub mod pcb;
 
-/// Types for binary cutscene (`.cutb`) files.
+/// Types for cutscene binary (`.cutb`) files.
 pub mod cutb;
 
 mod bcn;

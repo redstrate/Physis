@@ -5,6 +5,9 @@ use std::io::{Cursor, Read};
 
 use crate::ByteSpan;
 
+/// Hardware cursor file, usually with the `.hwc` file extension.
+///
+/// Contains a pixmap meant to be used as a hardware cursor.
 #[derive(Debug)]
 pub struct Hwc {
     pub rgba: Vec<u8>,

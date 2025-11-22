@@ -115,6 +115,9 @@ pub enum TextureType {
     ThreeDimensional,
 }
 
+/// Texture file, usually with the `.tex` file extension.
+///
+/// Contains a texture, which optionally be compressed or represent a more complex type like a 3D image.
 pub struct Texture {
     /// Type of texture
     pub texture_type: TextureType,

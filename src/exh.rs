@@ -93,6 +93,9 @@ pub struct ExcelDataPagination {
     pub row_count: u32,
 }
 
+/// Excel header file, usually with the `.exh` file extension.
+///
+/// Contains general information about the sheet, such as which languages are supported.
 #[binrw]
 #[brw(big)]
 #[allow(dead_code)]

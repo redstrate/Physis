@@ -150,6 +150,9 @@ pub struct Node {
     pub passes: Vec<Pass>,
 }
 
+/// Shader package file, usually with the `.shpk` file extension.
+///
+/// A collection of shaders which are usually different permutations, probably created from a "mega-shader".
 #[binread]
 #[br(little)]
 #[br(magic = b"ShPk")]

@@ -174,6 +174,9 @@ struct AvfxBlock {
     data: AvfxData,
 }
 
+/// Animated VFX file, usually with the `.avfx` file extension.
+///
+/// This is used for the animated VFX effects in-game.
 #[derive(Debug)]
 #[allow(dead_code)]
 pub struct Avfx {

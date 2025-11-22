@@ -685,6 +685,9 @@ pub struct LayerChunk {
     pub layers: Vec<Layer>,
 }
 
+/// Layer group binary file, usually with the `.lgb` file extension.
+///
+/// Contains information about where game objects are placed.
 #[derive(Debug)]
 pub struct LayerGroup {
     pub file_id: u32,

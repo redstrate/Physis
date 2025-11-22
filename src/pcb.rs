@@ -119,6 +119,9 @@ pub struct Polygon {
     pub material: u64,
 }
 
+/// Player collision binary file, usually with the `.pcb` file extension.
+///
+/// Contains a tree of polygons that makes up a collision mesh.
 #[binrw]
 #[derive(Debug)]
 #[brw(little)]

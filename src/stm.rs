@@ -34,6 +34,9 @@ pub struct DyePack {
     specular_power: f32,
 }
 
+/// Staining template material file, usually with the `.stm` file extension.
+///
+/// Contains dye information.
 #[derive(Debug)]
 pub struct StainingTemplate {}
 

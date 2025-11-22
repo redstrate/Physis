@@ -72,6 +72,9 @@ pub struct StringNode {
     unk1: u32, // Seems to be either 255 or 0
 }
 
+/// Cutscene binary file, usually with the `.cutb` file extension.
+///
+/// Describes animated cutscenes to be played in-game.
 #[binrw]
 #[brw(magic = b"CUTB")]
 #[derive(Debug)]

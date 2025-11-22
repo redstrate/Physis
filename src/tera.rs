@@ -40,6 +40,9 @@ pub struct PlateModel {
     pub filename: String,
 }
 
+/// Terrain file, usually with the `.tera` file extension.
+///
+/// Contains a list of plates that make up the underlying terrain of a level.
 #[derive(Debug)]
 pub struct Terrain {
     pub plates: Vec<PlateModel>,

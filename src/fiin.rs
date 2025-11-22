@@ -16,7 +16,9 @@ use crate::sha1::Sha1;
 #[brw(magic = b"FileInfo")]
 #[derive(Debug)]
 #[brw(little)]
-/// File info, which contains SHA1 of one or more files
+/// File info file, usually with the `.fiin` file extension.
+///
+/// Purpose unknown, but contains SHA1 information of various executable-related files.
 pub struct FileInfo {
     #[brw(pad_before = 16)]
     #[bw(calc = 1024)]
@@ -34,7 +36,7 @@ pub struct FileInfo {
 
 #[binrw]
 #[derive(Debug)]
-/// A file info entry
+/// An entry in a FIIN file.
 pub struct FIINEntry {
     /// File size (in bytes)
     pub file_size: i32,

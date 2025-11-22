@@ -18,6 +18,9 @@ pub enum ShaderStage {
     Pixel,
 }
 
+/// Shader file, usually with the `.shcd` file extension.
+///
+/// Used instead of a shader package for standalone shaders.
 #[binread]
 #[derive(Debug)]
 #[brw(little)]
