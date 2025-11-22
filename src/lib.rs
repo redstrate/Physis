@@ -22,138 +22,138 @@ pub mod sqpack;
 
 mod compression;
 
-/// Reading model (MDL) files.
+/// Types for model (`.mdl`) files.
 pub mod model;
 
 /// Playable race and genders.
 pub mod race;
 
-/// Reading Excel lists (EXL).
+/// Types for Excel list (`.exl`) files.
 pub mod exl;
 
-/// Reading equipment and equipment-related data.
+/// Dealing with equipment and its data.
 pub mod equipment;
 
-/// Common structures, enumerations and functions used by many modules.
+/// Common structures, enumerations and functions used by other modules.
 pub mod common;
 
-/// Methods for installing game and boot patches.
+/// Types for ZiPatch (`.patch`) files.
 pub mod patch;
 
-/// Implementation of the Blowfish ECB block cipher used by the retail client. It's used to encrypt arguments in the launcher, to prevent login token snooping.
+/// Implementation of the Blowfish ECB block cipher used by the retail client.
 pub mod blowfish;
 
-/// Reading Excel header files (EXH).
+/// Types for Excel header (`.exh`) files.
 pub mod exh;
 
-/// Reading Excel data files (EXD).
+/// Types for Excel data (`.exd`) files.
 pub mod exd;
 
-/// Reading Havok XML sidecar files.
+/// Types for skeleton (`.sklb`) files.
 pub mod skeleton;
 
-/// Reading file info files (FIIN).
+/// Types for file info (`.fiin`) files.
 pub mod fiin;
 
-/// Reading textures (TEX).
+/// Types for textures (`.tex`) files.
 pub mod tex;
 
-/// Reading material files (MTRL)
+/// Types for material (`.mtrl`) files.
 pub mod mtrl;
 
-/// Reading shader packages (SHPK)
+/// Types for shader packages (`.shpk`) files.
 pub mod shpk;
 
-/// Reading character parameter files (CMP)
+/// Types for character parameter (`.cmp`) files.
 pub mod cmp;
 
-/// Reading and writing various saved data formats from the game.
+/// Types for and writing various saved data formats from the game.
 pub mod savedata;
 
-/// Reading and writing the plaintext config files (CFG) used by the game to store most of it's configuration.
+/// Types for and writing the plaintext config (`.cfg`) files.
 pub mod cfg;
 
 mod havok;
 
-/// Reading bone deform matrices.
+/// Types for bone deform matrices (`.pbd`) files.
 pub mod pbd;
 
 mod crc;
 mod sha1;
 
-/// Reading layer information for a map (LGB)
+/// Types for layer information (`.lgb`) files.
 pub mod layer;
 
-/// Reading terrain model data (TERA).
+/// Types for terrain information (`.tera`) files.
 pub mod tera;
 
 mod common_file_operations;
 mod exd_file_operations;
 
-/// Reading word dictionaries, such as the vulgar word list.
+/// Types for vulgar word dictionary (`.dic`) files.
 pub mod dic;
 
 #[doc(hidden)]
 pub const PHYSIS_VERSION: &str = env!("CARGO_PKG_VERSION");
 
-/// Reading ULD files
+/// Types for UI layout definition (`.uld`) files.
 pub mod uld;
 
-/// Reading SGB files
+/// Types for shared group binary (`.sgb`) files.
 pub mod sgb;
 
-/// Reading SCD files
+/// Types for `.scd` files.
 pub mod scd;
 
-/// Reading HWC files
+/// Types for hardware cursor (`.hwc`) files.
 pub mod hwc;
 
-/// Reading IWC files
+/// Types for `.iwc` files.
 pub mod iwc;
 
-/// Reading TMB files
+/// Types for `.tmb` files.
 pub mod tmb;
 
-/// Reading SKP files
+/// Types for `.skp` files.
 pub mod skp;
 
-/// Reading SHCD files
+/// Types for shader (`.shcd`) files.
 pub mod shcd;
 
-/// Reading PHYB files
+/// Types for `.phyb` files.
 pub mod phyb;
 
-/// Reading PAP files
+/// Types for `.pap` files.
 pub mod pap;
 
-/// Reading AVFX files
+/// Types for animated VFX (`.avfx`) files.
 pub mod avfx;
 
-/// Reading STM files
+/// Types for staining (`.stm`) files.
 pub mod stm;
 
-/// Reading patch lists
+/// Types for patch lists.
 pub mod patchlist;
 
-/// Reading UWB files
+/// Types for `.uwb` files.
 pub mod uwb;
 
-/// Reading LCB files
+/// Types for `.lcb` files.
 pub mod lcb;
 
-/// Reading LVB files
+/// Types for `.lvb` files.
 pub mod lvb;
 
-/// Reading SVB files
+/// Types for `.svb` files.
 pub mod svb;
 
 /// File resource handling.
 pub mod resource;
 
-/// Reading PCB files.
+/// Types for `.pcb` files.
 pub mod pcb;
 
-/// Reading CUTB files.
+/// Types for binary cutscene (`.cutb`) files.
 pub mod cutb;
 
 mod bcn;
