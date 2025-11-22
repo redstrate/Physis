@@ -10,7 +10,6 @@ use std::{
 use crate::{
     ByteBuffer,
     common::{Platform, read_version},
-    patch::{PatchError, ZiPatch},
     repository::{Category, Repository, string_to_category},
     sqpack::{Hash, IndexEntry, SqPackData, SqPackIndex},
 };
@@ -170,11 +169,6 @@ impl SqPackResource {
         }
 
         Some(index_filenames)
-    }
-
-    /// Applies the patch to game data and returns any errors it encounters. This function will not update the version in the GameData struct.
-    pub fn apply_patch(&self, patch_path: &str) -> Result<(), PatchError> {
-        ZiPatch::apply(&self.game_directory, patch_path)
     }
 
     /// Detects whether or not the game files need a repair, right now it only checks for invalid

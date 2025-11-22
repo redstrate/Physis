@@ -14,7 +14,7 @@ pub type ByteBuffer = Vec<u8>;
 /// Parsing game repositories, such as "ffxiv", "ex1" and their version information.
 pub mod repository;
 
-/// Handling and updating data in the "boot" directory, which contains the launcher files.
+/// Handling data in the "boot" directory, which contains the launcher files.
 pub mod bootdata;
 
 /// SqPack file formats - including Db, Data and Index/Index2 files.

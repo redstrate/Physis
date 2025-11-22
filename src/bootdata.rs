@@ -4,8 +4,6 @@
 use std::fs;
 use std::path::PathBuf;
 
-use crate::patch::{PatchError, ZiPatch};
-
 /// Represents the boot data for FFXIV, which is located under the "boot" directory.
 pub struct BootData {
     path: String,
@@ -42,11 +40,6 @@ impl BootData {
                 }
             }
         }
-    }
-
-    /// Applies the patch to boot data and returns any errors it encounters. This function will not update the version in the BootData struct.
-    pub fn apply_patch(&self, patch_path: &str) -> Result<(), PatchError> {
-        ZiPatch::apply(&self.path, patch_path)
     }
 
     fn is_valid(path: &str) -> bool {
