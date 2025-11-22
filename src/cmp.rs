@@ -48,7 +48,7 @@ pub struct RacialScalingParameters {
     pub bust_max_z: f32,
 }
 
-/// Character multiplier parameter file, usually with the `.cmp` file extension.
+/// Character multiplier make file, usually with the `.cmp` file extension.
 ///
 /// This is used to determine various scaling limits for height, and so on.
 #[derive(Debug)]

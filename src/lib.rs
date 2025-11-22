@@ -64,7 +64,7 @@ pub mod mtrl;
 /// Types for shader packages (`.shpk`) files.
 pub mod shpk;
 
-/// Types for character multiplier parameter (`.cmp`) files.
+/// Types for character make parameter (`.cmp`) files.
 pub mod cmp;
 
 /// Types for and writing various saved data formats from the game.
