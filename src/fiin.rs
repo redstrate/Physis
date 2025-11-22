@@ -56,13 +56,13 @@ pub struct FIINEntry {
 }
 
 impl FileInfo {
-    /// Parses an existing FIIN file.
+    /// Read an existing file.
     pub fn from_existing(buffer: ByteSpan) -> Option<FileInfo> {
         let mut cursor = Cursor::new(buffer);
         FileInfo::read(&mut cursor).ok()
     }
 
-    /// Writes file info into a new file
+    /// Writes data back to a buffer.
     pub fn write_to_buffer(&self) -> Option<ByteBuffer> {
         let mut buffer = ByteBuffer::new();
 

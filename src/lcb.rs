@@ -51,12 +51,13 @@ pub struct LccEntry {
 }
 
 impl Lcb {
-    /// Reads an existing UWB file
+    /// Read an existing file.
     pub fn from_existing(buffer: ByteSpan) -> Option<Self> {
         let mut cursor = Cursor::new(buffer);
         Lcb::read(&mut cursor).ok()
     }
 
+    /// Writes data back to a buffer.
     pub fn write_to_buffer(&self) -> Option<ByteBuffer> {
         let mut buffer = ByteBuffer::new();
 

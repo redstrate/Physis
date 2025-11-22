@@ -77,7 +77,7 @@ pub struct Skeleton {
 }
 
 impl Skeleton {
-    /// Reads an existing SKLB file
+    /// Read an existing file.
     pub fn from_existing(buffer: ByteSpan) -> Option<Skeleton> {
         let mut cursor = Cursor::new(buffer);
 

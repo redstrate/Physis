@@ -52,7 +52,7 @@ pub struct SqPackDatabase {
 }
 
 impl SqPackDatabase {
-    /// Reads an existing SQDB file
+    /// Read an existing file.
     pub fn from_existing(buffer: ByteSpan) -> Option<Self> {
         let mut cursor = Cursor::new(buffer);
         Self::read(&mut cursor).ok()

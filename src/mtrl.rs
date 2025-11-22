@@ -438,6 +438,7 @@ pub struct Material {
 }
 
 impl Material {
+    /// Read an existing file.
     pub fn from_existing(buffer: ByteSpan) -> Option<Material> {
         let mut cursor = Cursor::new(buffer);
         let mat_data = MaterialData::read(&mut cursor).ok()?;

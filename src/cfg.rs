@@ -24,7 +24,7 @@ pub struct ConfigFile {
 }
 
 impl ConfigFile {
-    /// Parses an existing config file.
+    /// Read an existing file.
     pub fn from_existing(buffer: ByteSpan) -> Option<ConfigFile> {
         let mut cfg = ConfigFile {
             categories: Vec::new(),
@@ -61,7 +61,7 @@ impl ConfigFile {
         Some(cfg)
     }
 
-    /// Writes an existing config file to a buffer.
+    /// Writes data back to a buffer.
     pub fn write_to_buffer(&self) -> Option<ByteBuffer> {
         let mut buffer = ByteBuffer::new();
 

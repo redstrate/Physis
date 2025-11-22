@@ -286,7 +286,7 @@ impl Default for Avfx {
 }
 
 impl Avfx {
-    /// Reads an existing Avfx file
+    /// Read an existing file.
     pub fn from_existing(buffer: ByteSpan) -> Option<Self> {
         let mut cursor = Cursor::new(buffer);
         let header = AvfxHeader::read(&mut cursor).ok()?;

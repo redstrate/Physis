@@ -96,7 +96,7 @@ pub struct PreBoneDeformMatrices {
 }
 
 impl PreBoneDeformer {
-    /// Reads an existing PBD file
+    /// Read an existing file.
     pub fn from_existing(buffer: ByteSpan) -> Option<PreBoneDeformer> {
         let mut cursor = Cursor::new(buffer);
         let header = PreBoneDeformerHeader::read(&mut cursor).ok()?;

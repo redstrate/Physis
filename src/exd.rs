@@ -224,7 +224,7 @@ pub struct ExcelRow {
 }
 
 impl EXD {
-    /// Parse an EXD from an existing file.
+    /// Read an existing file.
     pub fn from_existing(exh: &EXH, buffer: ByteSpan) -> Option<EXD> {
         EXD::read_args(&mut Cursor::new(&buffer), (exh,)).ok()
     }
@@ -277,7 +277,7 @@ impl EXD {
         }
     }
 
-    /// Write this EXD back to it's serialized binary form.
+    /// Writes data back to a buffer.
     pub fn write_to_buffer(&self, exh: &EXH) -> Option<ByteBuffer> {
         let mut buffer = ByteBuffer::new();
 

@@ -241,7 +241,7 @@ pub struct ShaderPackage {
 const SELECTOR_MULTIPLER: u32 = 31;
 
 impl ShaderPackage {
-    /// Reads an existing SHPK file
+    /// Read an existing file.
     pub fn from_existing(buffer: ByteSpan) -> Option<ShaderPackage> {
         let mut cursor = Cursor::new(buffer);
         let mut package = ShaderPackage::read(&mut cursor).ok()?;

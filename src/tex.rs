@@ -134,7 +134,7 @@ pub struct Texture {
 type DecodeFunction = fn(&[u8], usize, usize, &mut [u32]) -> Result<(), &'static str>;
 
 impl Texture {
-    /// Reads an existing TEX file
+    /// Read an existing file.
     pub fn from_existing(buffer: ByteSpan) -> Option<Texture> {
         let mut cursor = Cursor::new(buffer);
         let header = TexHeader::read(&mut cursor).ok()?;

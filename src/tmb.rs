@@ -20,7 +20,7 @@ struct TmbHeader {
 pub struct Tmb {}
 
 impl Tmb {
-    /// Reads an existing ULD file
+    /// Read an existing file.
     pub fn from_existing(buffer: ByteSpan) -> Option<Self> {
         let mut cursor = Cursor::new(buffer);
         TmbHeader::read(&mut cursor).ok()?;

@@ -19,7 +19,7 @@ struct IwcHeader {
 pub struct Iwc {}
 
 impl Iwc {
-    /// Reads an existing ULD file
+    /// Read an existing file.
     pub fn from_existing(buffer: ByteSpan) -> Option<Self> {
         let mut cursor = Cursor::new(buffer);
         IwcHeader::read(&mut cursor).ok()?;

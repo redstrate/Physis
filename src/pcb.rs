@@ -132,7 +132,7 @@ pub struct Pcb {
 }
 
 impl Pcb {
-    /// Reads an existing PCB file
+    /// Read an existing file.
     pub fn from_existing(buffer: ByteSpan) -> Option<Self> {
         let mut cursor = Cursor::new(buffer);
         Pcb::read(&mut cursor).ok()

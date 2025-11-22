@@ -695,7 +695,7 @@ pub struct LayerGroup {
 }
 
 impl LayerGroup {
-    /// Reads an existing PBD file
+    /// Read an existing file.
     pub fn from_existing(buffer: ByteSpan) -> Option<LayerGroup> {
         let mut cursor = Cursor::new(buffer);
 
@@ -802,6 +802,7 @@ impl LayerGroup {
         })
     }
 
+    /// Writes data back to a buffer.
     pub fn write_to_buffer(&self) -> Option<ByteBuffer> {
         let mut buffer = ByteBuffer::new();
 

@@ -115,10 +115,12 @@ pub struct EXH {
 }
 
 impl EXH {
+    /// Read an existing file.
     pub fn from_existing(buffer: ByteSpan) -> Option<EXH> {
         EXH::read(&mut Cursor::new(&buffer)).ok()
     }
 
+    /// Writes data back to a buffer.
     pub fn write_to_buffer(&self) -> Option<ByteBuffer> {
         let mut buffer = ByteBuffer::new();
 

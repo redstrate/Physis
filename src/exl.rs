@@ -42,6 +42,7 @@ impl EXL {
         Some(exl)
     }
 
+    /// Writes data back to a buffer.
     pub fn write_to_buffer(&self) -> Option<ByteBuffer> {
         let mut buffer = ByteBuffer::new();
 

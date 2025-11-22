@@ -28,7 +28,7 @@ struct SgbHeader {
 pub struct Sgb {}
 
 impl Sgb {
-    /// Reads an existing SGB file
+    /// Read an existing file.
     pub fn from_existing(buffer: ByteSpan) -> Option<Self> {
         let mut cursor = Cursor::new(buffer);
         SgbHeader::read(&mut cursor).ok()?;

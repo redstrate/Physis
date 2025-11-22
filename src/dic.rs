@@ -71,7 +71,7 @@ pub struct Dictionary {
 }
 
 impl Dictionary {
-    /// Parses an existing dictionary file.
+    /// Read an existing file.
     pub fn from_existing(buffer: ByteSpan) -> Option<Dictionary> {
         let mut cursor = Cursor::new(buffer);
         let mut dict = DictionaryHeader::read(&mut cursor).unwrap();

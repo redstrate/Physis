@@ -41,7 +41,7 @@ pub struct DyePack {
 pub struct StainingTemplate {}
 
 impl StainingTemplate {
-    /// Reads an existing ULD file
+    /// Read an existing file.
     pub fn from_existing(buffer: ByteSpan) -> Option<Self> {
         let mut cursor = Cursor::new(buffer);
         let header = StmHeader::read(&mut cursor).unwrap();

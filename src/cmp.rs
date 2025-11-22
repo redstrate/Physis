@@ -58,7 +58,7 @@ pub struct CMP {
 }
 
 impl CMP {
-    /// Parses an existing CMP file.
+    /// Read an existing file.
     pub fn from_existing(buffer: ByteSpan) -> Option<CMP> {
         let mut cursor = Cursor::new(buffer);
 

@@ -41,7 +41,7 @@ struct PapHeader {
 pub struct Pap {}
 
 impl Pap {
-    /// Reads an existing ULD file
+    /// Read an existing file.
     pub fn from_existing(buffer: ByteSpan) -> Option<Self> {
         let mut cursor = Cursor::new(buffer);
         PapHeader::read(&mut cursor).ok()?;

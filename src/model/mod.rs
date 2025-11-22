@@ -475,6 +475,7 @@ pub struct MDL {
 }
 
 impl MDL {
+    /// Read an existing file.
     pub fn from_existing(buffer: ByteSpan) -> Option<MDL> {
         let mut cursor = Cursor::new(buffer);
         let model_file_header = ModelFileHeader::read(&mut cursor).ok()?;
@@ -1036,6 +1037,7 @@ impl MDL {
         self.model_data.header.shape_value_count = self.model_data.shape_values.len() as u16;
     }
 
+    /// Writes data back to a buffer.
     pub fn write_to_buffer(&self) -> Option<ByteBuffer> {
         let mut buffer = ByteBuffer::new();
 

@@ -324,7 +324,7 @@ pub struct Uld {
 }
 
 impl Uld {
-    /// Read an existing ULD file.
+    /// Read an existing file.
     pub fn from_existing(buffer: ByteSpan) -> Option<Self> {
         let mut cursor = Cursor::new(buffer);
         Uld::read(&mut cursor).ok()

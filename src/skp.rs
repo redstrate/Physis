@@ -24,7 +24,7 @@ struct SkpHeader {
 pub struct Skp {}
 
 impl Skp {
-    /// Reads an existing ULD file
+    /// Read an existing file.
     pub fn from_existing(buffer: ByteSpan) -> Option<Self> {
         let mut cursor = Cursor::new(buffer);
         SkpHeader::read(&mut cursor).ok()?;

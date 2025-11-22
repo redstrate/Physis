@@ -15,7 +15,7 @@ pub struct Hwc {
 }
 
 impl Hwc {
-    /// Reads an existing HWC file
+    /// Read an existing file.
     pub fn from_existing(buffer: ByteSpan) -> Option<Self> {
         let mut cursor = Cursor::new(buffer);
 

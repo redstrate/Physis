@@ -233,7 +233,7 @@ impl ScnUnknown4Section {
 }
 
 impl Lvb {
-    /// Reads an existing UWB file
+    /// Read an existing file.
     pub fn from_existing(buffer: ByteSpan) -> Option<Self> {
         let mut cursor = Cursor::new(buffer);
         Lvb::read(&mut cursor).ok()

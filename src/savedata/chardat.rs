@@ -171,14 +171,14 @@ pub struct CharacterData {
 }
 
 impl CharacterData {
-    /// Parses existing character data.
+    /// Read an existing file.
     pub fn from_existing(buffer: ByteSpan) -> Option<CharacterData> {
         let mut cursor = Cursor::new(buffer);
 
         CharacterData::read(&mut cursor).ok()
     }
 
-    /// Write existing character data to a buffer.
+    /// Writes data back to a buffer.
     pub fn write_to_buffer(&self) -> Option<ByteBuffer> {
         let mut buffer = ByteBuffer::new();
 

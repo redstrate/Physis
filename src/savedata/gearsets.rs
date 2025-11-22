@@ -4,6 +4,7 @@
 #![allow(clippy::ptr_arg)] // binrw trips up another false positive
 
 use crate::ByteBuffer;
+use crate::ByteSpan;
 use crate::equipment::Slot;
 use crate::savedata::dat::DatHeader;
 use binrw::NullString;
@@ -224,8 +225,8 @@ pub struct GearSets {
 const GEARSET_KEY: u8 = 0x73;
 
 impl GearSets {
-    /// Parses existing gearsets data.
-    pub fn from_existing(buffer: &[u8]) -> Option<GearSets> {
+    /// Read an existing file.
+    pub fn from_existing(buffer: ByteSpan) -> Option<GearSets> {
         let mut cursor = Cursor::new(buffer);
 
         let header = DatHeader::read(&mut cursor).ok()?;
@@ -239,7 +240,7 @@ impl GearSets {
         GearSets::read(&mut cursor).ok()
     }
 
-    /// Write existing gearsets data to a buffer.
+    /// Writes data back to a buffer.
     pub fn write_to_buffer(&self) -> Option<ByteBuffer> {
         let mut buffer = ByteBuffer::new();
 

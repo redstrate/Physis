@@ -49,7 +49,7 @@ struct ScdHeader {
 pub struct Scd {}
 
 impl Scd {
-    /// Reads an existing ULD file
+    /// Read an existing file.
     pub fn from_existing(buffer: ByteSpan) -> Option<Self> {
         let mut cursor = Cursor::new(buffer);
         ScdHeader::read(&mut cursor).ok()?;

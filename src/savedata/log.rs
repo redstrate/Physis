@@ -112,7 +112,7 @@ pub struct ChatLog {
 }
 
 impl ChatLog {
-    /// Reads an existing LOG file
+    /// Read an existing file.
     pub fn from_existing(buffer: ByteSpan) -> Option<ChatLog> {
         let mut cursor = Cursor::new(buffer);
 

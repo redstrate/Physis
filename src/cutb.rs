@@ -164,7 +164,7 @@ pub struct TimelineNode {
 }
 
 impl Cutscene {
-    /// Parses an existing FIIN file.
+    /// Read an existing file.
     pub fn from_existing(buffer: ByteSpan) -> Option<Cutscene> {
         let mut cursor = Cursor::new(buffer);
         Cutscene::read(&mut cursor).ok()

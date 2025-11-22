@@ -49,7 +49,7 @@ pub struct Terrain {
 }
 
 impl Terrain {
-    /// Reads an existing TERA file
+    /// Read an existing file.
     pub fn from_existing(buffer: ByteSpan) -> Option<Terrain> {
         let mut cursor = Cursor::new(buffer);
         let header = TerrainHeader::read(&mut cursor).ok()?;
@@ -69,6 +69,7 @@ impl Terrain {
         Some(Terrain { plates })
     }
 
+    /// Writes data back to a buffer.
     pub fn write_to_buffer(&self) -> Option<ByteBuffer> {
         let mut buffer = ByteBuffer::new();
 
