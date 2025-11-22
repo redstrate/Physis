@@ -14,22 +14,22 @@ pub struct Hwc {
     pub rgba: Vec<u8>,
 }
 
-/// The width of all hardware cursors.
-pub const CURSOR_WIDTH: usize = 64;
-
-/// The height of all hardware cursors.
-pub const CURSOR_HEIGHT: usize = 64;
-
 impl Hwc {
     /// Reads an existing HWC file
     pub fn from_existing(buffer: ByteSpan) -> Option<Self> {
         let mut cursor = Cursor::new(buffer);
 
-        let mut rgba = vec![0; CURSOR_WIDTH * CURSOR_HEIGHT * 4];
+        let mut rgba = vec![0; Self::WIDTH * Self::HEIGHT * 4];
         cursor.read_exact(&mut rgba).ok()?;
 
         Some(Self { rgba })
     }
+
+    /// The width of all hardware cursors.
+    pub const WIDTH: usize = 64;
+
+    /// The height of all hardware cursors.
+    pub const HEIGHT: usize = 64;
 }
 
 #[cfg(test)]
