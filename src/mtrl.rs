@@ -472,14 +472,15 @@ impl Material {
         // bg/ffxiv/wil_w1/evt/w1eb/material/w1eb_f1_vfog1a.mtrl has a shader value list of 9, which doesn't make sense in this system
         // eventually we need to un-hardcode it from vec4 or whatever
         let mut constants = Vec::new();
-        if mat_data.header.shader_value_list_size % 4 == 0 {
+        const VALUE_SIZE: u16 = std::mem::size_of::<f32>() as u16;
+        if mat_data.header.shader_value_list_size % VALUE_SIZE == 0 {
             for constant in mat_data.constants {
                 let mut values: [f32; 4] = [0.0; 4];
 
                 // TODO: use mem::size_of
-                let num_floats = constant.value_size / 4;
-                for i in 0..num_floats as usize {
-                    values[i] = mat_data.shader_values[(constant.value_offset as usize / 4) + i];
+                let num_floats = constant.value_size / VALUE_SIZE;
+                for (i, value) in values.iter_mut().enumerate().take(num_floats as usize) {
+                    *value = mat_data.shader_values[(constant.value_offset as usize / 4) + i];
                 }
 
                 constants.push(Constant {

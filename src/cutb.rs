@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: 2025 Joshua Goins <josh@redstrate.com>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+#![allow(unused_variables)] // binrw :-(
+
 use std::io::Cursor;
 use std::io::SeekFrom;
 

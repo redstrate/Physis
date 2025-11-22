@@ -75,8 +75,8 @@ impl PatchList {
         };
 
         let parts: Vec<_> = encoded.split("\r\n").collect();
-        for i in 5..parts.len() - 2 {
-            let patch_parts: Vec<_> = parts[i].split('\t').collect();
+        for part in parts.iter().take(parts.len() - 2).skip(5) {
+            let patch_parts: Vec<_> = part.split('\t').collect();
 
             if patch_type == PatchListType::Boot {
                 patches.push(PatchEntry {

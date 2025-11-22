@@ -115,8 +115,8 @@ fn write_row<T: Write + Seek>(writer: &mut T, exh: &EXH, row: &ExcelSingleRow) {
 
     // process packed bools before continuing, since we need to know what their final byte form is
     for (definition, column) in &column_definitions {
-        match &column {
-            ColumnData::Bool(val) => match definition.data_type {
+        if let ColumnData::Bool(val) = &column {
+            match definition.data_type {
                 ColumnDataType::PackedBool0 => write_packed_bool(definition, 0, val),
                 ColumnDataType::PackedBool1 => write_packed_bool(definition, 1, val),
                 ColumnDataType::PackedBool2 => write_packed_bool(definition, 2, val),
@@ -126,9 +126,8 @@ fn write_row<T: Write + Seek>(writer: &mut T, exh: &EXH, row: &ExcelSingleRow) {
                 ColumnDataType::PackedBool6 => write_packed_bool(definition, 6, val),
                 ColumnDataType::PackedBool7 => write_packed_bool(definition, 7, val),
                 _ => {} // not relevant
-            },
-            _ => {} // not relevant
-        }
+            }
+        };
     }
 
     let mut strings_len = 0;

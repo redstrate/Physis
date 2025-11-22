@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: 2023 Joshua Goins <josh@redstrate.com>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+#![allow(clippy::ptr_arg)] // binrw trips up another false positive
+
 use crate::ByteBuffer;
 use crate::equipment::Slot;
 use crate::savedata::dat::DatHeader;

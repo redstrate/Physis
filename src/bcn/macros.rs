@@ -14,8 +14,8 @@ macro_rules! block_decoder {
             const BLOCK_WIDTH: usize = $block_width;
             const BLOCK_HEIGHT: usize = $block_height;
             const BLOCK_SIZE: usize = BLOCK_WIDTH * BLOCK_HEIGHT;
-            let num_blocks_x: usize = (width + BLOCK_WIDTH - 1) / BLOCK_WIDTH;
-            let num_blocks_y: usize = (height + BLOCK_WIDTH - 1) / BLOCK_HEIGHT;
+            let num_blocks_x: usize = width.div_ceil(BLOCK_WIDTH);
+            let num_blocks_y: usize = height.div_ceil(BLOCK_HEIGHT);
             let mut buffer: [u32; BLOCK_SIZE] =
                 [crate::bcn::color::color(0, 0, 0, 255); BLOCK_SIZE];
 
