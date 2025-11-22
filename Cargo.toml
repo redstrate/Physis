@@ -31,4 +31,4 @@ libz-rs-sys = { version = "0.5", features = ["std", "rust-allocator"], default-f
 half = { version = "2.7", features = ["std"], default-features = false }
 
 # needed for c-style bitflags used in some formats (such as tex files)
-bitflags = { version = "2.9", default-features = false }
+bitflags = { version = "2.10", default-features = false }
