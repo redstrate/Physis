@@ -160,6 +160,7 @@ enum AvfxData {
     Texture,
     #[brw(magic = b"ldoM")]
     Model,
+    Unknown(#[br(temp)] [u8; 4]),
 }
 
 #[binread]
@@ -514,6 +515,7 @@ impl Avfx {
                 AvfxData::Model => {
                     todo!()
                 }
+                AvfxData::Unknown() => {}
             }
             let new_pos = cursor.position();
             let read_bytes = (new_pos - last_pos) - 8;
@@ -522,5 +524,23 @@ impl Avfx {
         }
 
         Some(avfx)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::fs::read;
+    use std::path::PathBuf;
+
+    use super::*;
+
+    #[test]
+    fn test_invalid() {
+        let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        d.push("resources/tests");
+        d.push("random");
+
+        // Feeding it invalid data should not panic
+        Avfx::from_existing(&read(d).unwrap());
     }
 }

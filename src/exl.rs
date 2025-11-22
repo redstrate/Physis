@@ -62,7 +62,7 @@ impl EXL {
         Some(buffer)
     }
 
-    /// Checks whether or not the list contains a key.
+    /// Checks whether or not the list contains `key`.
     ///
     /// # Example
     ///

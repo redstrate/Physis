@@ -10,27 +10,29 @@ use binrw::binrw;
 #[brw(repr(u8))]
 #[repr(u8)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
-/// The language the game data is written for. Some of these languages are supported in the Global region.
+/// Language the game data is written for.
 pub enum Language {
     /// Used for data that is language-agnostic.
     None,
-    /// Japanese language.
+    /// Japanese language. Only available in the Global client.
     Japanese,
-    /// English language.
+    /// English language. Only available in the Global client.
     English,
-    /// German language.
+    /// German language. Only available in the Global client.
     German,
-    /// French language.
+    /// French language. Only available in the Global client.
     French,
-    /// Chinese (Simplified) language.
+    /// Chinese (Simplified) language. Only available in the Chinese client.
     ChineseSimplified,
-    /// Chinese (Traditional) language.
+    /// Chinese (Traditional) language. Only available in the Chinese client.
     ChineseTraditional,
-    /// Korean language.
+    /// Korean language. Only available in the Korean client.
     Korean,
 }
 
-/// Returns the shorthand language code for `language`. For example, English becomes "en".
+/// Returns the shorthand language code for `language`.
+///
+/// For example, English becomes "en".
 pub fn get_language_code(lang: &Language) -> &'static str {
     match &lang {
         Language::None => "",
@@ -60,22 +62,26 @@ pub fn read_version(p: &Path) -> Option<String> {
     fs::read_to_string(p).ok()
 }
 
+/// Platform used for game data.
 #[binrw]
 #[brw(repr = u8)]
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Platform {
-    /// Windows and macOS
+    /// Windows and macOS.
     Win32 = 0x0,
-    /// Playstation 3
+    /// Playstation 3.
     PS3 = 0x1,
-    /// Playstation 4
+    /// Playstation 4.
     PS4 = 0x2,
-    /// Playstation 5
+    /// Playstation 5.
     PS5 = 0x3,
-    /// Xbox
+    /// Xbox One.
     Xbox = 0x4,
 }
 
+/// Returns the short-hand version of `id`.
+///
+/// For example, `Platform::Win32` becomes "win32".
 pub fn get_platform_string(id: &Platform) -> &'static str {
     match &id {
         Platform::Win32 => "win32",

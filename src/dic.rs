@@ -67,6 +67,7 @@ struct DictionaryHeader {
 /// This is used to store a list of forbidden (or vulgar) words blocked in chat.
 pub struct Dictionary {
     header: DictionaryHeader,
+    /// List of words in this dictionary.
     pub words: Vec<String>,
 }
 

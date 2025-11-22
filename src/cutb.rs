@@ -37,7 +37,7 @@ pub struct CutsceneNode {
     #[bw(pad_size_to = 4)]
     #[bw(map = write_string)]
     #[br(map = read_string)]
-    name: String,
+    pub name: String,
     /// In bytes, the size of this node *including* the name.
     size: u32,
 
@@ -47,7 +47,7 @@ pub struct CutsceneNode {
     #[br(seek_before = SeekFrom::Current(data_offset as i64 - 4))]
     #[br(restore_position)]
     #[br(args(&name))]
-    node_data: NodeData,
+    pub node_data: NodeData,
 
     /// Size of the node's data *including* the node information.
     data_size: u32,
@@ -84,7 +84,7 @@ pub struct Cutscene {
     size_of_file: u32,
     num_nodes: u32,
     #[br(count = num_nodes)]
-    nodes: Vec<CutsceneNode>,
+    pub nodes: Vec<CutsceneNode>,
 }
 
 #[binrw]

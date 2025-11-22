@@ -102,12 +102,12 @@ impl ConfigFile {
         false
     }
 
-    /// Checks if the CFG contains a category named `select_category`
+    /// Checks if the CFG contains a category named `select_category`.
     pub fn has_category(&self, select_category: &str) -> bool {
         self.settings.contains_key(select_category)
     }
 
-    /// Sets the value to `new_value` of `select_key`
+    /// Sets the value of `select_key` to `new_value`.
     pub fn set_value(&mut self, select_key: &str, new_value: &str) {
         for keys in self.settings.values_mut() {
             for (key, value) in &mut keys.keys {

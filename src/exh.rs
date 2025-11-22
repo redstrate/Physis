@@ -15,14 +15,18 @@ use crate::ByteBuffer;
 use crate::ByteSpan;
 use crate::common::Language;
 
+/// What kind of rows this Excel sheet has.
 #[binrw]
 #[derive(Debug, PartialEq, Eq)]
 #[brw(repr = u8)]
 pub enum SheetRowKind {
+    /// Single rows.
     SingleRow = 1,
+    /// Rows with subrows.
     SubRows = 2,
 }
 
+/// Header for EXH files.
 #[binrw]
 #[brw(magic = b"EXHF")]
 #[brw(big)]
@@ -30,66 +34,93 @@ pub enum SheetRowKind {
 pub struct EXHHeader {
     pub(crate) version: u16,
 
-    pub row_size: u16,
+    pub(crate) row_size: u16,
     pub(crate) column_count: u16,
     pub(crate) page_count: u16,
     pub(crate) language_count: u16,
 
     /// Usually 0
-    pub unk1: u16,
+    pub(crate) unk1: u16,
 
-    pub unk2: u8,
+    pub(crate) unk2: u8,
 
     /// Whether this Excel sheet uses subrows or just single rows.
     pub row_kind: SheetRowKind,
 
-    pub unk3: u16,
+    pub(crate) unk3: u16,
 
+    /// How many rows are in this Excel sheet.
     #[brw(pad_after = 8)] // padding
     pub row_count: u32,
 }
 
+/// Data type for a column.
 #[binrw]
 #[brw(repr(u16))]
 #[repr(u16)]
 #[derive(PartialEq, Eq, Clone, Copy, Debug)]
 pub enum ColumnDataType {
+    /// String.
     String = 0x0,
+    /// Boolean.
     Bool = 0x1,
+    /// 8-bit signed integer.
     Int8 = 0x2,
+    /// 8-bit unsigned integer.
     UInt8 = 0x3,
+    /// 16-bit signed integer.
     Int16 = 0x4,
+    /// 16-bit unsigned integer.
     UInt16 = 0x5,
+    /// 32-bit signed integer.
     Int32 = 0x6,
+    /// 32-bit unsigned integer.
     UInt32 = 0x7,
+    /// 32-bit floating point.
     Float32 = 0x9,
+    /// 64-bit signed integer.
     Int64 = 0xA,
+    /// 64-bit unsigned integer.
     UInt64 = 0xB,
 
+    /// Packed boolean (0 index).
     PackedBool0 = 0x19,
+    /// Packed boolean (1 index).
     PackedBool1 = 0x1A,
+    /// Packed boolean (2 index).
     PackedBool2 = 0x1B,
+    /// Packed boolean (3 index).
     PackedBool3 = 0x1C,
+    /// Packed boolean (4 index).
     PackedBool4 = 0x1D,
+    /// Packed boolean (5 index).
     PackedBool5 = 0x1E,
+    /// Packed boolean (6 index).
     PackedBool6 = 0x1F,
+    /// Packed boolean (7 index).
     PackedBool7 = 0x20,
 }
 
+/// A column in an Excel sheet.
 #[binrw]
 #[brw(big)]
 #[derive(Debug, Copy, Clone)]
 pub struct ExcelColumnDefinition {
+    /// What data type this column is.
     pub data_type: ColumnDataType,
+    /// The offset from the row's beginning, in bytes.
     pub offset: u16,
 }
 
+/// Page in an Excel sheet.
 #[binrw]
 #[brw(big)]
 #[allow(dead_code)]
 #[derive(Debug)]
 pub struct ExcelDataPagination {
+    /// Which ID do rows start at.
     pub start_id: u32,
+    /// How many rows are in this page.
     pub row_count: u32,
 }
 
@@ -101,14 +132,18 @@ pub struct ExcelDataPagination {
 #[allow(dead_code)]
 #[derive(Debug)]
 pub struct EXH {
+    /// Header for this file.
     pub header: EXHHeader,
 
+    /// Columns and their types.
     #[br(count = header.column_count)]
     pub column_definitions: Vec<ExcelColumnDefinition>,
 
+    /// Page information.
     #[br(count = header.page_count)]
     pub pages: Vec<ExcelDataPagination>,
 
+    /// Supported languages.
     #[br(count = header.language_count)]
     #[brw(pad_after = 1)] // \0
     pub languages: Vec<Language>,

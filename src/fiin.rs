@@ -30,7 +30,7 @@ pub struct FileInfo {
 
     #[brw(pad_before = 992)]
     #[br(count = entries_size / 96)]
-    /// File info entries
+    /// File info entries.
     pub entries: Vec<FIINEntry>,
 }
 
@@ -38,10 +38,10 @@ pub struct FileInfo {
 #[derive(Debug)]
 /// An entry in a FIIN file.
 pub struct FIINEntry {
-    /// File size (in bytes)
+    /// File size (in bytes).
     pub file_size: i32,
 
-    /// The file name
+    /// The file name.
     #[brw(pad_before = 4)]
     #[br(count = 64)]
     #[bw(pad_size_to = 64)]
@@ -49,7 +49,7 @@ pub struct FIINEntry {
     #[br(map = read_string)]
     pub file_name: String,
 
-    /// SHA1 of the file
+    /// SHA1 of the file.
     #[br(count = 24)]
     #[bw(pad_size_to = 24)]
     pub sha1: Vec<u8>,
@@ -79,8 +79,6 @@ impl FileInfo {
     /// hashes.
     ///
     /// These paths are converted to just their filenames.
-    ///
-    /// The new FileInfo structure can then be serialized back into retail-compatible form.
     pub fn new(files: &[&str]) -> Option<FileInfo> {
         let mut entries = vec![];
 

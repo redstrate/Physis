@@ -25,10 +25,10 @@ impl Hwc {
         Some(Self { rgba })
     }
 
-    /// The width of all hardware cursors.
+    /// The width of all hardware cursors, in pixels.
     pub const WIDTH: usize = 64;
 
-    /// The height of all hardware cursors.
+    /// The height of all hardware cursors, in pixels.
     pub const HEIGHT: usize = 64;
 }
 

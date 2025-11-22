@@ -97,23 +97,35 @@ pub struct EXD {
     pub rows: Vec<ExcelRow>,
 }
 
+/// Contains a single column's data, which can be various underlying types.
 #[derive(Debug, Clone, PartialEq)]
 pub enum ColumnData {
+    /// String.
     String(String),
+    /// Boolean.
     Bool(bool),
+    /// 8-bit signed integer.
     Int8(i8),
+    /// 8-bit unsigned integer.
     UInt8(u8),
+    /// 16-bit signed integer.
     Int16(i16),
+    /// 16-bit unsigned integer.
     UInt16(u16),
+    /// 32-bit signed integer.
     Int32(i32),
+    /// 32-bit unsigned integer.
     UInt32(u32),
+    /// 32-bit floating point.
     Float32(f32),
+    /// 64-bit signed integer.
     Int64(i64),
+    /// 64-bit unsigned integer.
     UInt64(u64),
 }
 
 impl ColumnData {
-    // Returns a Some(String) if this column was a String, otherwise None.
+    /// Returns a `Some(String)` if this column was a `String`, otherwise `None`.
     pub fn into_string(&self) -> Option<&String> {
         if let ColumnData::String(value) = self {
             return Some(value);
@@ -121,7 +133,7 @@ impl ColumnData {
         None
     }
 
-    // Returns a Some(bool) if this column was a Bool, otherwise None.
+    /// Returns a `Some(bool)` if this column was a `Bool`, otherwise `None`.
     pub fn into_bool(&self) -> Option<&bool> {
         if let ColumnData::Bool(value) = self {
             return Some(value);
@@ -129,7 +141,7 @@ impl ColumnData {
         None
     }
 
-    // Returns a Some(i8) if this column was a Int8, otherwise None.
+    /// Returns a `Some(i8)` if this column was a `Int8`, otherwise `None`.
     pub fn into_i8(&self) -> Option<&i8> {
         if let ColumnData::Int8(value) = self {
             return Some(value);
@@ -137,7 +149,7 @@ impl ColumnData {
         None
     }
 
-    // Returns a Some(u8) if this column was a UInt8, otherwise None.
+    /// Returns a `Some(u8)` if this column was a `UInt8`, otherwise `None`.
     pub fn into_u8(&self) -> Option<&u8> {
         if let ColumnData::UInt8(value) = self {
             return Some(value);
@@ -145,7 +157,7 @@ impl ColumnData {
         None
     }
 
-    // Returns a Some(i16) if this column was a Int16, otherwise None.
+    /// Returns a `Some(i16)` if this column was a `Int16`, otherwise `None`.
     pub fn into_i16(&self) -> Option<&i16> {
         if let ColumnData::Int16(value) = self {
             return Some(value);
@@ -153,7 +165,7 @@ impl ColumnData {
         None
     }
 
-    // Returns a Some(u16) if this column was a UInt16, otherwise None.
+    /// Returns a `Some(u16)` if this column was a `UInt16`, otherwise `None`.
     pub fn into_u16(&self) -> Option<&u16> {
         if let ColumnData::UInt16(value) = self {
             return Some(value);
@@ -161,7 +173,7 @@ impl ColumnData {
         None
     }
 
-    // Returns a Some(i32) if this column was a Int32, otherwise None.
+    /// Returns a `Some(i32)` if this column was a `Int32`, otherwise `None`.
     pub fn into_i32(&self) -> Option<&i32> {
         if let ColumnData::Int32(value) = self {
             return Some(value);
@@ -169,7 +181,7 @@ impl ColumnData {
         None
     }
 
-    // Returns a Some(u32) if this column was a UInt32, otherwise None.
+    /// Returns a `Some(u32)` if this column was a `UInt32`, otherwise `None`.
     pub fn into_u32(&self) -> Option<&u32> {
         if let ColumnData::UInt32(value) = self {
             return Some(value);
@@ -177,7 +189,7 @@ impl ColumnData {
         None
     }
 
-    // Returns a Some(f32) if this column was a Float32, otherwise None.
+    /// Returns a `Some(f32)` if this column was a `Float32`, otherwise `None`.
     pub fn into_f32(&self) -> Option<&f32> {
         if let ColumnData::Float32(value) = self {
             return Some(value);
@@ -185,7 +197,7 @@ impl ColumnData {
         None
     }
 
-    // Returns a Some(i64) if this column was a Int64, otherwise None.
+    /// Returns a `Some(i64)` if this column was a `Int64`, otherwise `None`.
     pub fn into_i64(&self) -> Option<&i64> {
         if let ColumnData::Int64(value) = self {
             return Some(value);
@@ -193,7 +205,7 @@ impl ColumnData {
         None
     }
 
-    // Returns a Some(u64) if this column was a UInt64, otherwise None.
+    /// Returns a `Some(u64)` if this column was a `UInt64`, otherwise `None`.
     pub fn into_u64(&self) -> Option<&u64> {
         if let ColumnData::UInt64(value) = self {
             return Some(value);
@@ -202,24 +214,29 @@ impl ColumnData {
     }
 }
 
+/// A single row of Excel data.
 // TODO: Rename to ExcelRow
 #[derive(Debug, Clone, PartialEq)]
 pub struct ExcelSingleRow {
+    /// The columns in this row.
     pub columns: Vec<ColumnData>,
 }
 
+/// Contains either a single row, or multiple subrows.
 #[derive(Debug, Clone, PartialEq)]
 pub enum ExcelRowKind {
+    /// A single row.
     SingleRow(ExcelSingleRow),
+    /// Multiple subrows, with their IDs as the key.
     SubRows(Vec<(u16, ExcelSingleRow)>),
 }
 
 /// Represents an entry in the EXD.
 #[derive(Debug)]
 pub struct ExcelRow {
-    /// The row ID associated with this entry.
+    /// Row ID associated with this entry.
     pub row_id: u32,
-    /// The kind of entry.
+    /// What kind of entry this represents.
     pub kind: ExcelRowKind,
 }
 
@@ -229,7 +246,7 @@ impl EXD {
         EXD::read_args(&mut Cursor::new(&buffer), (exh,)).ok()
     }
 
-    /// Finds the entry with the specified ID, otherwise returns `None`.
+    /// Finds the entry with the specified `row_id`, otherwise returns `None`.
     pub fn get_row(&self, row_id: u32) -> Option<ExcelRowKind> {
         for row in &self.rows {
             if row.row_id == row_id {
@@ -240,7 +257,7 @@ impl EXD {
         None
     }
 
-    /// Finds the entry with the specified ID, otherwise returns `None`.
+    /// Finds the entry with the specified `row_id` and `subrow_id`, otherwise returns `None`.
     pub fn get_subrow(&self, row_id: u32, subrow_id: u16) -> Option<ExcelSingleRow> {
         for row in &self.rows {
             if row.row_id == row_id {
