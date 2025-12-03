@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2025 Joshua Goins <josh@redstrate.com>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-use binrw::{binread, binrw};
+use binrw::binrw;
 
 #[binrw]
 #[brw(repr = i32)]
@@ -13,8 +13,8 @@ pub enum PositionMarkerType {
     LQEvent = 0x4,
 }
 
-#[binread]
-#[derive(Debug)]
+#[binrw]
+#[derive(Debug, PartialEq)]
 #[br(little)]
 pub struct PositionMarkerInstanceObject {
     pub position_marker_type: PositionMarkerType,

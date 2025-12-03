@@ -1,9 +1,12 @@
 // SPDX-FileCopyrightText: 2025 Joshua Goins <josh@redstrate.com>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-use binrw::{binread, binrw};
+use binrw::binrw;
 
-use crate::layer::{HeapString, StringHeap};
+use crate::{
+    common_file_operations::write_bool_as,
+    layer::{HeapString, StringHeap},
+};
 
 use super::read_bool_from;
 
@@ -44,28 +47,33 @@ pub enum ColourState {
     Reset = 0x3,
 }
 
-#[binread]
-#[derive(Debug)]
+#[binrw]
+#[derive(Debug, PartialEq)]
 #[br(import(string_heap: &StringHeap))]
+#[bw(import(string_heap: &mut StringHeap))]
 #[br(little)]
 pub struct SharedGroupInstance {
-    #[br(args(string_heap))]
+    #[brw(args(string_heap))]
     pub asset_path: HeapString,
     pub initial_door_state: DoorState,
     pub overriden_members: i32,
     pub overriden_members_count: i32,
     pub initial_rotation_state: RotationState,
     #[br(map = read_bool_from::<u8>)]
+    #[bw(map = write_bool_as::<u8>)]
     pub random_timeline_auto_play: bool,
     #[br(map = read_bool_from::<u8>)]
+    #[bw(map = write_bool_as::<u8>)]
     pub random_timeline_loop_playback: bool,
     #[br(map = read_bool_from::<u8>)]
+    #[bw(map = write_bool_as::<u8>)]
     #[brw(pad_after = 1)] // padding
     pub collision_controllable_without_eobj: bool,
     pub bound_client_path_instance_id: u32,
     // TODO: read move path settings from this offset
     pub move_path_settings: i32,
     #[br(map = read_bool_from::<u8>)]
+    #[bw(map = write_bool_as::<u8>)]
     #[brw(pad_after = 3)] // padding
     pub not_create_navimesh_door: bool,
     pub initial_transform_state: TransformState,

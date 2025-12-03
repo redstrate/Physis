@@ -3,12 +3,12 @@
 
 #![allow(unused_variables)] // just binrw things with br(temp)
 
-use std::io::{Cursor, Read, Seek, SeekFrom, Write};
+use std::io::{Cursor, Seek, SeekFrom};
 
-use crate::common_file_operations::{read_bool_from, write_bool_as, write_string};
+use crate::common_file_operations::{read_bool_from, write_bool_as};
 use crate::{ByteBuffer, ByteSpan};
-use binrw::{BinRead, BinReaderExt, BinWrite, binread};
-use binrw::{Endian, Error, binrw};
+use binrw::binrw;
+use binrw::{BinRead, BinReaderExt, BinWrite};
 
 mod aetheryte;
 pub use aetheryte::AetheryteInstanceObject;
@@ -63,6 +63,9 @@ mod trigger_box;
 pub use trigger_box::TriggerBoxInstanceObject;
 pub use trigger_box::TriggerBoxShape;
 
+mod string_heap;
+pub use string_heap::{HeapString, StringHeap};
+
 // From https://github.com/NotAdam/Lumina/tree/40dab50183eb7ddc28344378baccc2d63ae71d35/src/Lumina/Data/Parsing/Layer
 // Also see https://github.com/aers/FFXIVClientStructs/blob/6b62122cae38bfbc016bf697bef75f80f37abac1/FFXIVClientStructs/FFXIV/Client/LayoutEngine/ILayoutInstance.cs
 
@@ -70,144 +73,6 @@ pub use trigger_box::TriggerBoxShape;
 pub const LGB1_ID: u32 = u32::from_le_bytes(*b"LGB1");
 /// "LGP1"
 pub const LGP1_ID: u32 = u32::from_le_bytes(*b"LGP1");
-
-/// A string that exists in a different location in the file, usually a heap with a bunch of other strings.
-#[binrw]
-#[br(import(string_heap: &StringHeap), stream = r)]
-#[bw(import(string_heap: &mut StringHeap))]
-#[derive(Clone, Debug)]
-pub struct HeapString {
-    #[br(temp)]
-    // TODO: this cast is stupid
-    #[bw(calc = string_heap.get_free_offset_string(value) as u32)]
-    pub offset: u32,
-    #[br(calc = string_heap.read_string(r, offset,))]
-    #[bw(ignore)]
-    pub value: String,
-}
-
-#[derive(Debug)]
-pub struct StringHeap {
-    pub pos: u64,
-    pub bytes: Vec<u8>,
-    pub free_pos: u64,
-}
-
-impl StringHeap {
-    pub fn from(pos: u64) -> Self {
-        Self {
-            pos,
-            bytes: Vec::new(),
-            free_pos: 0, // unused, so it doesn't matter
-        }
-    }
-
-    pub fn get_free_offset_args<T>(&mut self, obj: &T) -> i32
-    where
-        T: for<'a> BinWrite<Args<'a> = (&'a mut StringHeap,)> + std::fmt::Debug,
-    {
-        // figure out size of it
-        let mut buffer = ByteBuffer::new();
-        {
-            let mut cursor = Cursor::new(&mut buffer);
-            obj.write_le_args(&mut cursor, (self,)).unwrap();
-        }
-
-        self.bytes.append(&mut buffer);
-
-        let old_pos = self.free_pos;
-        self.free_pos += buffer.len() as u64;
-
-        old_pos as i32
-    }
-
-    pub fn get_free_offset<T>(&mut self, obj: &T) -> i32
-    where
-        T: for<'a> BinWrite<Args<'a> = ()> + std::fmt::Debug,
-    {
-        // figure out size of it
-        let mut buffer = ByteBuffer::new();
-        {
-            let mut cursor = Cursor::new(&mut buffer);
-            obj.write_le(&mut cursor).unwrap();
-        }
-
-        self.bytes.append(&mut buffer);
-
-        let old_pos = self.free_pos;
-        self.free_pos += buffer.len() as u64;
-
-        old_pos as i32
-    }
-
-    pub fn get_free_offset_string(&mut self, str: &String) -> i32 {
-        let bytes = write_string(str);
-        self.get_free_offset(&bytes)
-    }
-
-    pub fn read<R, T>(&self, reader: &mut R, offset: i32) -> T
-    where
-        R: Read + Seek,
-        T: for<'a> BinRead<Args<'a> = ()>,
-    {
-        let old_pos = reader.stream_position().unwrap();
-        reader
-            .seek(SeekFrom::Start((self.pos as i32 + offset) as u64))
-            .unwrap();
-        let obj = reader.read_le::<T>().unwrap();
-        reader.seek(SeekFrom::Start(old_pos)).unwrap();
-        obj
-    }
-
-    pub fn read_args<R, T>(&self, reader: &mut R, offset: i32) -> T
-    where
-        R: Read + Seek,
-        T: for<'a> BinRead<Args<'a> = (&'a StringHeap,)>,
-    {
-        let old_pos = reader.stream_position().unwrap();
-        reader
-            .seek(SeekFrom::Start((self.pos as i32 + offset) as u64))
-            .unwrap();
-        let obj = reader.read_le_args::<T>((self,)).unwrap();
-        reader.seek(SeekFrom::Start(old_pos)).unwrap();
-        obj
-    }
-
-    pub fn read_string<R>(&self, reader: &mut R, offset: u32) -> String
-    where
-        R: Read + Seek,
-    {
-        let offset = self.pos + offset as u64;
-
-        let mut string = String::new();
-
-        let old_pos = reader.stream_position().unwrap();
-
-        reader.seek(SeekFrom::Start(offset)).unwrap();
-        let mut next_char = reader.read_le::<u8>().unwrap() as char;
-        while next_char != '\0' {
-            string.push(next_char);
-            next_char = reader.read_le::<u8>().unwrap() as char;
-        }
-        reader.seek(SeekFrom::Start(old_pos)).unwrap();
-        string
-    }
-}
-
-impl BinWrite for StringHeap {
-    type Args<'a> = ();
-
-    fn write_options<W: Write + Seek>(
-        &self,
-        writer: &mut W,
-        endian: Endian,
-        (): Self::Args<'_>,
-    ) -> Result<(), Error> {
-        self.bytes.write_options(writer, endian, ())?;
-
-        Ok(())
-    }
-}
 
 // TODO: convert these all to magic
 #[binrw]
@@ -303,12 +168,13 @@ pub enum LayerEntryType {
     Unk3 = 89, // seen in bg/ffxiv/sea_s1/fld/s1f3/level/planevent.lgb
 }
 
-#[binread]
-#[derive(Debug)]
+#[binrw]
+#[derive(Debug, PartialEq)]
 #[br(import(magic: &LayerEntryType, string_heap: &StringHeap))]
+#[bw(import(string_heap: &mut StringHeap))]
 pub enum LayerEntryData {
     #[br(pre_assert(*magic == LayerEntryType::BG))]
-    BG(#[br(args(string_heap))] BGInstanceObject),
+    BG(#[brw(args(string_heap))] BGInstanceObject),
     #[br(pre_assert(*magic == LayerEntryType::LayLight))]
     LayLight(LightInstanceObject),
     #[br(pre_assert(*magic == LayerEntryType::Vfx))]
@@ -316,7 +182,7 @@ pub enum LayerEntryData {
     #[br(pre_assert(*magic == LayerEntryType::PositionMarker))]
     PositionMarker(PositionMarkerInstanceObject),
     #[br(pre_assert(*magic == LayerEntryType::SharedGroup))]
-    SharedGroup(#[br(args(string_heap))] SharedGroupInstance),
+    SharedGroup(#[brw(args(string_heap))] SharedGroupInstance),
     #[br(pre_assert(*magic == LayerEntryType::Sound))]
     Sound(SoundInstanceObject),
     #[br(pre_assert(*magic == LayerEntryType::EventNPC))]
@@ -340,7 +206,7 @@ pub enum LayerEntryData {
     #[br(pre_assert(*magic == LayerEntryType::EventObject))]
     EventObject(EventInstanceObject),
     #[br(pre_assert(*magic == LayerEntryType::EnvLocation))]
-    EnvLocation(EnvLocationObject),
+    EnvLocation(#[brw(args(string_heap))] EnvLocationObject),
     #[br(pre_assert(*magic == LayerEntryType::EventRange))]
     EventRange(EventRangeInstanceObject),
     #[br(pre_assert(*magic == LayerEntryType::QuestMarker))]
@@ -375,8 +241,8 @@ pub enum LayerEntryData {
     DoorRange(),
 }
 
-#[binread]
-#[derive(Debug)]
+#[binrw]
+#[derive(Debug, PartialEq)]
 #[br(little)]
 pub struct VFXInstanceObject {
     pub asset_path_offset: u32,
@@ -384,8 +250,10 @@ pub struct VFXInstanceObject {
     pub soft_particle_fade_range: f32,
     pub color: Color,
     #[br(map = read_bool_from::<u8>)]
+    #[bw(map = write_bool_as::<u8>)]
     pub auto_play: bool,
     #[br(map = read_bool_from::<u8>)]
+    #[bw(map = write_bool_as::<u8>)]
     #[brw(pad_after = 2)] // padding
     pub no_far_clip: bool,
     pub fade_near_start: f32,
@@ -395,16 +263,16 @@ pub struct VFXInstanceObject {
     pub z_correct: f32,
 }
 
-#[binread]
-#[derive(Debug)]
+#[binrw]
+#[derive(Debug, PartialEq)]
 #[br(little)]
 pub struct GatheringInstanceObject {
     #[brw(pad_after = 4)] // padding
     pub gathering_point_id: u32,
 }
 
-#[binread]
-#[derive(Debug)]
+#[binrw]
+#[derive(Debug, PartialEq)]
 #[br(little)]
 pub struct TreasureInstanceObject {
     #[brw(pad_after = 11)] // padding
@@ -412,13 +280,13 @@ pub struct TreasureInstanceObject {
 }
 
 // Unimplemented because I haven't needed it yet:
-#[binread]
-#[derive(Debug)]
+#[binrw]
+#[derive(Debug, PartialEq)]
 #[br(little)]
 pub struct MapRangeInstanceObject {}
 
-#[binread]
-#[derive(Debug)]
+#[binrw]
+#[derive(Debug, PartialEq)]
 #[br(little)]
 pub struct EventInstanceObject {
     pub parent_data: GameInstanceObject,
@@ -428,36 +296,44 @@ pub struct EventInstanceObject {
     pub linked_instance_id: u32,
 }
 
-#[binread]
-#[derive(Debug)]
+#[binrw]
+#[derive(Debug, PartialEq)]
+#[br(import(string_heap: &StringHeap))]
+#[bw(import(string_heap: &mut StringHeap))]
 #[br(little)]
-pub struct EnvLocationObject {}
+pub struct EnvLocationObject {
+    #[brw(args(string_heap))]
+    pub ambient_light_asset_path: HeapString,
+    #[brw(args(string_heap))]
+    pub env_map_asset_path: HeapString,
+    pub padding: [u8; 24], // TODO: UNKNOWN, MAYBE WRONG
+}
 
-#[binread]
-#[derive(Debug)]
+#[binrw]
+#[derive(Debug, PartialEq)]
 #[br(little)]
 pub struct EventRangeInstanceObject {
     pub parent_data: TriggerBoxInstanceObject,
     _unk1: [u8; 12],
 }
 
-#[binread]
-#[derive(Debug)]
+#[binrw]
+#[derive(Debug, PartialEq)]
 #[br(little)]
 pub struct QuestMarkerInstanceObject {}
 
-#[binread]
-#[derive(Debug)]
+#[binrw]
+#[derive(Debug, PartialEq)]
 #[br(little)]
 pub struct CollisionBoxInstanceObject {}
 
-#[binread]
-#[derive(Debug)]
+#[binrw]
+#[derive(Debug, PartialEq)]
 #[br(little)]
 pub struct LineVFXInstanceObject {}
 
-#[binread]
-#[derive(Debug)]
+#[binrw]
+#[derive(Debug, PartialEq)]
 #[br(little)]
 pub struct PathControlPoint {
     pub position: [f32; 3],
@@ -466,21 +342,21 @@ pub struct PathControlPoint {
     pub _padding: u8,
 }
 
-#[binread]
-#[derive(Debug)]
+#[binrw]
+#[derive(Debug, PartialEq)]
 #[br(little)]
 pub struct PathInstanceObject {
     pub control_points_unk: i32,
     #[br(temp)]
-    #[bw(calc = control_points.size() as i32)]
+    #[bw(calc = control_points.len() as i32)]
     control_point_count: i32,
     _padding: [u32; 2],
     #[br(count = control_point_count)]
     pub control_points: Vec<PathControlPoint>,
 }
 
-#[binread]
-#[derive(Debug)]
+#[binrw]
+#[derive(Debug, PartialEq)]
 #[br(little)]
 pub struct ClientPathInstanceObject {
     pub parent_data: PathInstanceObject,
@@ -488,33 +364,33 @@ pub struct ClientPathInstanceObject {
     _padding: u8,
 }
 
-#[binread]
-#[derive(Debug)]
+#[binrw]
+#[derive(Debug, PartialEq)]
 #[br(little)]
 pub struct ServerPathInstanceObject {}
 
-#[binread]
-#[derive(Debug)]
+#[binrw]
+#[derive(Debug, PartialEq)]
 #[br(little)]
 pub struct GimmickRangeInstanceObject {}
 
-#[binread]
-#[derive(Debug)]
+#[binrw]
+#[derive(Debug, PartialEq)]
 #[br(little)]
 pub struct TargetMarkerInstanceObject {}
 
-#[binread]
-#[derive(Debug)]
+#[binrw]
+#[derive(Debug, PartialEq)]
 #[br(little)]
 pub struct ChairMarkerInstanceObject {}
 
-#[binread]
-#[derive(Debug)]
+#[binrw]
+#[derive(Debug, PartialEq)]
 #[br(little)]
 pub struct PrefetchRangeInstanceObject {}
 
-#[binread]
-#[derive(Debug)]
+#[binrw]
+#[derive(Debug, PartialEq)]
 #[br(little)]
 pub struct FateRangeInstanceObject {}
 
@@ -529,7 +405,7 @@ enum LayerSetReferencedType {
 }
 
 #[binrw]
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 #[brw(little)]
 #[br(import(data_heap: &StringHeap, string_heap: &StringHeap), stream = r)]
 #[bw(import(data_heap: &mut StringHeap, string_heap: &mut StringHeap))]
@@ -576,7 +452,7 @@ pub struct LayerHeader {
 }
 
 #[binrw]
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 #[brw(little)]
 #[allow(dead_code)] // most of the fields are unused at the moment
 pub struct LayerSetReferenced {
@@ -584,7 +460,7 @@ pub struct LayerSetReferenced {
 }
 
 #[binrw]
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 #[brw(little)]
 #[br(import(data_heap: &StringHeap), stream = r)]
 #[bw(import(data_heap: &mut StringHeap))]
@@ -601,7 +477,7 @@ pub struct LayerSetReferencedList {
     pub layer_sets: Vec<LayerSetReferenced>,
 }
 
-#[binread]
+#[binrw]
 #[derive(Debug)]
 #[br(little)]
 #[allow(dead_code)] // most of the fields are unused at the moment
@@ -611,7 +487,7 @@ struct OBSetReferenced {
     ob_set_asset_path_offset: u32,
 }
 
-#[binread]
+#[binrw]
 #[derive(Debug)]
 #[br(little)]
 #[allow(dead_code)] // most of the fields are unused at the moment
@@ -619,8 +495,10 @@ struct OBSetEnableReferenced {
     asset_type: LayerEntryType,
     instance_id: u32,
     #[br(map = read_bool_from::<u8>)]
+    #[bw(map = write_bool_as::<u8>)]
     ob_set_enable: bool,
     #[br(map = read_bool_from::<u8>)]
+    #[bw(map = write_bool_as::<u8>)]
     ob_set_emissive_enable: bool,
     padding: [u8; 2],
 }
@@ -655,22 +533,24 @@ struct LayerChunkHeader {
 
 const LAYER_CHUNK_HEADER_SIZE: usize = 24;
 
-#[binread]
-#[derive(Debug)]
-#[br(little)]
+#[binrw]
+#[derive(Debug, PartialEq)]
+#[brw(little)]
 #[br(import(string_heap: &StringHeap))]
+#[bw(import(string_heap: &mut StringHeap))]
 #[allow(dead_code)] // most of the fields are unused at the moment
 pub struct InstanceObject {
     asset_type: LayerEntryType,
     pub instance_id: u32,
-    #[br(args(string_heap))]
+    #[brw(args(string_heap))]
     pub name: HeapString,
     pub transform: Transformation,
     #[br(args(&asset_type, string_heap))]
+    #[bw(args(string_heap))]
     pub data: LayerEntryData,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Layer {
     pub header: LayerHeader,
     pub objects: Vec<InstanceObject>,
@@ -759,6 +639,29 @@ impl LayerGroup {
                     let string_heap = StringHeap::from(start);
 
                     objects.push(InstanceObject::read_le_args(&mut cursor, (&string_heap,)).ok()?);
+
+                    let after_immediate_read = cursor.stream_position().unwrap();
+
+                    let next_offset = if i + 1 < header.instance_object_count {
+                        old_pos
+                            + header.instance_object_offset as u64
+                            + instance_offsets[i as usize + 1] as u64
+                    } else {
+                        old_pos + header.ob_set_referenced_list as u64
+                    };
+
+                    let expected_size = next_offset as u64 - start;
+                    let actual_size = after_immediate_read - start;
+
+                    // TODO: remove this once all the objects are fixed!
+                    if cfg!(debug_assertions) && expected_size != actual_size {
+                        println!(
+                            "{:#?} doesn't match the expected size! it's supposed to be {} bytes, but we read {} instead",
+                            objects.last(),
+                            expected_size,
+                            actual_size
+                        );
+                    }
                 }
             }
 
@@ -858,10 +761,16 @@ impl LayerGroup {
                     .header
                     .write_le_args(&mut cursor, (&mut chunk_data_heap, &mut chunk_string_heap))
                     .ok()?;
+
+                for obj in &layer.objects {
+                    obj.write_le_args(&mut cursor, (&mut chunk_string_heap,))
+                        .ok()?;
+                }
             }
 
             // make sure the heaps are at the end of the layer data
-            data_base += cursor.stream_position().unwrap() - layer_data_offset;
+            data_base += cursor.stream_position().unwrap() - layer_data_offset
+                + (offsets.len() * std::mem::size_of::<u32>()) as u64;
 
             // second pass: write layers again, we want to get a correct *chunk_string_heap* now that we know of the size of chunk_data_heap
             chunk_string_heap = StringHeap {
@@ -879,6 +788,7 @@ impl LayerGroup {
             cursor
                 .seek(SeekFrom::Start(layer_chunk_header_pos))
                 .unwrap();
+
             // TODO: support multiple layer chunks
             let layer_chunk = LayerChunkHeader {
                 chunk_id: self.chunks[0].chunk_id,
@@ -897,10 +807,19 @@ impl LayerGroup {
             // now write the layer data for the final time
             cursor.seek(SeekFrom::Start(layer_data_offset)).unwrap();
             for layer in &self.chunks[0].layers {
+                chunk_data_heap.free_pos = layer_data_offset + 12; // 52
+                chunk_string_heap.free_pos =
+                    chunk_data_heap.free_pos + chunk_string_heap.bytes.len() as u64 + 16;
+
                 layer
                     .header
                     .write_le_args(&mut cursor, (&mut chunk_data_heap, &mut chunk_string_heap))
                     .ok()?;
+
+                for obj in &layer.objects {
+                    obj.write_le_args(&mut cursor, (&mut chunk_string_heap,))
+                        .ok()?;
+                }
             }
 
             // write the heaps
@@ -911,7 +830,8 @@ impl LayerGroup {
             assert_eq!(offsets.len(), self.chunks[0].layers.len());
             cursor.seek(SeekFrom::Start(offset_pos)).ok()?;
             for offset in offsets {
-                offset.write_le(&mut cursor).ok()?;
+                // TODO: im probably subtracting from the wrong offset
+                (offset - offset_pos as i32).write_le(&mut cursor).ok()?;
             }
         }
 
@@ -983,6 +903,104 @@ mod tests {
                 layer_group_id: 261,
                 name: "PlanLive".to_string(),
                 layers: Vec::new(),
+            }],
+        };
+        assert_eq!(lgb.write_to_buffer().unwrap(), good_lgb_bytes);
+    }
+
+    #[test]
+    fn read_simple_planevent() {
+        let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        d.push("resources/tests");
+        d.push("simple_planevent.lgb");
+
+        let lgb = LayerGroup::from_existing(&read(d).unwrap()).unwrap();
+        assert_eq!(lgb.file_id, LGB1_ID);
+        assert_eq!(lgb.chunks.len(), 1);
+
+        let chunk = &lgb.chunks[0];
+        assert_eq!(chunk.chunk_id, LGP1_ID);
+        assert_eq!(chunk.layer_group_id, 260);
+        assert_eq!(chunk.name, "PlanEvent".to_string());
+        assert_eq!(
+            chunk.layers,
+            vec![Layer {
+                header: LayerHeader {
+                    layer_id: 133894,
+                    name: HeapString {
+                        value: "QST_StmBdr102".to_string()
+                    },
+                    instance_object_offset: 52,
+                    instance_object_count: 0,
+                    tool_mode_visible: true,
+                    tool_mode_read_only: false,
+                    is_bush_layer: false,
+                    ps3_visible: true,
+                    layer_set_referenced_list: LayerSetReferencedList {
+                        referenced_type: LayerSetReferencedType::Include,
+                        layer_sets: vec![LayerSetReferenced {
+                            layer_set_id: 132261
+                        }]
+                    },
+                    festival_id: 0,
+                    festival_phase_id: 0,
+                    is_temporary: 0,
+                    is_housing: 0,
+                    version_mask: 47,
+                    ob_set_referenced_list: 68,
+                    ob_set_referenced_list_count: 0,
+                    ob_set_enable_referenced_list: 68,
+                    ob_set_enable_referenced_list_count: 0
+                },
+                objects: vec![]
+            }]
+        );
+    }
+
+    #[test]
+    fn write_simple_planevent() {
+        let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        d.push("resources/tests");
+        d.push("simple_planevent.lgb");
+
+        let good_lgb_bytes = read(d).unwrap();
+
+        let lgb = LayerGroup {
+            file_id: LGB1_ID,
+            chunks: vec![LayerChunk {
+                chunk_id: LGP1_ID,
+                layer_group_id: 260,
+                name: "PlanEvent".to_string(),
+                layers: vec![Layer {
+                    header: LayerHeader {
+                        layer_id: 133894,
+                        name: HeapString {
+                            value: "QST_StmBdr102".to_string(),
+                        },
+                        instance_object_offset: 52,
+                        instance_object_count: 0,
+                        tool_mode_visible: true,
+                        tool_mode_read_only: false,
+                        is_bush_layer: false,
+                        ps3_visible: true,
+                        layer_set_referenced_list: LayerSetReferencedList {
+                            referenced_type: LayerSetReferencedType::Include,
+                            layer_sets: vec![LayerSetReferenced {
+                                layer_set_id: 132261,
+                            }],
+                        },
+                        festival_id: 0,
+                        festival_phase_id: 0,
+                        is_temporary: 0,
+                        is_housing: 0,
+                        version_mask: 47,
+                        ob_set_referenced_list: 68,
+                        ob_set_referenced_list_count: 0,
+                        ob_set_enable_referenced_list: 68,
+                        ob_set_enable_referenced_list_count: 0,
+                    },
+                    objects: vec![],
+                }],
             }],
         };
         assert_eq!(lgb.write_to_buffer().unwrap(), good_lgb_bytes);

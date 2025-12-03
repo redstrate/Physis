@@ -1,10 +1,10 @@
 // SPDX-FileCopyrightText: 2025 Joshua Goins <josh@redstrate.com>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-use binrw::binread;
+use binrw::binrw;
 
-#[binread]
-#[derive(Debug)]
+#[binrw]
+#[derive(Debug, PartialEq)]
 #[br(little)]
 pub struct SoundInstanceObject {
     pub sound_effect_param: i32,

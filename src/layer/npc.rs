@@ -1,12 +1,12 @@
 // SPDX-FileCopyrightText: 2025 Joshua Goins <josh@redstrate.com>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-use binrw::binread;
+use binrw::binrw;
 
 use super::common::RelativePositions;
 
-#[binread]
-#[derive(Debug)]
+#[binrw]
+#[derive(Debug, PartialEq)]
 #[br(little)]
 pub struct GameInstanceObject {
     /// For IDs >= 1000000, index into the ENpcBase
@@ -14,8 +14,8 @@ pub struct GameInstanceObject {
     pub base_id: u32,
 }
 
-#[binread]
-#[derive(Debug)]
+#[binrw]
+#[derive(Debug, PartialEq)]
 #[br(little)]
 pub struct NPCInstanceObject {
     pub parent_data: GameInstanceObject,
@@ -30,8 +30,8 @@ pub struct NPCInstanceObject {
     pub event_group: u16,
 }
 
-#[binread]
-#[derive(Debug)]
+#[binrw]
+#[derive(Debug, PartialEq)]
 #[br(little)]
 pub struct ENPCInstanceObject {
     pub parent_data: NPCInstanceObject,
@@ -39,8 +39,8 @@ pub struct ENPCInstanceObject {
     pub behavior: u32,
 }
 
-#[binread]
-#[derive(Debug)]
+#[binrw]
+#[derive(Debug, PartialEq)]
 #[br(little)]
 pub struct BNPCInstanceObject {
     pub parent_data: NPCInstanceObject,

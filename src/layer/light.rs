@@ -1,7 +1,9 @@
 // SPDX-FileCopyrightText: 2025 Joshua Goins <josh@redstrate.com>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-use binrw::{binread, binrw};
+use binrw::binrw;
+
+use crate::common_file_operations::write_bool_as;
 
 use super::{ColorHDRI, read_bool_from};
 
@@ -26,8 +28,8 @@ pub enum PointLightType {
     Hemisphere = 0x1,
 }
 
-#[binread]
-#[derive(Debug)]
+#[binrw]
+#[derive(Debug, PartialEq)]
 #[br(little)]
 pub struct LightInstanceObject {
     pub light_type: LightType,
@@ -39,13 +41,17 @@ pub struct LightInstanceObject {
     pub texture_path_offset: u32,
     pub diffuse_color_hdri: ColorHDRI,
     #[br(map = read_bool_from::<u8>)]
+    #[bw(map = write_bool_as::<u8>)]
     #[brw(pad_after = 3)] // padding
     pub follows_directional_light: bool,
     #[br(map = read_bool_from::<u8>)]
+    #[bw(map = write_bool_as::<u8>)]
     pub specular_enabled: bool,
     #[br(map = read_bool_from::<u8>)]
+    #[bw(map = write_bool_as::<u8>)]
     pub bg_shadow_enabled: bool,
     #[br(map = read_bool_from::<u8>)]
+    #[bw(map = write_bool_as::<u8>)]
     #[brw(pad_after = 1)] // padding
     pub character_shadow_enabled: bool,
     pub shadow_clip_range: f32,

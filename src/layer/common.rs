@@ -4,7 +4,7 @@
 use binrw::binrw;
 
 #[binrw]
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 #[brw(little)]
 pub struct RelativePositions {
     pos: i32,
@@ -12,7 +12,7 @@ pub struct RelativePositions {
 }
 
 #[binrw]
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 #[brw(little)]
 #[repr(C)]
 #[allow(dead_code)] // most of the fields are unused at the moment
@@ -23,7 +23,7 @@ pub struct Transformation {
 }
 
 #[binrw]
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 #[brw(little)]
 pub struct Color {
     pub red: u8,
@@ -33,7 +33,7 @@ pub struct Color {
 }
 
 #[binrw]
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 #[brw(little)]
 pub struct ColorHDRI {
     pub red: u8,

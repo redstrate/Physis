@@ -1,11 +1,11 @@
 // SPDX-FileCopyrightText: 2025 Joshua Goins <josh@redstrate.com>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-use binrw::binread;
+use binrw::binrw;
 
 use super::common::RelativePositions;
 
-#[binread]
+#[binrw]
 #[brw(repr = i32)]
 #[repr(C)]
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -15,8 +15,8 @@ pub enum PopType {
     Content = 0x3,
 }
 
-#[binread]
-#[derive(Debug)]
+#[binrw]
+#[derive(Debug, PartialEq)]
 #[br(little)]
 pub struct PopRangeInstanceObject {
     pub pop_type: PopType,

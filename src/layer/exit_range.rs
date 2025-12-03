@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2025 Joshua Goins <josh@redstrate.com>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-use binrw::{binread, binrw};
+use binrw::binrw;
 
 use super::TriggerBoxInstanceObject;
 
@@ -13,8 +13,8 @@ pub enum ExitType {
     Unk = 0x2, // seen in bg/ex5/02_ykt_y6/fld/y6f1/level/planmap.lgb
 }
 
-#[binread]
-#[derive(Debug)]
+#[binrw]
+#[derive(Debug, PartialEq)]
 #[br(little)]
 pub struct ExitRangeInstanceObject {
     pub parent_data: TriggerBoxInstanceObject,

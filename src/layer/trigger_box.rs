@@ -1,7 +1,9 @@
 // SPDX-FileCopyrightText: 2025 Joshua Goins <josh@redstrate.com>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-use binrw::{binread, binrw};
+use binrw::binrw;
+
+use crate::common_file_operations::write_bool_as;
 
 use super::read_bool_from;
 
@@ -17,13 +19,14 @@ pub enum TriggerBoxShape {
     BoardBothSides = 0x6,
 }
 
-#[binread]
-#[derive(Debug)]
+#[binrw]
+#[derive(Debug, PartialEq)]
 #[br(little)]
 pub struct TriggerBoxInstanceObject {
     pub trigger_box_shape: TriggerBoxShape,
     pub priority: i16,
     #[br(map = read_bool_from::<u8>)]
+    #[bw(map = write_bool_as::<u8>)]
     #[brw(pad_after = 5)] // padding
     pub enabled: bool,
 }
