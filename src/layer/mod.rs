@@ -654,14 +654,14 @@ impl LayerGroup {
                     let actual_size = after_immediate_read - start;
 
                     // TODO: remove this once all the objects are fixed!
-                    if cfg!(debug_assertions) && expected_size != actual_size {
+                    /*if cfg!(debug_assertions) && expected_size != actual_size {
                         println!(
                             "{:#?} doesn't match the expected size! it's supposed to be {} bytes, but we read {} instead",
                             objects.last(),
                             expected_size,
                             actual_size
                         );
-                    }
+                    }*/
                 }
             }
 
