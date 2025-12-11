@@ -298,9 +298,7 @@ pub struct MapRangeInstanceObject {
     #[bw(map = write_bool_as::<u8>)]
     pub rest_bonus_effective: bool,
     /// Map discovery ID.
-    #[br(map = read_bool_from::<u8>)]
-    #[bw(map = write_bool_as::<u8>)]
-    pub discovery_id: bool,
+    pub discovery_id: u8,
     #[br(map = read_bool_from::<u8>)]
     #[bw(map = write_bool_as::<u8>)]
     map_enabled: bool,
