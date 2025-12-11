@@ -279,11 +279,38 @@ pub struct TreasureInstanceObject {
     pub nonpop_init_zone: u8,
 }
 
-// Unimplemented because I haven't needed it yet:
 #[binrw]
 #[derive(Debug, PartialEq)]
 #[br(little)]
-pub struct MapRangeInstanceObject {}
+pub struct MapRangeInstanceObject {
+    parent_data: TriggerBoxInstanceObject,
+    map: u32,
+    /// Name for the general location. Index into the PlaceName Sxcel sheet.
+    pub place_name_block: u32,
+    /// Name for the specific spot. Index into the PlaceName Sxcel sheet.
+    pub place_name_spot: u32,
+    weather: u32,
+    bgm: u32,
+    padding: [u8; 10],
+    housing_block_id: u8,
+    /// Most likely affects whether the EXP bonus affects this area.
+    pub rest_bonus_effective: u8,
+    /// Map discovery ID.
+    pub discovery_id: u8,
+    map_enabled: u8,
+    /// Probably to enable indication in the little place name UI element.
+    pub place_name_enabled: u8,
+    /// Whether this place is discoverable (see `discovery_id`.)
+    pub discovery_enabled: u8,
+    bgm_enabled: u8,
+    weather_enabled: u8,
+    /// Whether this area is marked as a sanctuary.
+    pub rest_bonus_enabled: u8,
+    bgm_play_zone_in_only: u8,
+    lift_enabled: u8,
+    housing_enabled: u8,
+    padding2: [u8; 2],
+}
 
 #[binrw]
 #[derive(Debug, PartialEq)]
