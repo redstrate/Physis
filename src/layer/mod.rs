@@ -294,21 +294,43 @@ pub struct MapRangeInstanceObject {
     padding: [u8; 10],
     housing_block_id: u8,
     /// Most likely affects whether the EXP bonus affects this area.
-    pub rest_bonus_effective: u8,
+    #[br(map = read_bool_from::<u8>)]
+    #[bw(map = write_bool_as::<u8>)]
+    pub rest_bonus_effective: bool,
     /// Map discovery ID.
-    pub discovery_id: u8,
-    map_enabled: u8,
+    #[br(map = read_bool_from::<u8>)]
+    #[bw(map = write_bool_as::<u8>)]
+    pub discovery_id: bool,
+    #[br(map = read_bool_from::<u8>)]
+    #[bw(map = write_bool_as::<u8>)]
+    map_enabled: bool,
     /// Probably to enable indication in the little place name UI element.
-    pub place_name_enabled: u8,
+    #[br(map = read_bool_from::<u8>)]
+    #[bw(map = write_bool_as::<u8>)]
+    pub place_name_enabled: bool,
     /// Whether this place is discoverable (see `discovery_id`.)
-    pub discovery_enabled: u8,
-    bgm_enabled: u8,
-    weather_enabled: u8,
+    #[br(map = read_bool_from::<u8>)]
+    #[bw(map = write_bool_as::<u8>)]
+    pub discovery_enabled: bool,
+    #[br(map = read_bool_from::<u8>)]
+    #[bw(map = write_bool_as::<u8>)]
+    bgm_enabled: bool,
+    #[br(map = read_bool_from::<u8>)]
+    #[bw(map = write_bool_as::<u8>)]
+    weather_enabled: bool,
     /// Whether this area is marked as a sanctuary.
-    pub rest_bonus_enabled: u8,
-    bgm_play_zone_in_only: u8,
-    lift_enabled: u8,
-    housing_enabled: u8,
+    #[br(map = read_bool_from::<u8>)]
+    #[bw(map = write_bool_as::<u8>)]
+    pub rest_bonus_enabled: bool,
+    #[br(map = read_bool_from::<u8>)]
+    #[bw(map = write_bool_as::<u8>)]
+    bgm_play_zone_in_only: bool,
+    #[br(map = read_bool_from::<u8>)]
+    #[bw(map = write_bool_as::<u8>)]
+    lift_enabled: bool,
+    #[br(map = read_bool_from::<u8>)]
+    #[bw(map = write_bool_as::<u8>)]
+    housing_enabled: bool,
     padding2: [u8; 2],
 }
 
