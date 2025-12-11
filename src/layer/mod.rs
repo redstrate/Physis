@@ -212,7 +212,7 @@ pub enum LayerEntryData {
     #[br(pre_assert(*magic == LayerEntryType::QuestMarker))]
     QuestMarker(QuestMarkerInstanceObject),
     #[br(pre_assert(*magic == LayerEntryType::CollisionBox))]
-    CollisionBox(CollisionBoxInstanceObject),
+    CollisionBox(#[brw(args(string_heap))] CollisionBoxInstanceObject),
     #[br(pre_assert(*magic == LayerEntryType::LineVFX))]
     LineVFX(LineVFXInstanceObject),
     #[br(pre_assert(*magic == LayerEntryType::ClientPath))]
@@ -283,7 +283,7 @@ pub struct TreasureInstanceObject {
 #[derive(Debug, PartialEq)]
 #[br(little)]
 pub struct MapRangeInstanceObject {
-    parent_data: TriggerBoxInstanceObject,
+    pub parent_data: TriggerBoxInstanceObject,
     map: u32,
     /// Name for the general location. Index into the PlaceName Sxcel sheet.
     pub place_name_block: u32,
@@ -351,8 +351,20 @@ pub struct QuestMarkerInstanceObject {}
 
 #[binrw]
 #[derive(Debug, PartialEq)]
+#[br(import(string_heap: &StringHeap))]
+#[bw(import(string_heap: &mut StringHeap))]
 #[br(little)]
-pub struct CollisionBoxInstanceObject {}
+pub struct CollisionBoxInstanceObject {
+    pub parent_data: TriggerBoxInstanceObject,
+    attribute_mask: u32,
+    attribute: u32,
+    push_player_out: u8,
+    padding: [u8; 3],
+    // TODO: this seems... wrong
+    #[brw(args(string_heap))]
+    collision_asset_path: HeapString,
+    padding2: u32,
+}
 
 #[binrw]
 #[derive(Debug, PartialEq)]
@@ -407,14 +419,39 @@ pub struct GimmickRangeInstanceObject {}
 pub struct TargetMarkerInstanceObject {}
 
 #[binrw]
+#[brw(repr = u32)]
+#[repr(u32)]
 #[derive(Debug, PartialEq)]
-#[br(little)]
-pub struct ChairMarkerInstanceObject {}
+pub enum ChairType {
+    Chair = 0x0,
+    Bed = 0x1,
+}
 
 #[binrw]
 #[derive(Debug, PartialEq)]
 #[br(little)]
-pub struct PrefetchRangeInstanceObject {}
+pub struct ChairMarkerInstanceObject {
+    #[br(map = read_bool_from::<u8>)]
+    #[bw(map = write_bool_as::<u8>)]
+    left_enable: bool,
+    #[br(map = read_bool_from::<u8>)]
+    #[bw(map = write_bool_as::<u8>)]
+    right_enable: bool,
+    #[br(map = read_bool_from::<u8>)]
+    #[bw(map = write_bool_as::<u8>)]
+    back_enable: bool,
+    padding: u8,
+    chair_type: ChairType,
+}
+
+#[binrw]
+#[derive(Debug, PartialEq)]
+#[br(little)]
+pub struct PrefetchRangeInstanceObject {
+    pub parent_data: TriggerBoxInstanceObject,
+    pub bound_instance_id: u32,
+    padding: u32,
+}
 
 #[binrw]
 #[derive(Debug, PartialEq)]

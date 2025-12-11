@@ -18,8 +18,10 @@ pub enum ExitType {
 #[br(little)]
 pub struct ExitRangeInstanceObject {
     pub parent_data: TriggerBoxInstanceObject,
+    /// What kind of exit range this is.
     pub exit_type: ExitType,
     pub zone_id: u16,
+    /// Row ID to TerritoryType that this exit range points to.
     pub territory_type: u16,
     pub index: i32,
     pub destination_instance_id: u32,
