@@ -10,7 +10,7 @@ use super::read_bool_from;
 #[binrw]
 #[repr(C)]
 #[brw(repr = i32)]
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Copy)]
 pub enum TriggerBoxShape {
     Box = 0x1,
     Sphere = 0x2,
