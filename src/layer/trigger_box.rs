@@ -8,6 +8,7 @@ use crate::common_file_operations::write_bool_as;
 use super::read_bool_from;
 
 #[binrw]
+#[repr(C)]
 #[brw(repr = i32)]
 #[derive(Debug, PartialEq)]
 pub enum TriggerBoxShape {
