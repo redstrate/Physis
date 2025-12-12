@@ -12,12 +12,13 @@ use super::read_bool_from;
 #[brw(repr = i32)]
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub enum TriggerBoxShape {
+    None = 0x0,
     Box = 0x1,
     Sphere = 0x2,
     Cylinder = 0x3,
-    Board = 0x4,
+    Plane = 0x4,
     Mesh = 0x5,
-    BoardBothSides = 0x6,
+    PlaneTwoSided = 0x6,
 }
 
 #[binrw]
