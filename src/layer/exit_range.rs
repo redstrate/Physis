@@ -7,6 +7,7 @@ use super::TriggerBoxInstanceObject;
 
 #[binrw]
 #[brw(repr = i32)]
+#[repr(C)]
 #[derive(Debug, PartialEq)]
 pub enum ExitType {
     ZoneLine = 0x1,
