@@ -6,7 +6,8 @@ use std::path::PathBuf;
 
 /// Represents the boot data for FFXIV, which is located under the "boot" directory.
 pub struct BootData {
-    path: String,
+    /// Directory of the boot data.
+    pub path: String,
 
     /// The current version of the boot data, e.g. "2012.01.01.0000.0000".
     pub version: String,
