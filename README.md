@@ -22,7 +22,7 @@ If you want to use Physis in your Rust project, you can simply add it as a depen
 
 ```toml
 [dependencies]
-physis = "0.4"
+physis = "0.5"
 ```
 
 Documentation is available online at [docs.xiv.zone](https://docs.xiv.zone/docs/physis). It's automatically updated as new
