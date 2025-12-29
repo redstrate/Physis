@@ -18,6 +18,7 @@ use super::Resource;
 
 /// Possible actions to repair game files
 #[derive(Debug, PartialEq)]
+#[repr(C)]
 pub enum RepairAction {
     /// Indicates a version file is missing for a repository.
     VersionFileMissing,
