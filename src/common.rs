@@ -57,10 +57,10 @@ pub enum Region {
     KoreaChina = 1,
 }
 
-/// Reads a version file.
+/// Reads a version file. It intentionally reads whitespace as the game reads those characters too.
 // TODO: use version type
 pub fn read_version(p: &Path) -> Option<String> {
-    fs::read_to_string(p).map(|x| x.trim().to_string()).ok()
+    fs::read_to_string(p).ok()
 }
 
 /// Platform used for game data.
@@ -184,6 +184,9 @@ mod tests {
         assert_eq!(read_version(&dir), Some("2023.09.15.0000.0000".to_string()));
 
         std::fs::write(&dir, "2023.09.15.0000.0000\r\n").unwrap();
-        assert_eq!(read_version(&dir), Some("2023.09.15.0000.0000".to_string()));
+        assert_eq!(
+            read_version(&dir),
+            Some("2023.09.15.0000.0000\r\n".to_string())
+        );
     }
 }

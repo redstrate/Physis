@@ -10,22 +10,24 @@ use std::{
 use crate::{
     ByteBuffer,
     common::{Platform, read_version},
-    repository::{Category, Repository, string_to_category},
+    repository::{Category, Repository, RepositoryType, string_to_category},
     sqpack::{Hash, IndexEntry, SqPackData, SqPackIndex},
 };
 
 use super::Resource;
 
 /// Possible actions to repair game files
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum RepairAction {
-    /// Indicates a version file is missing for a repository
+    /// Indicates a version file is missing for a repository.
     VersionFileMissing,
-    /// The version file is missing, but it can be restored via a backup
+    /// The version file is missing, but it can be restored via a backup.
     VersionFileCanRestore,
+    /// Indicates a version file has extra newlines or spaces.
+    VersionFileExtraSpacing,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 /// Possible errors emitted through the repair process
 pub enum RepairError<'a> {
     /// Failed to repair a repository
@@ -177,7 +179,12 @@ impl SqPackResource {
     pub fn needs_repair(&self) -> Option<Vec<(&Repository, RepairAction)>> {
         let mut repositories: Vec<(&Repository, RepairAction)> = Vec::new();
         for repository in &self.repositories {
-            if repository.version.is_none() {
+            if let Some(version) = &repository.version {
+                let trimmed_version = version.trim();
+                if trimmed_version != version {
+                    repositories.push((repository, RepairAction::VersionFileExtraSpacing));
+                }
+            } else {
                 // Check to see if a .bck file is created, as we might be able to use that
                 let ver_bak_path: PathBuf = [
                     self.game_directory.clone(),
@@ -213,15 +220,21 @@ impl SqPackResource {
         repositories: &Vec<(&'a Repository, RepairAction)>,
     ) -> Result<(), RepairError<'a>> {
         for (repository, action) in repositories {
-            let ver_path: PathBuf = [
-                self.game_directory.clone(),
-                "sqpack".to_string(),
-                repository.name.clone(),
-                format!("{}.ver", repository.name),
-            ]
-            .iter()
-            .collect();
+            let ver_path: PathBuf = match repository.repo_type {
+                RepositoryType::Base => [self.game_directory.clone(), "ffxivgame.ver".to_string()]
+                    .iter()
+                    .collect(),
+                RepositoryType::Expansion { .. } => [
+                    self.game_directory.clone(),
+                    "sqpack".to_string(),
+                    repository.name.clone(),
+                    format!("{}.ver", repository.name),
+                ]
+                .iter()
+                .collect(),
+            };
 
+            // TODO: handle ffxivgame base here (except for extra spacing, which does):
             let new_version: String = match action {
                 RepairAction::VersionFileMissing => {
                     let repo_path: PathBuf = [
@@ -253,6 +266,10 @@ impl SqPackResource {
                     .collect();
 
                     read_version(&ver_bak_path).ok_or(RepairError::FailedRepair(repository))?
+                }
+                RepairAction::VersionFileExtraSpacing => {
+                    let ver_file = std::fs::read_to_string(&ver_path).unwrap();
+                    ver_file.trim().to_string()
                 }
             };
 
@@ -418,6 +435,68 @@ mod tests {
         assert!(
             data.parse_repository_category("what/some_font.dat")
                 .is_none()
+        );
+    }
+
+    #[test]
+    fn repository_repair_okay() {
+        let mut d = PathBuf::from(std::env::temp_dir());
+        d.push("test_sqpack");
+
+        if d.exists() {
+            std::fs::remove_dir_all(&d).unwrap();
+        }
+
+        std::fs::create_dir_all(&d).unwrap();
+
+        let mut sqpack = d.clone();
+        sqpack.push("ffxivgame.ver");
+        std::fs::write(sqpack, "2023.09.15.0000.0000").unwrap();
+
+        let resource = SqPackResource::from_existing(Platform::Win32, d.to_str().unwrap());
+        let repo = resource.repositories.first().unwrap();
+
+        assert_eq!(repo.name, "ffxiv");
+        assert_eq!(repo.version, Some("2023.09.15.0000.0000".to_string()));
+        assert_eq!(resource.needs_repair(), None);
+    }
+
+    #[test]
+    fn repository_repair_extra_spacing() {
+        let mut d = PathBuf::from(std::env::temp_dir());
+        d.push("test_sqpack_bad");
+
+        if d.exists() {
+            std::fs::remove_dir_all(&d).unwrap();
+        }
+
+        std::fs::create_dir_all(&d).unwrap();
+
+        let mut sqpack = d.clone();
+        sqpack.push("ffxivgame.ver");
+        std::fs::write(&sqpack, "2023.09.15.0000.0000\r\n").unwrap();
+
+        let resource = SqPackResource::from_existing(Platform::Win32, d.to_str().unwrap());
+        let repo = resource.repositories.first().unwrap();
+
+        assert_eq!(repo.name, "ffxiv");
+        assert_eq!(repo.version, Some("2023.09.15.0000.0000\r\n".to_string()));
+
+        let repairs = resource.needs_repair();
+
+        assert_eq!(
+            repairs,
+            Some(vec![(
+                resource.repositories.first().unwrap(),
+                RepairAction::VersionFileExtraSpacing
+            )])
+        );
+
+        resource.perform_repair(&repairs.unwrap()).unwrap();
+
+        assert_eq!(
+            std::fs::read_to_string(sqpack).unwrap(),
+            "2023.09.15.0000.0000"
         );
     }
 }
