@@ -5,7 +5,7 @@ mod resolver;
 pub use resolver::ResourceResolver;
 
 mod sqpack;
-pub use sqpack::SqPackResource;
+pub use sqpack::{SqPackResource, RepairAction, RepairError};
 
 mod unpacked;
 pub use unpacked::UnpackedResource;
