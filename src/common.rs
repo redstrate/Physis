@@ -60,7 +60,7 @@ pub enum Region {
 /// Reads a version file.
 // TODO: use version type
 pub fn read_version(p: &Path) -> Option<String> {
-    fs::read_to_string(p).ok()
+    fs::read_to_string(p).map(|x| x.trim().to_string()).ok()
 }
 
 /// Platform used for game data.
@@ -168,5 +168,22 @@ mod tests {
 
         // patch2
         assert!(Version("2025.02.27.0000.1000") > Version("2025.02.27.0000.0000"));
+    }
+
+    #[test]
+    fn test_version() {
+        let mut dir = std::env::temp_dir();
+        dir.push("test.ver");
+        if dir.exists() {
+            std::fs::remove_file(&dir).unwrap();
+        }
+
+        assert_eq!(read_version(&dir), None);
+
+        std::fs::write(&dir, "2023.09.15.0000.0000").unwrap();
+        assert_eq!(read_version(&dir), Some("2023.09.15.0000.0000".to_string()));
+
+        std::fs::write(&dir, "2023.09.15.0000.0000\r\n").unwrap();
+        assert_eq!(read_version(&dir), Some("2023.09.15.0000.0000".to_string()));
     }
 }
