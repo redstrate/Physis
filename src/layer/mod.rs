@@ -225,6 +225,8 @@ pub enum LayerEntryData {
     TargetMarker(TargetMarkerInstanceObject),
     #[br(pre_assert(*magic == LayerEntryType::ChairMarker))]
     ChairMarker(ChairMarkerInstanceObject),
+    #[br(pre_assert(*magic == LayerEntryType::ClickableRange))]
+    ClickableRange(ClickableRangeInstanceObject),
     #[br(pre_assert(*magic == LayerEntryType::PrefetchRange))]
     PrefetchRange(PrefetchRangeInstanceObject),
     #[br(pre_assert(*magic == LayerEntryType::FateRange))]
@@ -462,6 +464,12 @@ pub struct ChairMarkerInstanceObject {
     back_enable: bool,
     padding: u8,
     chair_type: ChairType,
+}
+
+#[binrw]
+#[derive(Debug, PartialEq)]
+#[br(little)]
+pub struct ClickableRangeInstanceObject {
 }
 
 #[binrw]
