@@ -23,7 +23,6 @@ pub enum TriggerBoxShape {
 
 #[binrw]
 #[derive(Debug, PartialEq)]
-#[br(little)]
 pub struct TriggerBoxInstanceObject {
     pub trigger_box_shape: TriggerBoxShape,
     pub priority: i16,

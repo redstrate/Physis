@@ -5,7 +5,6 @@ use binrw::binrw;
 
 #[binrw]
 #[derive(Debug, PartialEq)]
-#[br(little)]
 pub struct SoundInstanceObject {
     pub sound_effect_param: i32,
     pub asset_path_offset: u32,

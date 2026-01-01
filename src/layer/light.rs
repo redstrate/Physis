@@ -30,7 +30,6 @@ pub enum PointLightType {
 
 #[binrw]
 #[derive(Debug, PartialEq)]
-#[br(little)]
 pub struct LightInstanceObject {
     pub light_type: LightType,
     pub attenuation: f32,

@@ -5,6 +5,7 @@
 
 use std::io::{Cursor, Seek, SeekFrom};
 
+use crate::common::Platform;
 use crate::common_file_operations::{read_bool_from, write_bool_as};
 use crate::{ByteBuffer, ByteSpan};
 use binrw::binrw;
@@ -245,7 +246,6 @@ pub enum LayerEntryData {
 
 #[binrw]
 #[derive(Debug, PartialEq)]
-#[br(little)]
 pub struct VFXInstanceObject {
     pub asset_path_offset: u32,
     #[brw(pad_after = 4)] // padding
@@ -267,7 +267,6 @@ pub struct VFXInstanceObject {
 
 #[binrw]
 #[derive(Debug, PartialEq)]
-#[br(little)]
 pub struct GatheringInstanceObject {
     #[brw(pad_after = 4)] // padding
     pub gathering_point_id: u32,
@@ -275,7 +274,6 @@ pub struct GatheringInstanceObject {
 
 #[binrw]
 #[derive(Debug, PartialEq)]
-#[br(little)]
 pub struct TreasureInstanceObject {
     #[brw(pad_after = 11)] // padding
     pub nonpop_init_zone: u8,
@@ -283,7 +281,6 @@ pub struct TreasureInstanceObject {
 
 #[binrw]
 #[derive(Debug, PartialEq)]
-#[br(little)]
 pub struct MapRangeInstanceObject {
     pub parent_data: TriggerBoxInstanceObject,
     map: u32,
@@ -336,7 +333,6 @@ pub struct MapRangeInstanceObject {
 
 #[binrw]
 #[derive(Debug, PartialEq)]
-#[br(little)]
 pub struct EventInstanceObject {
     pub parent_data: GameInstanceObject,
     /// A reference to another object, most likely.
@@ -349,7 +345,6 @@ pub struct EventInstanceObject {
 #[derive(Debug, PartialEq)]
 #[br(import(string_heap: &StringHeap))]
 #[bw(import(string_heap: &mut StringHeap))]
-#[br(little)]
 pub struct EnvLocationObject {
     #[brw(args(string_heap))]
     pub ambient_light_asset_path: HeapString,
@@ -360,7 +355,6 @@ pub struct EnvLocationObject {
 
 #[binrw]
 #[derive(Debug, PartialEq)]
-#[br(little)]
 pub struct EventRangeInstanceObject {
     pub parent_data: TriggerBoxInstanceObject,
     pub unk_flags: [u8; 12],
@@ -368,14 +362,12 @@ pub struct EventRangeInstanceObject {
 
 #[binrw]
 #[derive(Debug, PartialEq)]
-#[br(little)]
 pub struct QuestMarkerInstanceObject {}
 
 #[binrw]
 #[derive(Debug, PartialEq)]
 #[br(import(string_heap: &StringHeap))]
 #[bw(import(string_heap: &mut StringHeap))]
-#[br(little)]
 pub struct CollisionBoxInstanceObject {
     pub parent_data: TriggerBoxInstanceObject,
     attribute_mask: u32,
@@ -390,12 +382,10 @@ pub struct CollisionBoxInstanceObject {
 
 #[binrw]
 #[derive(Debug, PartialEq)]
-#[br(little)]
 pub struct LineVFXInstanceObject {}
 
 #[binrw]
 #[derive(Debug, PartialEq)]
-#[br(little)]
 pub struct PathControlPoint {
     pub position: [f32; 3],
     pub point_id: u16,
@@ -405,7 +395,6 @@ pub struct PathControlPoint {
 
 #[binrw]
 #[derive(Debug, PartialEq)]
-#[br(little)]
 pub struct PathInstanceObject {
     pub control_points_unk: i32,
     #[br(temp)]
@@ -418,7 +407,6 @@ pub struct PathInstanceObject {
 
 #[binrw]
 #[derive(Debug, PartialEq)]
-#[br(little)]
 pub struct ClientPathInstanceObject {
     pub parent_data: PathInstanceObject,
     pub ring: u8,
@@ -427,17 +415,14 @@ pub struct ClientPathInstanceObject {
 
 #[binrw]
 #[derive(Debug, PartialEq)]
-#[br(little)]
 pub struct ServerPathInstanceObject {}
 
 #[binrw]
 #[derive(Debug, PartialEq)]
-#[br(little)]
 pub struct GimmickRangeInstanceObject {}
 
 #[binrw]
 #[derive(Debug, PartialEq)]
-#[br(little)]
 pub struct TargetMarkerInstanceObject {}
 
 #[binrw]
@@ -451,7 +436,6 @@ pub enum ChairType {
 
 #[binrw]
 #[derive(Debug, PartialEq)]
-#[br(little)]
 pub struct ChairMarkerInstanceObject {
     #[br(map = read_bool_from::<u8>)]
     #[bw(map = write_bool_as::<u8>)]
@@ -468,12 +452,10 @@ pub struct ChairMarkerInstanceObject {
 
 #[binrw]
 #[derive(Debug, PartialEq)]
-#[br(little)]
 pub struct ClickableRangeInstanceObject {}
 
 #[binrw]
 #[derive(Debug, PartialEq)]
-#[br(little)]
 pub struct PrefetchRangeInstanceObject {
     pub parent_data: TriggerBoxInstanceObject,
     pub bound_instance_id: u32,
@@ -482,7 +464,6 @@ pub struct PrefetchRangeInstanceObject {
 
 #[binrw]
 #[derive(Debug, PartialEq)]
-#[br(little)]
 pub struct FateRangeInstanceObject {}
 
 #[binrw]
@@ -497,7 +478,6 @@ enum LayerSetReferencedType {
 
 #[binrw]
 #[derive(Debug, PartialEq)]
-#[brw(little)]
 #[br(import(data_heap: &StringHeap, string_heap: &StringHeap), stream = r)]
 #[bw(import(data_heap: &mut StringHeap, string_heap: &mut StringHeap))]
 #[allow(dead_code)] // most of the fields are unused at the moment
@@ -544,7 +524,6 @@ pub struct LayerHeader {
 
 #[binrw]
 #[derive(Debug, PartialEq)]
-#[brw(little)]
 #[allow(dead_code)] // most of the fields are unused at the moment
 pub struct LayerSetReferenced {
     pub layer_set_id: u32,
@@ -552,7 +531,6 @@ pub struct LayerSetReferenced {
 
 #[binrw]
 #[derive(Debug, PartialEq)]
-#[brw(little)]
 #[br(import(data_heap: &StringHeap), stream = r)]
 #[bw(import(data_heap: &mut StringHeap))]
 pub struct LayerSetReferencedList {
@@ -570,7 +548,6 @@ pub struct LayerSetReferencedList {
 
 #[binrw]
 #[derive(Debug)]
-#[br(little)]
 #[allow(dead_code)] // most of the fields are unused at the moment
 struct OBSetReferenced {
     asset_type: LayerEntryType,
@@ -580,7 +557,6 @@ struct OBSetReferenced {
 
 #[binrw]
 #[derive(Debug)]
-#[br(little)]
 #[allow(dead_code)] // most of the fields are unused at the moment
 struct OBSetEnableReferenced {
     asset_type: LayerEntryType,
@@ -596,7 +572,6 @@ struct OBSetEnableReferenced {
 
 #[binrw]
 #[derive(Debug)]
-#[brw(little)]
 #[allow(dead_code)] // most of the fields are unused at the moment
 struct LgbHeader {
     // Example: "LGB1"
@@ -610,7 +585,6 @@ struct LgbHeader {
 #[derive(Debug)]
 #[br(import(string_heap: &StringHeap), stream = r)]
 #[bw(import(string_heap: &mut StringHeap))]
-#[brw(little)]
 #[allow(dead_code)] // most of the fields are unused at the moment
 struct LayerChunkHeader {
     chunk_id: u32,
@@ -626,7 +600,6 @@ const LAYER_CHUNK_HEADER_SIZE: usize = 24;
 
 #[binrw]
 #[derive(Debug, PartialEq)]
-#[brw(little)]
 #[br(import(string_heap: &StringHeap))]
 #[bw(import(string_heap: &mut StringHeap))]
 #[allow(dead_code)] // most of the fields are unused at the moment
@@ -667,10 +640,11 @@ pub struct LayerGroup {
 
 impl LayerGroup {
     /// Read an existing file.
-    pub fn from_existing(buffer: ByteSpan) -> Option<LayerGroup> {
+    pub fn from_existing(platform: Platform, buffer: ByteSpan) -> Option<LayerGroup> {
         let mut cursor = Cursor::new(buffer);
+        let endianness = platform.endianness();
 
-        let file_header = LgbHeader::read(&mut cursor).unwrap();
+        let file_header = LgbHeader::read_options(&mut cursor, endianness, ()).unwrap();
         if file_header.file_size <= 0 || file_header.total_chunk_count <= 0 {
             return None;
         }
@@ -679,7 +653,7 @@ impl LayerGroup {
         let chunk_string_heap = StringHeap::from(cursor.position() + 8);
 
         let chunk_header =
-            LayerChunkHeader::read_le_args(&mut cursor, (&chunk_string_heap,)).unwrap();
+            LayerChunkHeader::read_options(&mut cursor, endianness, (&chunk_string_heap,)).unwrap();
         if chunk_header.chunk_size <= 0 {
             return Some(LayerGroup {
                 file_id: file_header.file_id,
@@ -691,7 +665,7 @@ impl LayerGroup {
 
         let mut layer_offsets = vec![0i32; chunk_header.layer_count as usize];
         for i in 0..chunk_header.layer_count {
-            layer_offsets[i as usize] = cursor.read_le::<i32>().unwrap();
+            layer_offsets[i as usize] = cursor.read_type_args::<i32>(endianness, ()).unwrap();
         }
 
         let mut layers = Vec::new();
@@ -707,14 +681,16 @@ impl LayerGroup {
             let data_heap = StringHeap::from(old_pos);
 
             let header =
-                LayerHeader::read_le_args(&mut cursor, (&data_heap, &string_heap)).unwrap();
+                LayerHeader::read_options(&mut cursor, endianness, (&data_heap, &string_heap))
+                    .unwrap();
 
             let mut objects = Vec::new();
             // read instance objects
             {
                 let mut instance_offsets = vec![0i32; header.instance_object_count as usize];
                 for i in 0..header.instance_object_count {
-                    instance_offsets[i as usize] = cursor.read_le::<i32>().unwrap();
+                    instance_offsets[i as usize] =
+                        cursor.read_type_args::<i32>(endianness, ()).unwrap();
                 }
 
                 for i in 0..header.instance_object_count {
@@ -729,7 +705,10 @@ impl LayerGroup {
                     let start = cursor.stream_position().unwrap();
                     let string_heap = StringHeap::from(start);
 
-                    objects.push(InstanceObject::read_le_args(&mut cursor, (&string_heap,)).ok()?);
+                    objects.push(
+                        InstanceObject::read_options(&mut cursor, endianness, (&string_heap,))
+                            .ok()?,
+                    );
 
                     let after_immediate_read = cursor.stream_position().unwrap();
 
@@ -764,7 +743,7 @@ impl LayerGroup {
                     ))
                     .unwrap();
                 for _ in 0..header.ob_set_referenced_list_count {
-                    OBSetReferenced::read(&mut cursor).unwrap();
+                    OBSetReferenced::read_options(&mut cursor, endianness, ()).unwrap();
                 }
             }
 
@@ -776,7 +755,7 @@ impl LayerGroup {
                     ))
                     .unwrap();
                 for _ in 0..header.ob_set_enable_referenced_list_count {
-                    OBSetEnableReferenced::read(&mut cursor).unwrap();
+                    OBSetEnableReferenced::read_options(&mut cursor, endianness, ()).unwrap();
                 }
             }
 
@@ -959,7 +938,7 @@ mod tests {
         d.push("random");
 
         // Feeding it invalid data should not panic
-        LayerGroup::from_existing(&read(d).unwrap());
+        LayerGroup::from_existing(Platform::Win32, &read(d).unwrap());
     }
 
     #[test]
@@ -968,7 +947,7 @@ mod tests {
         d.push("resources/tests");
         d.push("empty_planlive.lgb");
 
-        let lgb = LayerGroup::from_existing(&read(d).unwrap()).unwrap();
+        let lgb = LayerGroup::from_existing(Platform::Win32, &read(d).unwrap()).unwrap();
         assert_eq!(lgb.file_id, LGB1_ID);
         assert_eq!(lgb.chunks.len(), 1);
 
@@ -1005,7 +984,7 @@ mod tests {
         d.push("resources/tests");
         d.push("simple_planevent.lgb");
 
-        let lgb = LayerGroup::from_existing(&read(d).unwrap()).unwrap();
+        let lgb = LayerGroup::from_existing(Platform::Win32, &read(d).unwrap()).unwrap();
         assert_eq!(lgb.file_id, LGB1_ID);
         assert_eq!(lgb.chunks.len(), 1);
 

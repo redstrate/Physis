@@ -6,11 +6,11 @@ use std::io::{Cursor, Read, Seek, SeekFrom};
 
 use crate::ByteBuffer;
 use crate::common::Platform;
-use binrw::BinRead;
 use binrw::BinWrite;
+use binrw::{BinRead, VecArgs};
 use binrw::{BinReaderExt, binrw};
 
-use crate::common_file_operations::read_bool_from;
+use crate::common_file_operations::{read_bool_from, write_bool_as};
 use crate::model::ModelFileHeader;
 use crate::sqpack::read_data_block;
 
@@ -29,13 +29,15 @@ pub enum FileType {
     Texture,
 }
 
-#[derive(BinRead)]
+#[binrw]
+#[derive(Debug)]
 struct StandardFileBlock {
-    #[br(pad_before = 8)]
+    #[brw(pad_before = 8)]
     num_blocks: u32,
 }
 
-#[derive(BinRead, Debug)]
+#[binrw]
+#[derive(Debug)]
 #[allow(dead_code)]
 struct TextureLodBlock {
     compressed_offset: u32,
@@ -61,7 +63,8 @@ impl<'a, T> AnyNumberType<'a> for T where
 {
 }
 
-#[derive(BinRead, BinWrite)]
+#[binrw]
+#[derive(Debug)]
 pub struct ModelMemorySizes<T: for<'a> AnyNumberType<'a>> {
     pub stack_size: T,
     pub runtime_size: T,
@@ -88,7 +91,8 @@ impl<T: for<'a> AnyNumberType<'a>> ModelMemorySizes<T> {
     }
 }
 
-#[derive(BinRead)]
+#[binrw]
+#[derive(Debug)]
 #[allow(dead_code)]
 pub struct ModelFileBlock {
     pub num_blocks: u32,
@@ -106,13 +110,16 @@ pub struct ModelFileBlock {
     pub num_lods: u8,
 
     #[br(map = read_bool_from::<u8>)]
+    #[bw(map = write_bool_as::<u8>)]
     pub index_buffer_streaming_enabled: bool,
     #[brw(pad_after = 1)]
     #[br(map = read_bool_from::<u8>)]
+    #[bw(map = write_bool_as::<u8>)]
     pub edge_geometry_enabled: bool,
 }
 
-#[derive(BinRead, Debug)]
+#[binrw]
+#[derive(Debug)]
 struct TextureBlock {
     #[br(pad_before = 8)]
     num_blocks: u32,
@@ -123,19 +130,23 @@ struct TextureBlock {
 
 /// A SqPack file info header. It can optionally contain extra information, such as texture or
 /// model data depending on the file type.
-#[derive(BinRead)]
+#[binrw]
+#[derive(Debug)]
 struct FileInfo {
     size: u32,
     file_type: FileType,
     file_size: u32,
 
     #[br(if (file_type == FileType::Standard))]
+    #[bw(if (*file_type == FileType::Standard))]
     standard_info: Option<StandardFileBlock>,
 
     #[br(if (file_type == FileType::Model))]
+    #[bw(if (*file_type == FileType::Model))]
     model_info: Option<ModelFileBlock>,
 
     #[br(if (file_type == FileType::Texture))]
+    #[bw(if (*file_type == FileType::Texture))]
     texture_info: Option<TextureBlock>,
 }
 
@@ -182,12 +193,6 @@ pub struct BlockHeader {
 pub struct SqPackData {
     platform: Platform,
     file: std::fs::File,
-}
-
-// from https://users.rust-lang.org/t/how-best-to-convert-u8-to-u16/57551/4
-fn to_u8_slice(slice: &mut [u16]) -> &mut [u8] {
-    let byte_len = 2 * slice.len();
-    unsafe { std::slice::from_raw_parts_mut(slice.as_mut_ptr().cast::<u8>(), byte_len) }
 }
 
 impl SqPackData {
@@ -257,10 +262,13 @@ impl SqPackData {
 
         let total_blocks = model_file_info.num.total();
 
-        let mut compressed_block_sizes: Vec<u16> = vec![0; total_blocks as usize];
-        let slice: &mut [u8] = to_u8_slice(&mut compressed_block_sizes);
-
-        self.file.read_exact(slice).ok()?;
+        let compressed_block_sizes: Vec<u16> = self
+            .file
+            .read_type_args(
+                self.platform.endianness(),
+                VecArgs::builder().count(total_blocks as usize).finalize(),
+            )
+            .ok()?;
 
         let mut current_block = 0;
 
@@ -391,7 +399,9 @@ impl SqPackData {
 
         buffer.seek(SeekFrom::Start(0)).ok()?;
 
-        header.write(&mut buffer).ok()?;
+        header
+            .write_options(&mut buffer, self.platform.endianness(), ())
+            .ok()?;
 
         Some(buffer.into_inner())
     }

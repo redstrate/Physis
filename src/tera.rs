@@ -5,13 +5,13 @@ use std::io::Cursor;
 
 use crate::ByteBuffer;
 use crate::ByteSpan;
+use crate::common::Platform;
 use binrw::BinRead;
 use binrw::BinWrite;
 use binrw::binrw;
 
 #[binrw]
 #[derive(Debug, Clone, Copy)]
-#[brw(little)]
 struct PlatePosition {
     x: i16,
     y: i16,
@@ -19,7 +19,6 @@ struct PlatePosition {
 
 #[binrw]
 #[derive(Debug)]
-#[brw(little)]
 struct TerrainHeader {
     // Example: 0x1000003
     version: u32,
@@ -50,9 +49,9 @@ pub struct Terrain {
 
 impl Terrain {
     /// Read an existing file.
-    pub fn from_existing(buffer: ByteSpan) -> Option<Terrain> {
+    pub fn from_existing(platform: Platform, buffer: ByteSpan) -> Option<Terrain> {
         let mut cursor = Cursor::new(buffer);
-        let header = TerrainHeader::read(&mut cursor).ok()?;
+        let header = TerrainHeader::read_options(&mut cursor, platform.endianness(), ()).ok()?;
 
         let mut plates = vec![];
 
@@ -114,6 +113,6 @@ mod tests {
         d.push("random");
 
         // Feeding it invalid data should not panic
-        Terrain::from_existing(&read(d).unwrap());
+        Terrain::from_existing(Platform::Win32, &read(d).unwrap());
     }
 }

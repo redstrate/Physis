@@ -15,7 +15,6 @@ pub enum PositionMarkerType {
 
 #[binrw]
 #[derive(Debug, PartialEq)]
-#[br(little)]
 pub struct PositionMarkerInstanceObject {
     pub position_marker_type: PositionMarkerType,
     pub comment_jp_offset: u32,

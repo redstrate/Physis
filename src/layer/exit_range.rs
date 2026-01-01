@@ -16,7 +16,6 @@ pub enum ExitType {
 
 #[binrw]
 #[derive(Debug, PartialEq)]
-#[br(little)]
 pub struct ExitRangeInstanceObject {
     pub parent_data: TriggerBoxInstanceObject,
     /// What kind of exit range this is.

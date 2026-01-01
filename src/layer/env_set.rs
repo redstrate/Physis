@@ -18,7 +18,6 @@ pub enum EnvSetShape {
 
 #[binrw]
 #[derive(Debug, PartialEq)]
-#[br(little)]
 pub struct EnvSetInstanceObject {
     pub asset_path_offset: u32,
     pub bound_instance_id: u32,

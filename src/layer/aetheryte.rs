@@ -7,7 +7,6 @@ use super::GameInstanceObject;
 
 #[binrw]
 #[derive(Debug, PartialEq)]
-#[br(little)]
 pub struct AetheryteInstanceObject {
     pub parent_data: GameInstanceObject,
     #[brw(pad_after = 4)] // padding

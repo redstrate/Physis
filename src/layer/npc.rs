@@ -7,7 +7,6 @@ use super::common::RelativePositions;
 
 #[binrw]
 #[derive(Debug, PartialEq)]
-#[br(little)]
 pub struct GameInstanceObject {
     /// For IDs >= 1000000, index into the ENpcBase
     /// For IDs >= 2000000, the row ID reference to EObj/EObjName
@@ -16,7 +15,6 @@ pub struct GameInstanceObject {
 
 #[binrw]
 #[derive(Debug, PartialEq)]
-#[br(little)]
 pub struct NPCInstanceObject {
     pub parent_data: GameInstanceObject,
     pub pop_weather: u32,
@@ -32,7 +30,6 @@ pub struct NPCInstanceObject {
 
 #[binrw]
 #[derive(Debug, PartialEq)]
-#[br(little)]
 pub struct ENPCInstanceObject {
     pub parent_data: NPCInstanceObject,
     #[brw(pad_after = 8)] // padding
@@ -41,7 +38,6 @@ pub struct ENPCInstanceObject {
 
 #[binrw]
 #[derive(Debug, PartialEq)]
-#[br(little)]
 pub struct BNPCInstanceObject {
     pub parent_data: NPCInstanceObject,
     pub name_id: u32,

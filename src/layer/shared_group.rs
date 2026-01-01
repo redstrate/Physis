@@ -51,7 +51,6 @@ pub enum ColourState {
 #[derive(Debug, PartialEq)]
 #[br(import(string_heap: &StringHeap))]
 #[bw(import(string_heap: &mut StringHeap))]
-#[br(little)]
 pub struct SharedGroupInstance {
     #[brw(args(string_heap))]
     pub asset_path: HeapString,

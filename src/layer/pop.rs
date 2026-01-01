@@ -17,7 +17,6 @@ pub enum PopType {
 
 #[binrw]
 #[derive(Debug, PartialEq)]
-#[br(little)]
 pub struct PopRangeInstanceObject {
     pub pop_type: PopType,
     pub relative_positions: RelativePositions,

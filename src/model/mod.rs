@@ -14,6 +14,7 @@ use binrw::BinReaderExt;
 use binrw::{BinRead, VecArgs};
 use binrw::{BinWrite, BinWriterExt, binrw};
 
+use crate::common::Platform;
 use crate::common_file_operations::{read_bool_from, write_bool_as};
 use crate::{ByteBuffer, ByteSpan};
 use vertex_declarations::{
@@ -25,7 +26,6 @@ pub const NUM_VERTICES: u32 = 17;
 
 #[binrw]
 #[derive(Debug, Clone, PartialEq)]
-#[brw(little)]
 pub struct ModelFileHeader {
     pub version: u32,
 
@@ -306,8 +306,7 @@ struct ShapeValue {
 #[binrw]
 #[derive(Debug, Clone, PartialEq)]
 #[allow(dead_code)]
-#[br(import {file_header: &ModelFileHeader})]
-#[brw(little)]
+#[br(import { file_header: &ModelFileHeader })]
 pub struct ModelData {
     #[br(args { vertex_declaration_count: file_header.vertex_declaration_count })]
     pub header: ModelHeader,
@@ -476,12 +475,14 @@ pub struct MDL {
 
 impl MDL {
     /// Read an existing file.
-    pub fn from_existing(buffer: ByteSpan) -> Option<MDL> {
+    pub fn from_existing(platform: Platform, buffer: ByteSpan) -> Option<MDL> {
         let mut cursor = Cursor::new(buffer);
-        let model_file_header = ModelFileHeader::read(&mut cursor).ok()?;
+        let endianness = platform.endianness();
+        let model_file_header = ModelFileHeader::read_options(&mut cursor, endianness, ()).ok()?;
 
-        let model = ModelData::read_args(
+        let model = ModelData::read_options(
             &mut cursor,
+            endianness,
             binrw::args! { file_header: &model_file_header },
         )
         .ok()?;
@@ -551,17 +552,17 @@ impl MDL {
                             VertexUsage::Position => match element.vertex_type {
                                 VertexType::Single4 => {
                                     vertices[k as usize].position.clone_from_slice(
-                                        &MDL::read_single4(&mut cursor).unwrap()[0..3],
+                                        &MDL::read_single4(&mut cursor, endianness).unwrap()[0..3],
                                     );
                                 }
                                 VertexType::Half4 => {
                                     vertices[k as usize].position.clone_from_slice(
-                                        &MDL::read_half4(&mut cursor).unwrap()[0..3],
+                                        &MDL::read_half4(&mut cursor, endianness).unwrap()[0..3],
                                     );
                                 }
                                 VertexType::Single3 => {
                                     vertices[k as usize].position =
-                                        MDL::read_single3(&mut cursor).unwrap();
+                                        MDL::read_single3(&mut cursor, endianness).unwrap();
                                 }
                                 _ => {
                                     panic!(
@@ -580,7 +581,8 @@ impl MDL {
                                         MDL::read_byte_float4(&mut cursor).unwrap();
                                 }
                                 VertexType::UnsignedShort4 => {
-                                    let bytes = MDL::read_unsigned_short4(&mut cursor).unwrap();
+                                    let bytes =
+                                        MDL::read_unsigned_short4(&mut cursor, endianness).unwrap();
                                     vertices[k as usize].bone_weight = [
                                         f32::from(bytes[0]),
                                         f32::from(bytes[1]),
@@ -601,7 +603,8 @@ impl MDL {
                                         MDL::read_byte4(&mut cursor).unwrap();
                                 }
                                 VertexType::UnsignedShort4 => {
-                                    let shorts = MDL::read_unsigned_short4(&mut cursor).unwrap();
+                                    let shorts =
+                                        MDL::read_unsigned_short4(&mut cursor, endianness).unwrap();
                                     vertices[k as usize].bone_id = [
                                         shorts[0] as u8,
                                         shorts[1] as u8,
@@ -619,12 +622,17 @@ impl MDL {
                             VertexUsage::Normal => match element.vertex_type {
                                 VertexType::Half4 => {
                                     vertices[k as usize].normal.clone_from_slice(
-                                        &MDL::read_half4(&mut cursor).unwrap()[0..3],
+                                        &MDL::read_half4(&mut cursor, endianness).unwrap()[0..3],
                                     );
                                 }
                                 VertexType::Single3 => {
                                     vertices[k as usize].normal =
-                                        MDL::read_single3(&mut cursor).unwrap();
+                                        MDL::read_single3(&mut cursor, endianness).unwrap();
+                                }
+                                VertexType::UnkPS3 => {
+                                    // TODO: unsure
+                                    vertices[k as usize].normal =
+                                        MDL::read_single3(&mut cursor, endianness).unwrap();
                                 }
                                 _ => {
                                     panic!(
@@ -641,19 +649,22 @@ impl MDL {
                                     vertices[k as usize].uv1.clone_from_slice(&combined[2..4]);
                                 }
                                 VertexType::Half4 => {
-                                    let combined = MDL::read_half4(&mut cursor).unwrap();
+                                    let combined =
+                                        MDL::read_half4(&mut cursor, endianness).unwrap();
 
                                     vertices[k as usize].uv0.clone_from_slice(&combined[0..2]);
                                     vertices[k as usize].uv1.clone_from_slice(&combined[2..4]);
                                 }
                                 VertexType::Single4 => {
-                                    let combined = MDL::read_single4(&mut cursor).unwrap();
+                                    let combined =
+                                        MDL::read_single4(&mut cursor, endianness).unwrap();
 
                                     vertices[k as usize].uv0.clone_from_slice(&combined[0..2]);
                                     vertices[k as usize].uv1.clone_from_slice(&combined[2..4]);
                                 }
                                 VertexType::Half2 => {
-                                    let combined = MDL::read_half2(&mut cursor).unwrap();
+                                    let combined =
+                                        MDL::read_half2(&mut cursor, endianness).unwrap();
 
                                     vertices[k as usize].uv0.clone_from_slice(&combined[0..2]);
                                 }
@@ -714,7 +725,7 @@ impl MDL {
 
                 let index_count = model.meshes[j as usize].index_count as usize;
                 let indices: Vec<u16> = cursor
-                    .read_le_args(VecArgs::builder().count(index_count).finalize())
+                    .read_type_args(endianness, VecArgs::builder().count(index_count).finalize())
                     .ok()?;
 
                 let mut submeshes: Vec<SubMesh> =
@@ -1038,16 +1049,21 @@ impl MDL {
     }
 
     /// Writes data back to a buffer.
-    pub fn write_to_buffer(&self) -> Option<ByteBuffer> {
+    pub fn write_to_buffer(&self, platform: Platform) -> Option<ByteBuffer> {
         let mut buffer = ByteBuffer::new();
+        let endianness = platform.endianness();
 
         {
             let mut cursor = Cursor::new(&mut buffer);
 
             // write file header
-            self.file_header.write(&mut cursor).ok()?;
+            self.file_header
+                .write_options(&mut cursor, endianness, ())
+                .ok()?;
 
-            self.model_data.write(&mut cursor).ok()?;
+            self.model_data
+                .write_options(&mut cursor, endianness, ())
+                .ok()?;
 
             for (l, lod) in self.lods.iter().enumerate() {
                 for part in lod.parts.iter() {
@@ -1076,6 +1092,7 @@ impl MDL {
                                     VertexType::Single4 => {
                                         MDL::write_single4(
                                             &mut cursor,
+                                            endianness,
                                             &MDL::pad_slice(&vert.position, 1.0),
                                         )
                                         .ok()?;
@@ -1083,12 +1100,14 @@ impl MDL {
                                     VertexType::Half4 => {
                                         MDL::write_half4(
                                             &mut cursor,
+                                            endianness,
                                             &MDL::pad_slice(&vert.position, 1.0),
                                         )
                                         .ok()?;
                                     }
                                     VertexType::Single3 => {
-                                        MDL::write_single3(&mut cursor, &vert.position).ok()?;
+                                        MDL::write_single3(&mut cursor, endianness, &vert.position)
+                                            .ok()?;
                                     }
                                     _ => {
                                         panic!(
@@ -1128,12 +1147,19 @@ impl MDL {
                                     VertexType::Half4 => {
                                         MDL::write_half4(
                                             &mut cursor,
+                                            endianness,
                                             &MDL::pad_slice(&vert.normal, 0.0),
                                         )
                                         .ok()?;
                                     }
                                     VertexType::Single3 => {
-                                        MDL::write_single3(&mut cursor, &vert.normal).ok()?;
+                                        MDL::write_single3(&mut cursor, endianness, &vert.normal)
+                                            .ok()?;
+                                    }
+                                    VertexType::UnkPS3 => {
+                                        // TODO: unsure
+                                        MDL::write_single3(&mut cursor, endianness, &vert.normal)
+                                            .ok()?;
                                     }
                                     _ => {
                                         panic!(
@@ -1147,13 +1173,21 @@ impl MDL {
                                         let combined =
                                             [vert.uv0[0], vert.uv0[1], vert.uv1[0], vert.uv1[1]];
 
-                                        MDL::write_half4(&mut cursor, &combined).ok()?;
+                                        MDL::write_half4(&mut cursor, endianness, &combined)
+                                            .ok()?;
                                     }
                                     VertexType::Single4 => {
                                         let combined =
                                             [vert.uv0[0], vert.uv0[1], vert.uv1[0], vert.uv1[1]];
 
-                                        MDL::write_single4(&mut cursor, &combined).ok()?;
+                                        MDL::write_single4(&mut cursor, endianness, &combined)
+                                            .ok()?;
+                                    }
+                                    VertexType::ByteFloat4 => {
+                                        let combined =
+                                            [vert.uv0[0], vert.uv0[1], vert.uv1[0], vert.uv1[1]];
+
+                                        MDL::write_tangent(&mut cursor, &combined).ok()?;
                                     }
                                     _ => {
                                         panic!(
@@ -1176,9 +1210,12 @@ impl MDL {
                                 VertexUsage::Tangent => {
                                     #[allow(clippy::match_single_binding)] // TODO
                                     match element.vertex_type {
-                                        /*VertexType::ByteFloat4 => {
-                                            MDL::write_tangent(&mut cursor, &vert.binormal).ok()?;
-                                        }*/
+                                        VertexType::ByteFloat4 => {
+                                            // TODO: restore
+                                            //MDL::write_tangent(&mut cursor, &vert.binormal).ok()?;
+                                            MDL::write_tangent(&mut cursor, &[0.0, 0.0, 0.0, 0.0])
+                                                .ok()?;
+                                        }
                                         _ => {
                                             panic!(
                                                 "Unexpected vertex type for tangent: {:#?}",
@@ -1319,7 +1356,7 @@ mod tests {
         d.push("resources/tests");
         d.push("c0201e0038_top_zeroed.mdl");
 
-        let mut mdl = MDL::from_existing(&read(d).unwrap()).unwrap();
+        let mut mdl = MDL::from_existing(Platform::Win32, &read(d).unwrap()).unwrap();
         let old_mdl = mdl.clone();
 
         mdl.update_headers();
@@ -1335,7 +1372,7 @@ mod tests {
         d.push("resources/tests");
         d.push("c0201e0038_top_zeroed.mdl");
 
-        let mut mdl = MDL::from_existing(&read(d).unwrap()).unwrap();
+        let mut mdl = MDL::from_existing(Platform::Win32, &read(d).unwrap()).unwrap();
         let old_mdl = mdl.clone();
 
         for l in 0..old_mdl.lods.len() {
@@ -1361,7 +1398,7 @@ mod tests {
         d.push("resources/tests");
         d.push("c0201e0038_top_zeroed.mdl");
 
-        let mdl = MDL::from_existing(&read(d).unwrap()).unwrap();
+        let mdl = MDL::from_existing(Platform::Win32, &read(d).unwrap()).unwrap();
 
         // file header
         assert_eq!(mdl.file_header.version, 16777221);
@@ -1392,6 +1429,6 @@ mod tests {
         d.push("random");
 
         // Feeding it invalid data should not panic
-        MDL::from_existing(&read(d).unwrap());
+        MDL::from_existing(Platform::Win32, &read(d).unwrap());
     }
 }
