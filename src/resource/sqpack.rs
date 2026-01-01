@@ -35,6 +35,25 @@ pub enum RepairError<'a> {
     FailedRepair(&'a Repository),
 }
 
+/// Which release these SqPacks are from.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum SqPackRelease {
+    /// SqPack files that are generally available from retail.
+    Retail,
+    /// SqPack files usually only available in debug builds, and are suffixed with ".d"
+    Debug,
+}
+
+impl SqPackRelease {
+    /// The filename suffix for this release.
+    pub fn suffix(&self) -> &'static str {
+        match self {
+            SqPackRelease::Retail => "",
+            SqPackRelease::Debug => ".d",
+        }
+    }
+}
+
 /// Used to read files from the retail game, in their SqPack-compressed format.
 #[derive(Debug)]
 pub struct SqPackResource {
@@ -48,10 +67,14 @@ pub struct SqPackResource {
 
     /// The platform this resource was designed for.
     pub platform: Platform,
+
+    /// How these SqPack files were released.
+    pub release: SqPackRelease,
 }
 
 impl SqPackResource {
-    pub fn from_existing(platform: Platform, directory: &str) -> Self {
+    /// Creates a new `SqPackResource` that points to data for `platform` and `release` in `directory`.
+    pub fn from_existing(platform: Platform, release: SqPackRelease, directory: &str) -> Self {
         match is_valid(directory) {
             true => {
                 let mut data = Self {
@@ -59,8 +82,9 @@ impl SqPackResource {
                     repositories: vec![],
                     index_files: HashMap::new(),
                     platform,
+                    release,
                 };
-                data.reload_repositories(platform);
+                data.reload_repositories();
                 data
             }
             false => {
@@ -70,18 +94,20 @@ impl SqPackResource {
                     repositories: vec![],
                     index_files: HashMap::new(),
                     platform,
+                    release,
                 }
             }
         }
     }
 
-    fn reload_repositories(&mut self, platform: Platform) {
+    fn reload_repositories(&mut self) {
         self.repositories.clear();
 
         let mut d = PathBuf::from(self.game_directory.as_str());
 
         // add initial ffxiv directory
-        if let Some(base_repository) = Repository::from_existing_base(platform, d.to_str().unwrap())
+        if let Some(base_repository) =
+            Repository::from_existing_base(self.platform, self.release, d.to_str().unwrap())
         {
             self.repositories.push(base_repository);
         }
@@ -99,7 +125,8 @@ impl SqPackResource {
 
             for repository_path in repository_paths {
                 if let Some(expansion_repository) = Repository::from_existing_expansion(
-                    platform,
+                    self.platform,
+                    self.release,
                     repository_path.path().to_str().unwrap(),
                 ) {
                     self.repositories.push(expansion_repository);
@@ -289,8 +316,7 @@ impl SqPackResource {
 
     fn cache_index_file(&mut self, filename: &str) {
         if !self.index_files.contains_key(filename)
-            && let Some(index_file) =
-                SqPackIndex::from_existing(self.platform, filename)
+            && let Some(index_file) = SqPackIndex::from_existing(self.platform, filename)
         {
             self.index_files.insert(filename.to_string(), index_file);
         }
@@ -405,7 +431,7 @@ mod tests {
         d.push("valid_sqpack");
         d.push("game");
 
-        SqPackResource::from_existing(Platform::Win32, d.to_str().unwrap())
+        SqPackResource::from_existing(Platform::Win32, SqPackRelease::Retail, d.to_str().unwrap())
     }
 
     #[test]
@@ -460,7 +486,11 @@ mod tests {
         sqpack.push("ffxivgame.ver");
         std::fs::write(sqpack, "2023.09.15.0000.0000").unwrap();
 
-        let resource = SqPackResource::from_existing(Platform::Win32, d.to_str().unwrap());
+        let resource = SqPackResource::from_existing(
+            Platform::Win32,
+            SqPackRelease::Retail,
+            d.to_str().unwrap(),
+        );
         let repo = resource.repositories.first().unwrap();
 
         assert_eq!(repo.name, "ffxiv");
@@ -483,7 +513,11 @@ mod tests {
         sqpack.push("ffxivgame.ver");
         std::fs::write(&sqpack, "2023.09.15.0000.0000\r\n").unwrap();
 
-        let resource = SqPackResource::from_existing(Platform::Win32, d.to_str().unwrap());
+        let resource = SqPackResource::from_existing(
+            Platform::Win32,
+            SqPackRelease::Retail,
+            d.to_str().unwrap(),
+        );
         let repo = resource.repositories.first().unwrap();
 
         assert_eq!(repo.name, "ffxiv");

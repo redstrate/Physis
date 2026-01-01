@@ -7,6 +7,7 @@ use std::path::{Path, PathBuf};
 
 use crate::common::{Platform, read_version};
 use crate::repository::RepositoryType::{Base, Expansion};
+use crate::resource::SqPackRelease;
 
 /// The type of repository, discerning game data from expansion data.
 #[derive(Debug, PartialEq, Eq, Copy, Clone)]
@@ -27,8 +28,8 @@ pub enum RepositoryType {
 pub struct Repository {
     /// The folder name, such as "ex1".
     pub name: String,
-    /// The platform this repository is designed for.
     platform: Platform,
+    release: SqPackRelease,
     /// The type of repository, such as "base game" or "expansion".
     pub repo_type: RepositoryType,
     /// The version of the game data.
@@ -125,7 +126,11 @@ pub fn string_to_category(string: &str) -> Option<Category> {
 impl Repository {
     /// Creates a new base `Repository`, from an existing directory. This may return `None` if
     /// the directory is invalid, e.g. a version file is missing.
-    pub fn from_existing_base(platform: Platform, dir: &str) -> Option<Repository> {
+    pub fn from_existing_base(
+        platform: Platform,
+        release: SqPackRelease,
+        dir: &str,
+    ) -> Option<Repository> {
         let path = Path::new(dir);
         if path.metadata().is_err() {
             return None;
@@ -138,6 +143,7 @@ impl Repository {
         Some(Repository {
             name: "ffxiv".to_string(),
             platform,
+            release,
             repo_type: Base,
             version,
         })
@@ -145,7 +151,11 @@ impl Repository {
 
     /// Creates a new expansion `Repository`, from an existing directory. This may return `None` if
     /// the directory is invalid, e.g. a version file is missing.
-    pub fn from_existing_expansion(platform: Platform, dir: &str) -> Option<Repository> {
+    pub fn from_existing_expansion(
+        platform: Platform,
+        release: SqPackRelease,
+        dir: &str,
+    ) -> Option<Repository> {
         let path = Path::new(dir);
         if path.metadata().is_err() {
             return None;
@@ -160,6 +170,7 @@ impl Repository {
         Some(Repository {
             name,
             platform,
+            release,
             repo_type: Expansion {
                 number: expansion_number,
             },
@@ -170,11 +181,12 @@ impl Repository {
     /// Calculate an index filename for a specific category, like _"0a0000.win32.index"_.
     pub fn index_filename(&self, chunk: u8, category: Category) -> String {
         format!(
-            "{:02x}{:02}{:02}.{}.index",
+            "{:02x}{:02}{:02}.{}{}.index",
             category as i32,
             self.expansion(),
             chunk,
-            self.platform.shortname()
+            self.platform.shortname(),
+            self.release.suffix(),
         )
     }
 
@@ -204,7 +216,11 @@ mod tests {
         d.push("resources/tests");
         d.push("ffxiv");
 
-        let repository = Repository::from_existing_base(Platform::Win32, d.to_str().unwrap());
+        let repository = Repository::from_existing_base(
+            Platform::Win32,
+            SqPackRelease::Retail,
+            d.to_str().unwrap(),
+        );
         assert!(repository.is_some());
         assert_eq!(repository.unwrap().version.unwrap(), "2012.01.01.0000.0000");
     }
@@ -215,7 +231,11 @@ mod tests {
         d.push("resources/tests");
         d.push("ex1");
 
-        let repository = Repository::from_existing_expansion(Platform::Win32, d.to_str().unwrap());
+        let repository = Repository::from_existing_expansion(
+            Platform::Win32,
+            SqPackRelease::Retail,
+            d.to_str().unwrap(),
+        );
         assert!(repository.is_some());
         assert_eq!(repository.unwrap().version.unwrap(), "2012.01.01.0000.0000");
     }
@@ -225,6 +245,7 @@ mod tests {
         let repo = Repository {
             name: "ffxiv".to_string(),
             platform: Platform::Win32,
+            release: SqPackRelease::Retail,
             repo_type: RepositoryType::Base,
             version: None,
         };
@@ -244,6 +265,7 @@ mod tests {
         let repo = Repository {
             name: "ffxiv".to_string(),
             platform: Platform::PS3,
+            release: SqPackRelease::Retail,
             repo_type: RepositoryType::Base,
             version: None,
         };
@@ -260,6 +282,7 @@ mod tests {
         let repo = Repository {
             name: "ffxiv".to_string(),
             platform: Platform::PS4,
+            release: SqPackRelease::Retail,
             repo_type: RepositoryType::Base,
             version: None,
         };
@@ -268,6 +291,26 @@ mod tests {
         assert_eq!(
             repo.index2_filename(0, Category::Music),
             "0c0000.ps4.index2"
+        );
+    }
+
+    #[test]
+    fn test_ps3_debug_filenames() {
+        let repo = Repository {
+            name: "ffxiv".to_string(),
+            platform: Platform::PS3,
+            release: SqPackRelease::Debug,
+            repo_type: RepositoryType::Base,
+            version: None,
+        };
+
+        assert_eq!(
+            repo.index_filename(0, Category::Music),
+            "0c0000.ps3.d.index"
+        );
+        assert_eq!(
+            repo.index2_filename(0, Category::Music),
+            "0c0000.ps3.d.index2"
         );
     }
 }

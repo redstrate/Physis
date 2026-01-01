@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 use physis::common::Platform;
-use physis::resource::{Resource, SqPackResource};
+use physis::resource::{Resource, SqPackRelease, SqPackResource};
 use std::env;
 use std::fs::File;
 use std::io::Write;
@@ -21,7 +21,8 @@ fn main() {
     let destination_path = &args[3];
 
     // Create a GameData struct, this manages the repositories. It allows us to easily extract files.
-    let mut game_data = SqPackResource::from_existing(Platform::Win32, game_dir);
+    let mut game_data =
+        SqPackResource::from_existing(Platform::Win32, SqPackRelease::Retail, game_dir);
 
     // Extract said file:
     let Some(game_file) = game_data.read(file_path) else {
