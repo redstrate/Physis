@@ -10,7 +10,6 @@ use std::io::SeekFrom;
 use std::io::Write;
 
 use crate::common::Platform;
-use crate::common::get_platform_endianness;
 use crate::crc::Jamcrc;
 use crate::sqpack::SqPackHeader;
 use binrw::BinRead;
@@ -199,12 +198,7 @@ impl SqPackIndex {
         let mut buf = Vec::new();
         index_file.read_to_end(&mut buf).ok()?;
 
-        Self::read_options(
-            &mut std::io::Cursor::new(buf),
-            get_platform_endianness(platform),
-            (),
-        )
-        .ok()
+        Self::read_options(&mut std::io::Cursor::new(buf), platform.endianness(), ()).ok()
     }
 
     /// Calculates a partial hash for a given path
@@ -226,7 +220,7 @@ impl SqPackIndex {
                     let directory_crc = CRC.checksum(directory.as_bytes());
                     let filename_crc = CRC.checksum(&filename.as_bytes()[1..filename.len()]);
 
-                    if get_platform_endianness(self.sqpack_header.platform_id) == Endian::Big {
+                    if self.sqpack_header.platform.endianness() == Endian::Big {
                         // NOTE: see Hash documentation for why this is needed!
                         Hash::SplitPath {
                             name: directory_crc,

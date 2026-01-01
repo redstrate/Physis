@@ -36,7 +36,7 @@ pub(crate) enum SqPackFileType {
 #[derive(Debug)]
 pub(crate) struct SqPackHeader {
     #[brw(pad_size_to = 4)]
-    platform_id: Platform,
+    platform: Platform,
     /// The size of this header in bytes.
     pub size: u32,
     /// Have only seen version 1.

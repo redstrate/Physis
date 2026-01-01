@@ -80,24 +80,26 @@ pub enum Platform {
     Xbox = 0x4,
 }
 
-/// Returns the short-hand version of `id`.
-///
-/// For example, `Platform::Win32` becomes "win32".
-pub fn get_platform_string(id: Platform) -> &'static str {
-    match &id {
-        Platform::Win32 => "win32",
-        Platform::PS3 => "ps3",
-        Platform::PS4 => "ps4",
-        Platform::PS5 => "ps5",
-        Platform::Xbox => "lys",
+impl Platform {
+    /// Returns the short-hand codename for this platform.
+    ///
+    /// For example, `Platform::Win32` becomes "win32".
+    pub fn shortname(&self) -> &'static str {
+        match self {
+            Platform::Win32 => "win32",
+            Platform::PS3 => "ps3",
+            Platform::PS4 => "ps4",
+            Platform::PS5 => "ps5",
+            Platform::Xbox => "lys",
+        }
     }
-}
 
-/// Returns the endianness of the platform.
-pub(crate) fn get_platform_endianness(id: Platform) -> Endian {
-    match id {
-        Platform::PS3 => Endian::Big,
-        _ => Endian::Little,
+    /// Returns the endianness for this platform.
+    pub(crate) fn endianness(&self) -> Endian {
+        match self {
+            Platform::PS3 => Endian::Big,
+            _ => Endian::Little,
+        }
     }
 }
 

@@ -8,7 +8,6 @@ use std::io::SeekFrom;
 
 use crate::ByteSpan;
 use crate::common::Platform;
-use crate::common::get_platform_endianness;
 use crate::common_file_operations::read_bool_from;
 use crate::common_file_operations::read_string_until_null;
 use binrw::BinRead;
@@ -230,7 +229,7 @@ impl Lvb {
     /// Read an existing file.
     pub fn from_existing(platform: Platform, buffer: ByteSpan) -> Option<Self> {
         let mut cursor = Cursor::new(buffer);
-        Lvb::read_options(&mut cursor, get_platform_endianness(platform), ()).ok()
+        Lvb::read_options(&mut cursor, platform.endianness(), ()).ok()
     }
 }
 

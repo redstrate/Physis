@@ -5,7 +5,7 @@ use std::io::Write;
 use std::io::{Cursor, Read, Seek, SeekFrom};
 
 use crate::ByteBuffer;
-use crate::common::{Platform, get_platform_endianness};
+use crate::common::Platform;
 use binrw::BinRead;
 use binrw::BinWrite;
 use binrw::{BinReaderExt, binrw};
@@ -209,8 +209,7 @@ impl SqPackData {
             .expect("Unable to find offset in file.");
 
         let file_info =
-            FileInfo::read_options(&mut self.file, get_platform_endianness(self.platform), ())
-                .ok()?;
+            FileInfo::read_options(&mut self.file, self.platform.endianness(), ()).ok()?;
 
         match file_info.file_type {
             FileType::Empty => None,
@@ -227,10 +226,7 @@ impl SqPackData {
         let mut blocks: Vec<Block> = Vec::with_capacity(standard_file_info.num_blocks as usize);
 
         for _ in 0..standard_file_info.num_blocks {
-            blocks.push(
-                Block::read_options(&mut self.file, get_platform_endianness(self.platform), ())
-                    .ok()?,
-            );
+            blocks.push(Block::read_options(&mut self.file, self.platform.endianness(), ()).ok()?);
         }
 
         let mut data: Vec<u8> = Vec::with_capacity(file_info.file_size as usize);
@@ -241,7 +237,7 @@ impl SqPackData {
             data.append(
                 &mut read_data_block(
                     &mut self.file,
-                    get_platform_endianness(self.platform),
+                    self.platform.endianness(),
                     starting_position + (blocks[i as usize].offset as u64),
                 )
                 .expect("Failed to read data block."),
@@ -290,12 +286,8 @@ impl SqPackData {
             for _ in 0..size {
                 let last_pos = &self.file.stream_position().ok()?;
 
-                let data = read_data_block(
-                    &self.file,
-                    get_platform_endianness(self.platform),
-                    *last_pos,
-                )
-                .expect("Unable to read block data.");
+                let data = read_data_block(&self.file, self.platform.endianness(), *last_pos)
+                    .expect("Unable to read block data.");
                 // write to buffer
                 buffer.write_all(data.as_slice()).ok()?;
 
@@ -340,12 +332,9 @@ impl SqPackData {
                     for _ in 0..size {
                         let last_pos = self.file.stream_position().unwrap();
 
-                        let data = read_data_block(
-                            &self.file,
-                            get_platform_endianness(self.platform),
-                            last_pos,
-                        )
-                        .expect("Unable to read raw model block!");
+                        let data =
+                            read_data_block(&self.file, self.platform.endianness(), last_pos)
+                                .expect("Unable to read raw model block!");
 
                         buffer
                             .write_all(data.as_slice())
@@ -441,7 +430,7 @@ impl SqPackData {
 
                 data.append(&mut read_data_block(
                     &self.file,
-                    get_platform_endianness(self.platform),
+                    self.platform.endianness(),
                     running_block_total,
                 )?);
 

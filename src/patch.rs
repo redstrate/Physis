@@ -13,7 +13,7 @@ use crate::compression::header_decompress;
 use binrw::{BinRead, Endian};
 use binrw::{BinWrite, binrw};
 
-use crate::common::{Platform, get_platform_string};
+use crate::common::Platform;
 use crate::common_file_operations::{
     get_string_len, read_bool_from, read_string, write_bool_as, write_string,
 };
@@ -527,7 +527,7 @@ impl ZiPatch {
                     "{:02x}{:04x}.{}.dat{}",
                     main_id,
                     sub_id,
-                    get_platform_string(target_info.platform),
+                    target_info.platform.shortname(),
                     file_id
                 );
                 let path: PathBuf = [
@@ -548,7 +548,7 @@ impl ZiPatch {
                     "{:02x}{:04x}.{}.index",
                     main_id,
                     sub_id,
-                    get_platform_string(target_info.platform)
+                    target_info.platform.shortname()
                 );
 
                 // index files have no special ending if it's file_id == 0
