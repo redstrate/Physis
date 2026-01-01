@@ -126,7 +126,7 @@ pub fn string_to_category(string: &str) -> Option<Category> {
 impl Repository {
     /// Creates a new base `Repository`, from an existing directory. This may return `None` if
     /// the directory is invalid, e.g. a version file is missing.
-    pub fn from_existing_base(
+    pub(crate) fn from_existing_base(
         platform: Platform,
         release: SqPackRelease,
         dir: &str,
@@ -151,7 +151,7 @@ impl Repository {
 
     /// Creates a new expansion `Repository`, from an existing directory. This may return `None` if
     /// the directory is invalid, e.g. a version file is missing.
-    pub fn from_existing_expansion(
+    pub(crate) fn from_existing_expansion(
         platform: Platform,
         release: SqPackRelease,
         dir: &str,
