@@ -5,13 +5,14 @@
 
 use std::io::Cursor;
 
-use crate::ByteSpan;
+use crate::common::Platform;
 use crate::common_file_operations::{Half1, Half2, Half3};
 use crate::mtrl::ColorDyeTable::{
     DawntrailColorDyeTable, LegacyColorDyeTable, OpaqueColorDyeTable,
 };
 use crate::mtrl::ColorTable::{DawntrailColorTable, LegacyColorTable, OpaqueColorTable};
-use binrw::{BinRead, BinResult, binread, binrw};
+use crate::{ByteBuffer, ByteSpan};
+use binrw::{BinRead, BinResult, BinWrite, binread, binrw};
 
 #[binrw]
 #[derive(Debug)]
@@ -46,7 +47,7 @@ struct ColorSet {
     index: u16,
 }
 
-#[binread]
+#[binrw]
 #[derive(Debug, Clone, Copy)]
 #[repr(C)]
 #[allow(dead_code)]
@@ -121,7 +122,7 @@ pub struct DawntrailColorTableRow {
     pub material_skew: [f32; 2],
 }
 
-#[binread]
+#[binrw]
 #[derive(Debug, Clone, Copy)]
 #[repr(C)]
 #[allow(dead_code)]
@@ -150,31 +151,31 @@ pub struct LegacyColorTableRow {
     pub material_skew: [f32; 2],
 }
 
-#[binread]
-#[derive(Debug)]
+#[binrw]
+#[derive(Debug, Clone)]
 #[allow(dead_code)]
 pub struct LegacyColorTableData {
     #[br(count = 16)]
     pub rows: Vec<LegacyColorTableRow>,
 }
 
-#[binread]
-#[derive(Debug)]
+#[binrw]
+#[derive(Debug, Clone)]
 #[allow(dead_code)]
 pub struct DawntrailColorTableData {
     #[br(count = 32)]
     pub rows: Vec<DawntrailColorTableRow>,
 }
 
-#[binread]
-#[derive(Debug)]
+#[binrw]
+#[derive(Debug, Clone)]
 #[allow(dead_code)]
 pub struct OpaqueColorTableData {
     // TODO: Support
 }
 
-#[binread]
-#[derive(Debug)]
+#[binrw]
+#[derive(Debug, Clone)]
 #[allow(dead_code)]
 pub enum ColorTable {
     LegacyColorTable(LegacyColorTableData),
@@ -182,107 +183,129 @@ pub enum ColorTable {
     OpaqueColorTable(OpaqueColorTableData),
 }
 
-#[binread]
-#[derive(Debug)]
+#[binrw]
+#[derive(Debug, Clone)]
 #[allow(dead_code)]
 pub struct LegacyColorDyeTableRow {
     #[br(temp)]
+    #[bw(calc = 0)] // TODO: lol no
     data: u16,
 
     #[br(calc = data >> 5)]
+    #[bw(ignore)]
     pub template: u16,
 
     #[br(calc = (data & 0x01) != 0)]
+    #[bw(ignore)]
     pub diffuse: bool,
 
     #[br(calc = (data & 0x02) != 0)]
+    #[bw(ignore)]
     pub specular: bool,
 
     #[br(calc = (data & 0x04) != 0)]
+    #[bw(ignore)]
     pub emissive: bool,
 
     #[br(calc = (data & 0x08) != 0)]
+    #[bw(ignore)]
     pub gloss: bool,
 
     #[br(calc = (data & 0x10) != 0)]
+    #[bw(ignore)]
     pub specular_strength: bool,
 }
 
-#[binread]
-#[derive(Debug)]
+#[binrw]
+#[derive(Debug, Clone)]
 #[allow(dead_code)]
 pub struct DawntrailColorDyeTableRow {
     #[br(temp)]
+    #[bw(calc = 0)] // TODO: lol no
     data: u32,
 
     #[br(calc = ((data >> 16) & 0x7FF) as u16)]
+    #[bw(ignore)]
     pub template: u16,
 
     #[br(calc = ((data >> 27) & 0x3) as u8)]
+    #[bw(ignore)]
     pub channel: u8,
 
     #[br(calc = (data & 0x0001) != 0)]
+    #[bw(ignore)]
     pub diffuse: bool,
 
     #[br(calc = (data & 0x0002) != 0)]
+    #[bw(ignore)]
     pub specular: bool,
 
     #[br(calc = (data & 0x0004) != 0)]
+    #[bw(ignore)]
     pub emissive: bool,
 
     #[br(calc = (data & 0x0008) != 0)]
+    #[bw(ignore)]
     pub scalar3: bool,
 
     #[br(calc = (data & 0x0010) != 0)]
+    #[bw(ignore)]
     pub metalness: bool,
 
     #[br(calc = (data & 0x0020) != 0)]
+    #[bw(ignore)]
     pub roughness: bool,
 
     #[br(calc = (data & 0x0040) != 0)]
+    #[bw(ignore)]
     pub sheen_rate: bool,
 
     #[br(calc = (data & 0x0080) != 0)]
+    #[bw(ignore)]
     pub sheen_tint_rate: bool,
 
     #[br(calc = (data & 0x0100) != 0)]
+    #[bw(ignore)]
     pub sheen_aperture: bool,
 
     #[br(calc = (data & 0x0200) != 0)]
+    #[bw(ignore)]
     pub anisotropy: bool,
 
     #[br(calc = (data & 0x0400) != 0)]
+    #[bw(ignore)]
     pub sphere_map_index: bool,
 
     #[br(calc = (data & 0x0800) != 0)]
+    #[bw(ignore)]
     pub sphere_map_mask: bool,
 }
 
-#[binread]
-#[derive(Debug)]
+#[binrw]
+#[derive(Debug, Clone)]
 #[allow(dead_code)]
 pub struct LegacyColorDyeTableData {
     #[br(count = 16)]
     pub rows: Vec<LegacyColorDyeTableRow>,
 }
 
-#[binread]
-#[derive(Debug)]
+#[binrw]
+#[derive(Debug, Clone)]
 #[allow(dead_code)]
 pub struct DawntrailColorDyeTableData {
     #[br(count = 32)]
     pub rows: Vec<DawntrailColorDyeTableRow>,
 }
 
-#[binread]
-#[derive(Debug)]
+#[binrw]
+#[derive(Debug, Clone)]
 #[allow(dead_code)]
 pub struct OpaqueColorDyeTableData {
     // TODO: implement
 }
 
-#[binread]
-#[derive(Debug)]
+#[binrw]
+#[derive(Debug, Clone)]
 #[allow(dead_code)]
 pub enum ColorDyeTable {
     LegacyColorDyeTable(LegacyColorDyeTableData),
@@ -354,7 +377,6 @@ fn parse_color_dye_table(table_dimension_logs: u8) -> BinResult<Option<ColorDyeT
 #[binrw]
 #[derive(Debug)]
 #[allow(dead_code)]
-#[br(little)]
 struct MaterialData {
     file_header: MaterialFileHeader,
 
@@ -371,8 +393,10 @@ struct MaterialData {
     strings: Vec<u8>,
 
     #[br(count = file_header.additional_data_size)]
-    #[br(pad_size_to = 4)]
-    #[br(map = |x: Vec<u8>| if x.len() >= 4 { u32::from_le_bytes(x[0..4].try_into().unwrap()) } else { 0 })]
+    additional_data: Vec<u8>,
+
+    #[bw(ignore)]
+    #[br(calc = if additional_data.len() >= 4 { u32::from_le_bytes(additional_data[0..4].try_into().unwrap()) } else { 0 })]
     table_flags: u32,
 
     #[br(calc = (table_flags & 0x4) != 0)]
@@ -402,13 +426,13 @@ struct MaterialData {
     #[br(if(has_table))]
     #[br(parse_with = parse_color_table)]
     #[br(args(table_dimension_logs))]
-    #[bw(ignore)]
+    #[bw(if(*has_table))]
     color_table: Option<ColorTable>,
 
     #[br(if(has_dye_table))]
     #[br(parse_with = parse_color_dye_table)]
     #[br(args(table_dimension_logs))]
-    #[bw(ignore)]
+    #[bw(if(*has_dye_table))]
     color_dye_table: Option<ColorDyeTable>,
 
     header: MaterialHeader,
@@ -428,6 +452,7 @@ struct MaterialData {
 /// Contains general information about a material, such as which textures it uses.
 #[derive(Debug)]
 pub struct Material {
+    mat_data: MaterialData,
     pub shader_package_name: String,
     pub texture_paths: Vec<String>,
     pub shader_keys: Vec<ShaderKey>,
@@ -439,9 +464,9 @@ pub struct Material {
 
 impl Material {
     /// Read an existing file.
-    pub fn from_existing(buffer: ByteSpan) -> Option<Material> {
+    pub fn from_existing(platform: Platform, buffer: ByteSpan) -> Option<Material> {
         let mut cursor = Cursor::new(buffer);
-        let mat_data = MaterialData::read(&mut cursor).ok()?;
+        let mat_data = MaterialData::read_options(&mut cursor, platform.endianness(), ()).ok()?;
 
         let mut texture_paths = vec![];
 
@@ -478,7 +503,7 @@ impl Material {
         let mut constants = Vec::new();
         const VALUE_SIZE: u16 = std::mem::size_of::<f32>() as u16;
         if mat_data.header.shader_value_list_size % VALUE_SIZE == 0 {
-            for constant in mat_data.constants {
+            for constant in &mat_data.constants {
                 let mut values: [f32; 4] = [0.0; 4];
 
                 // TODO: use mem::size_of
@@ -495,15 +520,35 @@ impl Material {
             }
         }
 
+        let shader_keys = mat_data.shader_keys.clone();
+        let samplers = mat_data.samplers.clone();
+        let color_table = mat_data.color_table.clone();
+        let color_dye_table = mat_data.color_dye_table.clone();
+
         Some(Material {
+            mat_data,
             shader_package_name,
             texture_paths,
-            shader_keys: mat_data.shader_keys,
+            shader_keys,
             constants,
-            samplers: mat_data.samplers,
-            color_table: mat_data.color_table,
-            color_dye_table: mat_data.color_dye_table,
+            samplers,
+            color_table,
+            color_dye_table,
         })
+    }
+
+    /// Writes data back to a buffer.
+    pub fn write_to_buffer(&self, platform: Platform) -> Option<ByteBuffer> {
+        let mut buffer = ByteBuffer::new();
+
+        {
+            let mut cursor = Cursor::new(&mut buffer);
+            self.mat_data
+                .write_options(&mut cursor, platform.endianness(), ())
+                .ok()?;
+        }
+
+        Some(buffer)
     }
 }
 
@@ -521,6 +566,6 @@ mod tests {
         d.push("random");
 
         // Feeding it invalid data should not panic
-        Material::from_existing(&read(d).unwrap());
+        Material::from_existing(Platform::Win32, &read(d).unwrap());
     }
 }

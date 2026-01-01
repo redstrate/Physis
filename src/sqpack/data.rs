@@ -119,10 +119,21 @@ pub struct ModelFileBlock {
 }
 
 #[binrw]
+#[derive(Default, Debug)]
+struct ReferenceBlockRange {
+    begin: u32,
+    end: u32,
+}
+
+#[binrw]
+#[brw(import(platform: &Platform))]
 #[derive(Debug)]
 struct TextureBlock {
     #[br(pad_before = 8)]
     num_blocks: u32,
+
+    #[brw(if(*platform == Platform::PS3))]
+    _ps3_only: [ReferenceBlockRange; 3],
 
     #[br(count = num_blocks)]
     lods: Vec<TextureLodBlock>,
@@ -131,10 +142,14 @@ struct TextureBlock {
 /// A SqPack file info header. It can optionally contain extra information, such as texture or
 /// model data depending on the file type.
 #[binrw]
+#[brw(import(platform: &Platform))]
 #[derive(Debug)]
 struct FileInfo {
+    /// Size of this header in bytes.
     size: u32,
+    /// What kind of file this is.
     file_type: FileType,
+    /// The size of the file.
     file_size: u32,
 
     #[br(if (file_type == FileType::Standard))]
@@ -147,6 +162,7 @@ struct FileInfo {
 
     #[br(if (file_type == FileType::Texture))]
     #[bw(if (*file_type == FileType::Texture))]
+    #[brw(args(platform))]
     texture_info: Option<TextureBlock>,
 }
 
@@ -213,8 +229,12 @@ impl SqPackData {
             .seek(SeekFrom::Start(offset))
             .expect("Unable to find offset in file.");
 
-        let file_info =
-            FileInfo::read_options(&mut self.file, self.platform.endianness(), ()).ok()?;
+        let file_info = FileInfo::read_options(
+            &mut self.file,
+            self.platform.endianness(),
+            (&self.platform,),
+        )
+        .ok()?;
 
         match file_info.file_type {
             FileType::Empty => None,
@@ -446,7 +466,10 @@ impl SqPackData {
 
                 self.file.seek(SeekFrom::Start(original_pos)).ok()?;
 
-                running_block_total += self.file.read_le::<i16>().ok()? as u64;
+                running_block_total += self
+                    .file
+                    .read_type_args::<i16>(self.platform.endianness(), ())
+                    .ok()? as u64;
             }
         }
 

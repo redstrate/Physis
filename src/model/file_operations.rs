@@ -99,7 +99,6 @@ impl MDL {
         ])
     }
 
-    #[allow(dead_code)] // We will eventually use this
     pub(crate) fn write_half2<T: BinWriterExt>(
         cursor: &mut T,
         endian: Endian,

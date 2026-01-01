@@ -5,12 +5,15 @@
 
 use std::io::{Cursor, Read, Seek, SeekFrom};
 
+use crate::ByteBuffer;
 use crate::ByteSpan;
 use crate::bcn::decode_bc1;
 use crate::bcn::decode_bc3;
 use crate::bcn::decode_bc5;
 use crate::bcn::decode_bc7;
+use crate::common::Platform;
 use binrw::BinRead;
+use binrw::BinWrite;
 use binrw::binrw;
 use bitflags::bitflags;
 
@@ -94,7 +97,6 @@ enum TextureFormat {
 #[binrw]
 #[derive(Debug)]
 #[allow(dead_code)]
-#[brw(little)]
 struct TexHeader {
     attribute: TextureAttribute,
     format: TextureFormat,
@@ -135,9 +137,9 @@ type DecodeFunction = fn(&[u8], usize, usize, &mut [u32]) -> Result<(), &'static
 
 impl Texture {
     /// Read an existing file.
-    pub fn from_existing(buffer: ByteSpan) -> Option<Texture> {
+    pub fn from_existing(platform: Platform, buffer: ByteSpan) -> Option<Texture> {
         let mut cursor = Cursor::new(buffer);
-        let header = TexHeader::read(&mut cursor).ok()?;
+        let header = TexHeader::read_options(&mut cursor, platform.endianness(), ()).ok()?;
 
         cursor
             .seek(SeekFrom::Start(std::mem::size_of::<TexHeader>() as u64))
@@ -250,6 +252,26 @@ impl Texture {
         })
     }
 
+    /// Converts an existing texture from `src_platform` to `dst_platform`.
+    pub fn convert_existing(
+        src_platform: Platform,
+        buffer: ByteSpan,
+        dst_platform: Platform,
+    ) -> ByteBuffer {
+        // Read the header from src_platform.
+        let mut src_cursor = Cursor::new(buffer);
+        let src_header =
+            TexHeader::read_options(&mut src_cursor, src_platform.endianness(), ()).unwrap();
+
+        // Write the new header on top of the old one.
+        let mut dst_cursor = Cursor::new(buffer.to_vec());
+        src_header
+            .write_options(&mut dst_cursor, dst_platform.endianness(), ())
+            .unwrap();
+
+        dst_cursor.into_inner()
+    }
+
     fn decode(src: &[u8], width: usize, height: usize, decode_func: DecodeFunction) -> Vec<u8> {
         let mut image: Vec<u32> = vec![0; width * height];
         decode_func(src, width, height, &mut image).unwrap();
@@ -278,6 +300,6 @@ mod tests {
         d.push("random");
 
         // Feeding it invalid data should not panic
-        Texture::from_existing(&read(d).unwrap());
+        Texture::from_existing(Platform::Win32, &read(d).unwrap());
     }
 }

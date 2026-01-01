@@ -631,8 +631,9 @@ impl MDL {
                                 }
                                 VertexType::UnkPS3 => {
                                     // TODO: unsure
-                                    vertices[k as usize].normal =
-                                        MDL::read_single3(&mut cursor, endianness).unwrap();
+                                    vertices[k as usize].normal.clone_from_slice(
+                                        &MDL::read_byte_float4(&mut cursor).unwrap()[0..3],
+                                    );
                                 }
                                 _ => {
                                     panic!(
@@ -1158,8 +1159,11 @@ impl MDL {
                                     }
                                     VertexType::UnkPS3 => {
                                         // TODO: unsure
-                                        MDL::write_single3(&mut cursor, endianness, &vert.normal)
-                                            .ok()?;
+                                        MDL::write_byte_float4(
+                                            &mut cursor,
+                                            &MDL::pad_slice(&vert.normal, 0.0),
+                                        )
+                                        .ok()?;
                                     }
                                     _ => {
                                         panic!(
@@ -1169,6 +1173,10 @@ impl MDL {
                                     }
                                 },
                                 VertexUsage::UV => match element.vertex_type {
+                                    VertexType::Half2 => {
+                                        MDL::write_half2(&mut cursor, endianness, &vert.uv0)
+                                            .ok()?;
+                                    }
                                     VertexType::Half4 => {
                                         let combined =
                                             [vert.uv0[0], vert.uv0[1], vert.uv1[0], vert.uv1[1]];

@@ -44,7 +44,7 @@ pub enum VertexType {
     /// 4 16-bit floats
     Half4 = 14,
 
-    /// Seen on PS3, unsure of what this is. xivModdingFramework used to call this "Compress".
+    /// Seen on PS3, unsure of what this is. xivModdingFramework calls this "Compress".
     UnkPS3 = 15,
 
     /// 2 16-bit unsigned integers
@@ -69,7 +69,7 @@ pub fn get_vertex_type_size(vertex_type: VertexType) -> usize {
         VertexType::Short4n => 4,
         VertexType::Half2 => 4,
         VertexType::Half4 => 8,
-        VertexType::UnkPS3 => 4, // TODO: unsure
+        VertexType::UnkPS3 => 4,
         VertexType::UnsignedShort2 => 4,
         VertexType::UnsignedShort4 => 8,
     }
