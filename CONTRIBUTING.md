@@ -1,7 +1,6 @@
 # Contributing
 
-If you're interested to read how these formats work in more detail, see [xiv.dev](https://xiv.dev/) and
-[docs.xiv.zone](https://docs.xiv.zone).
+Contributions of any kind is welcome, from code to reviews or filing an issue you found while using Physis.
 
 ## Pull Requests
 
