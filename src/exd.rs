@@ -264,7 +264,6 @@ impl EXD {
                 match &row.kind {
                     ExcelRowKind::SingleRow(_) => {}
                     ExcelRowKind::SubRows(subrows) => {
-                        dbg!(subrows);
                         if let Some(subrow) = subrows.iter().find(|(id, _)| *id == subrow_id) {
                             return Some(subrow.1.clone());
                         }

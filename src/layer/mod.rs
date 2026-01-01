@@ -469,8 +469,7 @@ pub struct ChairMarkerInstanceObject {
 #[binrw]
 #[derive(Debug, PartialEq)]
 #[br(little)]
-pub struct ClickableRangeInstanceObject {
-}
+pub struct ClickableRangeInstanceObject {}
 
 #[binrw]
 #[derive(Debug, PartialEq)]

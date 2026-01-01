@@ -5,6 +5,7 @@ use std::io::Write;
 use std::io::{Cursor, Read, Seek, SeekFrom};
 
 use crate::ByteBuffer;
+use crate::common::{Platform, get_platform_endianness};
 use binrw::BinRead;
 use binrw::BinWrite;
 use binrw::{BinReaderExt, binrw};
@@ -20,11 +21,11 @@ use crate::sqpack::read_data_block;
 pub enum FileType {
     /// Empty entry, usually invalid.
     Empty = 1,
-    /// Encompasses every file that is not a model or a texture, which are stored in a special fashion.
+    /// Encompasses every file that is not a model or a texture.
     Standard,
-    /// Model (MDL) files.
+    /// Model (.mdl) files.
     Model,
-    /// Texture (TEX) files.
+    /// Texture (.tex) files.
     Texture,
 }
 
@@ -123,7 +124,6 @@ struct TextureBlock {
 /// A SqPack file info header. It can optionally contain extra information, such as texture or
 /// model data depending on the file type.
 #[derive(BinRead)]
-#[br(little)]
 struct FileInfo {
     size: u32,
     file_type: FileType,
@@ -140,7 +140,6 @@ struct FileInfo {
 }
 
 #[binrw]
-#[br(little)]
 pub struct Block {
     #[br(pad_after = 4)]
     offset: i32,
@@ -163,7 +162,6 @@ pub enum CompressionMode {
 
 #[binrw]
 #[derive(Debug)]
-#[brw(little)]
 pub struct BlockHeader {
     #[brw(pad_after = 4)]
     pub size: u32,
@@ -182,6 +180,7 @@ pub struct BlockHeader {
 }
 
 pub struct SqPackData {
+    platform: Platform,
     file: std::fs::File,
 }
 
@@ -193,8 +192,9 @@ fn to_u8_slice(slice: &mut [u16]) -> &mut [u8] {
 
 impl SqPackData {
     /// Creates a new reference to an existing dat file.
-    pub fn from_existing(path: &str) -> Option<Self> {
+    pub fn from_existing(platform: Platform, path: &str) -> Option<Self> {
         Some(Self {
+            platform,
             file: std::fs::File::open(path).ok()?,
         })
     }
@@ -208,7 +208,9 @@ impl SqPackData {
             .seek(SeekFrom::Start(offset))
             .expect("Unable to find offset in file.");
 
-        let file_info = FileInfo::read(&mut self.file).ok()?;
+        let file_info =
+            FileInfo::read_options(&mut self.file, get_platform_endianness(self.platform), ())
+                .ok()?;
 
         match file_info.file_type {
             FileType::Empty => None,
@@ -225,7 +227,10 @@ impl SqPackData {
         let mut blocks: Vec<Block> = Vec::with_capacity(standard_file_info.num_blocks as usize);
 
         for _ in 0..standard_file_info.num_blocks {
-            blocks.push(Block::read(&mut self.file).ok()?);
+            blocks.push(
+                Block::read_options(&mut self.file, get_platform_endianness(self.platform), ())
+                    .ok()?,
+            );
         }
 
         let mut data: Vec<u8> = Vec::with_capacity(file_info.file_size as usize);
@@ -236,6 +241,7 @@ impl SqPackData {
             data.append(
                 &mut read_data_block(
                     &mut self.file,
+                    get_platform_endianness(self.platform),
                     starting_position + (blocks[i as usize].offset as u64),
                 )
                 .expect("Failed to read data block."),
@@ -284,8 +290,12 @@ impl SqPackData {
             for _ in 0..size {
                 let last_pos = &self.file.stream_position().ok()?;
 
-                let data =
-                    read_data_block(&self.file, *last_pos).expect("Unable to read block data.");
+                let data = read_data_block(
+                    &self.file,
+                    get_platform_endianness(self.platform),
+                    *last_pos,
+                )
+                .expect("Unable to read block data.");
                 // write to buffer
                 buffer.write_all(data.as_slice()).ok()?;
 
@@ -330,8 +340,12 @@ impl SqPackData {
                     for _ in 0..size {
                         let last_pos = self.file.stream_position().unwrap();
 
-                        let data = read_data_block(&self.file, last_pos)
-                            .expect("Unable to read raw model block!");
+                        let data = read_data_block(
+                            &self.file,
+                            get_platform_endianness(self.platform),
+                            last_pos,
+                        )
+                        .expect("Unable to read raw model block!");
 
                         buffer
                             .write_all(data.as_slice())
@@ -425,7 +439,11 @@ impl SqPackData {
             for _ in 0..texture_file_info.lods[i as usize].block_count {
                 let original_pos = self.file.stream_position().ok()?;
 
-                data.append(&mut read_data_block(&self.file, running_block_total)?);
+                data.append(&mut read_data_block(
+                    &self.file,
+                    get_platform_endianness(self.platform),
+                    running_block_total,
+                )?);
 
                 self.file.seek(SeekFrom::Start(original_pos)).ok()?;
 
@@ -449,7 +467,7 @@ mod tests {
         d.push("resources/tests");
         d.push("random");
 
-        let mut dat = SqPackData::from_existing(d.to_str().unwrap()).unwrap();
+        let mut dat = SqPackData::from_existing(Platform::Win32, d.to_str().unwrap()).unwrap();
 
         let empty_file_info = FileInfo {
             size: 0,

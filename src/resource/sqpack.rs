@@ -36,6 +36,7 @@ pub enum RepairError<'a> {
 }
 
 /// Used to read files from the retail game, in their SqPack-compressed format.
+#[derive(Debug)]
 pub struct SqPackResource {
     /// The game directory to operate on.
     pub game_directory: String,
@@ -75,8 +76,7 @@ impl SqPackResource {
         let mut d = PathBuf::from(self.game_directory.as_str());
 
         // add initial ffxiv directory
-        if let Some(base_repository) =
-            Repository::from_existing_base(platform.clone(), d.to_str().unwrap())
+        if let Some(base_repository) = Repository::from_existing_base(platform, d.to_str().unwrap())
         {
             self.repositories.push(base_repository);
         }
@@ -94,7 +94,7 @@ impl SqPackResource {
 
             for repository_path in repository_paths {
                 if let Some(expansion_repository) = Repository::from_existing_expansion(
-                    platform.clone(),
+                    platform,
                     repository_path.path().to_str().unwrap(),
                 ) {
                     self.repositories.push(expansion_repository);
@@ -113,7 +113,7 @@ impl SqPackResource {
         // Append the new dat extension
         let dat_path = format!("{dat_path}.dat{data_file_id}",);
 
-        SqPackData::from_existing(&dat_path)
+        SqPackData::from_existing(self.repositories[0].platform, &dat_path)
     }
 
     /// Finds the offset inside of the DAT file for `path`.
@@ -284,7 +284,8 @@ impl SqPackResource {
 
     fn cache_index_file(&mut self, filename: &str) {
         if !self.index_files.contains_key(filename)
-            && let Some(index_file) = SqPackIndex::from_existing(filename)
+            && let Some(index_file) =
+                SqPackIndex::from_existing(self.repositories[0].platform, filename)
         {
             self.index_files.insert(filename.to_string(), index_file);
         }

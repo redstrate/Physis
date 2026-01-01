@@ -9,6 +9,8 @@ use std::io::Seek;
 use std::io::SeekFrom;
 use std::io::Write;
 
+use crate::common::Platform;
+use crate::common::get_platform_endianness;
 use crate::crc::Jamcrc;
 use crate::sqpack::SqPackHeader;
 use binrw::BinRead;
@@ -32,13 +34,16 @@ pub struct SegementDescriptor {
 #[brw(repr = u32)]
 #[derive(Debug, PartialEq)]
 pub enum IndexType {
+    /// `.index` files.
     Index1 = 0,
+    /// `.index2` files.
     Index2 = 2,
 }
 
 #[binrw]
 #[derive(Debug)]
 pub struct SqPackIndexHeader {
+    /// The size of this header in bytes.
     size: u32,
 
     #[brw(pad_after = 4)]
@@ -65,12 +70,14 @@ pub struct SqPackIndexHeader {
 #[derive(PartialEq, Debug, Clone, Copy)]
 #[repr(C)]
 pub enum Hash {
+    // TODO: on the PS3 these are flipped, but I don't have a good way to represent that yet...
     #[br(pre_assert(*index_type == IndexType::Index1))]
     SplitPath { name: u32, path: u32 },
     #[br(pre_assert(*index_type == IndexType::Index2))]
     FullPath(u32),
 }
 
+#[derive(Debug)]
 pub struct FileEntryData {
     pub is_synonym: bool,
     pub data_file_id: u8,
@@ -85,7 +92,12 @@ impl BinRead for FileEntryData {
         endian: Endian,
         (): Self::Args<'_>,
     ) -> BinResult<Self> {
-        let data = <u32>::read_options(reader, endian, ())?;
+        let mut data = <u32>::read_options(reader, endian, ())?;
+        if endian == Endian::Big {
+            // Taken from Lumina, fixes reading from PS3 somehow?
+            data = (data << 4) | ((data & 0x70000000) >> 27) | ((data & 0x80000000) >> 31);
+        }
+
         Ok(Self {
             is_synonym: (data & 0b1) == 0b1,
             data_file_id: ((data & 0b1110) >> 1) as u8,
@@ -106,12 +118,15 @@ impl BinWrite for FileEntryData {
         // TODO: support synonym and data_file_id
         let data: u32 = self.offset.wrapping_div(0x08) as u32;
 
+        // TODO: support big endian?
+
         data.write_options(writer, endian, ())
     }
 }
 
 #[binrw]
 #[brw(import(index_type: &IndexType))]
+#[derive(Debug)]
 pub struct FileEntry {
     #[br(args(index_type))]
     pub hash: Hash,
@@ -149,7 +164,7 @@ pub struct IndexEntry {
 }
 
 #[binrw]
-#[br(little)]
+#[derive(Debug)]
 pub struct SqPackIndex {
     sqpack_header: SqPackHeader,
 
@@ -176,7 +191,7 @@ const CRC: Jamcrc = Jamcrc::new();
 
 impl SqPackIndex {
     /// Creates a new reference to an existing index file.
-    pub fn from_existing(path: &str) -> Option<Self> {
+    pub fn from_existing(platform: Platform, path: &str) -> Option<Self> {
         let mut index_file = std::fs::File::open(path).ok()?;
 
         // Index files are individually small, so we can easily load them entirely to memory.
@@ -184,7 +199,12 @@ impl SqPackIndex {
         let mut buf = Vec::new();
         index_file.read_to_end(&mut buf).ok()?;
 
-        Self::read(&mut std::io::Cursor::new(buf)).ok()
+        Self::read_options(
+            &mut std::io::Cursor::new(buf),
+            get_platform_endianness(platform),
+            (),
+        )
+        .ok()
     }
 
     /// Calculates a partial hash for a given path
@@ -206,9 +226,17 @@ impl SqPackIndex {
                     let directory_crc = CRC.checksum(directory.as_bytes());
                     let filename_crc = CRC.checksum(&filename.as_bytes()[1..filename.len()]);
 
-                    Hash::SplitPath {
-                        name: filename_crc,
-                        path: directory_crc,
+                    if get_platform_endianness(self.sqpack_header.platform_id) == Endian::Big {
+                        // NOTE: see Hash documentation for why this is needed!
+                        Hash::SplitPath {
+                            name: directory_crc,
+                            path: filename_crc,
+                        }
+                    } else {
+                        Hash::SplitPath {
+                            name: filename_crc,
+                            path: directory_crc,
+                        }
                     }
                 } else {
                     // TODO: is this ever hit?
@@ -261,7 +289,7 @@ mod tests {
         d.push("random");
 
         // Feeding it invalid data should not panic
-        SqPackIndex::from_existing(d.to_str().unwrap());
+        SqPackIndex::from_existing(Platform::Win32, d.to_str().unwrap());
     }
 
     #[test]

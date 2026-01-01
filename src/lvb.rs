@@ -7,6 +7,8 @@ use std::io::Cursor;
 use std::io::SeekFrom;
 
 use crate::ByteSpan;
+use crate::common::Platform;
+use crate::common::get_platform_endianness;
 use crate::common_file_operations::read_bool_from;
 use crate::common_file_operations::read_string_until_null;
 use binrw::BinRead;
@@ -19,7 +21,6 @@ use binrw::binread;
 /// Contains general information about the level, such as which layer groups it has.
 #[binread]
 #[derive(Debug)]
-#[brw(little)]
 #[brw(magic = b"LVB1")]
 pub struct Lvb {
     /// Including this header
@@ -34,7 +35,6 @@ pub struct Lvb {
 
 #[binread]
 #[derive(Debug)]
-#[brw(little)]
 #[brw(magic = b"SCN1")]
 pub struct Scn {
     total_size: u32,
@@ -79,7 +79,6 @@ pub(crate) fn strings_from_offsets(offsets: &Vec<i32>) -> BinResult<Vec<String>>
 
 #[binread]
 #[derive(Debug)]
-#[brw(little)]
 pub struct ScnHeader {
     /// offset to FileLayerGroupHeader[NumEmbeddedLayerGroups]
     offset_embedded_layer_groups: i32,
@@ -120,7 +119,6 @@ impl ScnHeader {
 
 #[binread]
 #[derive(Debug)]
-#[br(little)]
 pub struct ScnGeneralSection {
     #[br(map = read_bool_from::<i32>)]
     pub have_layer_groups: bool, // TODO: this is probably not what is according to Sapphire?
@@ -166,7 +164,6 @@ impl ScnGeneralSection {
 
 #[binread]
 #[derive(Debug)]
-#[br(little)]
 pub struct ScnUnknown1Section {
     unk1: i32,
     unk2: i32,
@@ -179,7 +176,6 @@ impl ScnUnknown1Section {
 // TODO: definitely not correct
 #[binread]
 #[derive(Debug)]
-#[br(little)]
 pub struct ScnUnknown2Section {
     unk1: i32,
     unk2: i32,
@@ -192,7 +188,6 @@ impl ScnUnknown2Section {
 // TODO: definitely not correct
 #[binread]
 #[derive(Debug)]
-#[br(little)]
 pub struct ScnUnknown3Section {
     layer_sets_offset: i32,
     layer_sets_count: i32,
@@ -209,7 +204,6 @@ impl ScnUnknown3Section {
 // TODO: definitely not correct
 #[binread]
 #[derive(Debug)]
-#[br(little)]
 pub struct ScnUnknown4Section {
     nvm_path_offset: i32,
     unk1: i32,
@@ -234,9 +228,9 @@ impl ScnUnknown4Section {
 
 impl Lvb {
     /// Read an existing file.
-    pub fn from_existing(buffer: ByteSpan) -> Option<Self> {
+    pub fn from_existing(platform: Platform, buffer: ByteSpan) -> Option<Self> {
         let mut cursor = Cursor::new(buffer);
-        Lvb::read(&mut cursor).ok()
+        Lvb::read_options(&mut cursor, get_platform_endianness(platform), ()).ok()
     }
 }
 
@@ -254,6 +248,6 @@ mod tests {
         d.push("random");
 
         // Feeding it invalid data should not panic
-        Lvb::from_existing(&read(d).unwrap());
+        Lvb::from_existing(Platform::Win32, &read(d).unwrap());
     }
 }

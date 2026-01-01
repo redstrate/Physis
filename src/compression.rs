@@ -76,7 +76,6 @@ pub fn header_decompress(in_data: &mut [u8], out_data: &mut [u8]) -> Option<usiz
             core::mem::size_of::<z_stream>() as i32,
         );
         if ret != Z_OK {
-            dbg!(ret);
             return None;
         }
 
@@ -86,7 +85,6 @@ pub fn header_decompress(in_data: &mut [u8], out_data: &mut [u8]) -> Option<usiz
 
         let ret = inflate(&mut strm, Z_NO_FLUSH);
         if ret != Z_STREAM_END && ret != Z_OK {
-            dbg!(ret);
             return None;
         }
 

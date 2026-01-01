@@ -7,6 +7,7 @@ use std::io::{BufRead, BufReader, BufWriter, Cursor, Write};
 /// Excel list file, usually with the `.exl` file extension.
 ///
 /// Contains a list of every Excel sheet available in-game.
+#[derive(Debug)]
 pub struct EXL {
     /// The version of the list.
     pub version: i32,

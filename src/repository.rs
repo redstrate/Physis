@@ -174,7 +174,7 @@ impl Repository {
             category as i32,
             self.expansion(),
             chunk,
-            get_platform_string(&self.platform)
+            get_platform_string(self.platform)
         )
     }
 

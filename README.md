@@ -6,9 +6,9 @@ Physis is a library for reading and writing FFXIV data. It knows how to read man
 
 ## Supported Game Versions
 
-All game versions are supported, including benchmark versions of the game. Only the Windows client data is tested and other platforms probably won't work.
+All game versions are supported, including benchmark versions of the game. Support for other platforms like the PS3 is somewhat available.
 
-## Supported Platforms
+## Supported Target Platforms
 
 Physis compiles and runs on all major platforms including Windows, macOS, Linux and WebAssembly.
 

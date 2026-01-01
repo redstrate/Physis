@@ -5,7 +5,7 @@ mod resolver;
 pub use resolver::ResourceResolver;
 
 mod sqpack;
-pub use sqpack::{SqPackResource, RepairAction, RepairError};
+pub use sqpack::{RepairAction, RepairError, SqPackResource};
 
 mod unpacked;
 pub use unpacked::UnpackedResource;
@@ -52,21 +52,11 @@ pub trait Resource {
 
 /// Read an excel sheet by name (e.g. "Achievement")
 pub fn read_excel_sheet_header<T: Resource>(resource: &mut T, name: &str) -> Option<EXH> {
-    let root_exl_file = resource.read("exd/root.exl")?;
+    let new_filename = name.to_lowercase();
 
-    let root_exl = EXL::from_existing(&root_exl_file)?;
+    let path = format!("exd/{new_filename}.exh");
 
-    for (row, _) in root_exl.entries {
-        if row == name {
-            let new_filename = name.to_lowercase();
-
-            let path = format!("exd/{new_filename}.exh");
-
-            return EXH::from_existing(&resource.read(&path)?);
-        }
-    }
-
-    None
+    EXH::from_existing(&resource.read(&path)?)
 }
 
 /// Returns all known sheet names listed in the root list

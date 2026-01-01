@@ -10,10 +10,10 @@ use std::path::{Path, PathBuf};
 
 use crate::ByteBuffer;
 use crate::compression::header_decompress;
-use binrw::BinRead;
+use binrw::{BinRead, Endian};
 use binrw::{BinWrite, binrw};
 
-use crate::common::{Platform, Region, get_platform_string};
+use crate::common::{Platform, get_platform_string};
 use crate::common_file_operations::{
     get_string_len, read_bool_from, read_string, write_bool_as, write_string,
 };
@@ -105,6 +105,7 @@ struct FileHeaderChunk3 {
     delete_data_size: u32,
     delete_data_size_2: u32,
     minor_version: u32,
+    /// The "name" of the repository in integer form. For example, the Global FFXIV repository is 4E9A232B.
     repository_name: u32,
     commands: u32,
     sqpk_add_commands: u32,
@@ -295,7 +296,7 @@ struct SqpkTargetInfo {
     #[brw(pad_before = 3)]
     #[brw(pad_size_to = 2)]
     platform: Platform, // Platform is read as a u16, but the enum is u8
-    region: Region, // TODO: unsure if this is actually true, this seems to return Global for Korean patches.
+    unk1: i16, // TODO: unsure what this is, it doesn't seem to correlate to region
     #[br(map = read_bool_from::<u16>)]
     #[bw(map = write_bool_as::<u16>)]
     is_debug: bool,
@@ -526,7 +527,7 @@ impl ZiPatch {
                     "{:02x}{:04x}.{}.dat{}",
                     main_id,
                     sub_id,
-                    get_platform_string(&target_info.platform),
+                    get_platform_string(target_info.platform),
                     file_id
                 );
                 let path: PathBuf = [
@@ -547,7 +548,7 @@ impl ZiPatch {
                     "{:02x}{:04x}.{}.index",
                     main_id,
                     sub_id,
-                    get_platform_string(&target_info.platform)
+                    get_platform_string(target_info.platform)
                 );
 
                 // index files have no special ending if it's file_id == 0
@@ -690,7 +691,7 @@ impl ZiPatch {
 
                                     while data.len() < fop.file_size as usize {
                                         data.append(
-                                            &mut read_data_block_patch(&mut file)
+                                            &mut read_data_block_patch(&mut file, Endian::Little) // TODO: don't hardcode to little
                                                 .ok_or(PatchError::ParseError)?,
                                         );
                                     }
@@ -877,7 +878,7 @@ impl ZiPatch {
                 writer.seek(SeekFrom::Current(-4)).ok()?;
 
                 // add file data, dummy ver for now
-                write_data_block_patch(&mut writer, file_data);
+                write_data_block_patch(&mut writer, Endian::Little, file_data); // TODO: don't hardcode to little
 
                 // re-apply crc32
                 writer.seek(SeekFrom::Current(4)).ok()?;

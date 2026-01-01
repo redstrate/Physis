@@ -4,7 +4,7 @@
 use std::fs;
 use std::path::Path;
 
-use binrw::binrw;
+use binrw::{Endian, binrw};
 
 #[binrw]
 #[brw(repr(u8))]
@@ -48,7 +48,7 @@ pub fn get_language_code(lang: &Language) -> &'static str {
 
 /// The region of the game. Used to denote the region a patch is meant for.
 #[binrw]
-#[brw(repr = i16)]
+#[brw(repr = u16)]
 #[derive(Debug, PartialEq, Eq)]
 pub enum Region {
     /// The global region, used for any region not specified.
@@ -66,7 +66,7 @@ pub fn read_version(p: &Path) -> Option<String> {
 /// Platform used for game data.
 #[binrw]
 #[brw(repr = u8)]
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Platform {
     /// Windows and macOS.
     Win32 = 0x0,
@@ -83,13 +83,21 @@ pub enum Platform {
 /// Returns the short-hand version of `id`.
 ///
 /// For example, `Platform::Win32` becomes "win32".
-pub fn get_platform_string(id: &Platform) -> &'static str {
+pub fn get_platform_string(id: Platform) -> &'static str {
     match &id {
         Platform::Win32 => "win32",
         Platform::PS3 => "ps3",
         Platform::PS4 => "ps4",
         Platform::PS5 => "ps5",
         Platform::Xbox => "lys",
+    }
+}
+
+/// Returns the endianness of the platform.
+pub(crate) fn get_platform_endianness(id: Platform) -> Endian {
+    match id {
+        Platform::PS3 => Endian::Big,
+        _ => Endian::Little,
     }
 }
 
