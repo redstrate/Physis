@@ -30,13 +30,9 @@ commits are pushed to the main branch.
 
 If you need a high-level Excel API, see [Icarus](https://github.com/redstrate/Icarus) which is based off of Physis.
 
-### C/C++
+### C and C++
 
-C/C++ projects (or any language that can interface with C) can use [libphysis](https://github.com/redstrate/libphysis).
-
-### C#
-
-C# projects can use [PhysisSharp](https://github.com/redstrate/PhysisSharp) which exposes part of the Physis API to C#.
+C and C++ projects (or any language that can interface with C) can use [libphysis](https://github.com/redstrate/libphysis).
 
 ## Building
 
