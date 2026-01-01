@@ -28,7 +28,7 @@ pub struct Repository {
     /// The folder name, such as "ex1".
     pub name: String,
     /// The platform this repository is designed for.
-    pub platform: Platform,
+    platform: Platform,
     /// The type of repository, such as "base game" or "expansion".
     pub repo_type: RepositoryType,
     /// The version of the game data.

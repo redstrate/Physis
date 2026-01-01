@@ -45,6 +45,9 @@ pub struct SqPackResource {
     pub repositories: Vec<Repository>,
 
     index_files: HashMap<String, SqPackIndex>,
+
+    /// The platform this resource was designed for.
+    pub platform: Platform,
 }
 
 impl SqPackResource {
@@ -55,6 +58,7 @@ impl SqPackResource {
                     game_directory: String::from(directory),
                     repositories: vec![],
                     index_files: HashMap::new(),
+                    platform,
                 };
                 data.reload_repositories(platform);
                 data
@@ -65,6 +69,7 @@ impl SqPackResource {
                     game_directory: String::from(directory),
                     repositories: vec![],
                     index_files: HashMap::new(),
+                    platform,
                 }
             }
         }
@@ -113,7 +118,7 @@ impl SqPackResource {
         // Append the new dat extension
         let dat_path = format!("{dat_path}.dat{data_file_id}",);
 
-        SqPackData::from_existing(self.repositories[0].platform, &dat_path)
+        SqPackData::from_existing(self.platform, &dat_path)
     }
 
     /// Finds the offset inside of the DAT file for `path`.
@@ -285,7 +290,7 @@ impl SqPackResource {
     fn cache_index_file(&mut self, filename: &str) {
         if !self.index_files.contains_key(filename)
             && let Some(index_file) =
-                SqPackIndex::from_existing(self.repositories[0].platform, filename)
+                SqPackIndex::from_existing(self.platform, filename)
         {
             self.index_files.insert(filename.to_string(), index_file);
         }
