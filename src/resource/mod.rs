@@ -25,7 +25,7 @@ pub trait Resource {
     /// # use physis::resource::{Resource, SqPackResource, SqPackRelease};
     /// # use std::io::Write;
     /// # use physis::common::Platform;
-    /// let mut game = SqPackResource::from_existing(Platform::Win32, SqPackRelease::Retail, "SquareEnix/Final Fantasy XIV - A Realm Reborn/game");
+    /// let mut game = SqPackResource::from_existing("SquareEnix/Final Fantasy XIV - A Realm Reborn/game");
     /// let data = game.read("exd/root.exl").unwrap();
     ///
     /// let mut file = std::fs::File::create("root.exl").unwrap();
@@ -42,7 +42,7 @@ pub trait Resource {
     /// ```
     /// # use physis::common::Platform;
     /// # use physis::resource::{Resource, SqPackResource, SqPackRelease};
-    /// let mut game = SqPackResource::from_existing(Platform::Win32, SqPackRelease::Retail, "SquareEnix/Final Fantasy XIV - A Realm Reborn/game");
+    /// let mut game = SqPackResource::from_existing("SquareEnix/Final Fantasy XIV - A Realm Reborn/game");
     /// if game.exists("exd/cid.exl") {
     ///     println!("Cid really does exist!");
     /// } else {

@@ -9,7 +9,7 @@ use std::{
 
 use crate::{
     ByteBuffer,
-    common::{Platform, read_version},
+    common::{PLATFORM_LIST, Platform, read_version},
     repository::{Category, Repository, RepositoryType, string_to_category},
     sqpack::{Hash, IndexEntry, SqPackData, SqPackIndex},
 };
@@ -76,7 +76,12 @@ pub struct SqPackResource {
 
 impl SqPackResource {
     /// Creates a new `SqPackResource` that points to data for `platform` and `release` in `directory`.
-    pub fn from_existing(platform: Platform, release: SqPackRelease, directory: &str) -> Self {
+    ///
+    /// This function automatically determines the platform and release kind based on filenames.
+    /// If this is a new install and we can't do that, it will default to Win32 Retail.
+    pub fn from_existing(directory: &str) -> Self {
+        let (platform, release) = Self::determine_platform_release(directory);
+
         match is_valid(directory) {
             true => {
                 let mut data = Self {
@@ -100,6 +105,46 @@ impl SqPackResource {
                 }
             }
         }
+    }
+
+    /// Determines the `Platform` and `SqPackRelease` for a game directory, based on filenames.
+    /// Since we assume all installations are valid, and it never makes sense to "mix" platforms or releases this can be done automatically.
+    fn determine_platform_release(directory: &str) -> (Platform, SqPackRelease) {
+        let mut d = PathBuf::from(directory);
+        d.push("sqpack");
+        d.push("ffxiv"); // Every installation should have this directory
+
+        if let Ok(repository_paths) = fs::read_dir(d.as_path()) {
+            let repository_paths: ReadDir = repository_paths;
+
+            if let Some(file) = repository_paths
+                .filter_map(Result::ok)
+                .filter(|s| s.file_type().unwrap().is_file())
+                .filter(|s| {
+                    s.file_name()
+                        .to_str()
+                        .unwrap_or_default()
+                        .ends_with(".index")
+                })
+                .take(1)
+                .next()
+            {
+                let filename = file.file_name().to_str().unwrap_or_default().to_string();
+
+                for platform in PLATFORM_LIST {
+                    if filename.contains(platform.shortname()) {
+                        // Then determine if this is a debug SqPack or not
+                        if filename.contains(".d") {
+                            return (platform, SqPackRelease::Debug);
+                        } else {
+                            return (platform, SqPackRelease::Retail);
+                        }
+                    }
+                }
+            }
+        }
+
+        (Platform::Win32, SqPackRelease::Retail)
     }
 
     fn reload_repositories(&mut self) {
@@ -437,7 +482,7 @@ mod tests {
         d.push("valid_sqpack");
         d.push("game");
 
-        SqPackResource::from_existing(Platform::Win32, SqPackRelease::Retail, d.to_str().unwrap())
+        SqPackResource::from_existing(d.to_str().unwrap())
     }
 
     #[test]
@@ -492,11 +537,7 @@ mod tests {
         sqpack.push("ffxivgame.ver");
         std::fs::write(sqpack, "2023.09.15.0000.0000").unwrap();
 
-        let resource = SqPackResource::from_existing(
-            Platform::Win32,
-            SqPackRelease::Retail,
-            d.to_str().unwrap(),
-        );
+        let resource = SqPackResource::from_existing(d.to_str().unwrap());
         let repo = resource.repositories.first().unwrap();
 
         assert_eq!(repo.name, "ffxiv");
@@ -519,11 +560,7 @@ mod tests {
         sqpack.push("ffxivgame.ver");
         std::fs::write(&sqpack, "2023.09.15.0000.0000\r\n").unwrap();
 
-        let resource = SqPackResource::from_existing(
-            Platform::Win32,
-            SqPackRelease::Retail,
-            d.to_str().unwrap(),
-        );
+        let resource = SqPackResource::from_existing(d.to_str().unwrap());
         let repo = resource.repositories.first().unwrap();
 
         assert_eq!(repo.name, "ffxiv");
@@ -545,5 +582,28 @@ mod tests {
             std::fs::read_to_string(sqpack).unwrap(),
             "2023.09.15.0000.0000"
         );
+    }
+
+    #[test]
+    fn repository_platform_detection() {
+        let test_cases = [
+            ("win32_retail", (Platform::Win32, SqPackRelease::Retail)),
+            ("win32_debug", (Platform::Win32, SqPackRelease::Debug)),
+            ("ps3_retail", (Platform::PS3, SqPackRelease::Retail)),
+            ("ps4_retail", (Platform::PS4, SqPackRelease::Retail)),
+            ("ps5_retail", (Platform::PS5, SqPackRelease::Retail)),
+            ("lys_retail", (Platform::Xbox, SqPackRelease::Retail)),
+        ];
+
+        for (path, (platform, release)) in test_cases {
+            let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+            d.push("resources/tests");
+            d.push("platforms");
+            d.push(path);
+
+            let resource = SqPackResource::from_existing(d.to_str().unwrap());
+            assert_eq!(resource.platform, platform);
+            assert_eq!(resource.release, release);
+        }
     }
 }

@@ -19,7 +19,7 @@ use super::Resource;
 /// ```
 /// # use physis::resource::{ResourceResolver, SqPackResource, UnpackedResource, SqPackRelease};
 /// # use physis::common::Platform;
-/// let sqpack_source = SqPackResource::from_existing(Platform::Win32, SqPackRelease::Retail, "SquareEnix/Final Fantasy XIV - A Realm Reborn/game");
+/// let sqpack_source = SqPackResource::from_existing("SquareEnix/Final Fantasy XIV - A Realm Reborn/game");
 /// let file_source = UnpackedResource::from_existing("unpacked/");
 /// let mut resolver = ResourceResolver::new();
 /// resolver.add_source(Box::new(file_source)); // first has most priority
@@ -69,7 +69,7 @@ impl ResourceResolver {
     /// # use std::io::Write;
     /// # use physis::common::Platform;
     /// let mut resolver = ResourceResolver::new();
-    /// resolver.add_source(Box::new(SqPackResource::from_existing(Platform::Win32, SqPackRelease::Retail, "SquareEnix/Final Fantasy XIV - A Realm Reborn/game")));
+    /// resolver.add_source(Box::new(SqPackResource::from_existing("SquareEnix/Final Fantasy XIV - A Realm Reborn/game")));
     ///
     /// let exl = resolver.parsed::<EXL>("exd/root.exl").unwrap();
     /// ```

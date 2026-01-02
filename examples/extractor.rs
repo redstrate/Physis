@@ -21,8 +21,7 @@ fn main() {
     let destination_path = &args[3];
 
     // Create a GameData struct, this manages the repositories. It allows us to easily extract files.
-    let mut game_data =
-        SqPackResource::from_existing(Platform::Win32, SqPackRelease::Retail, game_dir);
+    let mut game_data = SqPackResource::from_existing(game_dir);
 
     // Extract said file:
     let Some(game_file) = game_data.read(file_path) else {

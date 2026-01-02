@@ -8,7 +8,7 @@ use physis::{
     common::{Language, Platform},
     excel::{ColumnData, ExcelRowKind},
     race::{Gender, Race, Tribe, build_skeleton_path},
-    resource::{Resource, ResourceResolver, SqPackRelease, SqPackResource},
+    resource::{Resource, ResourceResolver, SqPackResource},
     skeleton::Skeleton,
 };
 
@@ -17,11 +17,7 @@ use physis::{
 fn test_gamedata_extract() {
     let game_dir = env::var("FFXIV_GAME_DIR").unwrap();
 
-    let mut game_data = SqPackResource::from_existing(
-        Platform::Win32,
-        SqPackRelease::Retail,
-        format!("{}/game", game_dir).as_str(),
-    );
+    let mut game_data = SqPackResource::from_existing(format!("{}/game", game_dir).as_str());
 
     assert!(game_data.read("exd/root.exl").is_some());
 }
@@ -39,8 +35,6 @@ fn test_item_read() {
     let mut resolver = ResourceResolver::new();
 
     resolver.add_source(Box::new(SqPackResource::from_existing(
-        Platform::Win32,
-        SqPackRelease::Retail,
         format!("{}/game", game_dir).as_str(),
     )));
 
@@ -70,11 +64,7 @@ fn test_item_read() {
 fn test_parse_skeleton() {
     let game_dir = env::var("FFXIV_GAME_DIR").unwrap();
 
-    let mut game_data = SqPackResource::from_existing(
-        Platform::Win32,
-        SqPackRelease::Retail,
-        format!("{}/game", game_dir).as_str(),
-    );
+    let mut game_data = SqPackResource::from_existing(format!("{}/game", game_dir).as_str());
 
     let sklb_path = build_skeleton_path(Race::Hyur, Tribe::Midlander, Gender::Female);
     let sklb = game_data.read(&sklb_path).unwrap();
