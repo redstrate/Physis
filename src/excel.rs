@@ -183,7 +183,7 @@ impl ExcelSheetPage {
             let data_offset = cursor.stream_position().unwrap();
 
             let new_row = if exh.header.row_kind == SheetRowKind::SubRows {
-                let mut rows = Vec::new();
+                let mut rows = Vec::with_capacity(row_header.row_count as usize);
                 for i in 0..row_header.row_count {
                     let subrow_offset = data_offset + i as u64 * (2 + exh.header.row_size as u64);
                     cursor.seek(SeekFrom::Start(subrow_offset)).unwrap();
@@ -222,7 +222,7 @@ impl ExcelSheetPage {
             ))
             .unwrap();
 
-        let mut data_offsets = Vec::new();
+        let mut data_offsets = Vec::with_capacity(self.rows.len());
 
         for row in &self.rows {
             data_offsets.push(ExcelDataOffset {
@@ -318,11 +318,12 @@ pub struct ExcelSheet {
 impl ExcelSheet {
     /// Finds the entry with the specified `row_id`, otherwise returns `None`.
     pub fn get_row(&self, row_id: u32) -> Option<ExcelRowKind> {
-        for page in &self.pages {
-            for row in &page.rows {
-                if row.row_id == row_id {
-                    return Some(row.kind.clone());
-                }
+        let page_index = self.exh.get_page(row_id);
+        let page = self.pages.get(page_index)?;
+
+        for row in &page.rows {
+            if row.row_id == row_id {
+                return Some(row.kind.clone());
             }
         }
 
@@ -331,15 +332,16 @@ impl ExcelSheet {
 
     /// Finds the entry with the specified `row_id` and `subrow_id`, otherwise returns `None`.
     pub fn get_subrow(&self, row_id: u32, subrow_id: u16) -> Option<ExcelSingleRow> {
-        for page in &self.pages {
-            for row in &page.rows {
-                if row.row_id == row_id {
-                    match &row.kind {
-                        ExcelRowKind::SingleRow(_) => {}
-                        ExcelRowKind::SubRows(subrows) => {
-                            if let Some(subrow) = subrows.iter().find(|(id, _)| *id == subrow_id) {
-                                return Some(subrow.1.clone());
-                            }
+        let page_index = self.exh.get_page(row_id);
+        let page = self.pages.get(page_index)?;
+
+        for row in &page.rows {
+            if row.row_id == row_id {
+                match &row.kind {
+                    ExcelRowKind::SingleRow(_) => {}
+                    ExcelRowKind::SubRows(subrows) => {
+                        if let Some(subrow) = subrows.iter().find(|(id, _)| *id == subrow_id) {
+                            return Some(subrow.1.clone());
                         }
                     }
                 }
@@ -399,6 +401,7 @@ mod tests {
                 columns: vec![ColumnData::Int8(0)]
             })
         );
+        assert!(excel.get_row(1441792).is_some());
 
         // row 1
         assert_eq!(excel.pages[0].rows[1].row_id, 1441793);
@@ -408,6 +411,7 @@ mod tests {
                 columns: vec![ColumnData::Int8(1)]
             })
         );
+        assert!(excel.get_row(1441793).is_some());
 
         // row 2
         assert_eq!(excel.pages[0].rows[2].row_id, 1441794);
@@ -417,6 +421,7 @@ mod tests {
                 columns: vec![ColumnData::Int8(2)]
             })
         );
+        assert!(excel.get_row(1441794).is_some());
 
         // row 3
         assert_eq!(excel.pages[0].rows[3].row_id, 1441795);
@@ -426,6 +431,10 @@ mod tests {
                 columns: vec![ColumnData::Int8(3)]
             })
         );
+        assert!(excel.get_row(1441795).is_some());
+
+        // non-existent row 4
+        assert!(excel.get_row(1019181719).is_none());
     }
 
     // slightly more complex to read, because it has STRINGS

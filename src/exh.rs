@@ -173,6 +173,19 @@ impl WritableFile for EXH {
     }
 }
 
+impl EXH {
+    /// Returns the page that contains this `row_id`.
+    pub(crate) fn get_page(&self, row_id: u32) -> usize {
+        for (i, page) in self.pages.iter().enumerate() {
+            if row_id >= page.start_id && row_id < page.start_id + page.row_count {
+                return i;
+            }
+        }
+
+        0
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use std::fs::read;
