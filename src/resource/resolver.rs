@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 use crate::{
-    ByteBuffer, ReadableFile,
+    ByteBuffer, Error, ReadableFile,
     common::Language,
     excel::{ExcelSheet, ExcelSheetPage},
     exd::EXD,
@@ -73,14 +73,20 @@ impl ResourceResolver {
     ///
     /// let exl = resolver.parsed::<EXL>("exd/root.exl").unwrap();
     /// ```
-    pub fn parsed<T: ReadableFile>(&mut self, path: &str) -> Option<T> {
+    pub fn parsed<T: ReadableFile>(&mut self, path: &str) -> Result<T, Error> {
         for resolver in &mut self.resolvers {
             if let Some(bytes) = resolver.read(path) {
-                return T::from_existing(resolver.platform(), &bytes);
+                return T::from_existing(resolver.platform(), &bytes).ok_or(
+                    Error::FileParsingFailed {
+                        path: path.to_string(),
+                    },
+                );
             }
         }
 
-        None
+        Err(Error::FileNotFound {
+            path: path.to_string(),
+        })
     }
 
     // TODO: add documentation
@@ -95,7 +101,7 @@ impl ResourceResolver {
     }
 
     /// Read an excel sheet header by name (e.g. "Achievement")
-    pub fn read_excel_sheet_header(&mut self, name: &str) -> Option<EXH> {
+    pub fn read_excel_sheet_header(&mut self, name: &str) -> Result<EXH, Error> {
         let new_filename = name.to_lowercase();
 
         let path = format!("exd/{new_filename}.exh");
@@ -109,18 +115,18 @@ impl ResourceResolver {
         exh: EXH,
         name: &str,
         language: Language,
-    ) -> Option<ExcelSheet> {
+    ) -> Result<ExcelSheet, Error> {
         let mut pages = Vec::new();
         for page in 0..exh.header.page_count {
             let exd = self.read_excel_exd(name, &exh, language, page as usize)?;
             pages.push(ExcelSheetPage::from_exd(&exh, exd));
         }
 
-        Some(ExcelSheet { exh, pages })
+        Ok(ExcelSheet { exh, pages })
     }
 
     /// Returns all known sheet names listed in the root list
-    pub fn get_all_sheet_names(&mut self) -> Option<Vec<String>> {
+    pub fn get_all_sheet_names(&mut self) -> Result<Vec<String>, Error> {
         let root_exl = self.parsed::<EXL>("exd/root.exl")?;
 
         let mut names = vec![];
@@ -128,7 +134,7 @@ impl ResourceResolver {
             names.push(row);
         }
 
-        Some(names)
+        Ok(names)
     }
 
     fn read_excel_exd(
@@ -137,7 +143,7 @@ impl ResourceResolver {
         exh: &EXH,
         language: Language,
         page: usize,
-    ) -> Option<EXD> {
+    ) -> Result<EXD, Error> {
         let exd_path = format!(
             "exd/{}",
             EXD::calculate_filename(name, language, &exh.pages[page])
