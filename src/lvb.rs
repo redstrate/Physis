@@ -30,13 +30,14 @@ use binrw::binrw;
 #[brw(magic = b"LVB1")]
 pub struct Lvb {
     /// Including this header
-    pub file_size: u32,
+    file_size: u32,
 
     /// Number of Scn's
     #[br(temp)]
     #[bw(calc = sections.len() as u32)]
     section_count: u32,
 
+    /// The sections of this file.
     #[br(count = section_count)]
     #[br(args{ inner: (string_heap,) })]
     #[bw(write_with = write_scns, args(string_heap,))]
@@ -109,19 +110,19 @@ pub struct ScnSection {
     #[br(restore_position)]
     #[br(seek_before = SeekFrom::Current(offset_layer_group_resources as i64 - ScnSection::SIZE as i64))]
     #[bw(ignore)] // TODO: support
-    pub path_layer_group_resources: Vec<String>,
+    pub lgb_paths: Vec<String>,
 
     #[br(seek_before = SeekFrom::Current(offset_unk1 as i64 - ScnSection::SIZE as i64))]
     #[br(restore_position)]
-    pub unk1: ScnUnknown1Section,
+    unk1: ScnUnknown1Section,
 
     #[br(seek_before = SeekFrom::Current(offset_unk2 as i64 - ScnSection::SIZE as i64))]
     #[br(restore_position)]
-    pub unk2_section: ScnUnknown2Section,
+    unk2_section: ScnUnknown2Section,
 
     #[br(seek_before = SeekFrom::Current(offset_unk3 as i64 - ScnSection::SIZE as i64))]
     #[br(restore_position)]
-    pub unk3: ScnUnknown3Section,
+    unk3: ScnUnknown3Section,
 }
 
 impl ScnSection {
