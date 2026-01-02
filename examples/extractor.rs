@@ -1,8 +1,7 @@
 // SPDX-FileCopyrightText: 2024 Joshua Goins <josh@redstrate.com>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-use physis::common::Platform;
-use physis::resource::{Resource, SqPackRelease, SqPackResource};
+use physis::resource::{Resource, SqPackResource};
 use std::env;
 use std::fs::File;
 use std::io::Write;
