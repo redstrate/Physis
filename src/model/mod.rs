@@ -16,7 +16,7 @@ use binrw::{BinWrite, BinWriterExt, binrw};
 
 use crate::common::Platform;
 use crate::common_file_operations::{read_bool_from, write_bool_as};
-use crate::{ByteBuffer, ByteSpan};
+use crate::{ByteBuffer, ByteSpan, ReadableFile, WritableFile};
 use vertex_declarations::{
     VERTEX_ELEMENT_SIZE, VertexDeclaration, VertexType, VertexUsage, vertex_element_parser,
     vertex_element_writer,
@@ -474,8 +474,192 @@ pub struct MDL {
 }
 
 impl MDL {
-    /// Read an existing file.
-    pub fn from_existing(platform: Platform, buffer: ByteSpan) -> Option<MDL> {
+    pub fn replace_vertices(
+        &mut self,
+        lod_index: usize,
+        part_index: usize,
+        vertices: &[Vertex],
+        indices: &[u16],
+        submeshes: &[SubMesh],
+    ) {
+        let part = &mut self.lods[lod_index].parts[part_index];
+
+        part.vertices = Vec::from(vertices);
+        part.indices = Vec::from(indices);
+
+        for (i, submesh) in part.submeshes.iter().enumerate() {
+            if i < submeshes.len() {
+                self.model_data.submeshes[submesh.submesh_index].index_offset =
+                    submeshes[i].index_offset;
+                self.model_data.submeshes[submesh.submesh_index].index_count =
+                    submeshes[i].index_count;
+            }
+        }
+
+        // Update vertex count in header
+        self.model_data.meshes[part.mesh_index as usize].vertex_count = part.vertices.len() as u16;
+        self.model_data.meshes[part.mesh_index as usize].index_count = part.indices.len() as u32;
+
+        self.update_headers();
+    }
+
+    pub fn remove_shape_meshes(&mut self) {
+        self.model_data.shape_meshes.clear();
+        self.model_data.shape_values.clear();
+
+        for lod in 0..3 {
+            for shape in &mut self.model_data.shapes {
+                shape.shape_mesh_count[lod] = 0;
+                shape.shape_mesh_start_index[lod] = 0;
+            }
+        }
+
+        self.update_headers();
+    }
+
+    pub fn add_shape_mesh(
+        &mut self,
+        lod_index: usize,
+        shape_index: usize,
+        shape_mesh_index: usize,
+        part_index: usize,
+        shape_values: &[NewShapeValue],
+    ) {
+        let part = &mut self.lods[lod_index].parts[part_index];
+
+        // TODO: this is assuming they are added in order
+        if shape_mesh_index == 0 {
+            self.model_data.shapes[shape_index].shape_mesh_start_index[lod_index] =
+                self.model_data.shape_meshes.len() as u16;
+        }
+
+        self.model_data.shape_meshes.push(ShapeMesh {
+            mesh_index_offset: self.model_data.meshes[part.mesh_index as usize].start_index,
+            shape_value_count: shape_values.len() as u32,
+            shape_value_offset: self.model_data.shape_values.len() as u32,
+        });
+
+        for shape_value in shape_values {
+            part.vertices.push(shape_value.replacing_vertex);
+
+            self.model_data.shape_values.push(ShapeValue {
+                base_indices_index: self.model_data.meshes[part.mesh_index as usize].start_index
+                    as u16
+                    + shape_value.base_index as u16,
+                replacing_vertex_index: self.model_data.meshes[part.mesh_index as usize].start_index
+                    as u16
+                    + (part.vertices.len() - 1) as u16,
+            })
+        }
+
+        self.model_data.shapes[shape_index].shape_mesh_count[lod_index] += 1;
+
+        self.update_headers();
+    }
+
+    pub(crate) fn update_headers(&mut self) {
+        // update values
+        for i in 0..self.file_header.lod_count {
+            let mut vertex_offset = 0;
+
+            for j in self.model_data.lods[i as usize].mesh_index
+                ..self.model_data.lods[i as usize].mesh_index
+                    + self.model_data.lods[i as usize].mesh_count
+            {
+                let mesh = &mut self.model_data.meshes[j as usize];
+
+                mesh.start_index =
+                    self.model_data.submeshes[mesh.submesh_index as usize].index_offset;
+
+                for i in 0..mesh.vertex_stream_count as usize {
+                    mesh.vertex_buffer_offsets[i] = vertex_offset;
+                    vertex_offset +=
+                        mesh.vertex_count as u32 * mesh.vertex_buffer_strides[i] as u32;
+                }
+            }
+        }
+
+        for lod in &mut self.model_data.lods {
+            let mut total_vertex_buffer_size = 0;
+            let mut total_index_buffer_size = 0;
+
+            // still slightly off?
+            for j in lod.mesh_index..lod.mesh_index + lod.mesh_count {
+                let vertex_count = self.model_data.meshes[j as usize].vertex_count;
+                let index_count = self.model_data.meshes[j as usize].index_count;
+
+                let mut total_vertex_stride: u32 = 0;
+                for i in 0..self.model_data.meshes[j as usize].vertex_stream_count as usize {
+                    total_vertex_stride +=
+                        self.model_data.meshes[j as usize].vertex_buffer_strides[i] as u32;
+                }
+
+                total_vertex_buffer_size += vertex_count as u32 * total_vertex_stride;
+                total_index_buffer_size += index_count * size_of::<u16>() as u32;
+            }
+
+            // TODO: this can definitely be written better
+            let mut index_padding = total_index_buffer_size % 16;
+            if index_padding == 0 {
+                index_padding = 16;
+            } else {
+                index_padding = 16 - index_padding;
+            }
+
+            lod.vertex_buffer_size = total_vertex_buffer_size;
+            lod.index_buffer_size = total_index_buffer_size.wrapping_add(index_padding);
+        }
+
+        // update lod values
+        self.file_header.stack_size = self.file_header.calculate_stack_size();
+        self.file_header.runtime_size = self.model_data.calculate_runtime_size();
+
+        let data_offset = self.file_header.runtime_size
+            + size_of::<ModelFileHeader>() as u32
+            + self.file_header.stack_size;
+
+        let mut overall_offset: u32 = 0;
+
+        for lod in &mut self.model_data.lods {
+            // vertex
+            lod.vertex_data_offset = data_offset + overall_offset;
+            overall_offset += lod.vertex_buffer_size;
+
+            // index
+            lod.index_data_offset = data_offset + overall_offset;
+            overall_offset += lod.index_buffer_size;
+
+            // edge, but unused?
+            //lod.edge_geometry_data_offset = data_offset + overall_offset;
+            //overall_offset += lod.edge_geometry_size;
+
+            lod.edge_geometry_data_offset = lod.index_data_offset;
+        }
+
+        for i in 0..self.lods.len() {
+            self.file_header.vertex_buffer_size[i] = self.model_data.lods[i].vertex_buffer_size;
+        }
+
+        for i in 0..self.lods.len() {
+            self.file_header.vertex_offsets[i] = self.model_data.lods[i].vertex_data_offset;
+        }
+
+        for i in 0..self.lods.len() {
+            self.file_header.index_buffer_size[i] = self.model_data.lods[i].index_buffer_size;
+        }
+
+        for i in 0..self.lods.len() {
+            self.file_header.index_offsets[i] = self.model_data.lods[i].index_data_offset;
+        }
+
+        self.model_data.header.shape_count = self.model_data.shapes.len() as u16;
+        self.model_data.header.shape_mesh_count = self.model_data.shape_meshes.len() as u16;
+        self.model_data.header.shape_value_count = self.model_data.shape_values.len() as u16;
+    }
+}
+
+impl ReadableFile for MDL {
+    fn from_existing(platform: Platform, buffer: ByteSpan) -> Option<Self> {
         let mut cursor = Cursor::new(buffer);
         let endianness = platform.endianness();
         let model_file_header = ModelFileHeader::read_options(&mut cursor, endianness, ()).ok()?;
@@ -865,192 +1049,10 @@ impl MDL {
             material_names,
         })
     }
+}
 
-    pub fn replace_vertices(
-        &mut self,
-        lod_index: usize,
-        part_index: usize,
-        vertices: &[Vertex],
-        indices: &[u16],
-        submeshes: &[SubMesh],
-    ) {
-        let part = &mut self.lods[lod_index].parts[part_index];
-
-        part.vertices = Vec::from(vertices);
-        part.indices = Vec::from(indices);
-
-        for (i, submesh) in part.submeshes.iter().enumerate() {
-            if i < submeshes.len() {
-                self.model_data.submeshes[submesh.submesh_index].index_offset =
-                    submeshes[i].index_offset;
-                self.model_data.submeshes[submesh.submesh_index].index_count =
-                    submeshes[i].index_count;
-            }
-        }
-
-        // Update vertex count in header
-        self.model_data.meshes[part.mesh_index as usize].vertex_count = part.vertices.len() as u16;
-        self.model_data.meshes[part.mesh_index as usize].index_count = part.indices.len() as u32;
-
-        self.update_headers();
-    }
-
-    pub fn remove_shape_meshes(&mut self) {
-        self.model_data.shape_meshes.clear();
-        self.model_data.shape_values.clear();
-
-        for lod in 0..3 {
-            for shape in &mut self.model_data.shapes {
-                shape.shape_mesh_count[lod] = 0;
-                shape.shape_mesh_start_index[lod] = 0;
-            }
-        }
-
-        self.update_headers();
-    }
-
-    pub fn add_shape_mesh(
-        &mut self,
-        lod_index: usize,
-        shape_index: usize,
-        shape_mesh_index: usize,
-        part_index: usize,
-        shape_values: &[NewShapeValue],
-    ) {
-        let part = &mut self.lods[lod_index].parts[part_index];
-
-        // TODO: this is assuming they are added in order
-        if shape_mesh_index == 0 {
-            self.model_data.shapes[shape_index].shape_mesh_start_index[lod_index] =
-                self.model_data.shape_meshes.len() as u16;
-        }
-
-        self.model_data.shape_meshes.push(ShapeMesh {
-            mesh_index_offset: self.model_data.meshes[part.mesh_index as usize].start_index,
-            shape_value_count: shape_values.len() as u32,
-            shape_value_offset: self.model_data.shape_values.len() as u32,
-        });
-
-        for shape_value in shape_values {
-            part.vertices.push(shape_value.replacing_vertex);
-
-            self.model_data.shape_values.push(ShapeValue {
-                base_indices_index: self.model_data.meshes[part.mesh_index as usize].start_index
-                    as u16
-                    + shape_value.base_index as u16,
-                replacing_vertex_index: self.model_data.meshes[part.mesh_index as usize].start_index
-                    as u16
-                    + (part.vertices.len() - 1) as u16,
-            })
-        }
-
-        self.model_data.shapes[shape_index].shape_mesh_count[lod_index] += 1;
-
-        self.update_headers();
-    }
-
-    pub(crate) fn update_headers(&mut self) {
-        // update values
-        for i in 0..self.file_header.lod_count {
-            let mut vertex_offset = 0;
-
-            for j in self.model_data.lods[i as usize].mesh_index
-                ..self.model_data.lods[i as usize].mesh_index
-                    + self.model_data.lods[i as usize].mesh_count
-            {
-                let mesh = &mut self.model_data.meshes[j as usize];
-
-                mesh.start_index =
-                    self.model_data.submeshes[mesh.submesh_index as usize].index_offset;
-
-                for i in 0..mesh.vertex_stream_count as usize {
-                    mesh.vertex_buffer_offsets[i] = vertex_offset;
-                    vertex_offset +=
-                        mesh.vertex_count as u32 * mesh.vertex_buffer_strides[i] as u32;
-                }
-            }
-        }
-
-        for lod in &mut self.model_data.lods {
-            let mut total_vertex_buffer_size = 0;
-            let mut total_index_buffer_size = 0;
-
-            // still slightly off?
-            for j in lod.mesh_index..lod.mesh_index + lod.mesh_count {
-                let vertex_count = self.model_data.meshes[j as usize].vertex_count;
-                let index_count = self.model_data.meshes[j as usize].index_count;
-
-                let mut total_vertex_stride: u32 = 0;
-                for i in 0..self.model_data.meshes[j as usize].vertex_stream_count as usize {
-                    total_vertex_stride +=
-                        self.model_data.meshes[j as usize].vertex_buffer_strides[i] as u32;
-                }
-
-                total_vertex_buffer_size += vertex_count as u32 * total_vertex_stride;
-                total_index_buffer_size += index_count * size_of::<u16>() as u32;
-            }
-
-            // TODO: this can definitely be written better
-            let mut index_padding = total_index_buffer_size % 16;
-            if index_padding == 0 {
-                index_padding = 16;
-            } else {
-                index_padding = 16 - index_padding;
-            }
-
-            lod.vertex_buffer_size = total_vertex_buffer_size;
-            lod.index_buffer_size = total_index_buffer_size.wrapping_add(index_padding);
-        }
-
-        // update lod values
-        self.file_header.stack_size = self.file_header.calculate_stack_size();
-        self.file_header.runtime_size = self.model_data.calculate_runtime_size();
-
-        let data_offset = self.file_header.runtime_size
-            + size_of::<ModelFileHeader>() as u32
-            + self.file_header.stack_size;
-
-        let mut overall_offset: u32 = 0;
-
-        for lod in &mut self.model_data.lods {
-            // vertex
-            lod.vertex_data_offset = data_offset + overall_offset;
-            overall_offset += lod.vertex_buffer_size;
-
-            // index
-            lod.index_data_offset = data_offset + overall_offset;
-            overall_offset += lod.index_buffer_size;
-
-            // edge, but unused?
-            //lod.edge_geometry_data_offset = data_offset + overall_offset;
-            //overall_offset += lod.edge_geometry_size;
-
-            lod.edge_geometry_data_offset = lod.index_data_offset;
-        }
-
-        for i in 0..self.lods.len() {
-            self.file_header.vertex_buffer_size[i] = self.model_data.lods[i].vertex_buffer_size;
-        }
-
-        for i in 0..self.lods.len() {
-            self.file_header.vertex_offsets[i] = self.model_data.lods[i].vertex_data_offset;
-        }
-
-        for i in 0..self.lods.len() {
-            self.file_header.index_buffer_size[i] = self.model_data.lods[i].index_buffer_size;
-        }
-
-        for i in 0..self.lods.len() {
-            self.file_header.index_offsets[i] = self.model_data.lods[i].index_data_offset;
-        }
-
-        self.model_data.header.shape_count = self.model_data.shapes.len() as u16;
-        self.model_data.header.shape_mesh_count = self.model_data.shape_meshes.len() as u16;
-        self.model_data.header.shape_value_count = self.model_data.shape_values.len() as u16;
-    }
-
-    /// Writes data back to a buffer.
-    pub fn write_to_buffer(&self, platform: Platform) -> Option<ByteBuffer> {
+impl WritableFile for MDL {
+    fn write_to_buffer(&self, platform: Platform) -> Option<ByteBuffer> {
         let mut buffer = ByteBuffer::new();
         let endianness = platform.endianness();
 

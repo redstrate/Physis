@@ -5,13 +5,14 @@ use std::io::Cursor;
 use std::io::SeekFrom;
 
 use crate::ByteSpan;
+use crate::ReadableFile;
+use crate::common::Platform;
 use binrw::BinRead;
 use binrw::BinResult;
 use binrw::binrw;
 
 #[binrw]
 #[derive(Debug)]
-#[brw(little)]
 struct PcbResourceHeader {
     pcb_type: u32, // Lumina: 0x0 is resource, 0x1 is list?
     version: u32,  // ClientStructs: 0 is 'legacy', 1/4 are 'normal', rest unsupported
@@ -60,7 +61,6 @@ fn uncompress_vertices(local_bounds: &AABB, vertex: &[u16; 3]) -> [f32; 3] {
 
 #[binrw]
 #[derive(Debug)]
-#[brw(little)]
 pub struct ResourceNode {
     // TODO: figure out what these two values are
     magic: u32,   // pretty terrible magic if you ask me, lumina calls it so
@@ -124,18 +124,16 @@ pub struct Polygon {
 /// Contains a tree of polygons that makes up a collision mesh.
 #[binrw]
 #[derive(Debug)]
-#[brw(little)]
 pub struct Pcb {
     header: PcbResourceHeader,
     /// The root node of this PCB.
     pub root_node: ResourceNode,
 }
 
-impl Pcb {
-    /// Read an existing file.
-    pub fn from_existing(buffer: ByteSpan) -> Option<Self> {
+impl ReadableFile for Pcb {
+    fn from_existing(platform: Platform, buffer: ByteSpan) -> Option<Self> {
         let mut cursor = Cursor::new(buffer);
-        Pcb::read(&mut cursor).ok()
+        Pcb::read_options(&mut cursor, platform.endianness(), ()).ok()
     }
 }
 
@@ -153,6 +151,6 @@ mod tests {
         d.push("random");
 
         // Feeding it invalid data should not panic
-        Pcb::from_existing(&read(d).unwrap());
+        Pcb::from_existing(Platform::Win32, &read(d).unwrap());
     }
 }

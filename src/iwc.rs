@@ -4,12 +4,13 @@
 use std::io::Cursor;
 
 use crate::ByteSpan;
+use crate::ReadableFile;
+use crate::common::Platform;
 use binrw::BinRead;
 use binrw::binrw;
 
 #[binrw]
 #[derive(Debug)]
-#[brw(little)]
 struct IwcHeader {
     count: u16,
     part_mask: u16,
@@ -18,11 +19,10 @@ struct IwcHeader {
 #[derive(Debug)]
 pub struct Iwc {}
 
-impl Iwc {
-    /// Read an existing file.
-    pub fn from_existing(buffer: ByteSpan) -> Option<Self> {
+impl ReadableFile for Iwc {
+    fn from_existing(platform: Platform, buffer: ByteSpan) -> Option<Self> {
         let mut cursor = Cursor::new(buffer);
-        IwcHeader::read(&mut cursor).ok()?;
+        IwcHeader::read_options(&mut cursor, platform.endianness(), ()).ok()?;
 
         Some(Iwc {})
     }

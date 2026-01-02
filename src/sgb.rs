@@ -4,12 +4,13 @@
 use std::io::Cursor;
 
 use crate::ByteSpan;
+use crate::ReadableFile;
+use crate::common::Platform;
 use binrw::BinRead;
 use binrw::binrw;
 
 #[binrw]
 #[derive(Debug)]
-#[brw(little)]
 struct SgbHeader {
     #[br(count = 4)]
     #[bw(pad_size_to = 4)]
@@ -27,11 +28,10 @@ struct SgbHeader {
 #[derive(Debug)]
 pub struct Sgb {}
 
-impl Sgb {
-    /// Read an existing file.
-    pub fn from_existing(buffer: ByteSpan) -> Option<Self> {
+impl ReadableFile for Sgb {
+    fn from_existing(platform: Platform, buffer: ByteSpan) -> Option<Self> {
         let mut cursor = Cursor::new(buffer);
-        SgbHeader::read(&mut cursor).ok()?;
+        SgbHeader::read_options(&mut cursor, platform.endianness(), ()).ok()?;
 
         Some(Sgb {})
     }

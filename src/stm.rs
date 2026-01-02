@@ -3,7 +3,8 @@
 
 use std::io::{Cursor, Seek, SeekFrom};
 
-use crate::ByteSpan;
+use crate::common::Platform;
+use crate::{ByteSpan, ReadableFile};
 use binrw::BinRead;
 use binrw::{BinReaderExt, binrw};
 
@@ -12,7 +13,6 @@ const MAX_ELEMENTS: usize = 128;
 
 #[binrw]
 #[derive(Debug)]
-#[brw(little)]
 struct StmHeader {
     #[br(pad_before = 4)] // TODO: what is this byte?
     entry_count: i32,
@@ -40,11 +40,10 @@ pub struct DyePack {
 #[derive(Debug)]
 pub struct StainingTemplate {}
 
-impl StainingTemplate {
-    /// Read an existing file.
-    pub fn from_existing(buffer: ByteSpan) -> Option<Self> {
+impl ReadableFile for StainingTemplate {
+    fn from_existing(platform: Platform, buffer: ByteSpan) -> Option<Self> {
         let mut cursor = Cursor::new(buffer);
-        let header = StmHeader::read(&mut cursor).unwrap();
+        let header = StmHeader::read_options(&mut cursor, platform.endianness(), ()).unwrap();
 
         for entry_offset in header.offsets {
             let offset = entry_offset as i32 * 2 + 8 + 4 * header.entry_count;
@@ -69,7 +68,9 @@ impl StainingTemplate {
 
         Some(StainingTemplate {})
     }
+}
 
+impl StainingTemplate {
     #[allow(unused)]
     fn read_array<T: binrw::BinRead<Args<'static> = ()> + Default + Clone + Copy>(
         cursor: &mut Cursor<ByteSpan>,

@@ -5,6 +5,8 @@ use std::io::Cursor;
 use std::io::SeekFrom;
 
 use crate::ByteSpan;
+use crate::ReadableFile;
+use crate::common::Platform;
 use binrw::BinRead;
 use binrw::binread;
 
@@ -23,7 +25,6 @@ pub enum ShaderStage {
 /// Used instead of a shader package for standalone shaders.
 #[binread]
 #[derive(Debug)]
-#[brw(little)]
 #[brw(magic = b"ShCd")]
 #[allow(dead_code)]
 pub struct SHCD {
@@ -52,10 +53,9 @@ pub struct SHCD {
     pub bytecode: Vec<u8>,
 }
 
-impl SHCD {
-    /// Read an existing file.
-    pub fn from_existing(buffer: ByteSpan) -> Option<Self> {
+impl ReadableFile for SHCD {
+    fn from_existing(platform: Platform, buffer: ByteSpan) -> Option<Self> {
         let mut cursor = Cursor::new(buffer);
-        SHCD::read(&mut cursor).ok()
+        SHCD::read_options(&mut cursor, platform.endianness(), ()).ok()
     }
 }

@@ -4,12 +4,13 @@
 use std::io::Cursor;
 
 use crate::ByteSpan;
+use crate::ReadableFile;
+use crate::common::Platform;
 use binrw::BinRead;
 use binrw::binrw;
 
 #[binrw]
 #[derive(Debug)]
-#[brw(little)]
 struct SkpHeader {
     magic: i32, // TODO: what magic?
 
@@ -23,11 +24,10 @@ struct SkpHeader {
 #[derive(Debug)]
 pub struct Skp {}
 
-impl Skp {
-    /// Read an existing file.
-    pub fn from_existing(buffer: ByteSpan) -> Option<Self> {
+impl ReadableFile for Skp {
+    fn from_existing(platform: Platform, buffer: ByteSpan) -> Option<Self> {
         let mut cursor = Cursor::new(buffer);
-        SkpHeader::read(&mut cursor).ok()?;
+        SkpHeader::read_options(&mut cursor, platform.endianness(), ()).ok()?;
 
         Some(Skp {})
     }

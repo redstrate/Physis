@@ -5,6 +5,8 @@ use std::io::Cursor;
 
 use crate::ByteBuffer;
 use crate::ByteSpan;
+use crate::ReadableFile;
+use crate::WritableFile;
 use crate::common::Platform;
 use binrw::BinRead;
 use binrw::BinWrite;
@@ -47,9 +49,8 @@ pub struct Terrain {
     pub plates: Vec<PlateModel>,
 }
 
-impl Terrain {
-    /// Read an existing file.
-    pub fn from_existing(platform: Platform, buffer: ByteSpan) -> Option<Terrain> {
+impl ReadableFile for Terrain {
+    fn from_existing(platform: Platform, buffer: ByteSpan) -> Option<Terrain> {
         let mut cursor = Cursor::new(buffer);
         let header = TerrainHeader::read_options(&mut cursor, platform.endianness(), ()).ok()?;
 
@@ -67,9 +68,10 @@ impl Terrain {
 
         Some(Terrain { plates })
     }
+}
 
-    /// Writes data back to a buffer.
-    pub fn write_to_buffer(&self) -> Option<ByteBuffer> {
+impl WritableFile for Terrain {
+    fn write_to_buffer(&self, _platform: Platform) -> Option<ByteBuffer> {
         let mut buffer = ByteBuffer::new();
 
         {

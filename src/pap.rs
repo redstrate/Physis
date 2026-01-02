@@ -4,6 +4,8 @@
 use std::io::Cursor;
 
 use crate::ByteSpan;
+use crate::ReadableFile;
+use crate::common::Platform;
 use binrw::BinRead;
 use binrw::binrw;
 
@@ -22,7 +24,6 @@ enum SkeletonType {
 
 #[binrw]
 #[derive(Debug)]
-#[brw(little)]
 struct PapHeader {
     magic: i32, // TODO: what magic?
     version: i32,
@@ -40,11 +41,10 @@ struct PapHeader {
 #[derive(Debug)]
 pub struct Pap {}
 
-impl Pap {
-    /// Read an existing file.
-    pub fn from_existing(buffer: ByteSpan) -> Option<Self> {
+impl ReadableFile for Pap {
+    fn from_existing(platform: Platform, buffer: ByteSpan) -> Option<Self> {
         let mut cursor = Cursor::new(buffer);
-        PapHeader::read(&mut cursor).ok()?;
+        PapHeader::read_options(&mut cursor, platform.endianness(), ()).ok()?;
 
         Some(Pap {})
     }

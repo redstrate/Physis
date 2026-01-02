@@ -13,7 +13,10 @@ use binrw::binrw;
 
 use crate::ByteBuffer;
 use crate::ByteSpan;
+use crate::ReadableFile;
+use crate::WritableFile;
 use crate::common::Language;
+use crate::common::Platform;
 
 /// What kind of rows this Excel sheet has.
 #[binrw]
@@ -149,14 +152,14 @@ pub struct EXH {
     pub languages: Vec<Language>,
 }
 
-impl EXH {
-    /// Read an existing file.
-    pub fn from_existing(buffer: ByteSpan) -> Option<EXH> {
-        EXH::read(&mut Cursor::new(&buffer)).ok()
+impl ReadableFile for EXH {
+    fn from_existing(_platform: Platform, buffer: ByteSpan) -> Option<Self> {
+        Self::read(&mut Cursor::new(&buffer)).ok()
     }
+}
 
-    /// Writes data back to a buffer.
-    pub fn write_to_buffer(&self) -> Option<ByteBuffer> {
+impl WritableFile for EXH {
+    fn write_to_buffer(&self, _platform: Platform) -> Option<ByteBuffer> {
         let mut buffer = ByteBuffer::new();
 
         {
@@ -184,7 +187,7 @@ mod tests {
         d.push("random");
 
         // Feeding it invalid data should not panic
-        EXH::from_existing(&read(d).unwrap());
+        EXH::from_existing(Platform::Win32, &read(d).unwrap());
     }
 
     // simple EXH to read, just one page
@@ -194,7 +197,7 @@ mod tests {
         d.push("resources/tests");
         d.push("gcshop.exh");
 
-        let exh = EXH::from_existing(&read(d).unwrap()).unwrap();
+        let exh = EXH::from_existing(Platform::Win32, &read(d).unwrap()).unwrap();
 
         // header
         assert_eq!(exh.header.version, 3);
@@ -227,9 +230,9 @@ mod tests {
         d.push("gcshop.exh");
 
         let expected_exh_bytes = read(d).unwrap();
-        let expected_exh = EXH::from_existing(&expected_exh_bytes).unwrap();
+        let expected_exh = EXH::from_existing(Platform::Win32, &expected_exh_bytes).unwrap();
 
-        let actual_exh_bytes = expected_exh.write_to_buffer().unwrap();
+        let actual_exh_bytes = expected_exh.write_to_buffer(Platform::Win32).unwrap();
 
         assert_eq!(actual_exh_bytes, expected_exh_bytes);
     }

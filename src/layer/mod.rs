@@ -7,7 +7,7 @@ use std::io::{Cursor, Seek, SeekFrom};
 
 use crate::common::Platform;
 use crate::common_file_operations::{read_bool_from, write_bool_as};
-use crate::{ByteBuffer, ByteSpan};
+use crate::{ByteBuffer, ByteSpan, ReadableFile, WritableFile};
 use binrw::binrw;
 use binrw::{BinRead, BinReaderExt, BinWrite};
 
@@ -638,9 +638,8 @@ pub struct LayerGroup {
     pub chunks: Vec<LayerChunk>,
 }
 
-impl LayerGroup {
-    /// Read an existing file.
-    pub fn from_existing(platform: Platform, buffer: ByteSpan) -> Option<LayerGroup> {
+impl ReadableFile for LayerGroup {
+    fn from_existing(platform: Platform, buffer: ByteSpan) -> Option<Self> {
         let mut cursor = Cursor::new(buffer);
         let endianness = platform.endianness();
 
@@ -774,9 +773,10 @@ impl LayerGroup {
             chunks: vec![layer_chunk],
         })
     }
+}
 
-    /// Writes data back to a buffer.
-    pub fn write_to_buffer(&self) -> Option<ByteBuffer> {
+impl WritableFile for LayerGroup {
+    fn write_to_buffer(&self, _platform: Platform) -> Option<ByteBuffer> {
         let mut buffer = ByteBuffer::new();
 
         {
@@ -975,7 +975,10 @@ mod tests {
                 layers: Vec::new(),
             }],
         };
-        assert_eq!(lgb.write_to_buffer().unwrap(), good_lgb_bytes);
+        assert_eq!(
+            lgb.write_to_buffer(Platform::Win32).unwrap(),
+            good_lgb_bytes
+        );
     }
 
     #[test]
@@ -1073,6 +1076,9 @@ mod tests {
                 }],
             }],
         };
-        assert_eq!(lgb.write_to_buffer().unwrap(), good_lgb_bytes);
+        assert_eq!(
+            lgb.write_to_buffer(Platform::Win32).unwrap(),
+            good_lgb_bytes
+        );
     }
 }

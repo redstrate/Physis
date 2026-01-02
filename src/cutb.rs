@@ -7,6 +7,8 @@ use std::io::Cursor;
 use std::io::SeekFrom;
 
 use crate::ByteSpan;
+use crate::ReadableFile;
+use crate::common::Platform;
 use crate::common_file_operations::read_string;
 use crate::common_file_operations::read_string_until_null;
 use crate::common_file_operations::write_string;
@@ -16,7 +18,6 @@ use binrw::binrw;
 #[binrw]
 #[derive(Debug)]
 #[brw(import(name: &str))]
-#[brw(little)]
 pub enum NodeData {
     #[br(pre_assert(name == "CTRL"))]
     CTRL(CTRLNode),
@@ -31,7 +32,6 @@ pub enum NodeData {
 
 #[binrw]
 #[derive(Debug)]
-#[brw(little)]
 pub struct CutsceneNode {
     #[br(count = 4)]
     #[bw(pad_size_to = 4)]
@@ -55,7 +55,6 @@ pub struct CutsceneNode {
 
 #[binrw]
 #[derive(Debug)]
-#[brw(little)]
 pub struct StringNode {
     #[br(temp)]
     #[bw(ignore)]
@@ -78,7 +77,6 @@ pub struct StringNode {
 #[binrw]
 #[brw(magic = b"CUTB")]
 #[derive(Debug)]
-#[brw(little)]
 pub struct Cutscene {
     /// In bytes, including the header and the magic.
     size_of_file: u32,
@@ -89,7 +87,6 @@ pub struct Cutscene {
 
 #[binrw]
 #[derive(Debug)]
-#[brw(little)]
 pub struct CTRLNode {
     /// In bytes, the size of the node information *including* this field.
     size: u32, // number of following u32s
@@ -104,7 +101,6 @@ pub struct CTRLNode {
 
 #[binrw]
 #[derive(Debug)]
-#[brw(little)]
 pub struct CTISNode {
     /// In bytes, the size of the node information *including* this field.
     size: u32, // number of following u32s
@@ -113,7 +109,6 @@ pub struct CTISNode {
 
 #[binrw]
 #[derive(Debug)]
-#[brw(little)]
 pub struct CTDSNode {
     /// In bytes, the size of the node information *including* this field.
     size: u32, // number of following u32s
@@ -133,7 +128,6 @@ pub struct CTDSNode {
 
 #[binrw]
 #[derive(Debug)]
-#[brw(little)]
 pub struct CTTLNode {
     #[br(count = 4)]
     #[bw(pad_size_to = 4)]
@@ -149,7 +143,6 @@ pub struct CTTLNode {
 
 #[binrw]
 #[derive(Debug)]
-#[brw(little)]
 pub struct TimelineNode {
     #[br(count = 4)]
     #[bw(pad_size_to = 4)]
@@ -163,11 +156,10 @@ pub struct TimelineNode {
     data: Vec<u8>,
 }
 
-impl Cutscene {
-    /// Read an existing file.
-    pub fn from_existing(buffer: ByteSpan) -> Option<Cutscene> {
+impl ReadableFile for Cutscene {
+    fn from_existing(platform: Platform, buffer: ByteSpan) -> Option<Cutscene> {
         let mut cursor = Cursor::new(buffer);
-        Cutscene::read(&mut cursor).ok()
+        Cutscene::read_options(&mut cursor, platform.endianness(), ()).ok()
     }
 }
 
@@ -184,6 +176,6 @@ mod tests {
         d.push("random");
 
         // Feeding it invalid data should not panic
-        Cutscene::from_existing(&read(d).unwrap());
+        Cutscene::from_existing(Platform::Win32, &read(d).unwrap());
     }
 }

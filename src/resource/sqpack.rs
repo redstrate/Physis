@@ -55,6 +55,8 @@ impl SqPackRelease {
 }
 
 /// Used to read files from the retail game, in their SqPack-compressed format.
+///
+/// In most cases, you probably want to use this inside of a `ResourceResolver`.
 #[derive(Debug)]
 pub struct SqPackResource {
     /// The game directory to operate on.
@@ -66,7 +68,7 @@ pub struct SqPackResource {
     index_files: HashMap<String, SqPackIndex>,
 
     /// The platform this resource was designed for.
-    pub platform: Platform,
+    platform: Platform,
 
     /// How these SqPack files were released.
     pub release: SqPackRelease,
@@ -406,6 +408,10 @@ impl Resource for SqPackResource {
         };
 
         self.find_entry(path).is_some()
+    }
+
+    fn platform(&self) -> Platform {
+        self.platform
     }
 }
 

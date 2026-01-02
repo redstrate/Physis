@@ -7,6 +7,7 @@ use std::io::{Cursor, Read, Seek, SeekFrom};
 
 use crate::ByteBuffer;
 use crate::ByteSpan;
+use crate::ReadableFile;
 use crate::bcn::decode_bc1;
 use crate::bcn::decode_bc3;
 use crate::bcn::decode_bc5;
@@ -135,9 +136,8 @@ pub struct Texture {
 
 type DecodeFunction = fn(&[u8], usize, usize, &mut [u32]) -> Result<(), &'static str>;
 
-impl Texture {
-    /// Read an existing file.
-    pub fn from_existing(platform: Platform, buffer: ByteSpan) -> Option<Texture> {
+impl ReadableFile for Texture {
+    fn from_existing(platform: Platform, buffer: ByteSpan) -> Option<Self> {
         let mut cursor = Cursor::new(buffer);
         let header = TexHeader::read_options(&mut cursor, platform.endianness(), ()).ok()?;
 
@@ -251,7 +251,9 @@ impl Texture {
             rgba: dst,
         })
     }
+}
 
+impl Texture {
     /// Converts an existing texture from `src_platform` to `dst_platform`.
     pub fn convert_existing(
         src_platform: Platform,

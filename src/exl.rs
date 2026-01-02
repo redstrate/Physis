@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2023 Joshua Goins <josh@redstrate.com>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-use crate::{ByteBuffer, ByteSpan};
+use crate::{ByteBuffer, ByteSpan, ReadableFile, WritableFile, common::Platform};
 use std::io::{BufRead, BufReader, BufWriter, Cursor, Write};
 
 /// Excel list file, usually with the `.exl` file extension.
@@ -16,9 +16,8 @@ pub struct EXL {
     pub entries: Vec<(String, i32)>,
 }
 
-impl EXL {
-    /// Initializes `EXL` from an existing list.
-    pub fn from_existing(buffer: ByteSpan) -> Option<EXL> {
+impl ReadableFile for EXL {
+    fn from_existing(_platform: Platform, buffer: ByteSpan) -> Option<Self> {
         let mut exl = Self {
             version: 0,
             entries: Vec::new(),
@@ -42,9 +41,10 @@ impl EXL {
 
         Some(exl)
     }
+}
 
-    /// Writes data back to a buffer.
-    pub fn write_to_buffer(&self) -> Option<ByteBuffer> {
+impl WritableFile for EXL {
+    fn write_to_buffer(&self, _platform: Platform) -> Option<ByteBuffer> {
         let mut buffer = ByteBuffer::new();
 
         {
@@ -62,7 +62,9 @@ impl EXL {
 
         Some(buffer)
     }
+}
 
+impl EXL {
     /// Checks whether or not the list contains `key`.
     ///
     /// # Example
@@ -71,11 +73,13 @@ impl EXL {
     /// # use std::fs::read;
     /// # use std::path::PathBuf;
     /// # use physis::exl::EXL;
+    /// # use physis::common::Platform;
+    /// # use physis::ReadableFile;
     /// # let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     /// # d.push("resources/tests");
     /// # d.push("test.exl");
     /// # let exl_file = read(d).unwrap();
-    /// let exl = EXL::from_existing(&exl_file).unwrap();
+    /// let exl = EXL::from_existing(Platform::Win32, &exl_file).unwrap();
     /// exl.contains("Foo");
     /// ```
     pub fn contains(&self, key: &str) -> bool {
@@ -95,7 +99,7 @@ mod tests {
         d.push("resources/tests");
         d.push("test.exl");
 
-        EXL::from_existing(&read(d).unwrap()).unwrap()
+        EXL::from_existing(Platform::Win32, &read(d).unwrap()).unwrap()
     }
 
     #[test]
@@ -126,11 +130,11 @@ mod tests {
         let exl = read(d).unwrap();
 
         let mut out = std::io::stdout();
-        out.write_all(&existing_exl.write_to_buffer().unwrap())
+        out.write_all(&existing_exl.write_to_buffer(Platform::Win32).unwrap())
             .unwrap();
         out.flush().unwrap();
 
-        assert_eq!(existing_exl.write_to_buffer().unwrap(), exl);
+        assert_eq!(existing_exl.write_to_buffer(Platform::Win32).unwrap(), exl);
     }
 
     #[test]
@@ -140,6 +144,6 @@ mod tests {
         d.push("random");
 
         // Feeding it invalid data should not panic
-        EXL::from_existing(&read(d).unwrap());
+        EXL::from_existing(Platform::Win32, &read(d).unwrap());
     }
 }

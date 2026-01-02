@@ -9,11 +9,11 @@ use binrw::helpers::until_eof;
 use binrw::{BinRead, binread};
 use std::io::{Cursor, SeekFrom};
 
-use crate::ByteSpan;
+use crate::common::Platform;
 use crate::havok::{HavokAnimationContainer, HavokBinaryTagFileReader};
+use crate::{ByteSpan, ReadableFile};
 
 #[binread]
-#[br(little)]
 struct SklbV1 {
     unk_offset: u16,
     havok_offset: u16,
@@ -24,7 +24,6 @@ struct SklbV1 {
 }
 
 #[binread]
-#[br(little)]
 struct SklbV2 {
     unk_offset: u32,
     havok_offset: u32,
@@ -37,7 +36,6 @@ struct SklbV2 {
 
 #[binread]
 #[br(magic = 0x736B6C62i32)]
-#[br(little)]
 struct SKLB {
     version: u32,
 
@@ -76,12 +74,11 @@ pub struct Skeleton {
     pub bones: Vec<Bone>,
 }
 
-impl Skeleton {
-    /// Read an existing file.
-    pub fn from_existing(buffer: ByteSpan) -> Option<Skeleton> {
+impl ReadableFile for Skeleton {
+    fn from_existing(platform: Platform, buffer: ByteSpan) -> Option<Skeleton> {
         let mut cursor = Cursor::new(buffer);
 
-        let sklb = SKLB::read(&mut cursor).ok()?;
+        let sklb = SKLB::read_options(&mut cursor, platform.endianness(), ()).ok()?;
 
         let root = HavokBinaryTagFileReader::read(&sklb.raw_data);
         let raw_animation_container = root.find_object_by_type("hkaAnimationContainer");
@@ -127,6 +124,6 @@ mod tests {
         d.push("random");
 
         // Feeding it invalid data should not panic
-        Skeleton::from_existing(&read(d).unwrap());
+        Skeleton::from_existing(Platform::Win32, &read(d).unwrap());
     }
 }
