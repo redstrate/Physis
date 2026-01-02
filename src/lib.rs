@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #![doc = include_str!("../README.md")]
+#![allow(unused_assignments)] // Too many false positives caused by binrw
 
 extern crate core;
 
