@@ -20,7 +20,7 @@ use crate::common::Platform;
 
 /// What kind of rows this Excel sheet has.
 #[binrw]
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 #[brw(repr = u8)]
 pub enum SheetRowKind {
     /// Single rows.
@@ -33,7 +33,7 @@ pub enum SheetRowKind {
 #[binrw]
 #[brw(magic = b"EXHF")]
 #[brw(big)]
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct EXHHeader {
     pub(crate) version: u16,
 
@@ -119,7 +119,7 @@ pub struct ExcelColumnDefinition {
 #[binrw]
 #[brw(big)]
 #[allow(dead_code)]
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub struct ExcelDataPagination {
     /// Which ID do rows start at.
     pub start_id: u32,
@@ -133,7 +133,7 @@ pub struct ExcelDataPagination {
 #[binrw]
 #[brw(big)]
 #[allow(dead_code)]
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct EXH {
     /// Header for this file.
     pub header: EXHHeader,
