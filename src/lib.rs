@@ -159,6 +159,9 @@ pub mod cutb;
 /// Higher-level Excel API.
 pub mod excel;
 
+/// Iterators for Excel types!!
+pub mod excel_iterators;
+
 mod bcn;
 
 mod error;

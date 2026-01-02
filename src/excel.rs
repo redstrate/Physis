@@ -156,6 +156,7 @@ pub struct ExcelRow {
 }
 
 pub struct ExcelSheetPage {
+    pub(crate) row_count: u32,
     exd: EXD,
 
     /// The rows in this page.
@@ -163,9 +164,13 @@ pub struct ExcelSheetPage {
 }
 
 impl ExcelSheetPage {
-    pub(crate) fn from_exd(exh: &EXH, exd: EXD) -> Self {
+    pub(crate) fn from_exd(page_index: u16, exh: &EXH, exd: EXD) -> Self {
         let rows = Self::get_rows(exh, &exd);
-        Self { exd, rows }
+        Self {
+            row_count: exh.pages[page_index as usize].row_count,
+            exd,
+            rows,
+        }
     }
 
     fn get_rows(exh: &EXH, exd: &EXD) -> Vec<ExcelRow> {
@@ -384,7 +389,7 @@ mod tests {
             exd = EXD::from_existing(Platform::Win32, &read(d).unwrap()).unwrap();
         }
 
-        let page = ExcelSheetPage::from_exd(&exh, exd);
+        let page = ExcelSheetPage::from_exd(0, &exh, exd);
 
         let excel = ExcelSheet {
             exh,
@@ -460,7 +465,7 @@ mod tests {
             exd = EXD::from_existing(Platform::Win32, &read(d).unwrap()).unwrap();
         }
 
-        let page = ExcelSheetPage::from_exd(&exh, exd);
+        let page = ExcelSheetPage::from_exd(0, &exh, exd);
 
         let excel = ExcelSheet {
             exh,
@@ -591,7 +596,7 @@ mod tests {
             expected_exd = EXD::from_existing(Platform::Win32, &expected_exd_bytes).unwrap();
         }
 
-        let page = ExcelSheetPage::from_exd(&exh, expected_exd);
+        let page = ExcelSheetPage::from_exd(0, &exh, expected_exd);
 
         let actual_exd_bytes = page.write_to_buffer(&exh).unwrap();
         assert_eq!(actual_exd_bytes, expected_exd_bytes);
@@ -622,7 +627,7 @@ mod tests {
             expected_exd = EXD::from_existing(Platform::Win32, &expected_exd_bytes).unwrap();
         }
 
-        let page = ExcelSheetPage::from_exd(&exh, expected_exd);
+        let page = ExcelSheetPage::from_exd(0, &exh, expected_exd);
 
         let actual_exd_bytes = page.write_to_buffer(&exh).unwrap();
         assert_eq!(actual_exd_bytes, expected_exd_bytes);
@@ -653,7 +658,7 @@ mod tests {
             expected_exd = EXD::from_existing(Platform::Win32, &expected_exd_bytes).unwrap();
         }
 
-        let page = ExcelSheetPage::from_exd(&exh, expected_exd);
+        let page = ExcelSheetPage::from_exd(0, &exh, expected_exd);
 
         let actual_exd_bytes = page.write_to_buffer(&exh).unwrap();
         assert_eq!(actual_exd_bytes, expected_exd_bytes);

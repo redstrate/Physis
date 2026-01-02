@@ -119,7 +119,7 @@ impl ResourceResolver {
         let mut pages = Vec::new();
         for page in 0..exh.header.page_count {
             let exd = self.read_excel_exd(name, &exh, language, page as usize)?;
-            pages.push(ExcelSheetPage::from_exd(&exh, exd));
+            pages.push(ExcelSheetPage::from_exd(page, &exh, exd));
         }
 
         Ok(ExcelSheet { exh, pages })
