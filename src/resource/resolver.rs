@@ -43,6 +43,7 @@ impl ResourceResolver {
         }
     }
 
+    // TODO: Remove Box requirement from the API
     /// Adds a new source to this resolver, and makes it the least prioritized.
     pub fn add_source(&mut self, source: Box<dyn Resource + Send + Sync>) {
         self.resolvers.push(source);
