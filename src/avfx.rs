@@ -3,13 +3,13 @@
 
 use std::io::{Cursor, Seek, SeekFrom};
 
-use crate::ByteSpan;
+use crate::common::Platform;
+use crate::{ByteSpan, ReadableFile};
 use binrw::BinRead;
 use binrw::{BinReaderExt, binread, binrw};
 
 #[binrw]
 #[derive(Debug)]
-#[brw(little)]
 struct AvfxHeader {
     name: u32,
     size: u32,
@@ -165,7 +165,6 @@ enum AvfxData {
 
 #[binread]
 #[derive(Debug)]
-#[brw(little)]
 struct AvfxBlock {
     #[br(pad_before = 4)]
     size: u32,
@@ -286,11 +285,10 @@ impl Default for Avfx {
     }
 }
 
-impl Avfx {
-    /// Read an existing file.
-    pub fn from_existing(buffer: ByteSpan) -> Option<Self> {
+impl ReadableFile for Avfx {
+    fn from_existing(platform: Platform, buffer: ByteSpan) -> Option<Self> {
         let mut cursor = Cursor::new(buffer);
-        let header = AvfxHeader::read(&mut cursor).ok()?;
+        let header = AvfxHeader::read_options(&mut cursor, platform.endianness(), ()).ok()?;
 
         let mut avfx = Avfx::default();
 
@@ -302,7 +300,7 @@ impl Avfx {
 
         while cursor.position() < header.size as u64 {
             let last_pos = cursor.position();
-            let block = AvfxBlock::read(&mut cursor).unwrap();
+            let block = AvfxBlock::read_options(&mut cursor, platform.endianness(), ()).unwrap();
             match block.data {
                 AvfxData::AvfxBase => {}
                 AvfxData::Version => {
@@ -541,6 +539,6 @@ mod tests {
         d.push("random");
 
         // Feeding it invalid data should not panic
-        Avfx::from_existing(&read(d).unwrap());
+        Avfx::from_existing(Platform::Win32, &read(d).unwrap());
     }
 }

@@ -4,12 +4,13 @@
 use std::io::Cursor;
 
 use crate::ByteSpan;
+use crate::ReadableFile;
+use crate::common::Platform;
 use binrw::BinRead;
 use binrw::binread;
 
 #[binread]
 #[derive(Debug)]
-#[brw(little)]
 #[allow(dead_code)]
 struct PhybHeader {
     version: [u8; 4],
@@ -25,11 +26,10 @@ struct PhybHeader {
 #[derive(Debug)]
 pub struct Phyb {}
 
-impl Phyb {
-    /// Read an existing file.
-    pub fn from_existing(buffer: ByteSpan) -> Option<Self> {
+impl ReadableFile for Phyb {
+    fn from_existing(platform: Platform, buffer: ByteSpan) -> Option<Self> {
         let mut cursor = Cursor::new(buffer);
-        PhybHeader::read(&mut cursor).ok()?;
+        PhybHeader::read_options(&mut cursor, platform.endianness(), ()).ok()?;
 
         Some(Phyb {})
     }

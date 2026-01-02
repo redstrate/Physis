@@ -6,37 +6,19 @@ use std::{
     io::{Read, Seek, SeekFrom, Write},
 };
 
-use binrw::{BinRead, BinResult, BinWrite, Endian};
+use binrw::{BinRead, BinWrite, Endian};
 
 use crate::{
-    exd::{
-        ColumnData, DataSection, DataSectionHeader, EXD, EXDHeader, ExcelDataOffset, ExcelRow,
-        ExcelRowKind, ExcelSingleRow, SubRowHeader,
-    },
-    exh::{ColumnDataType, EXH, ExcelColumnDefinition, SheetRowKind},
+    excel::{ColumnData, ExcelSingleRow},
+    exd::EXD,
+    exh::{ColumnDataType, EXH, ExcelColumnDefinition},
 };
 
-#[binrw::parser(reader)]
-pub fn read_data_sections(header: &EXDHeader) -> BinResult<Vec<DataSection>> {
-    let mut rows = Vec::new();
-
-    // we have to do this annoying thing because they specified it in bytes,
-    // not an actual count of data sections
-    let begin_pos = reader.stream_position().unwrap();
-    loop {
-        let current_pos = reader.stream_position().unwrap();
-        if current_pos - begin_pos >= header.data_section_size as u64 {
-            break;
-        }
-
-        let data_section = DataSection::read_be(reader).unwrap();
-        rows.push(data_section);
-    }
-
-    Ok(rows)
-}
-
-fn read_row<T: Read + Seek>(reader: &mut T, exh: &EXH, row_offset: u64) -> Option<ExcelSingleRow> {
+pub(crate) fn read_row<T: Read + Seek>(
+    reader: &mut T,
+    exh: &EXH,
+    row_offset: u64,
+) -> Option<ExcelSingleRow> {
     let mut subrow = ExcelSingleRow {
         columns: Vec::with_capacity(exh.column_definitions.len()),
     };
@@ -54,43 +36,7 @@ fn read_row<T: Read + Seek>(reader: &mut T, exh: &EXH, row_offset: u64) -> Optio
     Some(subrow)
 }
 
-#[binrw::parser(reader)]
-pub fn parse_rows(exh: &EXH, data_offsets: &Vec<ExcelDataOffset>) -> BinResult<Vec<ExcelRow>> {
-    let mut rows = Vec::new();
-
-    for offset in data_offsets {
-        reader.seek(SeekFrom::Start(offset.offset.into()))?;
-
-        let row_header = DataSectionHeader::read(reader)?;
-
-        let data_offset = reader.stream_position().unwrap();
-
-        let new_row = if exh.header.row_kind == SheetRowKind::SubRows {
-            let mut rows = Vec::new();
-            for i in 0..row_header.row_count {
-                let subrow_offset = data_offset + i as u64 * (2 + exh.header.row_size as u64);
-                reader.seek(SeekFrom::Start(subrow_offset))?;
-
-                let subrow_header = SubRowHeader::read(reader)?;
-                rows.push((
-                    subrow_header.subrow_id,
-                    read_row(reader, exh, subrow_offset + 2).unwrap(),
-                ));
-            }
-            ExcelRowKind::SubRows(rows)
-        } else {
-            ExcelRowKind::SingleRow(read_row(reader, exh, data_offset).unwrap())
-        };
-        rows.push(ExcelRow {
-            row_id: offset.row_id,
-            kind: new_row,
-        });
-    }
-
-    Ok(rows)
-}
-
-fn write_row<T: Write + Seek>(writer: &mut T, exh: &EXH, row: &ExcelSingleRow) {
+pub(crate) fn write_row<T: Write + Seek>(writer: &mut T, exh: &EXH, row: &ExcelSingleRow) {
     let mut column_definitions: Vec<(ExcelColumnDefinition, ColumnData)> = exh
         .column_definitions
         .clone()
@@ -153,97 +99,6 @@ fn write_row<T: Write + Seek>(writer: &mut T, exh: &EXH, row: &ExcelSingleRow) {
             [0u8; 3].write_le(writer).unwrap();
         }
     }
-}
-
-#[binrw::writer(writer)]
-pub fn write_rows(rows: &Vec<ExcelRow>, exh: &EXH) -> BinResult<()> {
-    // seek past the data offsets, which we will write later
-    let data_offsets_pos = writer.stream_position().unwrap();
-    writer
-        .seek(SeekFrom::Current(
-            (core::mem::size_of::<ExcelDataOffset>() * rows.len()) as i64,
-        ))
-        .unwrap();
-
-    let mut data_offsets = Vec::new();
-
-    for row in rows {
-        data_offsets.push(ExcelDataOffset {
-            row_id: row.row_id,
-            offset: writer.stream_position().unwrap() as u32,
-        });
-
-        // skip row header for now, because we don't know the size yet!
-        let row_header_pos = writer.stream_position().unwrap();
-
-        writer.seek(SeekFrom::Current(6)).unwrap(); // u32 + u16
-
-        let old_pos = writer.stream_position().unwrap();
-
-        // write column data
-        match &row.kind {
-            ExcelRowKind::SingleRow(excel_single_row) => write_row(writer, exh, excel_single_row),
-            ExcelRowKind::SubRows(excel_single_rows) => {
-                for (id, row) in excel_single_rows {
-                    let subrow_header = SubRowHeader { subrow_id: *id };
-                    subrow_header.write_ne(writer)?;
-
-                    write_row(writer, exh, row);
-                }
-            }
-        }
-
-        // write strings at the end of column data
-        {
-            let mut write_row_strings = |row: &ExcelSingleRow| {
-                for column in &row.columns {
-                    if let ColumnData::String(val) = column {
-                        let bytes = val.as_bytes();
-                        bytes.write(writer).unwrap();
-
-                        // nul terminator
-                        0u8.write_le(writer).unwrap();
-                    }
-                }
-            };
-
-            match &row.kind {
-                ExcelRowKind::SingleRow(excel_single_row) => write_row_strings(excel_single_row),
-                ExcelRowKind::SubRows(excel_single_rows) => {
-                    for (_, row) in excel_single_rows {
-                        write_row_strings(row);
-                    }
-                }
-            }
-        }
-
-        // aligned to the next 4 byte boundary
-        let boundary_pos = writer.stream_position().unwrap();
-        let remainder = boundary_pos.div_ceil(4) * 4;
-        for _ in 0..remainder - boundary_pos {
-            0u8.write_le(writer).unwrap();
-        }
-
-        let new_pos = writer.stream_position().unwrap();
-
-        // write row header
-        writer.seek(SeekFrom::Start(row_header_pos)).unwrap();
-
-        let row_header = DataSectionHeader {
-            size: (new_pos - old_pos) as u32,
-            row_count: 1, // TODO: hardcoded
-        };
-        row_header.write(writer).unwrap();
-
-        // restore pos
-        writer.seek(SeekFrom::Start(new_pos)).unwrap();
-    }
-
-    // now write the data offsets
-    writer.seek(SeekFrom::Start(data_offsets_pos)).unwrap();
-    data_offsets.write(writer).unwrap();
-
-    Ok(())
 }
 
 impl EXD {

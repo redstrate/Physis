@@ -4,6 +4,8 @@
 use std::io::{Cursor, SeekFrom};
 
 use crate::ByteSpan;
+use crate::ReadableFile;
+use crate::common::Platform;
 use crate::common_file_operations::strings_parser;
 use binrw::BinRead;
 use binrw::binread;
@@ -11,7 +13,6 @@ use binrw::binread;
 #[binread]
 #[derive(Debug)]
 #[br(import { data_offset: i32 })]
-#[brw(little)]
 #[allow(unused)]
 struct RacialDeformer {
     bone_count: i32,
@@ -35,7 +36,6 @@ struct RacialDeformer {
 
 #[binread]
 #[derive(Debug)]
-#[brw(little)]
 struct PreBoneDeformerItem {
     body_id: u16, // the combined body id like 0101
     link_index: i16,
@@ -51,7 +51,6 @@ struct PreBoneDeformerItem {
 
 #[binread]
 #[derive(Debug)]
-#[brw(little)]
 #[allow(dead_code)]
 struct PreBoneDeformerLink {
     parent_index: i16,
@@ -62,7 +61,6 @@ struct PreBoneDeformerLink {
 
 #[binread]
 #[derive(Debug)]
-#[brw(little)]
 #[allow(dead_code)]
 struct PreBoneDeformerHeader {
     count: i32,
@@ -95,15 +93,17 @@ pub struct PreBoneDeformMatrices {
     pub bones: Vec<PreBoneDeformBone>,
 }
 
-impl PreBoneDeformer {
-    /// Read an existing file.
-    pub fn from_existing(buffer: ByteSpan) -> Option<PreBoneDeformer> {
+impl ReadableFile for PreBoneDeformer {
+    fn from_existing(platform: Platform, buffer: ByteSpan) -> Option<Self> {
         let mut cursor = Cursor::new(buffer);
-        let header = PreBoneDeformerHeader::read(&mut cursor).ok()?;
+        let header =
+            PreBoneDeformerHeader::read_options(&mut cursor, platform.endianness(), ()).ok()?;
 
         Some(PreBoneDeformer { header })
     }
+}
 
+impl PreBoneDeformer {
     /// Calculates the deform matrices between two races
     pub fn get_deform_matrices(
         &self,
@@ -165,6 +165,6 @@ mod tests {
         d.push("random");
 
         // Feeding it invalid data should not panic
-        PreBoneDeformer::from_existing(&read(d).unwrap());
+        PreBoneDeformer::from_existing(Platform::Win32, &read(d).unwrap());
     }
 }

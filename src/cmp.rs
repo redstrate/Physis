@@ -4,12 +4,13 @@
 use std::io::{Cursor, Seek, SeekFrom};
 
 use crate::ByteSpan;
+use crate::ReadableFile;
+use crate::common::Platform;
 use binrw::BinRead;
 use binrw::binrw;
 
 /// A set of scaling parameters for a race.
 #[binrw]
-#[br(little)]
 #[repr(C)]
 #[derive(Debug, Clone, Copy)]
 pub struct RacialScalingParameters {
@@ -57,9 +58,8 @@ pub struct CMP {
     pub parameters: Vec<RacialScalingParameters>,
 }
 
-impl CMP {
-    /// Read an existing file.
-    pub fn from_existing(buffer: ByteSpan) -> Option<CMP> {
+impl ReadableFile for CMP {
+    fn from_existing(platform: Platform, buffer: ByteSpan) -> Option<Self> {
         let mut cursor = Cursor::new(buffer);
 
         cursor.seek(SeekFrom::Start(0x2a800)).ok()?;
@@ -70,7 +70,10 @@ impl CMP {
         let mut parameters = vec![];
 
         for _ in 0..entries {
-            parameters.push(RacialScalingParameters::read(&mut cursor).ok()?);
+            parameters.push(
+                RacialScalingParameters::read_options(&mut cursor, platform.endianness(), ())
+                    .ok()?,
+            );
         }
 
         Some(CMP { parameters })
@@ -91,6 +94,6 @@ mod tests {
         d.push("random");
 
         // Feeding it invalid data should not panic
-        CMP::from_existing(&read(d).unwrap());
+        CMP::from_existing(Platform::Win32, &read(d).unwrap());
     }
 }

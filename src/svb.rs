@@ -5,13 +5,15 @@ use std::io::Cursor;
 
 use crate::ByteBuffer;
 use crate::ByteSpan;
+use crate::ReadableFile;
+use crate::WritableFile;
+use crate::common::Platform;
 use binrw::BinRead;
 use binrw::BinWrite;
 use binrw::binrw;
 
 #[binrw]
 #[derive(Debug)]
-#[brw(little)]
 #[brw(magic = b"SVB1")]
 pub struct Svb {
     /// Including this header
@@ -26,7 +28,6 @@ pub struct Svb {
 
 #[binrw]
 #[derive(Debug)]
-#[brw(little)]
 #[brw(magic = b"SVC1")]
 pub struct Svc {
     #[br(temp)]
@@ -43,27 +44,27 @@ pub struct Svc {
 
 #[binrw]
 #[derive(Debug)]
-#[brw(little)]
 pub struct SvcEntry {
     // TODO: figure out what this is
     #[br(count = 48)]
     pub unk1: Vec<u8>,
 }
 
-impl Svb {
-    /// Read an existing file.
-    pub fn from_existing(buffer: ByteSpan) -> Option<Self> {
+impl ReadableFile for Svb {
+    fn from_existing(platform: Platform, buffer: ByteSpan) -> Option<Self> {
         let mut cursor = Cursor::new(buffer);
-        Svb::read(&mut cursor).ok()
+        Svb::read_options(&mut cursor, platform.endianness(), ()).ok()
     }
+}
 
-    /// Writes data back to a buffer.
-    pub fn write_to_buffer(&self) -> Option<ByteBuffer> {
+impl WritableFile for Svb {
+    fn write_to_buffer(&self, platform: Platform) -> Option<ByteBuffer> {
         let mut buffer = ByteBuffer::new();
 
         {
             let mut cursor = Cursor::new(&mut buffer);
-            self.write_le(&mut cursor).ok()?;
+            self.write_options(&mut cursor, platform.endianness(), ())
+                .ok()?;
         }
 
         Some(buffer)
@@ -84,6 +85,6 @@ mod tests {
         d.push("random");
 
         // Feeding it invalid data should not panic
-        Svb::from_existing(&read(d).unwrap());
+        Svb::from_existing(Platform::Win32, &read(d).unwrap());
     }
 }

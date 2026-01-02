@@ -156,7 +156,28 @@ pub mod pcb;
 /// Types for cutscene binary (`.cutb`) files.
 pub mod cutb;
 
+/// Higher-level Excel API.
+pub mod excel;
+
 mod bcn;
 
 mod error;
 pub use error::Error;
+
+use crate::common::Platform;
+
+/// A file that can be parsed from its serialized byte form.
+///
+/// This should be implemented for all types readable from SqPack.
+pub trait ReadableFile: Sized {
+    /// Read an existing file.
+    fn from_existing(platform: Platform, buffer: ByteSpan) -> Option<Self>;
+}
+
+/// A file that can be written back to its serialized byte form.
+///
+/// This should be implemented for all types readable from SqPack, on a best-effort basis.
+pub trait WritableFile: Sized {
+    /// Writes data back to a buffer.
+    fn write_to_buffer(&self, platform: Platform) -> Option<ByteBuffer>;
+}

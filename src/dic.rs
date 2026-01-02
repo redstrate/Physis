@@ -4,7 +4,8 @@
 use std::collections::HashMap;
 use std::io::{Cursor, Seek, SeekFrom};
 
-use crate::ByteSpan;
+use crate::common::Platform;
+use crate::{ByteSpan, ReadableFile};
 use binrw::binrw;
 use binrw::{BinRead, BinReaderExt};
 
@@ -14,7 +15,6 @@ use binrw::{BinRead, BinReaderExt};
 
 #[binrw]
 #[derive(Debug)]
-#[brw(little)]
 struct EntryItem {
     flag: u32,
     sibling: u32,
@@ -24,7 +24,6 @@ struct EntryItem {
 
 #[binrw]
 #[derive(Debug)]
-#[brw(little)]
 struct DictionaryHeader {
     #[br(seek_before = SeekFrom::Start(0x8124))]
     #[br(count = 256)]
@@ -71,11 +70,11 @@ pub struct Dictionary {
     pub words: Vec<String>,
 }
 
-impl Dictionary {
-    /// Read an existing file.
-    pub fn from_existing(buffer: ByteSpan) -> Option<Dictionary> {
+impl ReadableFile for Dictionary {
+    fn from_existing(platform: Platform, buffer: ByteSpan) -> Option<Self> {
         let mut cursor = Cursor::new(buffer);
-        let mut dict = DictionaryHeader::read(&mut cursor).unwrap();
+        let mut dict =
+            DictionaryHeader::read_options(&mut cursor, platform.endianness(), ()).unwrap();
 
         let map_start = 0x8750u32;
         let map_size = 0x200u32;
@@ -125,7 +124,9 @@ impl Dictionary {
 
         Some(dict)
     }
+}
 
+impl Dictionary {
     fn list_words(&self) -> Option<Vec<String>> {
         let mut result = Vec::new();
         let lut = self.generate_index_rune_lookup_table();
@@ -240,6 +241,6 @@ mod tests {
         d.push("random");
 
         // Feeding it invalid data should not panic
-        Dictionary::from_existing(&read(d).unwrap());
+        Dictionary::from_existing(Platform::Win32, &read(d).unwrap());
     }
 }

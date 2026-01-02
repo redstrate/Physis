@@ -11,7 +11,7 @@ use crate::mtrl::ColorDyeTable::{
     DawntrailColorDyeTable, LegacyColorDyeTable, OpaqueColorDyeTable,
 };
 use crate::mtrl::ColorTable::{DawntrailColorTable, LegacyColorTable, OpaqueColorTable};
-use crate::{ByteBuffer, ByteSpan};
+use crate::{ByteBuffer, ByteSpan, ReadableFile, WritableFile};
 use binrw::{BinRead, BinResult, BinWrite, binrw};
 
 #[binrw]
@@ -462,9 +462,8 @@ pub struct Material {
     pub color_dye_table: Option<ColorDyeTable>,
 }
 
-impl Material {
-    /// Read an existing file.
-    pub fn from_existing(platform: Platform, buffer: ByteSpan) -> Option<Material> {
+impl ReadableFile for Material {
+    fn from_existing(platform: Platform, buffer: ByteSpan) -> Option<Material> {
         let mut cursor = Cursor::new(buffer);
         let mat_data = MaterialData::read_options(&mut cursor, platform.endianness(), ()).ok()?;
 
@@ -536,9 +535,10 @@ impl Material {
             color_dye_table,
         })
     }
+}
 
-    /// Writes data back to a buffer.
-    pub fn write_to_buffer(&self, platform: Platform) -> Option<ByteBuffer> {
+impl WritableFile for Material {
+    fn write_to_buffer(&self, platform: Platform) -> Option<ByteBuffer> {
         let mut buffer = ByteBuffer::new();
 
         {

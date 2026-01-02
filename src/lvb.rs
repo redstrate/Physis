@@ -8,6 +8,8 @@ use std::io::SeekFrom;
 
 use crate::ByteBuffer;
 use crate::ByteSpan;
+use crate::ReadableFile;
+use crate::WritableFile;
 use crate::common::Platform;
 use crate::common_file_operations::read_bool_from;
 use crate::common_file_operations::write_bool_as;
@@ -343,17 +345,17 @@ impl ScnFilter {
     pub const SIZE: usize = 0x1C;
 }
 
-impl Lvb {
-    /// Read an existing file.
-    pub fn from_existing(platform: Platform, buffer: ByteSpan) -> Option<Self> {
+impl ReadableFile for Lvb {
+    fn from_existing(platform: Platform, buffer: ByteSpan) -> Option<Self> {
         let mut cursor = Cursor::new(buffer);
         let string_heap = StringHeap::from(cursor.position());
 
         Lvb::read_options(&mut cursor, platform.endianness(), (&string_heap,)).ok()
     }
+}
 
-    /// Writes data back to a buffer.
-    pub fn write_to_buffer(&self, platform: Platform) -> Option<ByteBuffer> {
+impl WritableFile for Lvb {
+    fn write_to_buffer(&self, platform: Platform) -> Option<ByteBuffer> {
         let mut buffer = ByteBuffer::new();
 
         {

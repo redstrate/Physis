@@ -5,12 +5,14 @@
 
 use std::io::{Cursor, SeekFrom};
 
+use crate::ReadableFile;
+use crate::common::Platform;
 use crate::crc::XivCrc32;
 use crate::{ByteSpan, common_file_operations::read_bool_from};
 use binrw::{BinRead, binread};
 
 #[binread]
-#[br(little, import {
+#[br(import {
     strings_offset: u32
 })]
 #[derive(Debug)]
@@ -38,7 +40,7 @@ pub struct ResourceParameter {
 }
 
 #[binread]
-#[br(little, import {
+#[br(import {
     version: u32,
     shader_data_offset: u32,
     strings_offset: u32,
@@ -100,7 +102,7 @@ pub struct Key {
 
 #[binread]
 #[repr(C)]
-#[br(little, import {
+#[br(import {
     version: u32,
 })]
 #[derive(Debug, Clone, Copy)]
@@ -121,7 +123,7 @@ pub struct NodeAlias {
 }
 
 #[binread]
-#[br(little, import {
+#[br(import {
     version: u32,
     system_key_count: u32,
     scene_key_count: u32,
@@ -154,7 +156,6 @@ pub struct Node {
 ///
 /// A collection of shaders which are usually different permutations, probably created from a "mega-shader".
 #[binread]
-#[br(little)]
 #[br(magic = b"ShPk")]
 #[derive(Debug)]
 #[allow(dead_code, unused)]
@@ -240,11 +241,11 @@ pub struct ShaderPackage {
 
 const SELECTOR_MULTIPLER: u32 = 31;
 
-impl ShaderPackage {
-    /// Read an existing file.
-    pub fn from_existing(buffer: ByteSpan) -> Option<ShaderPackage> {
+impl ReadableFile for ShaderPackage {
+    fn from_existing(platform: Platform, buffer: ByteSpan) -> Option<ShaderPackage> {
         let mut cursor = Cursor::new(buffer);
-        let mut package = ShaderPackage::read(&mut cursor).ok()?;
+        let mut package =
+            ShaderPackage::read_options(&mut cursor, platform.endianness(), ()).ok()?;
 
         for (i, node) in package.nodes.iter().enumerate() {
             package.node_selectors.push((node.selector, i as u32));
@@ -255,7 +256,9 @@ impl ShaderPackage {
 
         Some(package)
     }
+}
 
+impl ShaderPackage {
     pub fn find_node(&self, selector: u32) -> Option<&Node> {
         for (sel, node) in &self.node_selectors {
             if *sel == selector {
@@ -320,7 +323,7 @@ mod tests {
         d.push("random");
 
         // Feeding it invalid data should not panic
-        ShaderPackage::from_existing(&read(d).unwrap());
+        ShaderPackage::from_existing(Platform::Win32, &read(d).unwrap());
     }
 
     #[test]

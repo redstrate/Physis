@@ -5,13 +5,15 @@ use std::io::Cursor;
 
 use crate::ByteBuffer;
 use crate::ByteSpan;
+use crate::ReadableFile;
+use crate::WritableFile;
+use crate::common::Platform;
 use binrw::BinRead;
 use binrw::BinWrite;
 use binrw::binrw;
 
 #[binrw]
 #[derive(Debug)]
-#[brw(little)]
 #[brw(magic = b"UWB1")]
 pub struct Uwb {
     /// Including this header
@@ -26,7 +28,6 @@ pub struct Uwb {
 
 #[binrw]
 #[derive(Debug)]
-#[brw(little)]
 #[brw(magic = b"UWC1")]
 pub struct Uwc {
     /// Including this header
@@ -36,20 +37,21 @@ pub struct Uwc {
     pub unk1: Vec<u8>,
 }
 
-impl Uwb {
-    /// Read an existing file.
-    pub fn from_existing(buffer: ByteSpan) -> Option<Self> {
+impl ReadableFile for Uwb {
+    fn from_existing(platform: Platform, buffer: ByteSpan) -> Option<Self> {
         let mut cursor = Cursor::new(buffer);
-        Uwb::read(&mut cursor).ok()
+        Uwb::read_options(&mut cursor, platform.endianness(), ()).ok()
     }
+}
 
-    /// Writes data back to a buffer.
-    pub fn write_to_buffer(&self) -> Option<ByteBuffer> {
+impl WritableFile for Uwb {
+    fn write_to_buffer(&self, platform: Platform) -> Option<ByteBuffer> {
         let mut buffer = ByteBuffer::new();
 
         {
             let mut cursor = Cursor::new(&mut buffer);
-            self.write_le(&mut cursor).ok()?;
+            self.write_options(&mut cursor, platform.endianness(), ())
+                .ok()?;
         }
 
         Some(buffer)
@@ -70,6 +72,6 @@ mod tests {
         d.push("random");
 
         // Feeding it invalid data should not panic
-        Uwb::from_existing(&read(d).unwrap());
+        Uwb::from_existing(Platform::Win32, &read(d).unwrap());
     }
 }

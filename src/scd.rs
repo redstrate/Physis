@@ -4,12 +4,13 @@
 use std::io::Cursor;
 
 use crate::ByteSpan;
+use crate::ReadableFile;
+use crate::common::Platform;
 use binrw::BinRead;
 use binrw::binrw;
 
 #[binrw]
 #[derive(Debug)]
-#[brw(little)]
 struct ScdHeader {
     #[br(count = 4)]
     #[bw(pad_size_to = 4)]
@@ -48,11 +49,10 @@ struct ScdHeader {
 #[derive(Debug)]
 pub struct Scd {}
 
-impl Scd {
-    /// Read an existing file.
-    pub fn from_existing(buffer: ByteSpan) -> Option<Self> {
+impl ReadableFile for Scd {
+    fn from_existing(platform: Platform, buffer: ByteSpan) -> Option<Self> {
         let mut cursor = Cursor::new(buffer);
-        ScdHeader::read(&mut cursor).ok()?;
+        ScdHeader::read_options(&mut cursor, platform.endianness(), ()).ok()?;
 
         Some(Scd {})
     }

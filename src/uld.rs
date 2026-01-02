@@ -8,6 +8,8 @@ use std::io::Cursor;
 use std::io::SeekFrom;
 
 use crate::ByteSpan;
+use crate::ReadableFile;
+use crate::common::Platform;
 use crate::common_file_operations::read_bool_from;
 use crate::common_file_operations::read_string;
 use crate::common_file_operations::write_bool_as;
@@ -74,7 +76,6 @@ enum NodeData {
 /// A single widget.
 #[binrw]
 #[derive(Debug)]
-#[brw(little)]
 pub struct WidgetNode {
     /// A integer identifier for this node.
     pub node_id: u32,
@@ -135,7 +136,6 @@ pub struct WidgetNode {
 /// Widget container containing nodes.
 #[binrw]
 #[derive(Debug)]
-#[brw(little)]
 pub struct WidgetHeader {
     common: CommonHeader,
 
@@ -165,7 +165,6 @@ pub struct WidgetHeader {
 
 #[binrw]
 #[derive(Debug)]
-#[brw(little)]
 struct TimelineKeyFrame {
     time: u32,
     offset: u16,
@@ -177,7 +176,6 @@ struct TimelineKeyFrame {
 
 #[binrw]
 #[derive(Debug)]
-#[brw(little)]
 struct TimelineKeyGroup {
     usage: u16,
     key_group_type: u16,
@@ -190,7 +188,6 @@ struct TimelineKeyGroup {
 /// Represents a single frame of animation.
 #[binrw]
 #[derive(Debug)]
-#[brw(little)]
 pub struct TimelineFrame {
     // TODO: lol what? why is this called TimelineFrame then?!
     /// The frame to start at.
@@ -206,7 +203,6 @@ pub struct TimelineFrame {
 /// Represents an animated timeline.
 #[binrw]
 #[derive(Debug)]
-#[brw(little)]
 pub struct Timeline {
     /// Integer identifier for this timeline.
     id: u32,
@@ -223,7 +219,6 @@ pub struct Timeline {
 /// Contains timelines.
 #[binrw]
 #[derive(Debug)]
-#[brw(little)]
 pub struct TimelineHeader {
     common: CommonHeader,
 
@@ -239,7 +234,6 @@ pub struct TimelineHeader {
 /// Element that may contain a timeline or a widget.
 #[binrw]
 #[derive(Debug)]
-#[brw(little)]
 pub struct AtkHeader {
     common: CommonHeader,
 
@@ -274,7 +268,6 @@ const ATK_HEADER_SIZE: usize = 36;
 /// The common header for all ULD nodes.
 #[binrw]
 #[derive(Debug)]
-#[brw(little)]
 struct CommonHeader {
     #[br(count = 4)]
     #[bw(pad_size_to = 4)]
@@ -292,7 +285,6 @@ struct CommonHeader {
 
 #[binrw]
 #[derive(Debug)]
-#[brw(little)]
 struct UldHeader {
     common: CommonHeader,
 
@@ -307,7 +299,6 @@ struct UldHeader {
 /// Does what it says: lays out UI elements.
 #[binrw]
 #[derive(Debug)]
-#[brw(little)]
 pub struct Uld {
     header: UldHeader,
 
@@ -323,11 +314,10 @@ pub struct Uld {
     pub widget: AtkHeader,
 }
 
-impl Uld {
-    /// Read an existing file.
-    pub fn from_existing(buffer: ByteSpan) -> Option<Self> {
+impl ReadableFile for Uld {
+    fn from_existing(platform: Platform, buffer: ByteSpan) -> Option<Self> {
         let mut cursor = Cursor::new(buffer);
-        Uld::read(&mut cursor).ok()
+        Uld::read_options(&mut cursor, platform.endianness(), ()).ok()
     }
 }
 
@@ -345,6 +335,6 @@ mod tests {
         d.push("random");
 
         // Feeding it invalid data should not panic
-        Uld::from_existing(&read(d).unwrap());
+        Uld::from_existing(Platform::Win32, &read(d).unwrap());
     }
 }

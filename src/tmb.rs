@@ -4,12 +4,13 @@
 use std::io::Cursor;
 
 use crate::ByteSpan;
+use crate::ReadableFile;
+use crate::common::Platform;
 use binrw::BinRead;
 use binrw::binrw;
 
 #[binrw]
 #[derive(Debug)]
-#[brw(little)]
 struct TmbHeader {
     magic: i32, // TODO: figure out what this
     size: i32,
@@ -19,11 +20,10 @@ struct TmbHeader {
 #[derive(Debug)]
 pub struct Tmb {}
 
-impl Tmb {
-    /// Read an existing file.
-    pub fn from_existing(buffer: ByteSpan) -> Option<Self> {
+impl ReadableFile for Tmb {
+    fn from_existing(platform: Platform, buffer: ByteSpan) -> Option<Self> {
         let mut cursor = Cursor::new(buffer);
-        TmbHeader::read(&mut cursor).ok()?;
+        TmbHeader::read_options(&mut cursor, platform.endianness(), ()).ok()?;
 
         Some(Tmb {})
     }
