@@ -49,3 +49,15 @@ impl ReadableFile for Pap {
         Some(Pap {})
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::pass_random_invalid;
+
+    use super::*;
+
+    #[test]
+    fn test_invalid() {
+        pass_random_invalid::<Pap>();
+    }
+}

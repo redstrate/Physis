@@ -16,8 +16,8 @@ use binrw::binrw;
 #[derive(Debug)]
 #[brw(magic = b"UWB1")]
 pub struct Uwb {
-    /// Including this header
-    pub file_size: u32,
+    /// Including this header, in bytes.
+    file_size: u32,
     /// Number of UWC's
     #[br(temp)]
     #[bw(calc = uwcs.len() as u32)]
@@ -60,18 +60,12 @@ impl WritableFile for Uwb {
 
 #[cfg(test)]
 mod tests {
-    use std::fs::read;
-    use std::path::PathBuf;
+    use crate::pass_random_invalid;
 
     use super::*;
 
     #[test]
     fn test_invalid() {
-        let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-        d.push("resources/tests");
-        d.push("random");
-
-        // Feeding it invalid data should not panic
-        Uwb::from_existing(Platform::Win32, &read(d).unwrap());
+        pass_random_invalid::<Uwb>();
     }
 }

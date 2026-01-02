@@ -34,3 +34,15 @@ impl ReadableFile for Phyb {
         Some(Phyb {})
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::pass_random_invalid;
+
+    use super::*;
+
+    #[test]
+    fn test_invalid() {
+        pass_random_invalid::<Phyb>();
+    }
+}

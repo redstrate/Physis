@@ -59,3 +59,15 @@ impl ReadableFile for SHCD {
         SHCD::read_options(&mut cursor, platform.endianness(), ()).ok()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::pass_random_invalid;
+
+    use super::*;
+
+    #[test]
+    fn test_invalid() {
+        pass_random_invalid::<SHCD>();
+    }
+}

@@ -184,3 +184,18 @@ pub trait WritableFile: Sized {
     /// Writes data back to a buffer.
     fn write_to_buffer(&self, platform: Platform) -> Option<ByteBuffer>;
 }
+
+/// Used for basic sanity checking tests in other modules.
+#[cfg(test)]
+fn pass_random_invalid<T: crate::ReadableFile>() {
+    let mut d = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    d.push("resources/tests");
+    d.push("random");
+
+    // Feeding it invalid data should not panic
+    // Note that we don't check the Option currently, because some types like Hwc return Some regardless.
+    T::from_existing(
+        Platform::Win32,
+        &std::fs::read(d).expect("Could not read random test file"),
+    );
+}

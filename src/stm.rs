@@ -43,7 +43,7 @@ pub struct StainingTemplate {}
 impl ReadableFile for StainingTemplate {
     fn from_existing(platform: Platform, buffer: ByteSpan) -> Option<Self> {
         let mut cursor = Cursor::new(buffer);
-        let header = StmHeader::read_options(&mut cursor, platform.endianness(), ()).unwrap();
+        let header = StmHeader::read_options(&mut cursor, platform.endianness(), ()).ok()?;
 
         for entry_offset in header.offsets {
             let offset = entry_offset as i32 * 2 + 8 + 4 * header.entry_count;
@@ -120,5 +120,17 @@ impl StainingTemplate {
         } else {
             panic!("Too many elements");
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::pass_random_invalid;
+
+    use super::*;
+
+    #[test]
+    fn test_invalid() {
+        pass_random_invalid::<StainingTemplate>();
     }
 }

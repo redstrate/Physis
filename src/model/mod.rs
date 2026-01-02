@@ -1311,7 +1311,14 @@ mod tests {
 
     use vertex_declarations::VERTEX_ELEMENT_SIZE;
 
+    use crate::pass_random_invalid;
+
     use super::*;
+
+    #[test]
+    fn test_invalid() {
+        pass_random_invalid::<MDL>();
+    }
 
     #[test]
     fn test_file_header_size() {
@@ -1430,15 +1437,5 @@ mod tests {
 
         // model header
         assert_eq!(mdl.model_data.header.radius, 1.5340779);
-    }
-
-    #[test]
-    fn test_invalid() {
-        let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-        d.push("resources/tests");
-        d.push("random");
-
-        // Feeding it invalid data should not panic
-        MDL::from_existing(Platform::Win32, &read(d).unwrap());
     }
 }

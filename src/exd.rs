@@ -124,37 +124,12 @@ impl ReadableFile for EXD {
 // For more complex tests, see `excel.rs`.
 #[cfg(test)]
 mod tests {
-    use crate::exh::{EXH, EXHHeader, SheetRowKind};
-    use std::fs::read;
-    use std::path::PathBuf;
+    use crate::pass_random_invalid;
 
     use super::*;
 
     #[test]
     fn test_invalid() {
-        let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-        d.push("resources/tests");
-        d.push("random");
-
-        let exh = EXH {
-            header: EXHHeader {
-                version: 0,
-                row_size: 0,
-                column_count: 0,
-                page_count: 0,
-                language_count: 0,
-                row_count: 0,
-                unk1: 0,
-                row_kind: SheetRowKind::SingleRow,
-                unk2: 0,
-                unk3: 0,
-            },
-            column_definitions: vec![],
-            pages: vec![],
-            languages: vec![],
-        };
-
-        // Feeding it invalid data should not panic
-        EXD::from_existing(Platform::Win32, &read(d).unwrap());
+        pass_random_invalid::<EXD>();
     }
 }

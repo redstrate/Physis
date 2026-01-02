@@ -111,6 +111,30 @@ pub(crate) struct Half3 {
     pub b: f16,
 }
 
+/// Reads a 4 byte string.
+#[binrw::parser(reader, endian)]
+pub(crate) fn read_short_identifier() -> BinResult<String> {
+    let bytes = reader.read_type_args::<[u8; 4]>(endian, ())?.to_vec();
+
+    Ok(String::from_utf8(bytes)
+        .map_err(|orig_err| binrw::Error::Custom {
+            pos: 0,
+            err: Box::new(orig_err),
+        })?
+        .trim_matches(char::from(0))
+        .to_string())
+}
+
+/// Writes a 4 byte string.
+#[binrw::writer(writer)]
+pub fn write_short_identifier(identifier: &String) -> BinResult<()> {
+    let mut bytes = identifier.as_bytes().to_vec();
+    bytes.resize(4, 0); // Pad to 4 bytes
+    writer.write_all(&bytes)?;
+
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

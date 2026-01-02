@@ -6,16 +6,16 @@ use std::io::Cursor;
 use crate::ByteSpan;
 use crate::ReadableFile;
 use crate::common::Platform;
+use crate::common_file_operations::read_short_identifier;
+use crate::common_file_operations::write_short_identifier;
 use binrw::BinRead;
 use binrw::binrw;
 
 #[binrw]
 #[derive(Debug)]
 struct SgbHeader {
-    #[br(count = 4)]
-    #[bw(pad_size_to = 4)]
-    #[bw(map = |x : &String | x.as_bytes())]
-    #[br(map = | x: Vec<u8> | String::from_utf8(x).unwrap().trim_matches(char::from(0)).to_string())]
+    #[bw(write_with = write_short_identifier)]
+    #[br(parse_with = read_short_identifier)]
     pub identifier: String,
 
     file_size: i32,
@@ -34,5 +34,17 @@ impl ReadableFile for Sgb {
         SgbHeader::read_options(&mut cursor, platform.endianness(), ()).ok()?;
 
         Some(Sgb {})
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::pass_random_invalid;
+
+    use super::*;
+
+    #[test]
+    fn test_invalid() {
+        pass_random_invalid::<Sgb>();
     }
 }
