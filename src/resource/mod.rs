@@ -10,12 +10,19 @@ pub use sqpack::{RepairAction, RepairError, SqPackRelease, SqPackResource};
 mod unpacked;
 pub use unpacked::UnpackedResource;
 
-use crate::{ByteBuffer, common::Platform};
+use crate::{
+    ByteBuffer, Error, ReadableFile,
+    common::{Language, Platform},
+    excel::{ExcelSheet, ExcelSheetPage},
+    exd::EXD,
+    exh::EXH,
+    exl::EXL,
+};
 
 /// Represents a source of files for reading.
 ///
 /// This abstracts away some of the nitty-gritty of where files come from. This could represent a compressed archive like SqPack, unpacked files on disk, or even a network.
-pub trait Resource {
+pub trait Resource: Send + Sync + 'static {
     /// Reads the file located at `path`. This is returned as an in-memory buffer, and will usually
     /// have to be further parsed.
     ///
@@ -55,4 +62,80 @@ pub trait Resource {
     fn platform(&self) -> Platform {
         Platform::Win32
     }
+}
+
+// Below are generic across all Resources. We have to do this because of limitations with dyn Traits in Rust.
+// And we also don't want these solely in ResourceResolver, because these are also useful standalone.
+
+/// Generically parse a file from a `Resource`. You most likely want to use the method in `ResourceResolver.`
+pub fn generic_parsed<R: Resource + ?Sized, F: ReadableFile>(
+    resource: &mut R,
+    path: &str,
+) -> Result<F, Error> {
+    if let Some(bytes) = resource.read(path) {
+        return F::from_existing(resource.platform(), &bytes).ok_or(Error::FileParsingFailed {
+            path: path.to_string(),
+        });
+    }
+
+    Err(Error::FileNotFound {
+        path: path.to_string(),
+    })
+}
+
+/// Read an excel sheet header by name (e.g. "Achievement"). You most likely want to use the method in `ResourceResolver.`
+pub fn generic_read_excel_sheet_header<R: Resource + ?Sized>(
+    resource: &mut R,
+    name: &str,
+) -> Result<EXH, Error> {
+    let new_filename = name.to_lowercase();
+
+    let path = format!("exd/{new_filename}.exh");
+
+    generic_parsed::<R, EXH>(resource, &path)
+}
+
+/// Read an excel sheet by name (e.g. "Achievement"). You most likely want to use the method in `ResourceResolver.`
+pub fn generic_read_excel_sheet<R: Resource + ?Sized>(
+    resource: &mut R,
+    exh: EXH,
+    name: &str,
+    language: Language,
+) -> Result<ExcelSheet, Error> {
+    let mut pages = Vec::new();
+    for page in 0..exh.header.page_count {
+        let exd = generic_read_excel_exd(resource, name, &exh, language, page as usize)?;
+        pages.push(ExcelSheetPage::from_exd(page, &exh, exd));
+    }
+
+    Ok(ExcelSheet { exh, pages })
+}
+
+/// Returns all known sheet names listed in the root list. You most likely want to use the method in `ResourceResolver.`
+pub fn generic_get_all_sheet_names<R: Resource + ?Sized>(
+    resource: &mut R,
+) -> Result<Vec<String>, Error> {
+    let root_exl = generic_parsed::<R, EXL>(resource, "exd/root.exl")?;
+
+    let mut names = vec![];
+    for (row, _) in root_exl.entries {
+        names.push(row);
+    }
+
+    Ok(names)
+}
+
+fn generic_read_excel_exd<R: Resource + ?Sized>(
+    resource: &mut R,
+    name: &str,
+    exh: &EXH,
+    language: Language,
+    page: usize,
+) -> Result<EXD, Error> {
+    let exd_path = format!(
+        "exd/{}",
+        EXD::calculate_filename(name, language, &exh.pages[page])
+    );
+
+    generic_parsed::<R, EXD>(resource, &exd_path)
 }

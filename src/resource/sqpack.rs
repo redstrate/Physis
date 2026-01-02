@@ -8,9 +8,15 @@ use std::{
 };
 
 use crate::{
-    ByteBuffer,
-    common::{PLATFORM_LIST, Platform, read_version},
+    ByteBuffer, Error, ReadableFile,
+    common::{Language, PLATFORM_LIST, Platform, read_version},
+    excel::ExcelSheet,
+    exh::EXH,
     repository::{Category, Repository, RepositoryType, string_to_category},
+    resource::{
+        generic_get_all_sheet_names, generic_parsed, generic_read_excel_sheet,
+        generic_read_excel_sheet_header,
+    },
     sqpack::{Hash, IndexEntry, SqPackData, SqPackIndex},
 };
 
@@ -431,6 +437,31 @@ impl SqPackResource {
             }
             None => None,
         }
+    }
+
+    /// Generically parse a file from a `Resource`.
+    pub fn parsed<F: ReadableFile>(&mut self, path: &str) -> Result<F, Error> {
+        generic_parsed(self, path)
+    }
+
+    /// Read an excel sheet header by name (e.g. "Achievement").
+    pub fn read_excel_sheet_header(&mut self, name: &str) -> Result<EXH, Error> {
+        generic_read_excel_sheet_header(self, name)
+    }
+
+    /// Read an excel sheet by name (e.g. "Achievement").
+    pub fn read_excel_sheet(
+        &mut self,
+        exh: EXH,
+        name: &str,
+        language: Language,
+    ) -> Result<ExcelSheet, Error> {
+        generic_read_excel_sheet(self, exh, name, language)
+    }
+
+    /// Returns all known sheet names listed in the root list.
+    pub fn get_all_sheet_names(&mut self) -> Result<Vec<String>, Error> {
+        generic_get_all_sheet_names(self)
     }
 }
 

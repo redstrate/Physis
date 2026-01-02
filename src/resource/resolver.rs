@@ -4,10 +4,12 @@
 use crate::{
     ByteBuffer, Error, ReadableFile,
     common::Language,
-    excel::{ExcelSheet, ExcelSheetPage},
-    exd::EXD,
+    excel::ExcelSheet,
     exh::EXH,
-    exl::EXL,
+    resource::{
+        generic_get_all_sheet_names, generic_parsed, generic_read_excel_sheet,
+        generic_read_excel_sheet_header,
+    },
 };
 
 use super::Resource;
@@ -22,11 +24,11 @@ use super::Resource;
 /// let sqpack_source = SqPackResource::from_existing("SquareEnix/Final Fantasy XIV - A Realm Reborn/game");
 /// let file_source = UnpackedResource::from_existing("unpacked/");
 /// let mut resolver = ResourceResolver::new();
-/// resolver.add_source(Box::new(file_source)); // first has most priority
-/// resolver.add_source(Box::new(sqpack_source)); // this is the fallback
+/// resolver.add_source(file_source); // first has most priority
+/// resolver.add_source(sqpack_source); // this is the fallback
 /// ```
 pub struct ResourceResolver {
-    resolvers: Vec<Box<dyn Resource + Send + Sync>>,
+    resources: Vec<Box<dyn Resource>>,
 }
 
 impl Default for ResourceResolver {
@@ -39,19 +41,18 @@ impl ResourceResolver {
     /// Create a new, empty resolver.
     pub fn new() -> Self {
         Self {
-            resolvers: Vec::new(),
+            resources: Vec::new(),
         }
     }
 
-    // TODO: Remove Box requirement from the API
     /// Adds a new source to this resolver, and makes it the least prioritized.
-    pub fn add_source(&mut self, source: Box<dyn Resource + Send + Sync>) {
-        self.resolvers.push(source);
+    pub fn add_source(&mut self, source: impl Resource) {
+        self.resources.push(Box::new(source));
     }
 
     // TODO: add documentation
     pub fn read(&mut self, path: &str) -> Option<ByteBuffer> {
-        for resolver in &mut self.resolvers {
+        for resolver in &mut self.resources {
             if let Some(bytes) = resolver.read(path) {
                 return Some(bytes);
             }
@@ -70,29 +71,48 @@ impl ResourceResolver {
     /// # use std::io::Write;
     /// # use physis::common::Platform;
     /// let mut resolver = ResourceResolver::new();
-    /// resolver.add_source(Box::new(SqPackResource::from_existing("SquareEnix/Final Fantasy XIV - A Realm Reborn/game")));
+    /// resolver.add_source(SqPackResource::from_existing("SquareEnix/Final Fantasy XIV - A Realm Reborn/game"));
     ///
     /// let exl = resolver.parsed::<EXL>("exd/root.exl").unwrap();
     /// ```
-    pub fn parsed<T: ReadableFile>(&mut self, path: &str) -> Result<T, Error> {
-        for resolver in &mut self.resolvers {
-            if let Some(bytes) = resolver.read(path) {
-                return T::from_existing(resolver.platform(), &bytes).ok_or(
-                    Error::FileParsingFailed {
-                        path: path.to_string(),
-                    },
-                );
-            }
-        }
+    pub fn parsed<F: ReadableFile>(&mut self, path: &str) -> Result<F, Error> {
+        self.execute_first_found(
+            |resource| generic_parsed(resource, path),
+            Error::FileNotFound {
+                path: path.to_string(),
+            },
+        )
+    }
 
-        Err(Error::FileNotFound {
-            path: path.to_string(),
-        })
+    /// Read an excel sheet header by name (e.g. "Achievement").
+    pub fn read_excel_sheet_header(&mut self, name: &str) -> Result<EXH, Error> {
+        self.execute_first_found(
+            |resource| generic_read_excel_sheet_header(resource, name),
+            Error::Unknown,
+        )
+    }
+
+    /// Read an excel sheet by name (e.g. "Achievement").
+    pub fn read_excel_sheet(
+        &mut self,
+        exh: EXH,
+        name: &str,
+        language: Language,
+    ) -> Result<ExcelSheet, Error> {
+        self.execute_first_found(
+            |resource| generic_read_excel_sheet(resource, exh.clone(), name, language),
+            Error::Unknown,
+        )
+    }
+
+    /// Returns all known sheet names listed in the root list.
+    pub fn get_all_sheet_names(&mut self) -> Result<Vec<String>, Error> {
+        self.execute_first_found(generic_get_all_sheet_names, Error::Unknown)
     }
 
     // TODO: add documentation
     pub fn exists(&mut self, path: &str) -> bool {
-        for resolver in &mut self.resolvers {
+        for resolver in &mut self.resources {
             if resolver.exists(path) {
                 return true;
             }
@@ -101,55 +121,26 @@ impl ResourceResolver {
         false
     }
 
-    /// Read an excel sheet header by name (e.g. "Achievement")
-    pub fn read_excel_sheet_header(&mut self, name: &str) -> Result<EXH, Error> {
-        let new_filename = name.to_lowercase();
-
-        let path = format!("exd/{new_filename}.exh");
-
-        self.parsed::<EXH>(&path)
-    }
-
-    /// Read an excel sheet by name (e.g. "Achievement")
-    pub fn read_excel_sheet(
-        &mut self,
-        exh: EXH,
-        name: &str,
-        language: Language,
-    ) -> Result<ExcelSheet, Error> {
-        let mut pages = Vec::new();
-        for page in 0..exh.header.page_count {
-            let exd = self.read_excel_exd(name, &exh, language, page as usize)?;
-            pages.push(ExcelSheetPage::from_exd(page, &exh, exd));
+    /// Executes the given function `f`, continuing past "FileNotFound" errors and ultimately returns `error` if everything failed.
+    fn execute_first_found<T, F>(&mut self, f: F, error: Error) -> Result<T, Error>
+    where
+        F: Fn(&mut dyn Resource) -> Result<T, Error>,
+    {
+        for resource in &mut self.resources {
+            let result = f(resource.as_mut());
+            match result {
+                Ok(t) => return Ok(t),
+                Err(err) => {
+                    if let Error::FileNotFound { .. } = err {
+                        continue; // continue even if the file wasn't found in *this* resolver
+                    } else {
+                        return Err(err);
+                    }
+                }
+            }
         }
 
-        Ok(ExcelSheet { exh, pages })
-    }
-
-    /// Returns all known sheet names listed in the root list
-    pub fn get_all_sheet_names(&mut self) -> Result<Vec<String>, Error> {
-        let root_exl = self.parsed::<EXL>("exd/root.exl")?;
-
-        let mut names = vec![];
-        for (row, _) in root_exl.entries {
-            names.push(row);
-        }
-
-        Ok(names)
-    }
-
-    fn read_excel_exd(
-        &mut self,
-        name: &str,
-        exh: &EXH,
-        language: Language,
-        page: usize,
-    ) -> Result<EXD, Error> {
-        let exd_path = format!(
-            "exd/{}",
-            EXD::calculate_filename(name, language, &exh.pages[page])
-        );
-
-        self.parsed::<EXD>(&exd_path)
+        // TODO: maybe return the last error instead?
+        Err(error)
     }
 }
