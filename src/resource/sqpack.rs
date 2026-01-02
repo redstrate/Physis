@@ -43,6 +43,7 @@ pub enum RepairError<'a> {
 
 /// Which release these SqPacks are from.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[repr(C)]
 pub enum SqPackRelease {
     /// SqPack files that are generally available from retail.
     Retail,
