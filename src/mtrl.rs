@@ -12,7 +12,7 @@ use crate::mtrl::ColorDyeTable::{
 };
 use crate::mtrl::ColorTable::{DawntrailColorTable, LegacyColorTable, OpaqueColorTable};
 use crate::{ByteBuffer, ByteSpan};
-use binrw::{BinRead, BinResult, BinWrite, binread, binrw};
+use binrw::{BinRead, BinResult, BinWrite, binrw};
 
 #[binrw]
 #[derive(Debug)]

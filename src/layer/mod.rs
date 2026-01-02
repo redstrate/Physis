@@ -65,7 +65,7 @@ pub use trigger_box::TriggerBoxInstanceObject;
 pub use trigger_box::TriggerBoxShape;
 
 mod string_heap;
-pub use string_heap::{HeapString, StringHeap};
+pub use string_heap::{HeapPointer, HeapString, HeapStringFromPointer, StringHeap};
 
 // From https://github.com/NotAdam/Lumina/tree/40dab50183eb7ddc28344378baccc2d63ae71d35/src/Lumina/Data/Parsing/Layer
 // Also see https://github.com/aers/FFXIVClientStructs/blob/6b62122cae38bfbc016bf697bef75f80f37abac1/FFXIVClientStructs/FFXIV/Client/LayoutEngine/ILayoutInstance.cs

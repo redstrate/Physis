@@ -6,50 +6,126 @@
 use std::io::Cursor;
 use std::io::SeekFrom;
 
+use crate::ByteBuffer;
 use crate::ByteSpan;
 use crate::common::Platform;
 use crate::common_file_operations::read_bool_from;
-use crate::common_file_operations::read_string_until_null;
+use crate::common_file_operations::write_bool_as;
+use crate::layer::HeapPointer;
+use crate::layer::HeapStringFromPointer;
+use crate::layer::StringHeap;
 use binrw::BinRead;
 use binrw::BinReaderExt;
 use binrw::BinResult;
-use binrw::binread;
+use binrw::BinWrite;
+use binrw::binrw;
 
 /// Level variable binary file, usually with the `.lvb` file extension.
 ///
 /// Contains general information about the level, such as which layer groups it has.
-#[binread]
+#[binrw]
 #[derive(Debug)]
+#[br(import(string_heap: &StringHeap))]
+#[bw(import(string_heap: &mut StringHeap))]
 #[brw(magic = b"LVB1")]
 pub struct Lvb {
     /// Including this header
     pub file_size: u32,
+
     /// Number of Scn's
     #[br(temp)]
-    #[bw(calc = scns.len() as u32)]
-    scn_count: u32,
-    #[br(count = scn_count)]
-    pub scns: Vec<Scn>,
+    #[bw(calc = sections.len() as u32)]
+    section_count: u32,
+
+    #[br(count = section_count)]
+    #[br(args{ inner: (string_heap,) })]
+    #[bw(write_with = write_scns, args(string_heap,))]
+    pub sections: Vec<ScnSection>,
 }
 
-#[binread]
+#[binrw::writer(writer, endian)]
+pub fn write_scns(scns: &Vec<ScnSection>, string_heap: &mut StringHeap) -> BinResult<()> {
+    for scn in scns {
+        scn.write_options(writer, endian, (string_heap,))?;
+    }
+
+    Ok(())
+}
+
+#[binrw]
+#[br(import(string_heap: &StringHeap))]
+#[bw(import(string_heap: &mut StringHeap))]
 #[derive(Debug)]
 #[brw(magic = b"SCN1")]
-pub struct Scn {
+pub struct ScnSection {
+    /// Size of this header. Should be equal to `ScnHeader::SIZE`.
     total_size: u32,
-    pub header: ScnHeader,
-    #[br(seek_before = SeekFrom::Current(header.offset_general as i64 - ScnHeader::SIZE as i64))]
+    /// Offset to FileLayerGroupHeader[NumEmbeddedLayerGroups].
+    offset_embedded_layer_groups: i32,
+    /// Number of embedded layer groups.
+    num_embedded_layer_groups: i32,
+    /// Offset to FileSceneGeneral.
+    offset_general: i32,
+    /// Offset to FileSceneFilterList.
+    offset_filters: i32,
+    /// Offset to FileSceneTimelineList.
+    offset_timelines: i32,
+    /// offset to a list of path offsets (ints)
+    offset_layer_group_resources: i32,
+    num_layer_group_resources: i32,
+    unk2: i32,
+    offset_unk1: i32, // Points to 5 bytes of data
+    unk4: i32,
+    unk5: i32,
+    unk6: i32,
+    unk7: i32,
+    unk8: i32,
+    unk9: i32,
+    unk10: i32,
+    offset_unk2: i32, // Points to 39 bytes of data
+    offset_unk3: i32, // Points to 64 bytes of data
+
+    #[br(seek_before = SeekFrom::Current(offset_general as i64 - ScnSection::SIZE as i64))]
     #[br(restore_position)]
+    #[brw(args(string_heap))]
     pub general: ScnGeneralSection,
-    #[br(seek_before = SeekFrom::Current(header.offset_filters as i64 - ScnHeader::SIZE as i64))]
+
+    #[br(seek_before = SeekFrom::Current(offset_filters as i64 - ScnSection::SIZE as i64))]
     #[br(restore_position)]
-    pub unk3: ScnUnknown3Section,
-    #[br(seek_before = SeekFrom::Current(header.offset_unk1 as i64 - ScnHeader::SIZE as i64))]
+    #[brw(args(string_heap))]
+    pub filters: ScnFiltersSection,
+
+    #[br(seek_before = SeekFrom::Current(offset_timelines as i64 - ScnSection::SIZE as i64))]
+    #[br(restore_position)]
+    pub timelines: ScnTimelinesSection,
+
+    #[br(count = num_layer_group_resources)]
+    #[br(seek_before = SeekFrom::Current(offset_layer_group_resources as i64 - ScnSection::SIZE as i64))]
+    #[br(restore_position)]
+    offset_path_layer_group_resources: Vec<i32>,
+
+    #[br(parse_with = strings_from_offsets)]
+    #[br(args(&offset_path_layer_group_resources))]
+    #[br(restore_position)]
+    #[br(seek_before = SeekFrom::Current(offset_layer_group_resources as i64 - ScnSection::SIZE as i64))]
+    #[bw(ignore)] // TODO: support
+    pub path_layer_group_resources: Vec<String>,
+
+    #[br(seek_before = SeekFrom::Current(offset_unk1 as i64 - ScnSection::SIZE as i64))]
     #[br(restore_position)]
     pub unk1: ScnUnknown1Section,
-    #[br(seek_before = SeekFrom::Current(header.offset_unk2 as i64 - ScnHeader::SIZE as i64))]
+
+    #[br(seek_before = SeekFrom::Current(offset_unk2 as i64 - ScnSection::SIZE as i64))]
     #[br(restore_position)]
-    pub unk2: ScnUnknown2Section,
+    pub unk2_section: ScnUnknown2Section,
+
+    #[br(seek_before = SeekFrom::Current(offset_unk3 as i64 - ScnSection::SIZE as i64))]
+    #[br(restore_position)]
+    pub unk3: ScnUnknown3Section,
+}
+
+impl ScnSection {
+    pub const SIZE: usize = 0x48;
 }
 
 #[binrw::parser(reader)]
@@ -76,64 +152,73 @@ pub(crate) fn strings_from_offsets(offsets: &Vec<i32>) -> BinResult<Vec<String>>
     Ok(strings)
 }
 
-#[binread]
+#[binrw]
+#[br(import(string_heap: &StringHeap))]
+#[bw(import(string_heap: &mut StringHeap))]
 #[derive(Debug)]
-pub struct ScnHeader {
-    /// offset to FileLayerGroupHeader[NumEmbeddedLayerGroups]
-    offset_embedded_layer_groups: i32,
-    num_embedded_layer_groups: i32,
-    /// offset to FileSceneGeneral
-    offset_general: i32,
-    /// offset to FileSceneFilterList
-    offset_filters: i32,
-    offset_unk1: i32,
-    /// offset to a list of path offsets (ints)
-    offset_layer_group_resources: i32,
-    num_layer_group_resources: i32,
+pub struct ScnEnvSpace {
+    #[br(temp)]
+    #[bw(ignore)]
+    heap_pointer: HeapPointer,
+
+    #[br(args(heap_pointer, string_heap))]
+    #[bw(args(string_heap))]
+    pub env_path: HeapStringFromPointer,
+
+    unk1: i32,
     unk2: i32,
-    offset_unk2: i32,
-    unk4: i32,
-    unk5: i32,
-    unk6: i32,
-    unk7: i32,
-    unk8: i32,
-    unk9: i32,
-    unk10: i32,
 
-    #[br(count = num_layer_group_resources)]
-    #[br(seek_before = SeekFrom::Current(offset_layer_group_resources as i64 - ScnHeader::SIZE as i64))]
-    #[br(restore_position)]
-    offset_path_layer_group_resources: Vec<i32>,
+    #[br(args(heap_pointer, string_heap))]
+    #[bw(args(string_heap))]
+    pub essb_path: HeapStringFromPointer,
 
-    #[br(parse_with = strings_from_offsets)]
-    #[br(args(&offset_path_layer_group_resources))]
+    // TODO: I have no idea, but there's 8 extra bytes unaccounted for here. Probably a mistake elsewhere.
     #[br(restore_position)]
-    #[br(seek_before = SeekFrom::Current(offset_layer_group_resources as i64 - ScnHeader::SIZE as i64))]
-    pub path_layer_group_resources: Vec<String>,
+    unk: u64,
 }
 
-impl ScnHeader {
-    pub const SIZE: usize = 0x40;
+impl ScnEnvSpace {
+    pub const SIZE: usize = 0x10;
 }
 
-#[binread]
+#[binrw]
+#[br(import(string_heap: &StringHeap))]
+#[bw(import(string_heap: &mut StringHeap))]
 #[derive(Debug)]
 pub struct ScnGeneralSection {
+    #[br(temp)]
+    #[bw(ignore)]
+    heap_pointer: HeapPointer,
+
     #[br(map = read_bool_from::<i32>)]
+    #[bw(map = write_bool_as::<i32>)]
     pub have_layer_groups: bool, // TODO: this is probably not what is according to Sapphire?
-    offset_path_terrain: i32,
+
+    #[br(args(heap_pointer, string_heap))]
+    #[bw(args(string_heap))]
+    pub bg_path: HeapStringFromPointer,
+
     offset_env_spaces: i32,
     num_env_spaces: i32,
+
     unk1: i32,
-    offset_path_sky_visibility: i32,
+
+    #[br(args(heap_pointer, string_heap))]
+    #[bw(args(string_heap))]
+    pub svb_path: HeapStringFromPointer,
+
     unk2: i32,
     unk3: i32,
     unk4: i32,
     unk5: i32,
     unk6: i32,
     unk7: i32,
-    unk8: i32,
-    offset_path_lcb: i32,
+    unk8: i32, // points to 4 bytes in the string heap
+
+    #[br(args(heap_pointer, string_heap))]
+    #[bw(args(string_heap))]
+    pub lcb_path: HeapStringFromPointer,
+
     unk10: i32,
     unk11: i32,
     unk12: i32,
@@ -141,87 +226,119 @@ pub struct ScnGeneralSection {
     unk14: i32,
     unk15: i32,
     unk16: i32,
+
     #[br(map = read_bool_from::<i32>)]
+    #[bw(map = write_bool_as::<i32>)]
     pub have_lcbuw: bool,
 
-    #[br(seek_before = SeekFrom::Current(offset_path_terrain as i64 - ScnGeneralSection::SIZE as i64))]
-    #[br(restore_position, parse_with = read_string_until_null)]
-    pub path_terrain: String,
+    #[br(count = num_env_spaces)]
+    #[br(seek_before = SeekFrom::Current(offset_env_spaces as i64 - ScnGeneralSection::SIZE as i64))]
+    #[br(restore_position)]
+    #[br(args { inner: (string_heap,) })]
+    #[bw(write_with = write_env_spaces, args(string_heap))]
+    pub env_spaces: Vec<ScnEnvSpace>,
+}
 
-    #[br(seek_before = SeekFrom::Current(offset_path_sky_visibility as i64 - ScnGeneralSection::SIZE as i64))]
-    #[br(restore_position, parse_with = read_string_until_null)]
-    pub path_sky_visibility: String,
+#[binrw::writer(writer, endian)]
+pub fn write_env_spaces(scns: &Vec<ScnEnvSpace>, string_heap: &mut StringHeap) -> BinResult<()> {
+    for scn in scns {
+        scn.write_options(writer, endian, (string_heap,))?;
+    }
 
-    #[br(seek_before = SeekFrom::Current(offset_path_lcb as i64 - ScnGeneralSection::SIZE as i64))]
-    #[br(restore_position, parse_with = read_string_until_null)]
-    pub path_lcb: String,
+    Ok(())
 }
 
 impl ScnGeneralSection {
     pub const SIZE: usize = 0x58;
 }
 
-#[binread]
+#[binrw]
+#[derive(Debug)]
+pub struct ScnTimelinesSection {
+    offset_entries: i32,
+    num_entries: i32,
+}
+
+impl ScnTimelinesSection {
+    pub const SIZE: usize = 0x8;
+}
+
+// TODO: definitely not correct
+#[binrw]
 #[derive(Debug)]
 pub struct ScnUnknown1Section {
-    unk1: i32,
-    unk2: i32,
-}
-
-impl ScnUnknown1Section {
-    pub const SIZE: usize = 0x8;
+    unk: [u8; 5],
 }
 
 // TODO: definitely not correct
-#[binread]
+#[binrw]
 #[derive(Debug)]
 pub struct ScnUnknown2Section {
-    unk1: i32,
-    unk2: i32,
-}
-
-impl ScnUnknown2Section {
-    pub const SIZE: usize = 0x8;
+    unk: [u8; 39],
 }
 
 // TODO: definitely not correct
-#[binread]
+#[binrw]
 #[derive(Debug)]
 pub struct ScnUnknown3Section {
-    layer_sets_offset: i32,
-    layer_sets_count: i32,
-
-    #[br(seek_before = SeekFrom::Current(layer_sets_offset as i64 - ScnUnknown3Section::SIZE as i64))]
-    #[br(count = layer_sets_count, restore_position)]
-    pub unk2: Vec<ScnUnknown4Section>,
+    unk: [u8; 64],
 }
 
-impl ScnUnknown3Section {
+#[binrw]
+#[br(import(string_heap: &StringHeap))]
+#[bw(import(string_heap: &mut StringHeap))]
+#[derive(Debug)]
+pub struct ScnFiltersSection {
+    filter_offset: i32,
+    filter_count: i32,
+
+    #[br(seek_before = SeekFrom::Current(filter_offset as i64 - ScnFiltersSection::SIZE as i64))]
+    #[br(count = filter_count, restore_position, args { inner: (string_heap,) })]
+    #[bw(write_with = write_filters, args(string_heap))]
+    pub filters: Vec<ScnFilter>,
+}
+
+#[binrw::writer(writer, endian)]
+pub fn write_filters(scns: &Vec<ScnFilter>, string_heap: &mut StringHeap) -> BinResult<()> {
+    for scn in scns {
+        scn.write_options(writer, endian, (string_heap,))?;
+    }
+
+    Ok(())
+}
+
+impl ScnFiltersSection {
     pub const SIZE: usize = 0x8;
 }
 
-// TODO: definitely not correct
-#[binread]
+#[binrw]
+#[br(import(string_heap: &StringHeap))]
+#[bw(import(string_heap: &mut StringHeap))]
 #[derive(Debug)]
-pub struct ScnUnknown4Section {
-    nvm_path_offset: i32,
+pub struct ScnFilter {
+    #[br(temp)]
+    #[bw(ignore)]
+    heap_pointer: HeapPointer,
+
+    #[br(args(heap_pointer, string_heap))]
+    #[bw(args(string_heap))]
+    pub nvm_path: HeapStringFromPointer,
+
     unk1: i32,
     unk2: i32,
     unk3: i32,
-    unk4: i32,
+
+    /// Refers to a row in the TerritoryType Excel sheet.
+    pub territory_type_id: i32,
+
     unk5: i32,
-    nvx_path_offset: i32,
 
-    #[br(seek_before = SeekFrom::Current(nvm_path_offset as i64 - ScnUnknown4Section::SIZE as i64))]
-    #[br(restore_position, parse_with = read_string_until_null)]
-    pub path_nvm: String,
-
-    #[br(seek_before = SeekFrom::Current(nvx_path_offset as i64 - ScnUnknown4Section::SIZE as i64))]
-    #[br(restore_position, parse_with = read_string_until_null)]
-    pub path_nvx: String,
+    #[br(args(heap_pointer, string_heap))]
+    #[bw(args(string_heap))]
+    pub nvx_path: HeapStringFromPointer,
 }
 
-impl ScnUnknown4Section {
+impl ScnFilter {
     pub const SIZE: usize = 0x1C;
 }
 
@@ -229,7 +346,30 @@ impl Lvb {
     /// Read an existing file.
     pub fn from_existing(platform: Platform, buffer: ByteSpan) -> Option<Self> {
         let mut cursor = Cursor::new(buffer);
-        Lvb::read_options(&mut cursor, platform.endianness(), ()).ok()
+        let string_heap = StringHeap::from(cursor.position());
+
+        Lvb::read_options(&mut cursor, platform.endianness(), (&string_heap,)).ok()
+    }
+
+    /// Writes data back to a buffer.
+    pub fn write_to_buffer(&self, platform: Platform) -> Option<ByteBuffer> {
+        let mut buffer = ByteBuffer::new();
+
+        {
+            let mut string_heap = StringHeap::from(0);
+
+            // TODO: need dual pass
+
+            let mut cursor = Cursor::new(&mut buffer);
+            self.write_options(&mut cursor, platform.endianness(), (&mut string_heap,))
+                .ok()?;
+
+            string_heap
+                .write_options(&mut cursor, platform.endianness(), ())
+                .ok()?;
+        }
+
+        Some(buffer)
     }
 }
 

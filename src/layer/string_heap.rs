@@ -3,7 +3,7 @@
 
 use std::io::{Cursor, Read, Seek, SeekFrom, Write};
 
-use binrw::{BinRead, BinReaderExt, BinWrite, Endian, Error, binrw};
+use binrw::{BinRead, BinReaderExt, BinResult, BinWrite, Endian, Error, binrw};
 
 use crate::{ByteBuffer, common_file_operations::write_string};
 
@@ -22,11 +22,41 @@ pub struct HeapString {
     pub value: String,
 }
 
+// TODO: merge with HeapString once LayerGroup can be ported
+/// A string that exists in a different location in the file, usually a heap with a bunch of other strings.
+/// Pointer points to where the string offset is relative to, usually the start of a struct.
+#[binrw]
+#[br(import(pointer: HeapPointer, string_heap: &StringHeap), stream = r)]
+#[bw(import(string_heap: &mut StringHeap))]
+#[derive(Clone, Debug, PartialEq)]
+pub struct HeapStringFromPointer {
+    #[br(temp)]
+    // TODO: this cast is stupid
+    #[bw(calc = string_heap.get_free_offset_string(value) as u32)]
+    pub offset: u32,
+    #[br(calc = string_heap.read_string(r, offset + pointer.pos as u32,))]
+    #[bw(ignore)]
+    pub value: String,
+}
+
 #[derive(Debug)]
 pub struct StringHeap {
     pub pos: u64,
     pub bytes: Vec<u8>,
     pub free_pos: u64,
+}
+
+#[binrw]
+#[derive(Clone, Copy, Debug)]
+pub struct HeapPointer {
+    #[br(parse_with = read_pointer_pos)]
+    #[bw(ignore)]
+    pub pos: u64,
+}
+
+#[binrw::parser(reader)]
+pub fn read_pointer_pos() -> BinResult<u64> {
+    Ok(reader.stream_position().unwrap())
 }
 
 impl StringHeap {
