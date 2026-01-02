@@ -4,10 +4,11 @@
 use std::env;
 
 use physis::{
+    ReadableFile,
     common::{Language, Platform},
-    exd::{ColumnData, ExcelRowKind},
+    excel::{ColumnData, ExcelRowKind},
     race::{Gender, Race, Tribe, build_skeleton_path},
-    resource::{Resource, SqPackRelease, SqPackResource},
+    resource::{Resource, ResourceResolver, SqPackRelease, SqPackResource},
     skeleton::Skeleton,
 };
 
@@ -35,17 +36,19 @@ fn test_item_read() {
         return;
     }
 
-    let mut game_data = SqPackResource::from_existing(
+    let mut resolver = ResourceResolver::new();
+
+    resolver.add_source(Box::new(SqPackResource::from_existing(
         Platform::Win32,
         SqPackRelease::Retail,
         format!("{}/game", game_dir).as_str(),
-    );
+    )));
 
-    let exh = physis::resource::read_excel_sheet_header(&mut game_data, "Item").unwrap();
-    let exd =
-        physis::resource::read_excel_sheet(&mut game_data, "Item", &exh, Language::English, 0)
-            .unwrap();
-    for row in exd.rows {
+    let exh = resolver.read_excel_sheet_header("Item").unwrap();
+    let exd = resolver
+        .read_excel_sheet(exh, "Item", Language::English)
+        .unwrap();
+    for row in &exd.pages[0].rows {
         match &row.kind {
             ExcelRowKind::SingleRow(row) => match &row.columns[9] {
                 ColumnData::String(val) => {
@@ -75,7 +78,7 @@ fn test_parse_skeleton() {
 
     let sklb_path = build_skeleton_path(Race::Hyur, Tribe::Midlander, Gender::Female);
     let sklb = game_data.read(&sklb_path).unwrap();
-    let skeleton = Skeleton::from_existing(&sklb).unwrap();
+    let skeleton = Skeleton::from_existing(Platform::Win32, &sklb).unwrap();
     for bone in &skeleton.bones {
         if bone.name == "j_kosi" {
             return;
