@@ -22,7 +22,7 @@ impl std::convert::TryFrom<u8> for Gender {
         match value {
             0 => Ok(Self::Male),
             1 => Ok(Self::Female),
-            _ => Err(Error {}),
+            _ => Err(Error::Unknown),
         }
     }
 }
@@ -73,7 +73,7 @@ impl std::convert::TryFrom<u8> for Tribe {
             14 => Ok(Self::Lost),
             15 => Ok(Self::Rava),
             16 => Ok(Self::Veena),
-            _ => Err(Error {}),
+            _ => Err(Error::Unknown),
         }
     }
 }
@@ -107,7 +107,7 @@ impl std::convert::TryFrom<u8> for Race {
             6 => Ok(Self::AuRa),
             7 => Ok(Self::Hrothgar),
             8 => Ok(Self::Viera),
-            _ => Err(Error {}),
+            _ => Err(Error::Unknown),
         }
     }
 }
