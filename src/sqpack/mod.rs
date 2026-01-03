@@ -21,7 +21,7 @@ pub use index::{Hash, IndexEntry, SqPackIndex};
 /// The type of this SqPack file.
 #[binrw]
 #[brw(repr = u32)]
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub(crate) enum SqPackFileType {
     /// FFXIV Explorer says "SQDB", whatever that is.
     Sqdb = 0x0,
@@ -33,7 +33,7 @@ pub(crate) enum SqPackFileType {
 
 #[binrw]
 #[brw(magic = b"SqPack\0\0")]
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub(crate) struct SqPackHeader {
     #[brw(pad_size_to = 4)]
     platform: Platform,

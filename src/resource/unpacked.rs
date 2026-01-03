@@ -10,6 +10,7 @@ use super::Resource;
 /// Used to read unpacked files from a directory.
 ///
 /// In most cases, you probably want to use this inside of a `ResourceResolver`.
+#[derive(Clone)]
 pub struct UnpackedResource {
     base_directory: String,
 }

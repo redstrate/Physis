@@ -27,14 +27,9 @@ use super::Resource;
 /// resolver.add_source(file_source); // first has most priority
 /// resolver.add_source(sqpack_source); // this is the fallback
 /// ```
+#[derive(Clone)]
 pub struct ResourceResolver {
     resources: Vec<Box<dyn Resource>>,
-}
-
-impl Default for ResourceResolver {
-    fn default() -> Self {
-        Self::new()
-    }
 }
 
 impl ResourceResolver {

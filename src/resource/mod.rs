@@ -19,10 +19,38 @@ use crate::{
     exl::EXL,
 };
 
+impl Clone for Box<dyn Resource> {
+    fn clone(&self) -> Box<dyn Resource> {
+        self.clone_box()
+    }
+}
+
+/// Workaround for allowing Resources to be clonable (which normally isn't dyn compatible.)
+///
+/// When impementing your own Resources, you do not need to worry about this as it's an implementation detail. You just need to derive from the Clone trait.
+pub trait ClonableResource {
+    fn clone_box(&self) -> Box<dyn Resource>;
+}
+
+impl<T> ClonableResource for T
+where
+    T: 'static + Resource + Clone,
+{
+    fn clone_box(&self) -> Box<dyn Resource> {
+        Box::new(self.clone())
+    }
+}
+
+impl Default for ResourceResolver {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 /// Represents a source of files for reading.
 ///
 /// This abstracts away some of the nitty-gritty of where files come from. This could represent a compressed archive like SqPack, unpacked files on disk, or even a network.
-pub trait Resource: Send + Sync + 'static {
+pub trait Resource: Send + Sync + ClonableResource + 'static {
     /// Reads the file located at `path`. This is returned as an in-memory buffer, and will usually
     /// have to be further parsed.
     ///
@@ -102,7 +130,7 @@ pub fn generic_read_excel_sheet<R: Resource + ?Sized>(
     name: &str,
     language: Language,
 ) -> Result<ExcelSheet, Error> {
-    let mut pages = Vec::new();
+    let mut pages = Vec::with_capacity(exh.header.page_count as usize);
     for page in 0..exh.header.page_count {
         let exd = generic_read_excel_exd(resource, name, &exh, language, page as usize)?;
         pages.push(ExcelSheetPage::from_exd(page, &exh, exd));
@@ -116,13 +144,11 @@ pub fn generic_get_all_sheet_names<R: Resource + ?Sized>(
     resource: &mut R,
 ) -> Result<Vec<String>, Error> {
     let root_exl = generic_parsed::<R, EXL>(resource, "exd/root.exl")?;
-
-    let mut names = vec![];
-    for (row, _) in root_exl.entries {
-        names.push(row);
-    }
-
-    Ok(names)
+    Ok(root_exl
+        .entries
+        .iter()
+        .map(|(row, _)| row.clone())
+        .collect())
 }
 
 fn generic_read_excel_exd<R: Resource + ?Sized>(

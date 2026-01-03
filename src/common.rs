@@ -49,7 +49,7 @@ pub fn get_language_code(lang: &Language) -> &'static str {
 /// The region of the game. Used to denote the region a patch is meant for.
 #[binrw]
 #[brw(repr = u16)]
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum Region {
     /// The global region, used for any region not specified.
     Global = -1,

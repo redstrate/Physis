@@ -20,7 +20,7 @@ use binrw::Error;
 use binrw::binrw;
 
 #[binrw]
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct SegementDescriptor {
     count: u32,
     offset: u32,
@@ -31,7 +31,7 @@ pub struct SegementDescriptor {
 
 #[binrw]
 #[brw(repr = u32)]
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Copy)]
 pub enum IndexType {
     /// `.index` files.
     Index1 = 0,
@@ -40,7 +40,7 @@ pub enum IndexType {
 }
 
 #[binrw]
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct SqPackIndexHeader {
     /// The size of this header in bytes.
     size: u32,
@@ -76,7 +76,7 @@ pub enum Hash {
     FullPath(u32),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct FileEntryData {
     pub is_synonym: bool,
     pub data_file_id: u8,
@@ -125,7 +125,7 @@ impl BinWrite for FileEntryData {
 
 #[binrw]
 #[brw(import(index_type: &IndexType))]
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct FileEntry {
     #[br(args(index_type))]
     pub hash: Hash,
@@ -139,14 +139,14 @@ pub struct FileEntry {
 }
 
 #[binrw]
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct DataEntry {
     // A bunch of 0xFFFFFFFF
     unk: [u8; 256],
 }
 
 #[binrw]
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct FolderEntry {
     hash: u32,
     files_offset: u32,
@@ -163,7 +163,7 @@ pub struct IndexEntry {
 }
 
 #[binrw]
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct SqPackIndex {
     sqpack_header: SqPackHeader,
 

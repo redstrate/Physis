@@ -147,7 +147,7 @@ pub enum ExcelRowKind {
 }
 
 /// Represents an entry in the EXD.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ExcelRow {
     /// Row ID associated with this entry.
     pub row_id: u32,
@@ -155,6 +155,7 @@ pub struct ExcelRow {
     pub kind: ExcelRowKind,
 }
 
+#[derive(Debug, Clone)]
 pub struct ExcelSheetPage {
     pub(crate) row_count: u32,
     exd: EXD,
@@ -187,7 +188,7 @@ impl ExcelSheetPage {
 
             let data_offset = cursor.stream_position().unwrap();
 
-            let new_row = if exh.header.row_kind == SheetRowKind::SubRows {
+            let kind = if exh.header.row_kind == SheetRowKind::SubRows {
                 let mut rows = Vec::with_capacity(row_header.row_count as usize);
                 for i in 0..row_header.row_count {
                     let subrow_offset = data_offset + i as u64 * (2 + exh.header.row_size as u64);
@@ -205,7 +206,7 @@ impl ExcelSheetPage {
             };
             rows.push(ExcelRow {
                 row_id: offset.row_id,
-                kind: new_row,
+                kind,
             });
         }
 
@@ -313,6 +314,7 @@ impl ExcelSheetPage {
     }
 }
 
+#[derive(Debug, Clone)]
 pub struct ExcelSheet {
     /// The EXH for this sheet.
     pub exh: EXH,

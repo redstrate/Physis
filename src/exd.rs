@@ -7,7 +7,6 @@ use std::io::Cursor;
 
 use binrw::BinRead;
 use binrw::binrw;
-use binrw::helpers::until_eof;
 
 use crate::common::{Language, Platform};
 use crate::exh::ExcelDataPagination;
@@ -17,7 +16,7 @@ use crate::{ByteSpan, ReadableFile};
 #[brw(magic = b"EXDF")]
 #[brw(big)]
 #[allow(dead_code)]
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub(crate) struct EXDHeader {
     /// Usually 2, I don't think I've seen any other version
     pub(crate) version: u16,
@@ -36,7 +35,7 @@ impl EXDHeader {
 
 #[binrw]
 #[brw(big)]
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub(crate) struct ExcelDataOffset {
     /// The row ID associated with this data offset
     pub(crate) row_id: u32,
@@ -82,7 +81,7 @@ pub(crate) struct DataSection {
 #[binrw]
 #[brw(big)]
 #[allow(dead_code)]
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct EXD {
     pub(crate) header: EXDHeader,
 
@@ -90,7 +89,7 @@ pub struct EXD {
     #[bw(ignore)]
     pub(crate) data_offsets: Vec<ExcelDataOffset>,
 
-    #[br(parse_with = until_eof)]
+    #[br(count = header.data_section_size)]
     #[bw(ignore)]
     pub remaining_data: Vec<u8>,
 }

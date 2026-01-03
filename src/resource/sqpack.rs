@@ -64,7 +64,7 @@ impl SqPackRelease {
 /// Used to read files from the retail game, in their SqPack-compressed format.
 ///
 /// In most cases, you probably want to use this inside of a `ResourceResolver`.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct SqPackResource {
     /// The game directory to operate on.
     pub game_directory: String,
