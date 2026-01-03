@@ -77,7 +77,7 @@ impl WritableFile for Terrain {
         {
             let mut cursor = Cursor::new(&mut buffer);
 
-            let plate_size = 128;
+            let plate_size = 32;
 
             let header = TerrainHeader {
                 version: 0x1000003,
