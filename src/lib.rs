@@ -41,7 +41,7 @@ pub mod common;
 /// Types for ZiPatch (`.patch`) files.
 pub mod patch;
 
-/// Implementation of the Blowfish ECB block cipher used by the retail client.
+/// Implementation of the variety of Blowfish ECB block ciphers used.
 pub mod blowfish;
 
 /// Types for Excel header (`.exh`) files.
@@ -167,6 +167,12 @@ mod bcn;
 
 mod error;
 pub use error::Error;
+
+/// Find existing installation directories
+pub mod existing_dirs;
+
+/// Reading data from executables
+pub mod execlookup;
 
 use crate::common::Platform;
 
