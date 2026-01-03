@@ -25,5 +25,5 @@ pub struct DatHeader {
     pub content_size: u32,
     #[br(temp)]
     #[bw(calc = 0xFF)]
-    end_of_header: u8,
+    end_of_header: u8, // TODO: may not be part of the header but instead something related to gearsets
 }
