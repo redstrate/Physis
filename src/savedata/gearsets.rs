@@ -250,6 +250,7 @@ impl GearSets {
 
             let header = DatHeader {
                 file_type: crate::savedata::dat::DatFileType::Gearset,
+                file_version: 109,
                 max_size: 45205,
                 content_size: 45205,
             };

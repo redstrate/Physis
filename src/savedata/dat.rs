@@ -10,7 +10,7 @@ use binrw::binrw;
 #[brw(little)]
 pub enum DatFileType {
     /// GEARSET.DAT
-    #[brw(magic = 0x006d0005u32)]
+    #[brw(magic = 5u16)]
     Gearset,
 }
 
@@ -19,6 +19,7 @@ pub enum DatFileType {
 #[brw(little)]
 pub struct DatHeader {
     pub file_type: DatFileType,
+    pub file_version: u16, // This may be a combination of something else
     pub max_size: u32,
     #[brw(pad_after = 4)] // empty bytes
     pub content_size: u32,
