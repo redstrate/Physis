@@ -12,12 +12,13 @@ use binrw::BinRead;
 use binrw::BinWrite;
 use binrw::binrw;
 
+/// Sky visibility binary file, usually with the `.svb` file extension.
 #[binrw]
 #[derive(Debug)]
 #[brw(magic = b"SVB1")]
 pub struct Svb {
-    /// Including this header
-    pub file_size: u32,
+    /// Including this header, in bytes.
+    file_size: u32,
     /// Number of Svc's
     #[br(temp)]
     #[bw(calc = svcs.len() as u32)]
@@ -30,24 +31,27 @@ pub struct Svb {
 #[derive(Debug)]
 #[brw(magic = b"SVC1")]
 pub struct Svc {
-    #[br(temp)]
-    #[bw(calc = entries.len() as u32 + 1)]
-    pub num_entries: u32,
-    #[brw(pad_before = 4)] // empty?
+    /// In bytes, including the magic.
+    header_size: u32,
+    /// Seems to always be 0?
+    id: u32,
     pub unk1: u32,
-    pub unk2: u32,
-    // TODO: figure out what this is
-    // TODO: why is it -1?
-    #[br(count = num_entries - 1)]
+
+    #[br(temp)]
+    #[bw(calc = entries.len() as u32)]
+    pub num_entries: u32,
+    #[br(count = num_entries)]
     pub entries: Vec<SvcEntry>,
 }
 
 #[binrw]
 #[derive(Debug)]
 pub struct SvcEntry {
+    /// Points to a GameObject in this territory.
+    pub instance_id: u32,
     // TODO: figure out what this is
-    #[br(count = 48)]
-    pub unk1: Vec<u8>,
+    pub unk2: u32,
+    pub unk3: f32,
 }
 
 impl ReadableFile for Svb {

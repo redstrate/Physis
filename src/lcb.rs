@@ -16,8 +16,8 @@ use binrw::binrw;
 #[derive(Debug)]
 #[brw(magic = b"LCB1")]
 pub struct Lcb {
-    /// Including this header
-    pub file_size: u32,
+    /// Including this header, in bytes.
+    file_size: u32,
     /// Number of Lcc's
     #[br(temp)]
     #[bw(calc = lccs.len() as u32)]
@@ -30,24 +30,28 @@ pub struct Lcb {
 #[derive(Debug)]
 #[brw(magic = b"LCC1")]
 pub struct Lcc {
-    #[br(temp)]
-    #[bw(calc = entries.len() as u32 + 1)]
-    pub num_entries: u32,
-    #[brw(pad_before = 4)] // empty?
+    /// In bytes, including the magic.
+    header_size: u32,
+    /// Seems to always be 0?
+    id: u32,
     pub unk1: u32,
-    pub unk2: u32,
-    // TODO: figure out what this is
-    // TODO: why is it -1?
-    #[br(count = num_entries - 1)]
+
+    #[br(temp)]
+    #[bw(calc = entries.len() as u32 )]
+    num_entries: u32,
+    #[br(count = num_entries)]
     pub entries: Vec<LccEntry>,
 }
 
 #[binrw]
 #[derive(Debug)]
 pub struct LccEntry {
+    /// Points to a GameObject in this territory.
+    pub instance_id: u32,
     // TODO: figure out what this is
-    #[br(count = 32)]
-    pub unk1: Vec<u8>,
+    pub unk1: u32,
+    pub min: [f32; 3],
+    pub max: [f32; 3],
 }
 
 impl ReadableFile for Lcb {
