@@ -154,6 +154,9 @@ pub mod resource;
 /// Types for player collision binary (`.pcb`) files.
 pub mod pcb;
 
+/// Types for collision streaming (`list.pcb`) files.
+pub mod pcblist;
+
 /// Types for cutscene binary (`.cutb`) files.
 pub mod cutb;
 
