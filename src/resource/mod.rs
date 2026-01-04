@@ -126,7 +126,7 @@ pub fn generic_read_excel_sheet_header<R: Resource + ?Sized>(
 /// Read an excel sheet by name (e.g. "Achievement"). You most likely want to use the method in `ResourceResolver.`
 pub fn generic_read_excel_sheet<R: Resource + ?Sized>(
     resource: &mut R,
-    exh: EXH,
+    exh: &EXH,
     name: &str,
     language: Language,
 ) -> Result<ExcelSheet, Error> {
@@ -136,7 +136,7 @@ pub fn generic_read_excel_sheet<R: Resource + ?Sized>(
         pages.push(ExcelSheetPage::from_exd(page, &exh, exd));
     }
 
-    Ok(ExcelSheet { exh, pages })
+    Ok(ExcelSheet { exh: exh.clone(), pages })
 }
 
 /// Returns all known sheet names listed in the root list. You most likely want to use the method in `ResourceResolver.`

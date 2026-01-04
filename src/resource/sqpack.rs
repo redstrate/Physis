@@ -453,7 +453,7 @@ impl SqPackResource {
     /// Read an excel sheet by name (e.g. "Achievement").
     pub fn read_excel_sheet(
         &mut self,
-        exh: EXH,
+        exh: &EXH,
         name: &str,
         language: Language,
     ) -> Result<ExcelSheet, Error> {
