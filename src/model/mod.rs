@@ -244,6 +244,20 @@ struct BoneTablesV2 {
     tables: Vec<BoneTableV2>,
 }
 
+fn pad_to_alignment<T: Seek>(reader: &mut T) -> BinResult<()> {
+    let position = reader.stream_position().unwrap() as i64;
+
+    // pad to 4 byte alignment
+    let padding = if position % 4 == 0 {
+        0
+    } else {
+        (0 - (position % 4) + 4) % 4
+    };
+    reader.seek(SeekFrom::Current(padding))?;
+
+    Ok(())
+}
+
 #[binrw::parser(reader, endian)]
 fn read_bone_tables_v2(bone_table_count: u16) -> BinResult<BoneTablesV2> {
     let offset_counts: Vec<(u16, u16)> = reader.read_type_args(
@@ -258,6 +272,7 @@ fn read_bone_tables_v2(bone_table_count: u16) -> BinResult<BoneTablesV2> {
         let bone_indices =
             reader.read_type_args(endian, VecArgs::builder().count(*count as usize).finalize())?;
         tables.push(BoneTableV2 { bone_indices });
+        pad_to_alignment(reader)?;
     }
 
     Ok(BoneTablesV2 {
@@ -273,6 +288,7 @@ fn write_bone_tables_v2(bone_tables_v2: &BoneTablesV2) -> BinResult<()> {
         .write_options(writer, endian, ())?;
     for table in &bone_tables_v2.tables {
         table.bone_indices.write_options(writer, endian, ())?;
+        pad_to_alignment(writer)?;
     }
 
     Ok(())
