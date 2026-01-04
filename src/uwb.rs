@@ -17,6 +17,8 @@ use binrw::binrw;
 #[brw(magic = b"UWB1")]
 pub struct Uwb {
     /// Including this header, in bytes.
+    #[br(temp)]
+    #[bw(calc = self.calculate_file_size())]
     file_size: u32,
     /// Number of UWC's
     #[br(temp)]
@@ -26,15 +28,27 @@ pub struct Uwb {
     pub uwcs: Vec<Uwc>,
 }
 
+impl Uwb {
+    fn calculate_file_size(&self) -> u32 {
+        12 // UWB1 header
+        + (Uwc::SIZE * self.uwcs.len()) as u32
+    }
+}
+
 #[binrw]
 #[derive(Debug)]
 #[brw(magic = b"UWC1")]
 pub struct Uwc {
-    /// Including this header
-    pub file_size: u32,
-    // TODO: figure out what this is
-    #[br(count = file_size - 8)]
-    pub unk1: Vec<u8>,
+    /// Including this header, in bytes.
+    /// Seems to be always be 88 bytes.
+    #[br(temp)]
+    #[bw(calc = Self::SIZE as u32)]
+    size: u32,
+    unk: [f32; 20],
+}
+
+impl Uwc {
+    pub const SIZE: usize = 88;
 }
 
 impl ReadableFile for Uwb {
