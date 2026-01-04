@@ -90,12 +90,12 @@ impl ResourceResolver {
     /// Read an excel sheet by name (e.g. "Achievement").
     pub fn read_excel_sheet(
         &mut self,
-        exh: EXH,
+        exh: &EXH,
         name: &str,
         language: Language,
     ) -> Result<ExcelSheet, Error> {
         self.execute_first_found(
-            |resource| generic_read_excel_sheet(resource, exh.clone(), name, language),
+            |resource| generic_read_excel_sheet(resource, exh, name, language),
             Error::Unknown,
         )
     }
