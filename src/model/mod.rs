@@ -10,8 +10,8 @@ pub mod vertex_declarations;
 use std::io::{Cursor, Seek, SeekFrom};
 use std::mem::size_of;
 
-use binrw::BinReaderExt;
 use binrw::{BinRead, VecArgs};
+use binrw::{BinReaderExt, BinResult};
 use binrw::{BinWrite, BinWriterExt, binrw};
 
 use crate::common::Platform;
@@ -233,20 +233,49 @@ struct BoneTable {
     bone_count: u8,
 }
 
-#[binrw]
 #[derive(Debug, Clone, PartialEq)]
-#[allow(dead_code)]
 struct BoneTableV2 {
-    #[brw(pad_before = 2)]
-    bone_count: u16,
-
-    #[br(count = bone_count)]
     bone_indices: Vec<u16>,
+}
 
-    // align to 4 bytes
-    // TODO: use br align_to?
-    #[br(if(bone_count.is_multiple_of(2)))]
-    padding: u16,
+#[derive(Default, Debug, Clone, PartialEq)]
+struct BoneTablesV2 {
+    offset_counts: Vec<(u16, u16)>,
+    tables: Vec<BoneTableV2>,
+}
+
+#[binrw::parser(reader, endian)]
+fn read_bone_tables_v2(bone_table_count: u16) -> BinResult<BoneTablesV2> {
+    let offset_counts: Vec<(u16, u16)> = reader.read_type_args(
+        endian,
+        VecArgs::builder()
+            .count(bone_table_count as usize)
+            .finalize(),
+    )?;
+
+    let mut tables = Vec::new();
+    for (_, count) in &offset_counts {
+        let bone_indices =
+            reader.read_type_args(endian, VecArgs::builder().count(*count as usize).finalize())?;
+        tables.push(BoneTableV2 { bone_indices });
+    }
+
+    Ok(BoneTablesV2 {
+        offset_counts,
+        tables,
+    })
+}
+
+#[binrw::writer(writer, endian)]
+fn write_bone_tables_v2(bone_tables_v2: &BoneTablesV2) -> BinResult<()> {
+    bone_tables_v2
+        .offset_counts
+        .write_options(writer, endian, ())?;
+    for table in &bone_tables_v2.tables {
+        table.bone_indices.write_options(writer, endian, ())?;
+    }
+
+    Ok(())
 }
 
 #[binrw]
@@ -346,9 +375,10 @@ pub struct ModelData {
     #[brw(if(file_header.version <= 0x1000005))]
     bone_tables: Vec<BoneTable>,
 
-    #[br(count = header.bone_table_count)]
     #[brw(if(file_header.version >= 0x1000006))]
-    bone_tables_v2: Vec<BoneTableV2>,
+    #[br(parse_with = read_bone_tables_v2, args(header.bone_table_count))]
+    #[bw(write_with = write_bone_tables_v2)]
+    bone_tables_v2: BoneTablesV2,
 
     #[br(count = header.shape_count)]
     shapes: Vec<ShapeStruct>,
@@ -361,7 +391,7 @@ pub struct ModelData {
 
     submesh_bone_map_size: u32,
 
-    #[br(count = submesh_bone_map_size / 2 )]
+    #[br(count = submesh_bone_map_size / 2)]
     submesh_bone_map: Vec<u16>,
 
     #[br(count = header.patch_72_table_size * 16)]

@@ -156,6 +156,7 @@ impl TryFrom<Slot> for GearSlotType {
             Slot::Earring => Ok(GearSlotType::Earrings),
             Slot::RingLeft => Ok(GearSlotType::Ring1),
             Slot::RingRight => Ok(GearSlotType::Ring2),
+            _ => Err(()),
         }
     }
 }

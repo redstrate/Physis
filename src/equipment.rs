@@ -7,6 +7,13 @@ use crate::race::{Gender, Race, Tribe, get_race_id};
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 /// The slot the item is for.
 pub enum Slot {
+    /// No applicable slot.
+    // NOTE: this invariant isn't great for Rust, but is needed for the C api.
+    Invalid,
+    /// The main weapon slot.
+    MainHand,
+    /// The off-hand weapon slot.
+    OffHand,
     /// The head slot. Shorthand is "met".
     Head,
     /// The hands slot. Shorthand is "glv".
@@ -30,54 +37,57 @@ pub enum Slot {
 }
 
 /// Returns the shorthand abbreviation of `slot`. For example, Body's shorthand is "top".
-pub fn get_slot_abbreviation(slot: Slot) -> &'static str {
+pub fn get_slot_abbreviation(slot: Slot) -> Option<&'static str> {
     match slot {
-        Slot::Head => "met",
-        Slot::Hands => "glv",
-        Slot::Legs => "dwn",
-        Slot::Feet => "sho",
-        Slot::Body => "top",
-        Slot::Earring => "ear",
-        Slot::Neck => "nek",
-        Slot::Wrists => "wrs",
-        Slot::RingLeft => "ril",
-        Slot::RingRight => "rir",
+        Slot::Head => Some("met"),
+        Slot::Hands => Some("glv"),
+        Slot::Legs => Some("dwn"),
+        Slot::Feet => Some("sho"),
+        Slot::Body => Some("top"),
+        Slot::Earring => Some("ear"),
+        Slot::Neck => Some("nek"),
+        Slot::Wrists => Some("wrs"),
+        Slot::RingLeft => Some("ril"),
+        Slot::RingRight => Some("rir"),
+        _ => None,
     }
 }
 
-/// Determines the correct slot from an id. This can fail, so a None is returned when no slot matches
+/// Determines the correct slot from an id. This can fail, so `Invalid` is returned when no slot matches
 /// that id.
-pub fn get_slot_from_id(id: i32) -> Option<Slot> {
+pub fn get_slot_from_id(id: i32) -> Slot {
     match id {
-        3 => Some(Slot::Head),
-        4 => Some(Slot::Body),
-        5 => Some(Slot::Hands),
-        7 => Some(Slot::Legs),
-        8 => Some(Slot::Feet),
-        9 => Some(Slot::Earring),
-        10 => Some(Slot::Neck),
-        11 => Some(Slot::Wrists),
-        12 => Some(Slot::RingLeft),
-        13 => Some(Slot::RingRight),
-        _ => None,
+        1 => Slot::MainHand,
+        2 => Slot::OffHand,
+        3 => Slot::Head,
+        4 => Slot::Body,
+        5 => Slot::Hands,
+        7 => Slot::Legs,
+        8 => Slot::Feet,
+        9 => Slot::Earring,
+        10 => Slot::Neck,
+        11 => Slot::Wrists,
+        12 => Slot::RingLeft,
+        13 => Slot::RingRight,
+        _ => Slot::Invalid,
     }
 }
 
-/// Determines the correct slot from an id. This can fail, so a None is returned when no slot matches
+/// Determines the correct slot from an id. This can fail, so `Invalid` is returned when no slot matches
 /// that id.
-pub fn get_slot_from_abbreviation(abrev: &str) -> Option<Slot> {
+pub fn get_slot_from_abbreviation(abrev: &str) -> Slot {
     match abrev {
-        "met" => Some(Slot::Head),
-        "glv" => Some(Slot::Hands),
-        "dwn" => Some(Slot::Legs),
-        "sho" => Some(Slot::Feet),
-        "top" => Some(Slot::Body),
-        "ear" => Some(Slot::Earring),
-        "nek" => Some(Slot::Neck),
-        "wrs" => Some(Slot::Wrists),
-        "ril" => Some(Slot::RingLeft),
-        "rir" => Some(Slot::RingRight),
-        _ => None,
+        "met" => Slot::Head,
+        "glv" => Slot::Hands,
+        "dwn" => Slot::Legs,
+        "sho" => Slot::Feet,
+        "top" => Slot::Body,
+        "ear" => Slot::Earring,
+        "nek" => Slot::Neck,
+        "wrs" => Slot::Wrists,
+        "ril" => Slot::RingLeft,
+        "rir" => Slot::RingRight,
+        _ => Slot::Invalid,
     }
 }
 
@@ -89,13 +99,26 @@ pub fn build_equipment_path(
     gender: Gender,
     slot: Slot,
 ) -> String {
-    format!(
-        "chara/equipment/e{:04}/model/c{:04}e{:04}_{}.mdl",
-        model_id,
-        get_race_id(race, tribe, gender).unwrap(),
-        model_id,
-        get_slot_abbreviation(slot)
-    )
+    let race_id = get_race_id(race, tribe, gender).unwrap();
+    match slot {
+        Slot::MainHand | Slot::OffHand => {
+            format!(
+                "chara/weapon/w{model_id:04}/obj/body/b{race_id:04}/model/w{model_id:04}b{race_id:04}.mdl"
+            )
+        }
+        Slot::Neck | Slot::Earring | Slot::Wrists | Slot::RingLeft | Slot::RingRight => {
+            format!(
+                "chara/accessory/a{model_id:04}/model/c{race_id:04}a{model_id:04}_{}.mdl",
+                get_slot_abbreviation(slot).unwrap_or_default()
+            )
+        }
+        _ => {
+            format!(
+                "chara/equipment/e{model_id:04}/model/c{race_id:04}e{model_id:04}_{}.mdl",
+                get_slot_abbreviation(slot).unwrap_or_default()
+            )
+        }
+    }
 }
 
 #[repr(u8)]
@@ -191,7 +214,7 @@ pub fn deconstruct_equipment_path(path: &str) -> Option<(i32, Slot)> {
 
     Some((
         model_id.parse().ok()?,
-        get_slot_from_abbreviation(slot_name)?,
+        get_slot_from_abbreviation(slot_name),
     ))
 }
 
