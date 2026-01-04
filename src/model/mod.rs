@@ -13,6 +13,7 @@ use std::mem::size_of;
 use binrw::{BinRead, VecArgs};
 use binrw::{BinReaderExt, BinResult};
 use binrw::{BinWrite, BinWriterExt, binrw};
+use bitflags::bitflags;
 
 use crate::common::Platform;
 use crate::common_file_operations::{read_bool_from, write_bool_as};
@@ -52,46 +53,38 @@ pub struct ModelFileHeader {
 }
 
 #[binrw]
-#[brw(repr = u8)]
-#[derive(Debug, Clone, PartialEq)]
-enum ModelFlags1 {
-    None = 0x0,
-    ShadowDisabled = 0x01,
-    LightShadowDisabled = 0x02,
-    WavingAnimationDisabled = 0x04,
-    LightingReflectionEnabled = 0x08,
-    RainOcclusionEnabled = 0x20,
-    SnowOcclusionEnabled = 0x40,
-    DustOcclusionEnabled = 0x80,
+#[derive(Debug, PartialEq, Clone, Copy)]
+struct ModelFlags1(u8);
 
-    // NOTE: these are most likely a combination of other flags
-    Unknown1 = 0x10,
-    Unknown2 = 0x5,  // TODO: seen in some bgparts
-    Unknown3 = 0xE4, // TODO: seen in some bgparts
-    Unknown4 = 0xE5, // TODO: seen in some bgparts
-    Unknown5 = 0x6,  // TODO: seen in some bgparts
-    Unknown6 = 0x3,  // TODO: seen in some bgparts
-    Unknown7 = 0x60, // TODO: seen in some bgparts
-    Unknown8 = 0x7,  // TODO: seen in some bgparts
+bitflags! {
+    impl ModelFlags1: u8 {
+        const None = 0x0;
+        const ShadowDisabled = 0x01;
+        const LightShadowDisabled = 0x02;
+        const WavingAnimationDisabled = 0x04;
+        const LightingReflectionEnabled = 0x08;
+        const RainOcclusionEnabled = 0x20;
+        const SnowOcclusionEnabled = 0x40;
+        const DustOcclusionEnabled = 0x80;
+    }
 }
 
 #[binrw]
-#[brw(repr = u8)]
-#[derive(Debug, Clone, PartialEq)]
-enum ModelFlags2 {
-    None = 0x0,
-    Unknown2 = 0x80,
-    BgUvScrollEnabled = 0x40,
-    EnableForceNonResident = 0x20,
-    ExtraLodEnabled = 0x10,
-    ShadowMaskEnabled = 0x08,
-    ForceLodRangeEnabled = 0x04,
-    EdgeGeometryEnabled = 0x02,
-    Unknown3 = 0x01,
+#[derive(Debug, PartialEq, Clone, Copy)]
+struct ModelFlags2(u8);
 
-    // NOTE: these are most likely a combination of other flags
-    Unknown4 = 0x41, // TODO: seen in some bgparts
-    Unknown5 = 0x50, // TODO: seen in some bgparts
+bitflags! {
+    impl ModelFlags2: u8 {
+        const None = 0x0;
+        const Unknown3 = 0x01;
+        const EdgeGeometryEnabled = 0x02;
+        const ForceLodRangeEnabled = 0x04;
+        const ShadowMaskEnabled = 0x08;
+        const ExtraLodEnabled = 0x10;
+        const EnableForceNonResident = 0x20;
+        const BgUvScrollEnabled = 0x40;
+        const Unknown2 = 0x80;
+    }
 }
 
 #[binrw]
