@@ -29,6 +29,7 @@ pub struct Terrain {
     version: u32,
 
     #[bw(calc = plates.len() as u32)]
+    #[br(temp)]
     plate_count: u32,
 
     /// Size of each plate in units.
@@ -37,7 +38,7 @@ pub struct Terrain {
 
     unknown: f32,
 
-    #[brw(pad_before = 32)]
+    #[brw(pad_before = 32)] // empty padding
     #[br(count = plate_count)]
     pub plates: Vec<Plate>,
 }
@@ -50,12 +51,13 @@ impl ReadableFile for Terrain {
 }
 
 impl WritableFile for Terrain {
-    fn write_to_buffer(&self, _platform: Platform) -> Option<ByteBuffer> {
+    fn write_to_buffer(&self, platform: Platform) -> Option<ByteBuffer> {
         let mut buffer = ByteBuffer::new();
 
         {
             let mut cursor = Cursor::new(&mut buffer);
-            self.write_le(&mut cursor).ok()?;
+            self.write_options(&mut cursor, platform.endianness(), ())
+                .ok()?;
         }
 
         Some(buffer)
@@ -79,6 +81,8 @@ impl Terrain {
 
 #[cfg(test)]
 mod tests {
+    use std::{fs::read, path::PathBuf};
+
     use crate::pass_random_invalid;
 
     use super::*;
@@ -86,5 +90,28 @@ mod tests {
     #[test]
     fn test_invalid() {
         pass_random_invalid::<Terrain>();
+    }
+
+    #[test]
+    fn test_simple() {
+        let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        d.push("resources/tests");
+        d.push("simple.tera");
+
+        let simple_tera = &read(d).unwrap();
+        let tera = Terrain {
+            version: 16777219,
+            plate_size: 128,
+            clip_distance: 0.0,
+            unknown: 1.0,
+            plates: vec![
+                Plate { x: -1, y: -1 },
+                Plate { x: 0, y: -1 },
+                Plate { x: -1, y: 0 },
+                Plate { x: 0, y: 0 },
+            ],
+        };
+
+        assert_eq!(*simple_tera, tera.write_to_buffer(Platform::Win32).unwrap());
     }
 }
