@@ -4,11 +4,14 @@
 use std::io::Cursor;
 use std::io::SeekFrom;
 
+use crate::ByteBuffer;
 use crate::ByteSpan;
 use crate::ReadableFile;
+use crate::WritableFile;
 use crate::common::Platform;
 use binrw::BinRead;
 use binrw::BinResult;
+use binrw::BinWrite;
 use binrw::binrw;
 
 #[binrw]
@@ -72,9 +75,12 @@ pub struct ResourceNode {
     /// The bounding box of this node.
     pub local_bounds: AABB,
 
+    #[bw(calc = 0)]
     num_vert_f16: u16,
+    #[bw(calc = polygons.len() as u16)]
     num_polygons: u16,
     #[brw(pad_after = 2)] // padding, supposedly
+    #[bw(calc = vertices.len() as u16)]
     num_vert_f32: u16,
 
     /// The children of this node.
@@ -82,10 +88,11 @@ pub struct ResourceNode {
     #[br(restore_position)]
     pub children: Vec<ResourceNode>,
 
+    #[bw(calc = vertices.clone())]
     #[br(count = num_vert_f32)]
     f32_vertices: Vec<[f32; 3]>,
     #[br(count = num_vert_f16)]
-    #[bw(ignore)]
+    #[bw(calc = Vec::new())]
     f16_vertices: Vec<[u16; 3]>,
 
     /// This node's vertices.
@@ -137,8 +144,62 @@ impl ReadableFile for Pcb {
     }
 }
 
+impl WritableFile for Pcb {
+    fn write_to_buffer(&self, platform: Platform) -> Option<ByteBuffer> {
+        let mut buffer = ByteBuffer::new();
+
+        {
+            let mut cursor = Cursor::new(&mut buffer);
+            self.write_options(&mut cursor, platform.endianness(), ())
+                .ok()?;
+        }
+
+        Some(buffer)
+    }
+}
+
+impl Pcb {
+    /// Creates a very simple collision mesh from a list of vertices and polygons.
+    pub fn new_from_vertices(vertices: &[[f32; 3]], polygons: &[Polygon]) -> Self {
+        let mut local_bounds = AABB {
+            min: [f32::INFINITY; 3],
+            max: [-f32::INFINITY; 3],
+        };
+        for vertex in vertices {
+            local_bounds.min[0] = local_bounds.min[0].min(vertex[0]);
+            local_bounds.min[1] = local_bounds.min[1].min(vertex[1]);
+            local_bounds.min[2] = local_bounds.min[2].min(vertex[2]);
+
+            local_bounds.max[0] = local_bounds.max[0].max(vertex[0]);
+            local_bounds.max[1] = local_bounds.max[1].max(vertex[1]);
+            local_bounds.max[2] = local_bounds.max[2].max(vertex[2]);
+        }
+
+        Self {
+            header: PcbResourceHeader {
+                pcb_type: 0,
+                version: 1,
+                total_nodes: 0,
+                total_polygons: 1,
+            },
+            root_node: ResourceNode {
+                magic: 0,
+                version: 0,
+                child1_offset: 0,
+                child2_offset: 0,
+                local_bounds,
+                children: Vec::new(),
+                vertices: vertices.to_vec(),
+                polygons: polygons.to_vec(),
+            },
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
+    use std::{fs::read, path::PathBuf};
+
     use crate::pass_random_invalid;
 
     use super::*;
@@ -146,5 +207,27 @@ mod tests {
     #[test]
     fn test_invalid() {
         pass_random_invalid::<Pcb>();
+    }
+
+    #[test]
+    fn test_write_triangle() {
+        let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        d.push("resources/tests");
+        d.push("triangle.pcb");
+
+        let empty_pcb = &read(d).unwrap();
+        let pcb = Pcb::new_from_vertices(
+            &[
+                [-400.00006, -20.0, -800.0],
+                [-400.00006, -20.0, -400.0],
+                [-3.0517578e-5, -10.0, -400.0],
+            ],
+            &[Polygon {
+                vertex_indices: [0, 1, 2],
+                material: 28672,
+            }],
+        );
+
+        assert_eq!(*empty_pcb, pcb.write_to_buffer(Platform::Win32).unwrap());
     }
 }
