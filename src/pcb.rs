@@ -103,7 +103,7 @@ impl ResourceNode {
 }
 
 #[binrw]
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Default)]
 #[allow(dead_code)]
 pub struct AABB {
     pub min: [f32; 3],
