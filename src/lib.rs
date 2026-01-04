@@ -139,13 +139,13 @@ pub mod patchlist;
 /// Types for `.uwb` files.
 pub mod uwb;
 
-/// Types for `.lcb` files.
+/// Types for level collision binary (`.lcb`) files.
 pub mod lcb;
 
 /// Types for level variable binary (`.lvb`) files.
 pub mod lvb;
 
-/// Types for `.svb` files.
+/// Types for sky visibility binary (`.svb`) files.
 pub mod svb;
 
 /// File resource handling.

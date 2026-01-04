@@ -12,6 +12,7 @@ use binrw::BinRead;
 use binrw::BinWrite;
 use binrw::binrw;
 
+/// Level collision binary file, usually with the `.lcb` file extension.
 #[binrw]
 #[derive(Debug)]
 #[brw(magic = b"LCB1")]
