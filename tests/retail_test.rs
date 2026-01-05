@@ -6,7 +6,7 @@ use std::env;
 use physis::{
     ReadableFile,
     common::{Language, Platform},
-    excel::{ColumnData, ExcelRowKind},
+    excel::{ExcelRowKind, Field},
     race::{Gender, Race, Tribe, build_skeleton_path},
     resource::{Resource, ResourceResolver, SqPackResource},
     skeleton::Skeleton,
@@ -45,7 +45,7 @@ fn test_item_read() {
     for row in &exd.pages[0].rows {
         match &row.kind {
             ExcelRowKind::SingleRow(row) => match &row.columns[9] {
-                ColumnData::String(val) => {
+                Field::String(val) => {
                     if val == "Dated Canvas Beret" {
                         return;
                     }

@@ -14,7 +14,7 @@ use crate::{
 
 /// Contains a single column's data, which can be various underlying types.
 #[derive(Debug, Clone, PartialEq)]
-pub enum ColumnData {
+pub enum Field {
     /// String.
     String(String),
     /// Boolean.
@@ -39,10 +39,10 @@ pub enum ColumnData {
     UInt64(u64),
 }
 
-impl ColumnData {
+impl Field {
     /// Returns a `Some(String)` if this column was a `String`, otherwise `None`.
     pub fn into_string(&self) -> Option<&String> {
-        if let ColumnData::String(value) = self {
+        if let Field::String(value) = self {
             return Some(value);
         }
         None
@@ -50,7 +50,7 @@ impl ColumnData {
 
     /// Returns a `Some(bool)` if this column was a `Bool`, otherwise `None`.
     pub fn into_bool(&self) -> Option<&bool> {
-        if let ColumnData::Bool(value) = self {
+        if let Field::Bool(value) = self {
             return Some(value);
         }
         None
@@ -58,7 +58,7 @@ impl ColumnData {
 
     /// Returns a `Some(i8)` if this column was a `Int8`, otherwise `None`.
     pub fn into_i8(&self) -> Option<&i8> {
-        if let ColumnData::Int8(value) = self {
+        if let Field::Int8(value) = self {
             return Some(value);
         }
         None
@@ -66,7 +66,7 @@ impl ColumnData {
 
     /// Returns a `Some(u8)` if this column was a `UInt8`, otherwise `None`.
     pub fn into_u8(&self) -> Option<&u8> {
-        if let ColumnData::UInt8(value) = self {
+        if let Field::UInt8(value) = self {
             return Some(value);
         }
         None
@@ -74,7 +74,7 @@ impl ColumnData {
 
     /// Returns a `Some(i16)` if this column was a `Int16`, otherwise `None`.
     pub fn into_i16(&self) -> Option<&i16> {
-        if let ColumnData::Int16(value) = self {
+        if let Field::Int16(value) = self {
             return Some(value);
         }
         None
@@ -82,7 +82,7 @@ impl ColumnData {
 
     /// Returns a `Some(u16)` if this column was a `UInt16`, otherwise `None`.
     pub fn into_u16(&self) -> Option<&u16> {
-        if let ColumnData::UInt16(value) = self {
+        if let Field::UInt16(value) = self {
             return Some(value);
         }
         None
@@ -90,7 +90,7 @@ impl ColumnData {
 
     /// Returns a `Some(i32)` if this column was a `Int32`, otherwise `None`.
     pub fn into_i32(&self) -> Option<&i32> {
-        if let ColumnData::Int32(value) = self {
+        if let Field::Int32(value) = self {
             return Some(value);
         }
         None
@@ -98,7 +98,7 @@ impl ColumnData {
 
     /// Returns a `Some(u32)` if this column was a `UInt32`, otherwise `None`.
     pub fn into_u32(&self) -> Option<&u32> {
-        if let ColumnData::UInt32(value) = self {
+        if let Field::UInt32(value) = self {
             return Some(value);
         }
         None
@@ -106,7 +106,7 @@ impl ColumnData {
 
     /// Returns a `Some(f32)` if this column was a `Float32`, otherwise `None`.
     pub fn into_f32(&self) -> Option<&f32> {
-        if let ColumnData::Float32(value) = self {
+        if let Field::Float32(value) = self {
             return Some(value);
         }
         None
@@ -114,7 +114,7 @@ impl ColumnData {
 
     /// Returns a `Some(i64)` if this column was a `Int64`, otherwise `None`.
     pub fn into_i64(&self) -> Option<&i64> {
-        if let ColumnData::Int64(value) = self {
+        if let Field::Int64(value) = self {
             return Some(value);
         }
         None
@@ -122,59 +122,51 @@ impl ColumnData {
 
     /// Returns a `Some(u64)` if this column was a `UInt64`, otherwise `None`.
     pub fn into_u64(&self) -> Option<&u64> {
-        if let ColumnData::UInt64(value) = self {
+        if let Field::UInt64(value) = self {
             return Some(value);
         }
         None
     }
 }
 
-/// A single row of Excel data.
-// TODO: Rename to ExcelRow
+/// A single row of data.
 #[derive(Debug, Clone, PartialEq)]
-pub struct ExcelSingleRow {
+pub struct Row {
     /// The columns in this row.
-    pub columns: Vec<ColumnData>,
+    pub columns: Vec<Field>,
 }
 
-/// Contains either a single row, or multiple subrows.
+/// Represents an entry in the page, which is made up of one to multiple subrows.
 #[derive(Debug, Clone, PartialEq)]
-pub enum ExcelRowKind {
-    /// A single row.
-    SingleRow(ExcelSingleRow),
-    /// Multiple subrows, with their IDs as the key.
-    SubRows(Vec<(u16, ExcelSingleRow)>),
+pub struct Entry {
+    /// The row ID.
+    pub id: u32,
+    /// A list of subrows. The first value of this tuple is the subrow ID.
+    pub subrows: Vec<(u16, Row)>,
 }
 
-/// Represents an entry in the EXD.
+/// A page of rows, inside of a [Sheet].
 #[derive(Debug, Clone)]
-pub struct ExcelRow {
-    /// Row ID associated with this entry.
-    pub row_id: u32,
-    /// What kind of entry this represents.
-    pub kind: ExcelRowKind,
-}
-
-#[derive(Debug, Clone)]
-pub struct ExcelSheetPage {
-    pub(crate) row_count: u32,
+pub struct Page {
     exd: EXD,
 
-    /// The rows in this page.
-    pub rows: Vec<ExcelRow>,
+    /// The row descriptors for this page.
+    ///
+    /// You most likely don't want to use this, prefer [Sheet::row] or [Sheet::subrow] instead.
+    // (NOTE: This is currently public because of write support, but this may change in the future.)
+    pub entries: Vec<Entry>,
 }
 
-impl ExcelSheetPage {
-    pub(crate) fn from_exd(page_index: u16, exh: &EXH, exd: EXD) -> Self {
-        let rows = Self::get_rows(exh, &exd);
+impl Page {
+    pub(crate) fn from_exd(exh: &EXH, exd: EXD) -> Self {
+        let descriptors = Self::read_descriptors(exh, &exd);
         Self {
-            row_count: exh.pages[page_index as usize].row_count,
             exd,
-            rows,
+            entries: descriptors,
         }
     }
 
-    fn get_rows(exh: &EXH, exd: &EXD) -> Vec<ExcelRow> {
+    fn read_descriptors(exh: &EXH, exd: &EXD) -> Vec<Entry> {
         let mut cursor = Cursor::new(&exd.remaining_data);
         let header_offset = EXDHeader::SIZE as u64 + exd.header.data_offset_size as u64;
         let mut rows = Vec::new();
@@ -188,7 +180,7 @@ impl ExcelSheetPage {
 
             let data_offset = cursor.stream_position().unwrap();
 
-            let kind = if exh.header.row_kind == SheetRowKind::SubRows {
+            let subrows = if exh.header.row_kind == SheetRowKind::SubRows {
                 let mut rows = Vec::with_capacity(row_header.row_count as usize);
                 for i in 0..row_header.row_count {
                     let subrow_offset = data_offset + i as u64 * (2 + exh.header.row_size as u64);
@@ -200,13 +192,13 @@ impl ExcelSheetPage {
                         read_row(&mut cursor, exh, subrow_offset + 2).unwrap(),
                     ));
                 }
-                ExcelRowKind::SubRows(rows)
+                rows
             } else {
-                ExcelRowKind::SingleRow(read_row(&mut cursor, exh, data_offset).unwrap())
+                vec![(0, read_row(&mut cursor, exh, data_offset).unwrap())]
             };
-            rows.push(ExcelRow {
-                row_id: offset.row_id,
-                kind,
+            rows.push(Entry {
+                id: offset.row_id,
+                subrows,
             });
         }
 
@@ -224,15 +216,15 @@ impl ExcelSheetPage {
         let data_offsets_pos = cursor.stream_position().unwrap();
         cursor
             .seek(SeekFrom::Current(
-                (core::mem::size_of::<ExcelDataOffset>() * self.rows.len()) as i64,
+                (core::mem::size_of::<ExcelDataOffset>() * self.entries.len()) as i64,
             ))
             .unwrap();
 
-        let mut data_offsets = Vec::with_capacity(self.rows.len());
+        let mut data_offsets = Vec::with_capacity(self.entries.len());
 
-        for row in &self.rows {
+        for row in &self.entries {
             data_offsets.push(ExcelDataOffset {
-                row_id: row.row_id,
+                row_id: row.id,
                 offset: cursor.stream_position().unwrap() as u32,
             });
 
@@ -244,12 +236,12 @@ impl ExcelSheetPage {
             let old_pos = cursor.stream_position().unwrap();
 
             // write column data
-            match &row.kind {
-                ExcelRowKind::SingleRow(excel_single_row) => {
-                    write_row(&mut cursor, exh, excel_single_row)
+            match &exh.header.row_kind {
+                SheetRowKind::SingleRow => {
+                    write_row(&mut cursor, exh, &row.subrows.first().unwrap().1)
                 }
-                ExcelRowKind::SubRows(excel_single_rows) => {
-                    for (id, row) in excel_single_rows {
+                SheetRowKind::SubRows => {
+                    for (id, row) in &row.subrows {
                         let subrow_header = SubRowHeader { subrow_id: *id };
                         subrow_header.write_ne(&mut cursor).ok()?;
 
@@ -260,9 +252,9 @@ impl ExcelSheetPage {
 
             // write strings at the end of column data
             {
-                let mut write_row_strings = |row: &ExcelSingleRow| {
+                let mut write_row_strings = |row: &Row| {
                     for column in &row.columns {
-                        if let ColumnData::String(val) = column {
+                        if let Field::String(val) = column {
                             let bytes = val.as_bytes();
                             bytes.write(&mut cursor).unwrap();
 
@@ -272,15 +264,8 @@ impl ExcelSheetPage {
                     }
                 };
 
-                match &row.kind {
-                    ExcelRowKind::SingleRow(excel_single_row) => {
-                        write_row_strings(excel_single_row)
-                    }
-                    ExcelRowKind::SubRows(excel_single_rows) => {
-                        for (_, row) in excel_single_rows {
-                            write_row_strings(row);
-                        }
-                    }
+                for (_, row) in &row.subrows {
+                    write_row_strings(row);
                 }
             }
 
@@ -312,58 +297,58 @@ impl ExcelSheetPage {
 
         Some(cursor.into_inner())
     }
+
+    /// The number of rows in this sheet. Does *not* take into account subrows.
+    pub fn row_count(&self) -> usize {
+        self.entries.len()
+    }
 }
 
+/// Represents an Excel sheet, which contains multiple pages of columns separated by either rows or subrows.
+///
+/// To read a sheet, use [ResourceResolver::read_excel_sheet](crate::resource::ResourceResolver::read_excel_sheet) or [SqPackResource::read_excel_sheet](crate::resource::SqPackResource::read_excel_sheet).
 #[derive(Debug, Clone)]
-pub struct ExcelSheet {
+pub struct Sheet {
     /// The EXH for this sheet.
+    // (NOTE: This is currently public because of Icarus, but this may change in the future.)
     pub exh: EXH,
-    /// All of the pages for this Excel sheet.
-    pub pages: Vec<ExcelSheetPage>,
+    /// The pages for this sheet.
+    pub pages: Vec<Page>,
 }
 
-impl ExcelSheet {
-    /// Finds the entire row with the specified `row_id` and returns a reference to it, otherwise returns `None`.
+impl Sheet {
+    /// Returns the entry matching `row_id` and returns a reference to it, otherwise returns [None].
     ///
-    /// This is only useful if you need to discriminate between single row and subrow sheets. In most other cases, you will want to use `get_row` and `get_subrow`.
-    pub fn get_row_kind(&self, row_id: u32) -> Option<&ExcelRowKind> {
+    /// This is only useful if you need to discriminate between single row and subrow sheets. In most cases, you want to use [row](Self::row) or [subrow](Self::subrow).
+    pub fn entry(&self, row_id: u32) -> Option<&Entry> {
         let page_index = self.exh.get_page(row_id);
         let page = self.pages.get(page_index)?;
 
-        page.rows
-            .iter()
-            .find(|row| row.row_id == row_id)
-            .map(|row| &row.kind)
+        page.entries.iter().find(|row| row.id == row_id)
     }
 
-    /// Finds the entry with the specified `row_id` and returns a reference to it, otherwise returns `None`.
+    /// Finds a row matching `row_id` and returns a reference to it, otherwise returns [None].
     ///
-    /// For sheets that have subrows, this will always return subrow 0.
-    pub fn get_row(&self, row_id: u32) -> Option<&ExcelSingleRow> {
-        let row = self.get_row_kind(row_id)?;
-        match &row {
-            ExcelRowKind::SingleRow(excel_single_row) => Some(excel_single_row),
-            ExcelRowKind::SubRows(items) => Some(&items.first()?.1),
-        }
+    /// For sheets that have subrows, this will always return subrow 0. It's recommended to use [subrow](Self::subrow) instead.
+    pub fn row(&self, row_id: u32) -> Option<&Row> {
+        let row = self.entry(row_id)?;
+        row.subrows.first().map(|(_, row)| row)
     }
 
-    /// Finds the entry with the specified `row_id` and `subrow_id` and returns a reference to it, otherwise returns `None`.
+    /// Finds a row matching `row_id` and `subrow_id` and returns a reference to it, otherwise returns [None].
     ///
-    /// For sheets that don't have subrows, this will always return None.
-    pub fn get_subrow(&self, row_id: u32, subrow_id: u16) -> Option<&ExcelSingleRow> {
+    /// For sheets that don't have subrows, this will always return [None].
+    pub fn subrow(&self, row_id: u32, subrow_id: u16) -> Option<&Row> {
         // Grabbing a subrow here never makes sense, and is just misuse of the API.
         if self.exh.header.row_kind == SheetRowKind::SingleRow {
             return None;
         }
 
-        let row = self.get_row_kind(row_id)?;
-        match &row {
-            ExcelRowKind::SubRows(subrows) => subrows
-                .iter()
-                .find(|(id, _)| *id == subrow_id)
-                .map(|(_, single_row)| single_row),
-            ExcelRowKind::SingleRow(_) => None,
-        }
+        let row = self.entry(row_id)?;
+        row.subrows
+            .iter()
+            .find(|(id, _)| *id == subrow_id)
+            .map(|(_, row)| row)
     }
 }
 
@@ -399,57 +384,77 @@ mod tests {
             exd = EXD::from_existing(Platform::Win32, &read(d).unwrap()).unwrap();
         }
 
-        let page = ExcelSheetPage::from_exd(0, &exh, exd);
+        let page = Page::from_exd(&exh, exd);
 
-        let excel = ExcelSheet {
+        let excel = Sheet {
             exh,
             pages: vec![page],
         };
 
-        assert_eq!(excel.pages[0].rows.len(), 4);
+        assert_eq!(excel.pages[0].entries.len(), 4);
 
         // row 0
-        assert_eq!(excel.pages[0].rows[0].row_id, 1441792);
         assert_eq!(
-            excel.pages[0].rows[0].kind,
-            ExcelRowKind::SingleRow(ExcelSingleRow {
-                columns: vec![ColumnData::Int8(0)]
-            })
+            excel.pages[0].entries[0],
+            Entry {
+                id: 1441792,
+                subrows: vec![(
+                    0,
+                    Row {
+                        columns: vec![Field::Int8(0)]
+                    }
+                )]
+            }
         );
-        assert!(excel.get_row(1441792).is_some());
+        assert!(excel.row(1441792).is_some());
 
         // row 1
-        assert_eq!(excel.pages[0].rows[1].row_id, 1441793);
         assert_eq!(
-            excel.pages[0].rows[1].kind,
-            ExcelRowKind::SingleRow(ExcelSingleRow {
-                columns: vec![ColumnData::Int8(1)]
-            })
+            excel.pages[0].entries[1],
+            Entry {
+                id: 1441793,
+                subrows: vec![(
+                    0,
+                    Row {
+                        columns: vec![Field::Int8(1)]
+                    }
+                )]
+            }
         );
-        assert!(excel.get_row(1441793).is_some());
+        assert!(excel.row(1441793).is_some());
 
         // row 2
-        assert_eq!(excel.pages[0].rows[2].row_id, 1441794);
         assert_eq!(
-            excel.pages[0].rows[2].kind,
-            ExcelRowKind::SingleRow(ExcelSingleRow {
-                columns: vec![ColumnData::Int8(2)]
-            })
+            excel.pages[0].entries[2],
+            Entry {
+                id: 1441794,
+                subrows: vec![(
+                    0,
+                    Row {
+                        columns: vec![Field::Int8(2)]
+                    }
+                )]
+            }
         );
-        assert!(excel.get_row(1441794).is_some());
+        assert!(excel.row(1441794).is_some());
 
         // row 3
-        assert_eq!(excel.pages[0].rows[3].row_id, 1441795);
         assert_eq!(
-            excel.pages[0].rows[3].kind,
-            ExcelRowKind::SingleRow(ExcelSingleRow {
-                columns: vec![ColumnData::Int8(3)]
-            })
+            excel.pages[0].entries[3],
+            Entry {
+                id: 1441795,
+                subrows: vec![(
+                    0,
+                    Row {
+                        columns: vec![Field::Int8(3)]
+                    }
+                )]
+            }
         );
-        assert!(excel.get_row(1441795).is_some());
+        assert!(excel.row(1441795).is_some());
 
         // non-existent row 4
-        assert!(excel.get_row(1019181719).is_none());
+        assert!(excel.row(1019181719).is_none());
     }
 
     // slightly more complex to read, because it has STRINGS
@@ -475,109 +480,149 @@ mod tests {
             exd = EXD::from_existing(Platform::Win32, &read(d).unwrap()).unwrap();
         }
 
-        let page = ExcelSheetPage::from_exd(0, &exh, exd);
+        let page = Page::from_exd(&exh, exd);
 
-        let excel = ExcelSheet {
+        let excel = Sheet {
             exh,
             pages: vec![page],
         };
 
-        assert_eq!(excel.pages[0].rows.len(), 8);
+        assert_eq!(excel.pages[0].entries.len(), 8);
 
         // row 0
-        assert_eq!(excel.pages[0].rows[0].row_id, 0);
         assert_eq!(
-            excel.pages[0].rows[0].kind,
-            ExcelRowKind::SingleRow(ExcelSingleRow {
-                columns: vec![
-                    ColumnData::String("HOWTO_MOVE_AND_CAMERA".to_string()),
-                    ColumnData::UInt32(1)
-                ]
-            })
+            excel.pages[0].entries[0],
+            Entry {
+                id: 0,
+                subrows: vec![(
+                    0,
+                    Row {
+                        columns: vec![
+                            Field::String("HOWTO_MOVE_AND_CAMERA".to_string()),
+                            Field::UInt32(1)
+                        ]
+                    }
+                )]
+            }
         );
 
         // row 1
-        assert_eq!(excel.pages[0].rows[1].row_id, 1);
         assert_eq!(
-            excel.pages[0].rows[1].kind,
-            ExcelRowKind::SingleRow(ExcelSingleRow {
-                columns: vec![
-                    ColumnData::String("HOWTO_ANNOUNCE_AND_QUEST".to_string()),
-                    ColumnData::UInt32(2)
-                ]
-            })
+            excel.pages[0].entries[1],
+            Entry {
+                id: 1,
+                subrows: vec![(
+                    0,
+                    Row {
+                        columns: vec![
+                            Field::String("HOWTO_ANNOUNCE_AND_QUEST".to_string()),
+                            Field::UInt32(2)
+                        ]
+                    }
+                )]
+            }
         );
 
         // row 2
-        assert_eq!(excel.pages[0].rows[2].row_id, 2);
         assert_eq!(
-            excel.pages[0].rows[2].kind,
-            ExcelRowKind::SingleRow(ExcelSingleRow {
-                columns: vec![
-                    ColumnData::String("HOWTO_QUEST_REWARD".to_string()),
-                    ColumnData::UInt32(11)
-                ]
-            })
+            excel.pages[0].entries[2],
+            Entry {
+                id: 2,
+                subrows: vec![(
+                    0,
+                    Row {
+                        columns: vec![
+                            Field::String("HOWTO_QUEST_REWARD".to_string()),
+                            Field::UInt32(11)
+                        ]
+                    }
+                )]
+            }
         );
 
         // row 3
-        assert_eq!(excel.pages[0].rows[3].row_id, 3);
         assert_eq!(
-            excel.pages[0].rows[3].kind,
-            ExcelRowKind::SingleRow(ExcelSingleRow {
-                columns: vec![
-                    ColumnData::String("BGM_MUSIC_NO_MUSIC".to_string()),
-                    ColumnData::UInt32(1001)
-                ]
-            })
+            excel.pages[0].entries[3],
+            Entry {
+                id: 3,
+                subrows: vec![(
+                    0,
+                    Row {
+                        columns: vec![
+                            Field::String("BGM_MUSIC_NO_MUSIC".to_string()),
+                            Field::UInt32(1001)
+                        ]
+                    }
+                )]
+            }
         );
 
         // row 4
-        assert_eq!(excel.pages[0].rows[4].row_id, 4);
         assert_eq!(
-            excel.pages[0].rows[4].kind,
-            ExcelRowKind::SingleRow(ExcelSingleRow {
-                columns: vec![
-                    ColumnData::String("ITEM_INITIAL_RING_A".to_string()),
-                    ColumnData::UInt32(4423)
-                ]
-            })
+            excel.pages[0].entries[4],
+            Entry {
+                id: 4,
+                subrows: vec![(
+                    0,
+                    Row {
+                        columns: vec![
+                            Field::String("ITEM_INITIAL_RING_A".to_string()),
+                            Field::UInt32(4423)
+                        ]
+                    }
+                )]
+            }
         );
 
         // row 5
-        assert_eq!(excel.pages[0].rows[5].row_id, 5);
         assert_eq!(
-            excel.pages[0].rows[5].kind,
-            ExcelRowKind::SingleRow(ExcelSingleRow {
-                columns: vec![
-                    ColumnData::String("ITEM_INITIAL_RING_B".to_string()),
-                    ColumnData::UInt32(4424)
-                ]
-            })
+            excel.pages[0].entries[5],
+            Entry {
+                id: 5,
+                subrows: vec![(
+                    0,
+                    Row {
+                        columns: vec![
+                            Field::String("ITEM_INITIAL_RING_B".to_string()),
+                            Field::UInt32(4424)
+                        ]
+                    }
+                )]
+            }
         );
 
         // row 6
-        assert_eq!(excel.pages[0].rows[6].row_id, 6);
         assert_eq!(
-            excel.pages[0].rows[6].kind,
-            ExcelRowKind::SingleRow(ExcelSingleRow {
-                columns: vec![
-                    ColumnData::String("ITEM_INITIAL_RING_C".to_string()),
-                    ColumnData::UInt32(4425)
-                ]
-            })
+            excel.pages[0].entries[6],
+            Entry {
+                id: 6,
+                subrows: vec![(
+                    0,
+                    Row {
+                        columns: vec![
+                            Field::String("ITEM_INITIAL_RING_C".to_string()),
+                            Field::UInt32(4425)
+                        ]
+                    }
+                )]
+            }
         );
 
         // row 7
-        assert_eq!(excel.pages[0].rows[7].row_id, 7);
         assert_eq!(
-            excel.pages[0].rows[7].kind,
-            ExcelRowKind::SingleRow(ExcelSingleRow {
-                columns: vec![
-                    ColumnData::String("ITEM_INITIAL_RING_D".to_string()),
-                    ColumnData::UInt32(4426)
-                ]
-            })
+            excel.pages[0].entries[7],
+            Entry {
+                id: 7,
+                subrows: vec![(
+                    0,
+                    Row {
+                        columns: vec![
+                            Field::String("ITEM_INITIAL_RING_D".to_string()),
+                            Field::UInt32(4426)
+                        ]
+                    }
+                )]
+            }
         );
     }
 
@@ -606,7 +651,7 @@ mod tests {
             expected_exd = EXD::from_existing(Platform::Win32, &expected_exd_bytes).unwrap();
         }
 
-        let page = ExcelSheetPage::from_exd(0, &exh, expected_exd);
+        let page = Page::from_exd(&exh, expected_exd);
 
         let actual_exd_bytes = page.write_to_buffer(&exh).unwrap();
         assert_eq!(actual_exd_bytes, expected_exd_bytes);
@@ -637,7 +682,7 @@ mod tests {
             expected_exd = EXD::from_existing(Platform::Win32, &expected_exd_bytes).unwrap();
         }
 
-        let page = ExcelSheetPage::from_exd(0, &exh, expected_exd);
+        let page = Page::from_exd(&exh, expected_exd);
 
         let actual_exd_bytes = page.write_to_buffer(&exh).unwrap();
         assert_eq!(actual_exd_bytes, expected_exd_bytes);
@@ -668,7 +713,7 @@ mod tests {
             expected_exd = EXD::from_existing(Platform::Win32, &expected_exd_bytes).unwrap();
         }
 
-        let page = ExcelSheetPage::from_exd(0, &exh, expected_exd);
+        let page = Page::from_exd(&exh, expected_exd);
 
         let actual_exd_bytes = page.write_to_buffer(&exh).unwrap();
         assert_eq!(actual_exd_bytes, expected_exd_bytes);

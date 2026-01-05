@@ -9,17 +9,13 @@ use std::{
 use binrw::{BinRead, BinWrite, Endian};
 
 use crate::{
-    excel::{ColumnData, ExcelSingleRow},
+    excel::{Field, Row},
     exd::EXD,
     exh::{ColumnDataType, EXH, ExcelColumnDefinition},
 };
 
-pub(crate) fn read_row<T: Read + Seek>(
-    reader: &mut T,
-    exh: &EXH,
-    row_offset: u64,
-) -> Option<ExcelSingleRow> {
-    let mut subrow = ExcelSingleRow {
+pub(crate) fn read_row<T: Read + Seek>(reader: &mut T, exh: &EXH, row_offset: u64) -> Option<Row> {
+    let mut subrow = Row {
         columns: Vec::with_capacity(exh.column_definitions.len()),
     };
 
@@ -36,8 +32,8 @@ pub(crate) fn read_row<T: Read + Seek>(
     Some(subrow)
 }
 
-pub(crate) fn write_row<T: Write + Seek>(writer: &mut T, exh: &EXH, row: &ExcelSingleRow) {
-    let mut column_definitions: Vec<(ExcelColumnDefinition, ColumnData)> = exh
+pub(crate) fn write_row<T: Write + Seek>(writer: &mut T, exh: &EXH, row: &Row) {
+    let mut column_definitions: Vec<(ExcelColumnDefinition, Field)> = exh
         .column_definitions
         .clone()
         .into_iter()
@@ -61,7 +57,7 @@ pub(crate) fn write_row<T: Write + Seek>(writer: &mut T, exh: &EXH, row: &ExcelS
 
     // process packed bools before continuing, since we need to know what their final byte form is
     for (definition, column) in &column_definitions {
-        if let ColumnData::Bool(val) = &column {
+        if let Field::Bool(val) = &column {
             match definition.data_type {
                 ColumnDataType::PackedBool0 => write_packed_bool(definition, 0, val),
                 ColumnDataType::PackedBool1 => write_packed_bool(definition, 1, val),
@@ -111,7 +107,7 @@ impl EXD {
         exh: &EXH,
         row_offset: u64,
         column: &ExcelColumnDefinition,
-    ) -> Option<ColumnData> {
+    ) -> Option<Field> {
         let mut read_packed_bool = |shift: i32| -> bool {
             let bit = 1 << shift;
             let bool_data: u8 = Self::read_data_raw(cursor).unwrap_or(0);
@@ -137,39 +133,31 @@ impl EXD {
                     byte = Self::read_data_raw(cursor).unwrap();
                 }
 
-                Some(ColumnData::String(string))
+                Some(Field::String(string))
             }
             ColumnDataType::Bool => {
                 // FIXME: i believe Bool is int8?
                 let bool_data: i32 = Self::read_data_raw(cursor).unwrap();
 
-                Some(ColumnData::Bool(bool_data == 1))
+                Some(Field::Bool(bool_data == 1))
             }
-            ColumnDataType::Int8 => Some(ColumnData::Int8(Self::read_data_raw(cursor).unwrap())),
-            ColumnDataType::UInt8 => Some(ColumnData::UInt8(Self::read_data_raw(cursor).unwrap())),
-            ColumnDataType::Int16 => Some(ColumnData::Int16(Self::read_data_raw(cursor).unwrap())),
-            ColumnDataType::UInt16 => {
-                Some(ColumnData::UInt16(Self::read_data_raw(cursor).unwrap()))
-            }
-            ColumnDataType::Int32 => Some(ColumnData::Int32(Self::read_data_raw(cursor).unwrap())),
-            ColumnDataType::UInt32 => {
-                Some(ColumnData::UInt32(Self::read_data_raw(cursor).unwrap()))
-            }
-            ColumnDataType::Float32 => {
-                Some(ColumnData::Float32(Self::read_data_raw(cursor).unwrap()))
-            }
-            ColumnDataType::Int64 => Some(ColumnData::Int64(Self::read_data_raw(cursor).unwrap())),
-            ColumnDataType::UInt64 => {
-                Some(ColumnData::UInt64(Self::read_data_raw(cursor).unwrap()))
-            }
-            ColumnDataType::PackedBool0 => Some(ColumnData::Bool(read_packed_bool(0))),
-            ColumnDataType::PackedBool1 => Some(ColumnData::Bool(read_packed_bool(1))),
-            ColumnDataType::PackedBool2 => Some(ColumnData::Bool(read_packed_bool(2))),
-            ColumnDataType::PackedBool3 => Some(ColumnData::Bool(read_packed_bool(3))),
-            ColumnDataType::PackedBool4 => Some(ColumnData::Bool(read_packed_bool(4))),
-            ColumnDataType::PackedBool5 => Some(ColumnData::Bool(read_packed_bool(5))),
-            ColumnDataType::PackedBool6 => Some(ColumnData::Bool(read_packed_bool(6))),
-            ColumnDataType::PackedBool7 => Some(ColumnData::Bool(read_packed_bool(7))),
+            ColumnDataType::Int8 => Some(Field::Int8(Self::read_data_raw(cursor).unwrap())),
+            ColumnDataType::UInt8 => Some(Field::UInt8(Self::read_data_raw(cursor).unwrap())),
+            ColumnDataType::Int16 => Some(Field::Int16(Self::read_data_raw(cursor).unwrap())),
+            ColumnDataType::UInt16 => Some(Field::UInt16(Self::read_data_raw(cursor).unwrap())),
+            ColumnDataType::Int32 => Some(Field::Int32(Self::read_data_raw(cursor).unwrap())),
+            ColumnDataType::UInt32 => Some(Field::UInt32(Self::read_data_raw(cursor).unwrap())),
+            ColumnDataType::Float32 => Some(Field::Float32(Self::read_data_raw(cursor).unwrap())),
+            ColumnDataType::Int64 => Some(Field::Int64(Self::read_data_raw(cursor).unwrap())),
+            ColumnDataType::UInt64 => Some(Field::UInt64(Self::read_data_raw(cursor).unwrap())),
+            ColumnDataType::PackedBool0 => Some(Field::Bool(read_packed_bool(0))),
+            ColumnDataType::PackedBool1 => Some(Field::Bool(read_packed_bool(1))),
+            ColumnDataType::PackedBool2 => Some(Field::Bool(read_packed_bool(2))),
+            ColumnDataType::PackedBool3 => Some(Field::Bool(read_packed_bool(3))),
+            ColumnDataType::PackedBool4 => Some(Field::Bool(read_packed_bool(4))),
+            ColumnDataType::PackedBool5 => Some(Field::Bool(read_packed_bool(5))),
+            ColumnDataType::PackedBool6 => Some(Field::Bool(read_packed_bool(6))),
+            ColumnDataType::PackedBool7 => Some(Field::Bool(read_packed_bool(7))),
         }
     }
 
@@ -179,18 +167,18 @@ impl EXD {
 
     pub(crate) fn write_column<T: Write + Seek>(
         cursor: &mut T,
-        column: &ColumnData,
+        column: &Field,
         column_definition: &ExcelColumnDefinition,
         strings_len: &mut u32,
         packed_bools: &mut HashMap<u16, u8>,
     ) {
         match column {
-            ColumnData::String(val) => {
+            Field::String(val) => {
                 let string_offset = *strings_len;
                 Self::write_data_raw(cursor, &string_offset);
                 *strings_len += val.len() as u32 + 1;
             }
-            ColumnData::Bool(_) => match column_definition.data_type {
+            Field::Bool(_) => match column_definition.data_type {
                 ColumnDataType::Bool => todo!(),
                 // packed bools are handled in write_rows
                 ColumnDataType::PackedBool0
@@ -210,15 +198,15 @@ impl EXD {
                 }
                 _ => panic!("This makes no sense!"),
             },
-            ColumnData::Int8(val) => Self::write_data_raw(cursor, val),
-            ColumnData::UInt8(val) => Self::write_data_raw(cursor, val),
-            ColumnData::Int16(val) => Self::write_data_raw(cursor, val),
-            ColumnData::UInt16(val) => Self::write_data_raw(cursor, val),
-            ColumnData::Int32(val) => Self::write_data_raw(cursor, val),
-            ColumnData::UInt32(val) => Self::write_data_raw(cursor, val),
-            ColumnData::Float32(val) => Self::write_data_raw(cursor, val),
-            ColumnData::Int64(val) => Self::write_data_raw(cursor, val),
-            ColumnData::UInt64(val) => Self::write_data_raw(cursor, val),
+            Field::Int8(val) => Self::write_data_raw(cursor, val),
+            Field::UInt8(val) => Self::write_data_raw(cursor, val),
+            Field::Int16(val) => Self::write_data_raw(cursor, val),
+            Field::UInt16(val) => Self::write_data_raw(cursor, val),
+            Field::Int32(val) => Self::write_data_raw(cursor, val),
+            Field::UInt32(val) => Self::write_data_raw(cursor, val),
+            Field::Float32(val) => Self::write_data_raw(cursor, val),
+            Field::Int64(val) => Self::write_data_raw(cursor, val),
+            Field::UInt64(val) => Self::write_data_raw(cursor, val),
         }
     }
 }

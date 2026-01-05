@@ -4,7 +4,7 @@
 use crate::{
     ByteBuffer, Error, ReadableFile,
     common::Language,
-    excel::ExcelSheet,
+    excel::Sheet,
     exh::EXH,
     resource::{
         generic_get_all_sheet_names, generic_parsed, generic_read_excel_sheet,
@@ -93,7 +93,7 @@ impl ResourceResolver {
         exh: &EXH,
         name: &str,
         language: Language,
-    ) -> Result<ExcelSheet, Error> {
+    ) -> Result<Sheet, Error> {
         self.execute_first_found(
             |resource| generic_read_excel_sheet(resource, exh, name, language),
             Error::Unknown,

@@ -10,7 +10,7 @@ use std::{
 use crate::{
     ByteBuffer, Error, ReadableFile,
     common::{Language, PLATFORM_LIST, Platform, read_version},
-    excel::ExcelSheet,
+    excel::Sheet,
     exh::EXH,
     repository::{Category, Repository, RepositoryType, string_to_category},
     resource::{
@@ -456,7 +456,7 @@ impl SqPackResource {
         exh: &EXH,
         name: &str,
         language: Language,
-    ) -> Result<ExcelSheet, Error> {
+    ) -> Result<Sheet, Error> {
         generic_read_excel_sheet(self, exh, name, language)
     }
 
