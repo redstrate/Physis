@@ -323,39 +323,31 @@ pub struct ExcelSheet {
 }
 
 impl ExcelSheet {
-    /// Finds the entry with the specified `row_id`, otherwise returns `None`.
-    pub fn get_row(&self, row_id: u32) -> Option<ExcelRowKind> {
+    /// Finds the entry with the specified `row_id` and returns a reference to it, otherwise returns `None`.
+    pub fn get_row(&self, row_id: u32) -> Option<&ExcelRowKind> {
         let page_index = self.exh.get_page(row_id);
         let page = self.pages.get(page_index)?;
 
-        for row in &page.rows {
-            if row.row_id == row_id {
-                return Some(row.kind.clone());
-            }
-        }
-
-        None
+        page.rows
+            .iter()
+            .find(|row| row.row_id == row_id)
+            .map(|row| &row.kind)
     }
 
-    /// Finds the entry with the specified `row_id` and `subrow_id`, otherwise returns `None`.
-    pub fn get_subrow(&self, row_id: u32, subrow_id: u16) -> Option<ExcelSingleRow> {
+    /// Finds the entry with the specified `row_id` and `subrow_id` and returns a reference to it, otherwise returns `None`.
+    pub fn get_subrow(&self, row_id: u32, subrow_id: u16) -> Option<&ExcelSingleRow> {
         let page_index = self.exh.get_page(row_id);
         let page = self.pages.get(page_index)?;
 
-        for row in &page.rows {
-            if row.row_id == row_id {
-                match &row.kind {
-                    ExcelRowKind::SingleRow(_) => {}
-                    ExcelRowKind::SubRows(subrows) => {
-                        if let Some(subrow) = subrows.iter().find(|(id, _)| *id == subrow_id) {
-                            return Some(subrow.1.clone());
-                        }
-                    }
-                }
-            }
-        }
+        let row = page.rows.iter().find(|row| row.row_id == row_id)?;
 
-        None
+        match &row.kind {
+            ExcelRowKind::SubRows(subrows) => subrows
+                .iter()
+                .find(|(id, _)| *id == subrow_id)
+                .map(|(_, single_row)| single_row),
+            ExcelRowKind::SingleRow(_) => None,
+        }
     }
 }
 
