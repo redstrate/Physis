@@ -8,7 +8,7 @@ use std::io::{Cursor, Seek, SeekFrom};
 use crate::common::Platform;
 use crate::common_file_operations::{read_bool_from, write_bool_as};
 use crate::{ByteBuffer, ByteSpan, ReadableFile, WritableFile};
-use binrw::binrw;
+use binrw::{binrw, Endian};
 use binrw::{BinRead, BinReaderExt, BinWrite};
 
 mod aetheryte;
@@ -620,6 +620,98 @@ pub struct Layer {
     pub objects: Vec<InstanceObject>,
 }
 
+impl Layer {
+    pub(crate) fn read(endianness: Endian, cursor: &mut Cursor<ByteSpan>) -> Option<Layer> {
+        let old_pos = cursor.position();
+
+        let string_heap = StringHeap::from(old_pos);
+        let data_heap = StringHeap::from(old_pos);
+
+        let header =
+            LayerHeader::read_options(cursor, endianness, (&data_heap, &string_heap))
+                .unwrap();
+
+        let mut objects = Vec::new();
+        // read instance objects
+        {
+            let mut instance_offsets = vec![0i32; header.instance_object_count as usize];
+            for i in 0..header.instance_object_count {
+                instance_offsets[i as usize] =
+                    cursor.read_type_args::<i32>(endianness, ()).unwrap();
+            }
+
+            for i in 0..header.instance_object_count {
+                cursor
+                    .seek(SeekFrom::Start(
+                        old_pos
+                            + header.instance_object_offset as u64
+                            + instance_offsets[i as usize] as u64,
+                    ))
+                    .unwrap();
+
+                let start = cursor.stream_position().unwrap();
+                let string_heap = StringHeap::from(start);
+
+                objects.push(
+                    InstanceObject::read_options(cursor, endianness, (&string_heap,))
+                        .ok()?,
+                );
+
+                let after_immediate_read = cursor.stream_position().unwrap();
+
+                let next_offset = if i + 1 < header.instance_object_count {
+                    old_pos
+                        + header.instance_object_offset as u64
+                        + instance_offsets[i as usize + 1] as u64
+                } else {
+                    old_pos + header.ob_set_referenced_list as u64
+                };
+
+                let expected_size = next_offset as u64 - start;
+                let actual_size = after_immediate_read - start;
+
+                // TODO: remove this once all the objects are fixed!
+                /*if cfg!(debug_assertions) && expected_size != actual_size {
+                    println!(
+                        "{:#?} doesn't match the expected size! it's supposed to be {} bytes, but we read {} instead",
+                        objects.last(),
+                        expected_size,
+                        actual_size
+                    );
+                }*/
+            }
+        }
+
+        // read ob set referenced
+        {
+            cursor
+                .seek(SeekFrom::Start(
+                    old_pos + header.ob_set_referenced_list as u64,
+                ))
+                .unwrap();
+            for _ in 0..header.ob_set_referenced_list_count {
+                OBSetReferenced::read_options(cursor, endianness, ()).unwrap();
+            }
+        }
+
+        // read ob set enable referenced list
+        {
+            cursor
+                .seek(SeekFrom::Start(
+                    old_pos + header.ob_set_enable_referenced_list as u64,
+                ))
+                .unwrap();
+            for _ in 0..header.ob_set_enable_referenced_list_count {
+                OBSetEnableReferenced::read_options(cursor, endianness, ()).unwrap();
+            }
+        }
+
+        Some(Layer {
+            header,
+            objects
+        })
+    }
+}
 #[derive(Debug)]
 pub struct LayerChunk {
     // Example: "LGP1"
@@ -674,91 +766,8 @@ impl ReadableFile for LayerGroup {
                 .seek(SeekFrom::Start(old_pos + layer_offsets[i as usize] as u64))
                 .unwrap();
 
-            let old_pos = cursor.position();
-
-            let string_heap = StringHeap::from(old_pos);
-            let data_heap = StringHeap::from(old_pos);
-
-            let header =
-                LayerHeader::read_options(&mut cursor, endianness, (&data_heap, &string_heap))
-                    .unwrap();
-
-            let mut objects = Vec::new();
-            // read instance objects
-            {
-                let mut instance_offsets = vec![0i32; header.instance_object_count as usize];
-                for i in 0..header.instance_object_count {
-                    instance_offsets[i as usize] =
-                        cursor.read_type_args::<i32>(endianness, ()).unwrap();
-                }
-
-                for i in 0..header.instance_object_count {
-                    cursor
-                        .seek(SeekFrom::Start(
-                            old_pos
-                                + header.instance_object_offset as u64
-                                + instance_offsets[i as usize] as u64,
-                        ))
-                        .unwrap();
-
-                    let start = cursor.stream_position().unwrap();
-                    let string_heap = StringHeap::from(start);
-
-                    objects.push(
-                        InstanceObject::read_options(&mut cursor, endianness, (&string_heap,))
-                            .ok()?,
-                    );
-
-                    let after_immediate_read = cursor.stream_position().unwrap();
-
-                    let next_offset = if i + 1 < header.instance_object_count {
-                        old_pos
-                            + header.instance_object_offset as u64
-                            + instance_offsets[i as usize + 1] as u64
-                    } else {
-                        old_pos + header.ob_set_referenced_list as u64
-                    };
-
-                    let expected_size = next_offset as u64 - start;
-                    let actual_size = after_immediate_read - start;
-
-                    // TODO: remove this once all the objects are fixed!
-                    /*if cfg!(debug_assertions) && expected_size != actual_size {
-                        println!(
-                            "{:#?} doesn't match the expected size! it's supposed to be {} bytes, but we read {} instead",
-                            objects.last(),
-                            expected_size,
-                            actual_size
-                        );
-                    }*/
-                }
-            }
-
-            // read ob set referenced
-            {
-                cursor
-                    .seek(SeekFrom::Start(
-                        old_pos + header.ob_set_referenced_list as u64,
-                    ))
-                    .unwrap();
-                for _ in 0..header.ob_set_referenced_list_count {
-                    OBSetReferenced::read_options(&mut cursor, endianness, ()).unwrap();
-                }
-            }
-
-            // read ob set enable referenced list
-            {
-                cursor
-                    .seek(SeekFrom::Start(
-                        old_pos + header.ob_set_enable_referenced_list as u64,
-                    ))
-                    .unwrap();
-                for _ in 0..header.ob_set_enable_referenced_list_count {
-                    OBSetEnableReferenced::read_options(&mut cursor, endianness, ()).unwrap();
-                }
-            }
-
-            layers.push(Layer { header, objects });
+            let layer = Layer::read(endianness, &mut cursor)?;
+            layers.push(layer);
         }
 
         let layer_chunk = LayerChunk {
