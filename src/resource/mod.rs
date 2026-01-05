@@ -132,11 +132,14 @@ pub fn generic_read_excel_sheet<R: Resource + ?Sized>(
 ) -> Result<ExcelSheet, Error> {
     let mut pages = Vec::with_capacity(exh.header.page_count as usize);
     for page in 0..exh.header.page_count {
-        let exd = generic_read_excel_exd(resource, name, &exh, language, page as usize)?;
-        pages.push(ExcelSheetPage::from_exd(page, &exh, exd));
+        let exd = generic_read_excel_exd(resource, name, exh, language, page as usize)?;
+        pages.push(ExcelSheetPage::from_exd(page, exh, exd));
     }
 
-    Ok(ExcelSheet { exh: exh.clone(), pages })
+    Ok(ExcelSheet {
+        exh: exh.clone(),
+        pages,
+    })
 }
 
 /// Returns all known sheet names listed in the root list. You most likely want to use the method in `ResourceResolver.`

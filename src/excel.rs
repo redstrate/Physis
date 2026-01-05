@@ -323,8 +323,10 @@ pub struct ExcelSheet {
 }
 
 impl ExcelSheet {
-    /// Finds the entry with the specified `row_id` and returns a reference to it, otherwise returns `None`.
-    pub fn get_row(&self, row_id: u32) -> Option<&ExcelRowKind> {
+    /// Finds the entire row with the specified `row_id` and returns a reference to it, otherwise returns `None`.
+    ///
+    /// This is only useful if you need to discriminate between single row and subrow sheets. In most other cases, you will want to use `get_row` and `get_subrow`.
+    pub fn get_row_kind(&self, row_id: u32) -> Option<&ExcelRowKind> {
         let page_index = self.exh.get_page(row_id);
         let page = self.pages.get(page_index)?;
 
@@ -334,14 +336,28 @@ impl ExcelSheet {
             .map(|row| &row.kind)
     }
 
+    /// Finds the entry with the specified `row_id` and returns a reference to it, otherwise returns `None`.
+    ///
+    /// For sheets that have subrows, this will always return subrow 0.
+    pub fn get_row(&self, row_id: u32) -> Option<&ExcelSingleRow> {
+        let row = self.get_row_kind(row_id)?;
+        match &row {
+            ExcelRowKind::SingleRow(excel_single_row) => Some(excel_single_row),
+            ExcelRowKind::SubRows(items) => Some(&items.first()?.1),
+        }
+    }
+
     /// Finds the entry with the specified `row_id` and `subrow_id` and returns a reference to it, otherwise returns `None`.
+    ///
+    /// For sheets that don't have subrows, this will always return None.
     pub fn get_subrow(&self, row_id: u32, subrow_id: u16) -> Option<&ExcelSingleRow> {
-        let page_index = self.exh.get_page(row_id);
-        let page = self.pages.get(page_index)?;
+        // Grabbing a subrow here never makes sense, and is just misuse of the API.
+        if self.exh.header.row_kind == SheetRowKind::SingleRow {
+            return None;
+        }
 
-        let row = page.rows.iter().find(|row| row.row_id == row_id)?;
-
-        match &row.kind {
+        let row = self.get_row_kind(row_id)?;
+        match &row {
             ExcelRowKind::SubRows(subrows) => subrows
                 .iter()
                 .find(|(id, _)| *id == subrow_id)
