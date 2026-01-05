@@ -13,7 +13,7 @@ pub use unpacked::UnpackedResource;
 use crate::{
     ByteBuffer, Error, ReadableFile,
     common::{Language, Platform},
-    excel::{ExcelSheet, ExcelSheetPage},
+    excel::{Page, Sheet},
     exd::EXD,
     exh::EXH,
     exl::EXL,
@@ -129,14 +129,14 @@ pub fn generic_read_excel_sheet<R: Resource + ?Sized>(
     exh: &EXH,
     name: &str,
     language: Language,
-) -> Result<ExcelSheet, Error> {
+) -> Result<Sheet, Error> {
     let mut pages = Vec::with_capacity(exh.header.page_count as usize);
     for page in 0..exh.header.page_count {
         let exd = generic_read_excel_exd(resource, name, exh, language, page as usize)?;
-        pages.push(ExcelSheetPage::from_exd(page, exh, exd));
+        pages.push(Page::from_exd(exh, exd));
     }
 
-    Ok(ExcelSheet {
+    Ok(Sheet {
         exh: exh.clone(),
         pages,
     })
