@@ -7,7 +7,7 @@ use crate::common::Platform;
 use crate::common_file_operations::read_short_identifier;
 use crate::common_file_operations::write_short_identifier;
 use crate::layer::Layer;
-use crate::ByteSpan;
+use crate::{ByteSpan, ReadableFile};
 use binrw::binrw;
 use binrw::{BinRead, BinReaderExt};
 
@@ -58,7 +58,7 @@ pub struct Sgb {
 
 #[binrw]
 #[derive(Debug)]
-pub struct SgbLayerGroupHeader {
+struct SgbLayerGroupHeader {
     layer_group_id: u32,
     name_offset: u32,
     layer_offsets_start: i32,
@@ -72,9 +72,9 @@ pub struct SgbLayerGroup {
     pub layers: Vec<Layer>,
 }
 
-impl Sgb {
+impl ReadableFile for Sgb {
     /// Read an existing file.
-    pub fn from_existing(platform: Platform, buffer: ByteSpan) -> Option<Self> {
+    fn from_existing(platform: Platform, buffer: ByteSpan) -> Option<Self> {
         let endianness = platform.endianness();
         let mut cursor = Cursor::new(buffer);
         let file_header = SgbHeader::read_options(&mut cursor, endianness, ()).ok()?;
@@ -116,7 +116,7 @@ impl Sgb {
                         start + group_header.layer_offsets_start as u64 + x as u64,
                     ))
                     .unwrap();
-                let layer = Layer::from_existing(platform, &mut cursor).unwrap();
+                let layer = Layer::read(endianness, &mut cursor).unwrap();
                 layers.push(layer);
             }
             cursor.seek(SeekFrom::Start(end)).unwrap();
@@ -140,6 +140,7 @@ mod tests {
     use super::*;
     use crate::layer::LayerEntryData::{LayLight, SharedGroup, BG};
     use crate::layer::LightType::Point;
+    use crate::pass_random_invalid;
     use std::fs::read;
     use std::path::PathBuf;
 
@@ -216,5 +217,10 @@ mod tests {
 
         let bg_object = &layer.objects[1];
         matches!(&bg_object.data, BG(data) if data.asset_path.value == "bgcommon/world/aet/001/bgparts/w_aet_001_01a.mdl");
+    }
+
+    #[test]
+    fn test_invalid() {
+        pass_random_invalid::<Sgb>();
     }
 }

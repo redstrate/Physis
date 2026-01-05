@@ -8,7 +8,7 @@ use std::io::{Cursor, Seek, SeekFrom};
 use crate::common::Platform;
 use crate::common_file_operations::{read_bool_from, write_bool_as};
 use crate::{ByteBuffer, ByteSpan, ReadableFile, WritableFile};
-use binrw::binrw;
+use binrw::{binrw, Endian};
 use binrw::{BinRead, BinReaderExt, BinWrite};
 
 mod aetheryte;
@@ -621,8 +621,7 @@ pub struct Layer {
 }
 
 impl Layer {
-    pub fn from_existing(platform: Platform, cursor: &mut Cursor<ByteSpan>) -> Option<Layer> {
-        let endianness = platform.endianness();
+    pub(crate) fn read(endianness: Endian, cursor: &mut Cursor<ByteSpan>) -> Option<Layer> {
         let old_pos = cursor.position();
 
         let string_heap = StringHeap::from(old_pos);
@@ -767,7 +766,7 @@ impl ReadableFile for LayerGroup {
                 .seek(SeekFrom::Start(old_pos + layer_offsets[i as usize] as u64))
                 .unwrap();
 
-            let layer = Layer::from_existing(platform, &mut cursor)?;
+            let layer = Layer::read(endianness, &mut cursor)?;
             layers.push(layer);
         }
 
