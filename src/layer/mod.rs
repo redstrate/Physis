@@ -78,7 +78,7 @@ pub use vfx::{LineVFXInstanceObject, VFXInstanceObject};
 #[repr(i32)]
 #[derive(Debug, PartialEq)]
 pub enum LayerEntryType {
-    AssetNone = 0x0,
+    None = 0x0,
     BG = 0x1,
     Attribute = 0x2,
     LayLight = 0x3,
@@ -171,6 +171,8 @@ pub enum LayerEntryType {
 #[br(import(magic: &LayerEntryType, string_heap: &StringHeap))]
 #[bw(import(string_heap: &mut StringHeap))]
 pub enum LayerEntryData {
+    #[br(pre_assert(*magic == LayerEntryType::None))]
+    None(),
     #[br(pre_assert(*magic == LayerEntryType::BG))]
     BG(#[brw(args(string_heap))] BGInstanceObject),
     #[br(pre_assert(*magic == LayerEntryType::LayLight))]
@@ -239,6 +241,8 @@ pub enum LayerEntryData {
     Unk4(),
     #[br(pre_assert(*magic == LayerEntryType::DoorRange))]
     DoorRange(),
+    /// Unhandled cases.
+    Unknown(),
 }
 
 #[binrw]
@@ -445,6 +449,7 @@ impl Layer {
                 let actual_size = after_immediate_read - start;
 
                 // TODO: remove this once all the objects are fixed!
+                // TODO: check if we hit unknown/unhandled data types too
                 /*if cfg!(debug_assertions) && expected_size != actual_size {
                     println!(
                         "{:#?} doesn't match the expected size! it's supposed to be {} bytes, but we read {} instead",
