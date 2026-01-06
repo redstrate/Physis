@@ -2,11 +2,34 @@
 
 [![Crates.io](https://img.shields.io/crates/v/physis)](https://crates.io/crates/physis) [![Docs Badge](https://img.shields.io/badge/docs-latest-blue)](https://docs.xiv.zone/docs/physis)
 
-Physis is a library for reading and writing FFXIV data. It knows how to read many of the game's formats, and can even write some of them too.
+Physis is a [Rust](https://www.rust-lang.org/learn/get-started) library for reading and writing FFXIV data.
+
+```rust,no_run
+use physis::{
+    Error,
+    resource::{SqPackResource, Resource},
+    model::MDL,
+};
+
+fn main() -> Result<(), Error> {
+    // Construct a resource to read from SqPack:
+    let mut resource = SqPackResource::from_existing("game");
+
+    // Read the raw data of this file, our resource takes care of decompressing it:
+    let bytes = resource.read(".mdl").ok_or(Error::Unknown)?;
+
+    // Or read and parse it:
+    let mdl = resource.parsed::<MDL>("test.mdl")?;
+    
+    Ok(())
+}
+```
+
+Physis can be used to [apply patches for launchers](https://github.com/redstrate/Astra), [build modding tools](https://github.com/redstrate/Novus) - and these are C++ projects! We can also [power server emulators](https://redstrate.com/Kawari) which deal with a lot of Excel and zone data. Our dependency tree is small, so [we are also easy to use on the web](https://github.com/redstrate/Auracite).
 
 ## Supported Game Versions
 
-All game versions are supported, including the benchmarks. Support for other platforms like the PS3 is somewhat available.
+We aim to support all game versions (A Realm Reborn onward), including the benchmarks. We also try to support all platforms - including the Playstation 3.
 
 ## Supported Target Platforms
 
@@ -14,11 +37,7 @@ Physis compiles and runs on all major platforms including Windows, macOS, Linux 
 
 ## Usage
 
-Physis exposes its API in a few different languages:
-
-### Rust
-
-If you want to use Physis in your Rust project, you can simply add it as a dependency in `Cargo.toml`:
+To use Physis in your project, add it as a dependency in your `Cargo.toml`:
 
 ```toml
 [dependencies]
@@ -28,33 +47,27 @@ physis = "0.5"
 Documentation is available online at [docs.xiv.zone](https://docs.xiv.zone/docs/physis). It's automatically updated as new
 commits are pushed to the main branch.
 
-Physis already provides a high-level, unstructured Excel API. For something even easier to use, see [Icarus](https://github.com/redstrate/Icarus) which is generated from [EXDSchema](https://github.com/xivdev/EXDSchema).
-
-### C and C++
+### C, C++ and others
 
 C and C++ projects (or any compatible language through FFI) can use [libphysis](https://github.com/redstrate/libphysis).
 
-## Building
-
-You need to set up [Rust](https://www.rust-lang.org/learn/get-started) and then run `cargo build`. Although Physis is a library, we have a few examples you can run.
-
 ## Contributing & Support
 
-Feel free to submit patches to help fix bugs or add functionality. Filing issues is appreciated, but I do this in my free time so please don't expect professional support.
+Feel free to submit PRs for fixing bugs or adding functionality. Filing issues is appreciated, but I do this in my free time so please don't expect professional support.
 
 See [CONTRIBUTING](CONTRIBUTING.md) for more information about contributing back to the project!
 
 ## Credits & Thank You
 
-* [ironworks](https://github.com/ackwell/ironworks) for inspiration and reference
-* [goatcorp](https://goatcorp.github.io) (XIVQuickLauncher, docs.xiv.dev, and even more)
-* [Ioncannon](http://ffxivexplorer.fragmenterworks.com/research.php) (FFXIV Data Explorer) for initially documenting the file formats
+* [ironworks](https://github.com/ackwell/ironworks) for inspiration and reference.
+* [goatcorp](https://goatcorp.github.io) for XIVQuickLauncher, docs.xiv.dev, and more.
+* [Ioncannon](http://ffxivexplorer.fragmenterworks.com/research.php) for initially documenting the file formats.
 * [binrw team](https://binrw.rs) for the awesome Rust library that powers our parsing!
-* [sha1-smol](https://github.com/mitsuhiko/sha1-smol) for a dependency-free SHA1 implementation
-* [FFXIVTools](https://github.com/dlunch/FFXIVTools) for it's Havok parsing implementation
+* [sha1-smol](https://github.com/mitsuhiko/sha1-smol) for a dependency-free SHA1 implementation.
+* [FFXIVTools](https://github.com/dlunch/FFXIVTools) for it's Havok parsing implementation.
 * [texture2ddecoder](https://github.com/UniversalGameExtraction/texture2ddecoder/) for it's BCn texture decoding functions.
 
-And everyone else who writes FFXIV tools!
+And everyone else who writes open-source software for FFXIV!
 
 ## License
 

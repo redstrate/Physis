@@ -61,9 +61,9 @@ impl SqPackRelease {
     }
 }
 
-/// Used to read files from the retail game, in their SqPack-compressed format.
+/// Resource to read files from the retail game, in their [SqPack](crate::sqpack::SqPackData)-compressed form.
 ///
-/// In most cases, you probably want to use this inside of a `ResourceResolver`.
+/// See the [module-level documentation](crate::resource) for more information about Resources.
 #[derive(Debug, Clone)]
 pub struct SqPackResource {
     /// The game directory to operate on.
@@ -82,10 +82,10 @@ pub struct SqPackResource {
 }
 
 impl SqPackResource {
-    /// Creates a new `SqPackResource` that points to data for `platform` and `release` in `directory`.
+    /// Creates a new `SqPackResource` that points to data in `directory`.
     ///
     /// This function automatically determines the platform and release kind based on filenames.
-    /// If this is a new install and we can't do that, it will default to Win32 Retail.
+    /// If this somehow fails, this will default to [Platform::Win32] and [SqPackRelease::Retail].
     pub fn from_existing(directory: &str) -> Self {
         let (platform, release) = Self::determine_platform_release(directory);
 
@@ -260,9 +260,9 @@ impl SqPackResource {
         Some(index_filenames)
     }
 
-    /// Detects whether or not the game files need a repair, right now it only checks for invalid
-    /// version files.
-    /// If the repair is needed, a list of invalid repositories is given.
+    /// Returns a list of repositories and which kinds of repairs are needed.
+    ///
+    /// To actually perform said repairs, use [Self::perform_repair].
     pub fn needs_repair(&self) -> Option<Vec<(&Repository, RepairAction)>> {
         let mut repositories: Vec<(&Repository, RepairAction)> = Vec::new();
         for repository in &self.repositories {
@@ -299,9 +299,8 @@ impl SqPackResource {
         }
     }
 
-    /// Performs the repair, assuming any damaging effects it may have
-    /// Returns true only if all actions were taken are successful.
-    /// NOTE: This is a destructive operation, especially for InvalidVersion errors.
+    /// Performs the repair, and returns [true] only if _all actions_ were are successfully repaired.
+    /// <div class="warning">This is a destructive operation, so be careful when calling this.</div>
     pub fn perform_repair<'a>(
         &self,
         repositories: &Vec<(&'a Repository, RepairAction)>,

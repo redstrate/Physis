@@ -20,10 +20,11 @@ use crate::common::Platform;
 
 /// What kind of rows this Excel sheet has.
 #[binrw]
-#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]
 #[brw(repr = u8)]
 pub enum SheetRowKind {
     /// Single rows.
+    #[default]
     SingleRow = 1,
     /// Rows with subrows.
     SubRows = 2,
@@ -33,7 +34,7 @@ pub enum SheetRowKind {
 #[binrw]
 #[brw(magic = b"EXHF")]
 #[brw(big)]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct EXHHeader {
     pub(crate) version: u16,
 
@@ -174,6 +175,16 @@ impl WritableFile for EXH {
 }
 
 impl EXH {
+    /// Creates a new, empty EXH.
+    pub fn new() -> EXH {
+        EXH {
+            header: EXHHeader::default(),
+            column_definitions: Vec::new(),
+            pages: Vec::new(),
+            languages: Vec::new(),
+        }
+    }
+
     /// Returns the page that contains this `row_id`.
     pub(crate) fn get_page(&self, row_id: u32) -> usize {
         for (i, page) in self.pages.iter().enumerate() {

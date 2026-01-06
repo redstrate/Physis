@@ -1,6 +1,72 @@
 // SPDX-FileCopyrightText: 2026 Joshua Goins <josh@redstrate.com>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+//! Higher-level Excel API.
+//!
+//! This module contains types used to examine and edit the game's Excel data. This is mainly accomplished through [Sheet], which provides access over pages of row or subrow data.
+//!
+//! For the underlying filetypes, see the [EXD](crate::exd), [EXH](crate::exh) and [EXL](crate::exl) modules.
+//!
+//! # Usage
+//!
+//! Sheets cannot be created yourself, but instead through [ResourceResolver::read_excel_sheet](crate::resource::ResourceResolver::read_excel_sheet)/[SqPackResource::read_excel_sheet](crate::resource::ResourceResolver::read_excel_sheet). But first, you need to use [ResourceResolver::read_excel_sheet_header](crate::resource::ResourceResolver::read_excel_sheet_header)/[SqPackResource::read_excel_sheet_header](crate::resource::SqPackResource::read_excel_sheet_header) to read [the sheet's metadata](crate::exh::EXH). This informs you what languages are supported, whether the sheet has subrows, etc.
+//!
+//! ```no_run
+//! # use physis::resource::{UnpackedResource, ResourceResolver};
+//! # use physis::common::Language;
+//! # use physis::Error;
+//! # let resource = UnpackedResource::from_existing(".");
+//! # let mut resolver = ResourceResolver::new();
+//! # resolver.add_source(resource);
+//! let exh = resolver.read_excel_sheet_header("Item")?;
+//! let sheet = resolver.read_excel_sheet(&exh, "Item", Language::English)?;
+//! let row = sheet.row(1); // 1 is the ID for Gil
+//! # Ok::<(), Error>(())
+//! ```
+//!
+//! With a Sheet in hand, the most important functions are [Sheet::row] and [Sheet::subrow]. These functions return the row associated with that ID.
+//!
+//! Each column is a [Field] which is a variant of a few data types. The columns are given to you as-is, determining their actual meaning is outside the scope of this library. One solution is [Icarus](https://github.com/redstrate/Icarus), which derives structured sheets from [EXDSchema](https://github.com/xivdev/EXDSchema) and is based on types from this module.
+//!
+//! # Iterators
+//!
+//! We have a variety of ways to iterate through sheets. Here's a complex use-case, showcased by iterating through `SwitchTalkVariation` with its various subrows:
+//!
+//! ```no_run
+//! # use physis::excel::Sheet;
+//! # use physis::exh::EXH;
+//! # let switch_talk_variation_sheet = Sheet { exh: EXH::new(), pages: Vec::new() };
+//! for (_, subrows) in &switch_talk_variation_sheet {
+//!    // We need to read these variations from highest to lowest (16..15..14..).
+//!    for (subrow_id, subrow) in subrows.iter().rev() {
+//!        println!("{subrow_id}: {subrow:#?}");
+//!    }
+//! }
+//! ```
+//!
+//! But most sheets don't have subrows, so having to deal with nesting is annoying. Use [PageIterator::flatten_subrows] to throw away this information:
+//!
+//! ```no_run
+//! # use physis::excel::Sheet;
+//! # use physis::exh::EXH;
+//! # let item_sheet = Sheet { exh: EXH::new(), pages: Vec::new() };
+//! for (row_id, row) in item_sheet.pages[0].into_iter().flatten_subrows() {
+//!     println!("{row_id}: {row:#?}");
+//! }
+//! ```
+//!
+//! So far our iterators will automatically go to the next [Page] of a [Sheet], but you can also iterate pages by themselves:
+//!
+//! ```no_run
+//! # use physis::excel::Sheet;
+//! # use physis::exh::EXH;
+//! # let item_sheet = Sheet { exh: EXH::new(), pages: Vec::new() };
+//! // We only care about the first page:
+//! for (row_id, row) in &item_sheet.pages[0] {
+//!     println!("{row_id}: {row:#?}");
+//! }
+//! ```
+
 use std::io::{Cursor, Seek, SeekFrom};
 
 use binrw::{BinRead, BinWrite};

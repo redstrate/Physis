@@ -77,7 +77,7 @@ pub(crate) struct DataSection {
 
 /// Excel data file, usually with the `.exd` file extension.
 ///
-/// Represents a page in an Excel Sheet. You most likely want to use the types in the `excel` module.
+/// Represents a page in an Excel Sheet. You most likely want to use the types in the [excel](crate::excel) module.
 #[binrw]
 #[brw(big)]
 #[allow(dead_code)]

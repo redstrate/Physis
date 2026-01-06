@@ -1,6 +1,51 @@
 // SPDX-FileCopyrightText: 2025 Joshua Goins <josh@redstrate.com>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+//! File resource handling.
+//!
+//! To begin with, there is the [Resource] trait which represents a collection of readable game files. The trait is intentionally small so it can represent a wide variety of sources. We provide two kinds of Resources already: [SqPackResource] and [UnpackedResource].
+//!
+//! # Layering multiple Resources
+//!
+//! [ResourceResolver] can layer multiple Resources on top of each other. This is useful if you want to normally read from SqPack, but might want to add a caching solution or read loose files from a filesystem too.
+//!
+//! It's recommended to only use ResourceResolver if you actually plan to use more than one Resource at a time. A big limitation with ResourceResolver is that Resources become opaque/inaccessible once added. This means you cannot access internal details like [SqPackResource::repositories], but only what is available from the [Resource] trait.
+//!
+//! # Helpers
+//!
+//! [ResourceResolver] and [SqPackResource] have various helpers to make reading game files easier:
+//!
+//! * To list all Excel sheet names, use [ResourceResolver::get_all_sheet_names]/[SqPackResource::get_all_sheet_names].
+//! * To read and parse file at once, use [ResourceResolver::parsed]/[SqPackResource::parsed].
+//! * To read an Excel sheet header (`.exh`), use [ResourceResolver::read_excel_sheet_header]/[SqPackResource::read_excel_sheet_header].
+//! * To read an Excel sheet, use [ResourceResolver::read_excel_sheet]/[SqPackResource::read_excel_sheet].
+//!
+//! # Deriving from Resource
+//!
+//! If you have a use-case that isn't handled by one of our built-in Resources, you can create your own by deriving the trait:
+//!
+//! ```no_run
+//! use physis::resource::{Resource, SqPackResource};
+//!
+//! #[derive(Clone)]
+//! struct SqPackResourceSpy {
+//!     sqpack_resource: SqPackResource,
+//!     output_directory: String,
+//! }
+//!
+//! impl Resource for SqPackResourceSpy {
+//!     fn read(&mut self, path: &str) -> Option<physis::ByteBuffer> {
+//!         todo!()
+//!     }
+//!
+//!     fn exists(&mut self, path: &str) -> bool {
+//!         todo!()
+//!     }
+//! }
+//! ```
+//!
+//! Due of limitations in Rust traits, helpers like the ones shown above are implemented automatically. But you can re-use the generic ones like [generic_parsed] and wrap them in your type.
+
 mod resolver;
 pub use resolver::ResourceResolver;
 
@@ -25,9 +70,9 @@ impl Clone for Box<dyn Resource> {
     }
 }
 
-/// Workaround for allowing Resources to be clonable (which normally isn't dyn compatible.)
+/// Implementation detail for [cloning](Clone) a [Resource] (which normally isn't dyn compatible.)
 ///
-/// When impementing your own Resources, you do not need to worry about this as it's an implementation detail. You just need to derive from the Clone trait.
+/// When implementing your own Resource, you do not have to care about this. Simply derive from the [Clone] trait.
 pub trait ClonableResource {
     fn clone_box(&self) -> Box<dyn Resource>;
 }
@@ -47,7 +92,7 @@ impl Default for ResourceResolver {
     }
 }
 
-/// Represents a source of files for reading.
+/// A collection of readable game files.
 ///
 /// This abstracts away some of the nitty-gritty of where files come from. This could represent a compressed archive like SqPack, unpacked files on disk, or even a network.
 pub trait Resource: Send + Sync + ClonableResource + 'static {
@@ -86,7 +131,7 @@ pub trait Resource: Send + Sync + ClonableResource + 'static {
     /// ```
     fn exists(&mut self, path: &str) -> bool;
 
-    /// Returns the `Platform` associated with this resource.
+    /// Returns the platform associated with this resource.
     fn platform(&self) -> Platform {
         Platform::Win32
     }

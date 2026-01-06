@@ -14,7 +14,9 @@ use crate::{
 
 use super::Resource;
 
-/// Allows chaining multiple Resources together. Also contains helper functions useful for extracting higher-level data and files.
+/// Allows layering multiple Resources on top of each other.
+///
+/// See the [module-level documentation](crate::resource) for more information.
 ///
 /// # Example
 ///

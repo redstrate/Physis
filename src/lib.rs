@@ -148,7 +148,6 @@ pub mod lvb;
 /// Types for sky visibility binary (`.svb`) files.
 pub mod svb;
 
-/// File resource handling.
 pub mod resource;
 
 /// Types for player collision binary (`.pcb`) files.
@@ -160,7 +159,6 @@ pub mod pcblist;
 /// Types for cutscene binary (`.cutb`) files.
 pub mod cutb;
 
-/// Higher-level Excel API.
 pub mod excel;
 
 mod bcn;

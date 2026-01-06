@@ -206,6 +206,9 @@ pub struct BlockHeader {
     pub compression: CompressionMode,
 }
 
+/// SqPack data file, usually with the `.dat` file extension.
+///
+/// This is used to store most of the game's data.
 pub struct SqPackData {
     platform: Platform,
     file: std::fs::File,

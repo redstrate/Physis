@@ -8,8 +8,8 @@ use std::io::{Cursor, Seek, SeekFrom};
 use crate::common::Platform;
 use crate::common_file_operations::{read_bool_from, write_bool_as};
 use crate::{ByteBuffer, ByteSpan, ReadableFile, WritableFile};
-use binrw::{binrw, Endian};
 use binrw::{BinRead, BinReaderExt, BinWrite};
+use binrw::{Endian, binrw};
 
 mod aetheryte;
 pub use aetheryte::AetheryteInstanceObject;
@@ -628,8 +628,7 @@ impl Layer {
         let data_heap = StringHeap::from(old_pos);
 
         let header =
-            LayerHeader::read_options(cursor, endianness, (&data_heap, &string_heap))
-                .unwrap();
+            LayerHeader::read_options(cursor, endianness, (&data_heap, &string_heap)).unwrap();
 
         let mut objects = Vec::new();
         // read instance objects
@@ -652,10 +651,8 @@ impl Layer {
                 let start = cursor.stream_position().unwrap();
                 let string_heap = StringHeap::from(start);
 
-                objects.push(
-                    InstanceObject::read_options(cursor, endianness, (&string_heap,))
-                        .ok()?,
-                );
+                objects
+                    .push(InstanceObject::read_options(cursor, endianness, (&string_heap,)).ok()?);
 
                 let after_immediate_read = cursor.stream_position().unwrap();
 
@@ -706,10 +703,7 @@ impl Layer {
             }
         }
 
-        Some(Layer {
-            header,
-            objects
-        })
+        Some(Layer { header, objects })
     }
 }
 #[derive(Debug)]

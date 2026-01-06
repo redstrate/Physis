@@ -7,15 +7,16 @@ use crate::ByteBuffer;
 
 use super::Resource;
 
-/// Used to read unpacked files from a directory.
+/// Resource to read unpacked files from a directory.
 ///
-/// In most cases, you probably want to use this inside of a `ResourceResolver`.
+/// See the [module-level documentation](crate::resource) for more information about Resources.
 #[derive(Clone)]
 pub struct UnpackedResource {
     base_directory: String,
 }
 
 impl UnpackedResource {
+    /// Read game files from this `base_directory`.
     pub fn from_existing(base_directory: &str) -> Self {
         Self {
             base_directory: base_directory.to_string(),
