@@ -171,77 +171,112 @@ pub enum LayerEntryType {
 #[br(import(magic: &LayerEntryType, string_heap: &StringHeap))]
 #[bw(import(string_heap: &mut StringHeap))]
 pub enum LayerEntryData {
+    /// Representing nothing.
     #[br(pre_assert(*magic == LayerEntryType::None))]
-    None(),
+    None,
+    /// Background model.
     #[br(pre_assert(*magic == LayerEntryType::BG))]
     BG(#[brw(args(string_heap))] BGInstanceObject),
+    /// Light source.
     #[br(pre_assert(*magic == LayerEntryType::LayLight))]
     LayLight(LightInstanceObject),
+    /// Visual effect.
     #[br(pre_assert(*magic == LayerEntryType::Vfx))]
     Vfx(VFXInstanceObject),
+    /// Unknown purpose.
     #[br(pre_assert(*magic == LayerEntryType::PositionMarker))]
     PositionMarker(PositionMarkerInstanceObject),
+    /// Instance of a prefab.
     #[br(pre_assert(*magic == LayerEntryType::SharedGroup))]
     SharedGroup(#[brw(args(string_heap))] SharedGroupInstance),
+    /// Unknown purpose.
     #[br(pre_assert(*magic == LayerEntryType::Sound))]
     Sound(SoundInstanceObject),
+    /// Event NPC.
     #[br(pre_assert(*magic == LayerEntryType::EventNPC))]
     EventNPC(ENPCInstanceObject),
+    /// Battle NPC.
     #[br(pre_assert(*magic == LayerEntryType::BattleNPC))]
     BattleNPC(BNPCInstanceObject),
+    /// Aetheryte.
     #[br(pre_assert(*magic == LayerEntryType::Aetheryte))]
     Aetheryte(AetheryteInstanceObject),
+    /// Unknown purpose.
     #[br(pre_assert(*magic == LayerEntryType::EnvSet))]
     EnvSet(EnvSetInstanceObject),
+    /// Unknown purpose.
     #[br(pre_assert(*magic == LayerEntryType::Gathering))]
     Gathering(GatheringInstanceObject),
+    /// Unknown purpose.
     #[br(pre_assert(*magic == LayerEntryType::Treasure))]
     Treasure(TreasureInstanceObject),
+    /// Used for a variety of things, including teleport locations.
     #[br(pre_assert(*magic == LayerEntryType::PopRange))]
     PopRange(PopRangeInstanceObject),
+    /// Walkable transitions between zones.
     #[br(pre_assert(*magic == LayerEntryType::ExitRange))]
     ExitRange(ExitRangeInstanceObject),
+    /// Locations on the map, such as sanctuaries.
     #[br(pre_assert(*magic == LayerEntryType::MapRange))]
     MapRange(MapRangeInstanceObject),
+    /// Event object.
     #[br(pre_assert(*magic == LayerEntryType::EventObject))]
     EventObject(EventInstanceObject),
+    /// Unknown purpose.
     #[br(pre_assert(*magic == LayerEntryType::EnvLocation))]
     EnvLocation(#[brw(args(string_heap))] EnvLocationObject),
+    /// Unknown purpose.
     #[br(pre_assert(*magic == LayerEntryType::EventRange))]
     EventRange(EventRangeInstanceObject),
+    /// Unknown purpose.
     #[br(pre_assert(*magic == LayerEntryType::QuestMarker))]
     QuestMarker(QuestMarkerInstanceObject),
+    /// Unknown purpose.
     #[br(pre_assert(*magic == LayerEntryType::CollisionBox))]
     CollisionBox(#[brw(args(string_heap))] CollisionBoxInstanceObject),
+    /// Unknown purpose.
     #[br(pre_assert(*magic == LayerEntryType::LineVFX))]
     LineVFX(LineVFXInstanceObject),
+    /// Unknown purpose.
     #[br(pre_assert(*magic == LayerEntryType::ClientPath))]
     ClientPath(ClientPathInstanceObject),
+    /// Unknown purpose.
     #[br(pre_assert(*magic == LayerEntryType::ServerPath))]
     ServerPath(ServerPathInstanceObject),
+    /// Unknown purpose.
     #[br(pre_assert(*magic == LayerEntryType::GimmickRange))]
     GimmickRange(GimmickRangeInstanceObject),
+    /// Unknown purpose.
     #[br(pre_assert(*magic == LayerEntryType::TargetMarker))]
     TargetMarker(TargetMarkerInstanceObject),
+    /// Unknown purpose.
     #[br(pre_assert(*magic == LayerEntryType::ChairMarker))]
     ChairMarker(ChairMarkerInstanceObject),
+    /// Unknown purpose.
     #[br(pre_assert(*magic == LayerEntryType::ClickableRange))]
     ClickableRange(ClickableRangeInstanceObject),
+    /// Unknown purpose.
     #[br(pre_assert(*magic == LayerEntryType::PrefetchRange))]
     PrefetchRange(PrefetchRangeInstanceObject),
+    /// Unknown purpose.
     #[br(pre_assert(*magic == LayerEntryType::FateRange))]
     FateRange(FateRangeInstanceObject),
+    /// Unknown purpose.
     #[br(pre_assert(*magic == LayerEntryType::Unk1))]
     Unk1(),
+    /// Unknown purpose.
     #[br(pre_assert(*magic == LayerEntryType::Unk2))]
     Unk2(),
+    /// Unknown purpose.
     #[br(pre_assert(*magic == LayerEntryType::Unk3))]
     Unk3(),
+    /// Unknown purpose.
     #[br(pre_assert(*magic == LayerEntryType::Unk4))]
     Unk4(),
+    /// Unknown purpose.
     #[br(pre_assert(*magic == LayerEntryType::DoorRange))]
     DoorRange(),
-    /// Unhandled cases.
+    /// Unhandled or unknown type.
     Unknown(),
 }
 
@@ -275,56 +310,70 @@ pub enum LayerSetReferencedType {
     Undetermined = 0x3,
 }
 
+/// Metadata information for a [Layer].
 #[binrw]
 #[derive(Debug, PartialEq)]
 #[br(import(data_heap: &StringHeap, string_heap: &StringHeap), stream = r)]
 #[bw(import(data_heap: &mut StringHeap, string_heap: &mut StringHeap))]
 #[allow(dead_code)] // most of the fields are unused at the moment
 pub struct LayerHeader {
+    /// ID of this layer.
     pub layer_id: u32,
 
+    /// The name of this layer.
     #[brw(args(string_heap))]
     pub name: HeapString,
 
-    pub instance_object_offset: i32,
-    pub instance_object_count: i32,
+    pub(crate) instance_object_offset: i32,
+    pub(crate) instance_object_count: i32,
 
+    /// Whether this layer is only visible in tool mode.
     #[br(map = read_bool_from::<u8>)]
     #[bw(map = write_bool_as::<u8>)]
     pub tool_mode_visible: bool,
+    /// Whether this layer is supposed to be read-only in tool mode.
     #[br(map = read_bool_from::<u8>)]
     #[bw(map = write_bool_as::<u8>)]
     pub tool_mode_read_only: bool,
 
+    /// Whether this is a bush layer.
     #[br(map = read_bool_from::<u8>)]
     #[bw(map = write_bool_as::<u8>)]
     pub is_bush_layer: bool,
+
+    /// If this layer should be visible on the Playstation 3.
     #[br(map = read_bool_from::<u8>)]
     #[bw(map = write_bool_as::<u8>)]
     pub ps3_visible: bool,
+
     #[br(temp)]
     #[bw(calc = data_heap.get_free_offset_args(&layer_set_referenced_list))]
-    pub layer_set_referenced_list_offset: i32,
+    pub(crate) layer_set_referenced_list_offset: i32,
+
+    /// The other referenced layer sets.
     #[br(calc = data_heap.read_args(r, layer_set_referenced_list_offset))]
     #[bw(ignore)]
     pub layer_set_referenced_list: LayerSetReferencedList,
+    /// The festival ID associated with this layer.
     pub festival_id: u16,
+    /// The festival phase ID associated with this layer.
     pub festival_phase_id: u16,
-    pub is_temporary: u8,
-    pub is_housing: u8,
-    pub version_mask: u16,
+    pub(crate) is_temporary: u8,
+    pub(crate) is_housing: u8,
+    pub(crate) version_mask: u16,
 
     #[brw(pad_before = 4)]
-    pub ob_set_referenced_list: i32,
-    pub ob_set_referenced_list_count: i32,
-    pub ob_set_enable_referenced_list: i32,
-    pub ob_set_enable_referenced_list_count: i32,
+    pub(crate) ob_set_referenced_list: i32,
+    pub(crate) ob_set_referenced_list_count: i32,
+    pub(crate) ob_set_enable_referenced_list: i32,
+    pub(crate) ob_set_enable_referenced_list_count: i32,
 }
 
 #[binrw]
 #[derive(Debug, PartialEq)]
 #[allow(dead_code)] // most of the fields are unused at the moment
 pub struct LayerSetReferenced {
+    /// The ID of the referenced layer set.
     pub layer_set_id: u32,
 }
 
@@ -333,7 +382,8 @@ pub struct LayerSetReferenced {
 #[br(import(data_heap: &StringHeap), stream = r)]
 #[bw(import(data_heap: &mut StringHeap))]
 pub struct LayerSetReferencedList {
-    pub(crate) referenced_type: LayerSetReferencedType,
+    /// The tpye of reference.
+    pub referenced_type: LayerSetReferencedType,
     #[br(temp)]
     #[bw(calc = data_heap.get_free_offset(&layer_sets))]
     layer_set_offset: i32,
@@ -369,16 +419,21 @@ struct OBSetEnableReferenced {
     padding: [u8; 2],
 }
 
+/// Transformation within the world space.
 #[binrw]
 #[derive(Debug, Clone, Copy, PartialEq)]
 #[repr(C)]
 #[allow(dead_code)] // most of the fields are unused at the moment
 pub struct Transformation {
+    /// X, Y, Z of the location in space.
     pub translation: [f32; 3],
+    /// Yaw, pitch and roll of the rotation in space.
     pub rotation: [f32; 3],
+    /// Width, height and depth of the scale in space.
     pub scale: [f32; 3],
 }
 
+/// Represents a single object in a [Layer], which could be anything from a light to an aetheryte.
 #[binrw]
 #[derive(Debug, PartialEq)]
 #[br(import(string_heap: &StringHeap))]
@@ -386,22 +441,30 @@ pub struct Transformation {
 #[allow(dead_code)] // most of the fields are unused at the moment
 pub struct InstanceObject {
     asset_type: LayerEntryType,
+    /// The unique ID of this object.
     pub instance_id: u32,
+    /// The name of this object.
     #[brw(args(string_heap))]
     pub name: HeapString,
+    /// The object's transformation in space.
     pub transform: Transformation,
+    /// The data associated with this object.
     #[br(args(&asset_type, string_heap))]
     #[bw(args(string_heap))]
     pub data: LayerEntryData,
 }
 
+/// Represents a layer of [InstanceObject].
 #[derive(Debug, PartialEq)]
 pub struct Layer {
+    /// The header for this layer.
     pub header: LayerHeader,
+    /// The list of objects contained within this layer.
     pub objects: Vec<InstanceObject>,
 }
 
 impl Layer {
+    /// Read from `cursor` with `endianness`.
     pub(crate) fn read(endianness: Endian, cursor: &mut Cursor<ByteSpan>) -> Option<Layer> {
         let old_pos = cursor.position();
 
