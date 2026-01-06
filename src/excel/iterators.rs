@@ -6,17 +6,17 @@ use crate::excel::{Page, Row};
 /// Iterator over an [Page].
 ///
 /// This includes subrows, if you know you don't have those then use [Self::flatten_subrows].
-pub struct ExcelSheetPageIterator<'a> {
+pub struct PageIterator<'a> {
     page: &'a Page,
     row_index: u32,
 }
 
-impl<'a> ExcelSheetPageIterator<'a> {
+impl<'a> PageIterator<'a> {
     /// Flattens this iterator, giving you one that only contains rows.
     ///
     /// If this sheet actually has subrows, then it only takes the first one in each row.
-    pub fn flatten_subrows(&self) -> ExcelRowIterator<'a> {
-        ExcelRowIterator {
+    pub fn flatten_subrows(&self) -> RowIterator<'a> {
+        RowIterator {
             page: self.page,
             row_index: self.row_index,
         }
@@ -25,17 +25,17 @@ impl<'a> ExcelSheetPageIterator<'a> {
 
 impl<'a> IntoIterator for &'a Page {
     type Item = (u32, &'a [(u16, Row)]);
-    type IntoIter = ExcelSheetPageIterator<'a>;
+    type IntoIter = PageIterator<'a>;
 
-    fn into_iter(self) -> ExcelSheetPageIterator<'a> {
-        ExcelSheetPageIterator {
+    fn into_iter(self) -> PageIterator<'a> {
+        PageIterator {
             page: self,
             row_index: 0,
         }
     }
 }
 
-impl<'a> Iterator for ExcelSheetPageIterator<'a> {
+impl<'a> Iterator for PageIterator<'a> {
     type Item = (u32, &'a [(u16, Row)]);
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -54,13 +54,13 @@ impl<'a> Iterator for ExcelSheetPageIterator<'a> {
 
 /// Iterator over an [Page], but only the rows.
 ///
-/// To create this iterator, use [ExcelSheetPageIterator::flatten_subrows].
-pub struct ExcelRowIterator<'a> {
+/// To create this iterator, use [PageIterator::flatten_subrows].
+pub struct RowIterator<'a> {
     page: &'a Page,
     row_index: u32,
 }
 
-impl<'a> Iterator for ExcelRowIterator<'a> {
+impl<'a> Iterator for RowIterator<'a> {
     type Item = (u32, &'a Row);
 
     fn next(&mut self) -> Option<Self::Item> {
