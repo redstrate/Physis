@@ -492,6 +492,13 @@ pub struct Part {
     pub material_index: u16,
     pub submeshes: Vec<SubMesh>,
     pub shapes: Vec<Shape>,
+    pub part_type: PartType,
+}
+
+#[derive(Debug, Clone)]
+pub enum PartType {
+    Mesh,
+    WaterMesh,
 }
 
 #[derive(Debug, Clone)]
@@ -767,9 +774,13 @@ impl ReadableFile for MDL {
         for i in 0..model.header.lod_count {
             let mut parts = vec![];
 
-            for j in model.lods[i as usize].mesh_index
-                ..model.lods[i as usize].mesh_index + model.lods[i as usize].mesh_count
-            {
+            for j in 0..model.meshes.len() as u16 {
+                let part_type = get_part_type(&model.lods[i as usize], j);
+                if part_type.is_none() {
+                    // this mesh isn't in this lod
+                    continue;
+                }
+                let part_type = part_type.unwrap();
                 let declaration = &model.header.vertex_declarations[j as usize];
                 let vertex_count = model.meshes[j as usize].vertex_count;
                 let material_index = model.meshes[j as usize].material_index;
@@ -1087,6 +1098,7 @@ impl ReadableFile for MDL {
 
                 parts.push(Part {
                     mesh_index: j,
+                    part_type,
                     vertices,
                     indices,
                     material_index,
@@ -1108,6 +1120,18 @@ impl ReadableFile for MDL {
             material_names,
         })
     }
+}
+
+fn get_part_type(lod: &MeshLod, index: u16) -> Option<PartType> {
+    if (lod.mesh_index..lod.mesh_index + lod.mesh_count).contains(&index) {
+        return Some(PartType::Mesh);
+    }
+
+    if (lod.water_mesh_index..lod.water_mesh_index + lod.water_mesh_count).contains(&index) {
+        return Some(PartType::WaterMesh);
+    }
+
+    None
 }
 
 impl WritableFile for MDL {
