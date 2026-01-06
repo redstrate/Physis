@@ -7,6 +7,8 @@ use crate::common::Platform;
 use crate::common_file_operations::read_short_identifier;
 use crate::common_file_operations::write_short_identifier;
 use crate::layer::Layer;
+use crate::layer::ScnSection;
+use crate::string_heap::StringHeap;
 use crate::{ByteSpan, ReadableFile};
 use binrw::binrw;
 use binrw::{BinRead, BinReaderExt};
@@ -22,31 +24,6 @@ struct SgbHeader {
     total_chunk_count: i32,
 }
 
-#[binrw]
-#[derive(Debug)]
-struct SceneChunkHeader {
-    #[bw(write_with = write_short_identifier)]
-    #[br(parse_with = read_short_identifier)]
-    pub identifier: String,
-
-    chunk_size: i32,
-    layer_group_offset: i32,
-    layer_group_count: i32,
-    unknown10: i32,
-    unknown14: i32,
-    unknown18: i32,
-    unknown1c: i32,
-    unknown20: i32,
-    unknown24: i32,
-    unknown28: i32,
-    unknown2c: i32,
-    unknown30: i32,
-    housing_offset: i32,
-    unknown38: i32,
-    unknown3c: i32,
-    unknown40: i32,
-    unknown44: i32,
-}
 /// Shared group binary file, usually with the `.sgb` file extension.
 ///
 /// This is basically a "prefab".
@@ -82,20 +59,17 @@ impl ReadableFile for Sgb {
         let start = cursor.position();
         let rewind = start + 8;
 
-        let chunk_header = SceneChunkHeader::read_le(&mut cursor).unwrap();
-        if chunk_header.chunk_size <= 0 {
-            return Some(Sgb {
-                file_id: file_header.identifier,
-                chunks: Vec::new(),
-            });
-        }
+        let string_heap = StringHeap::from(0); // TODO: wrong position probably
+
+        let chunk_header =
+            ScnSection::read_options(&mut cursor, endianness, (&string_heap,)).unwrap();
 
         let mut layer_groups: Vec<SgbLayerGroup> =
-            Vec::with_capacity(chunk_header.layer_group_count as usize);
-        for i in 0..chunk_header.layer_group_count {
+            Vec::with_capacity(chunk_header.num_layer_groups as usize);
+        for i in 0..chunk_header.num_layer_groups {
             cursor
                 .seek(SeekFrom::Start(
-                    rewind + (i * 4) as u64 + chunk_header.layer_group_offset as u64,
+                    rewind + (i * 4) as u64 + chunk_header.offset_layer_groups as u64,
                 ))
                 .unwrap();
 
@@ -124,7 +98,7 @@ impl ReadableFile for Sgb {
             layer_groups.push(SgbLayerGroup {
                 layer_group_id: group_header.layer_group_id,
                 name: "".to_string(), // TODO fix
-                layers: layers,
+                layers,
             })
         }
 
