@@ -65,6 +65,7 @@ pub struct ScnSection {
 
     #[br(seek_before = SeekFrom::Current(offset_timelines as i64 - ScnSection::SIZE as i64))]
     #[br(restore_position)]
+    #[br(args(string_heap))]
     pub timelines: ScnTimelinesSection,
 
     #[br(count = num_layer_group_resources)]
@@ -197,14 +198,68 @@ impl ScnGeneralSection {
 }
 
 #[binrw]
+#[br(import(string_heap: &StringHeap))]
 #[derive(Debug)]
 pub struct ScnTimelinesSection {
     offset_entries: i32,
     num_entries: i32,
+
+    #[br(seek_before = SeekFrom::Current(offset_entries as i64 - ScnTimelinesSection::SIZE as i64))]
+    #[br(count = num_entries, restore_position, args { inner: (string_heap,) })]
+    #[bw(ignore)] // TODO: support writing
+    pub timelines: Vec<ScnTimeline>,
 }
 
 impl ScnTimelinesSection {
     pub const SIZE: usize = 0x8;
+}
+
+#[binrw]
+#[br(import(string_heap: &StringHeap))]
+#[bw(import(string_heap: &mut StringHeap))]
+#[derive(Debug)]
+pub struct ScnTimeline {
+    #[br(temp)]
+    #[bw(ignore)]
+    heap_pointer: HeapPointer,
+
+    pub sub_id: u32,
+    #[br(args(heap_pointer, string_heap))]
+    #[bw(args(string_heap))]
+    pub animation_type: HeapStringFromPointer,
+    offset_instances: i32,
+    num_instances: i32,
+    offset_action_timeline_key: i32, // TODO: may be be a string? or at least clientstructs claims its one
+    offset_tmlb: i32,
+    tmlb_size: i32,
+
+    /// Bytes of a TMLB file.
+    #[br(seek_before = SeekFrom::Current(offset_tmlb as i64), count = tmlb_size, restore_position)]
+    pub tmlb: Vec<u8>,
+
+    unk1: [u8; 4], // empty(?)
+    #[br(map = read_bool_from::<u8>)]
+    #[bw(map = write_bool_as::<u8>)]
+    pub auto_play: bool,
+    #[br(map = read_bool_from::<u8>)]
+    #[bw(map = write_bool_as::<u8>)]
+    pub loop_animation: bool,
+    unk2: [u8; 10], // unsure
+
+    #[br(seek_before = SeekFrom::Current(offset_instances as i64 - ScnTimeline::SIZE as i64))]
+    #[br(count = num_instances, restore_position)]
+    pub instances: Vec<ScnTimelineInstance>,
+}
+
+impl ScnTimeline {
+    pub const SIZE: usize = 0x2C;
+}
+
+#[binrw]
+#[derive(Debug)]
+pub struct ScnTimelineInstance {
+    unknown: i32,
+    pub sub_id: i32,
 }
 
 // TODO: definitely not correct
