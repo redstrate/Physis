@@ -118,3 +118,19 @@ pub struct EventRangeInstanceObject {
 #[binrw]
 #[derive(Debug, PartialEq)]
 pub struct FateRangeInstanceObject {}
+
+#[binrw]
+#[derive(Debug, PartialEq)]
+pub struct GimmickRangeInstanceObject {}
+
+#[binrw]
+#[derive(Debug, PartialEq)]
+pub struct ClickableRangeInstanceObject {}
+
+#[binrw]
+#[derive(Debug, PartialEq)]
+pub struct PrefetchRangeInstanceObject {
+    pub parent_data: TriggerBoxInstanceObject,
+    pub bound_instance_id: u32,
+    padding: u32,
+}

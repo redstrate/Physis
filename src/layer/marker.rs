@@ -51,3 +51,7 @@ pub struct ChairMarkerInstanceObject {
 #[binrw]
 #[derive(Debug, PartialEq)]
 pub struct QuestMarkerInstanceObject {}
+
+#[binrw]
+#[derive(Debug, PartialEq)]
+pub struct TargetMarkerInstanceObject {}

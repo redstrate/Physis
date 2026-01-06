@@ -38,7 +38,7 @@ pub use light::{LightInstanceObject, LightType, PointLightType};
 mod marker;
 pub use marker::{
     ChairMarkerInstanceObject, ChairType, PositionMarkerInstanceObject, PositionMarkerType,
-    QuestMarkerInstanceObject,
+    QuestMarkerInstanceObject, TargetMarkerInstanceObject,
 };
 
 mod npc;
@@ -51,8 +51,9 @@ pub use path::{
 
 mod range;
 pub use range::{
-    EventRangeInstanceObject, ExitRangeInstanceObject, ExitType, FateRangeInstanceObject,
-    MapRangeInstanceObject, PopRangeInstanceObject, PopType,
+    ClickableRangeInstanceObject, EventRangeInstanceObject, ExitRangeInstanceObject, ExitType,
+    FateRangeInstanceObject, GimmickRangeInstanceObject, MapRangeInstanceObject,
+    PopRangeInstanceObject, PopType, PrefetchRangeInstanceObject,
 };
 
 mod shared_group;
@@ -278,26 +279,6 @@ pub enum LayerEntryData {
     DoorRange(),
     /// Unhandled or unknown type.
     Unknown(),
-}
-
-#[binrw]
-#[derive(Debug, PartialEq)]
-pub struct GimmickRangeInstanceObject {}
-
-#[binrw]
-#[derive(Debug, PartialEq)]
-pub struct TargetMarkerInstanceObject {}
-
-#[binrw]
-#[derive(Debug, PartialEq)]
-pub struct ClickableRangeInstanceObject {}
-
-#[binrw]
-#[derive(Debug, PartialEq)]
-pub struct PrefetchRangeInstanceObject {
-    pub parent_data: TriggerBoxInstanceObject,
-    pub bound_instance_id: u32,
-    padding: u32,
 }
 
 #[binrw]
