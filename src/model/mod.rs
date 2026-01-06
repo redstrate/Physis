@@ -1125,11 +1125,11 @@ impl ReadableFile for MDL {
 
 fn get_part_type(lod: &MeshLod, index: u16) -> Option<PartType> {
     if (lod.mesh_index..lod.mesh_index + lod.mesh_count).contains(&index) {
-        return Some(PartType::Mesh);
+        return Some(PartType::Normal);
     }
 
     if (lod.water_mesh_index..lod.water_mesh_index + lod.water_mesh_count).contains(&index) {
-        return Some(PartType::WaterMesh);
+        return Some(PartType::Water);
     }
 
     None
