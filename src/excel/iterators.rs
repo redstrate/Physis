@@ -1,11 +1,59 @@
 // SPDX-FileCopyrightText: 2026 Joshua Goins <josh@redstrate.com>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-use crate::excel::{Page, Row};
+use crate::excel::{Page, Row, Sheet};
 
-/// Iterator over an [Page].
+/// Iterator over a [Sheet].
+#[derive(Clone)]
+pub struct SheetIterator<'a> {
+    sheet: &'a Sheet,
+    page_index: u32,
+    page_iterator: Option<PageIterator<'a>>,
+}
+
+impl<'a> IntoIterator for &'a Sheet {
+    type Item = (u32, &'a [(u16, Row)]);
+    type IntoIter = SheetIterator<'a>;
+
+    fn into_iter(self) -> SheetIterator<'a> {
+        SheetIterator {
+            sheet: self,
+            page_index: 0,
+            page_iterator: None,
+        }
+    }
+}
+
+impl<'a> Iterator for SheetIterator<'a> {
+    type Item = (u32, &'a [(u16, Row)]);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let page_index = self.page_index;
+
+        if let Some(iterator) = &mut self.page_iterator {
+            iterator.next()
+        } else {
+            self.page_index += 1;
+
+            if page_index > self.sheet.pages.len() as u32 {
+                return None;
+            }
+
+            self.page_iterator = Some(self.sheet.pages[page_index as usize].into_iter());
+
+            if let Some(iterator) = &mut self.page_iterator {
+                iterator.next()
+            } else {
+                None
+            }
+        }
+    }
+}
+
+/// Iterator over a [Page].
 ///
 /// This includes subrows, if you know you don't have those then use [Self::flatten_subrows].
+#[derive(Clone)]
 pub struct PageIterator<'a> {
     page: &'a Page,
     row_index: u32,
@@ -55,6 +103,7 @@ impl<'a> Iterator for PageIterator<'a> {
 /// Iterator over an [Page], but only the rows.
 ///
 /// To create this iterator, use [PageIterator::flatten_subrows].
+#[derive(Clone)]
 pub struct RowIterator<'a> {
     page: &'a Page,
     row_index: u32,
@@ -120,6 +169,54 @@ mod tests {
         };
 
         assert_eq!(excel.pages[0].entries.len(), 4);
+
+        // page behavior
+        let expected_iterator: Vec<(u32, &[(u16, Row)])> = excel.into_iter().collect();
+        assert_eq!(
+            expected_iterator,
+            vec![
+                (
+                    1441792u32,
+                    [(
+                        0u16,
+                        Row {
+                            columns: vec![Field::Int8(0)]
+                        }
+                    )]
+                    .as_slice()
+                ),
+                (
+                    1441793u32,
+                    [(
+                        0u16,
+                        Row {
+                            columns: vec![Field::Int8(1)]
+                        }
+                    )]
+                    .as_slice()
+                ),
+                (
+                    1441794u32,
+                    [(
+                        0u16,
+                        Row {
+                            columns: vec![Field::Int8(2)]
+                        }
+                    )]
+                    .as_slice()
+                ),
+                (
+                    1441795u32,
+                    [(
+                        0u16,
+                        Row {
+                            columns: vec![Field::Int8(3)]
+                        }
+                    )]
+                    .as_slice()
+                )
+            ]
+        );
 
         // normal behavior that includes subrows
         let expected_iterator: Vec<(u32, &[(u16, Row)])> = excel.pages[0].into_iter().collect();
