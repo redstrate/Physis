@@ -12,6 +12,9 @@ use crate::{
     exh::{EXH, SheetRowKind},
 };
 
+mod iterators;
+pub use iterators::*;
+
 /// Contains a single column's data, which can be various underlying types.
 #[derive(Debug, Clone, PartialEq)]
 pub enum Field {
