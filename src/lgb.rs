@@ -8,7 +8,8 @@ use binrw::{BinRead, BinReaderExt, BinWrite, binrw};
 use crate::{
     ByteBuffer, ByteSpan, ReadableFile, WritableFile,
     common::Platform,
-    layer::{HeapString, Layer, StringHeap},
+    layer::Layer,
+    string_heap::{HeapString, StringHeap},
 };
 
 /// "LGB1"

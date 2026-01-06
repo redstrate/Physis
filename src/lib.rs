@@ -175,6 +175,9 @@ pub mod execlookup;
 /// Types for layer group binary (`.lgb`) files.
 pub mod lgb;
 
+/// Implementation detail for some types.
+pub mod string_heap;
+
 use crate::common::Platform;
 
 /// A file that can be parsed from its serialized byte form.
