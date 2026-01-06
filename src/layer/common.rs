@@ -11,16 +11,6 @@ pub struct RelativePositions {
 }
 
 #[binrw]
-#[derive(Debug, Clone, Copy, PartialEq)]
-#[repr(C)]
-#[allow(dead_code)] // most of the fields are unused at the moment
-pub struct Transformation {
-    pub translation: [f32; 3],
-    pub rotation: [f32; 3],
-    pub scale: [f32; 3],
-}
-
-#[binrw]
 #[derive(Debug, PartialEq)]
 pub struct Color {
     pub red: u8,
@@ -37,4 +27,12 @@ pub struct ColorHDRI {
     pub blue: u8,
     pub alpha: u8,
     pub intensity: f32,
+}
+
+#[binrw]
+#[derive(Debug, PartialEq)]
+pub struct GameInstanceObject {
+    /// For IDs >= 1000000, index into the ENpcBase
+    /// For IDs >= 2000000, the row ID reference to EObj/EObjName
+    pub base_id: u32,
 }

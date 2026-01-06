@@ -3,15 +3,9 @@
 
 use binrw::binrw;
 
-use super::common::RelativePositions;
+use crate::layer::GameInstanceObject;
 
-#[binrw]
-#[derive(Debug, PartialEq)]
-pub struct GameInstanceObject {
-    /// For IDs >= 1000000, index into the ENpcBase
-    /// For IDs >= 2000000, the row ID reference to EObj/EObjName
-    pub base_id: u32,
-}
+use super::common::RelativePositions;
 
 #[binrw]
 #[derive(Debug, PartialEq)]

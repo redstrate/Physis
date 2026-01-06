@@ -15,54 +15,59 @@ mod aetheryte;
 pub use aetheryte::AetheryteInstanceObject;
 
 mod bg;
-pub use bg::BGInstanceObject;
-pub use bg::ModelCollisionType;
+pub use bg::{BGInstanceObject, ModelCollisionType};
+
+mod collision;
+pub use collision::{CollisionBoxInstanceObject, TriggerBoxInstanceObject, TriggerBoxShape};
 
 mod common;
-pub use common::Color;
-pub use common::ColorHDRI;
-pub use common::Transformation;
+pub use common::{Color, ColorHDRI, GameInstanceObject, RelativePositions};
 
-mod env_set;
-pub use env_set::EnvSetInstanceObject;
-pub use env_set::EnvSetShape;
+mod env;
+pub use env::{EnvLocationObject, EnvSetInstanceObject, EnvSetShape};
 
-mod exit_range;
-pub use exit_range::ExitRangeInstanceObject;
-pub use exit_range::ExitType;
+mod event;
+pub use event::EventInstanceObject;
+
+mod gathering;
+pub use gathering::GatheringInstanceObject;
 
 mod light;
-pub use light::LightInstanceObject;
-pub use light::LightType;
-pub use light::PointLightType;
+pub use light::{LightInstanceObject, LightType, PointLightType};
+
+mod marker;
+pub use marker::{
+    ChairMarkerInstanceObject, ChairType, PositionMarkerInstanceObject, PositionMarkerType,
+    QuestMarkerInstanceObject,
+};
 
 mod npc;
-pub use npc::BNPCInstanceObject;
-pub use npc::ENPCInstanceObject;
-pub use npc::GameInstanceObject;
-pub use npc::NPCInstanceObject;
+pub use npc::{BNPCInstanceObject, ENPCInstanceObject, NPCInstanceObject};
 
-mod pop;
-pub use pop::PopRangeInstanceObject;
-pub use pop::PopType;
+mod path;
+pub use path::{
+    ClientPathInstanceObject, PathControlPoint, PathInstanceObject, ServerPathInstanceObject,
+};
 
-mod position_marker;
-pub use position_marker::PositionMarkerInstanceObject;
-pub use position_marker::PositionMarkerType;
+mod range;
+pub use range::{
+    EventRangeInstanceObject, ExitRangeInstanceObject, ExitType, FateRangeInstanceObject,
+    MapRangeInstanceObject, PopRangeInstanceObject, PopType,
+};
 
 mod shared_group;
-pub use shared_group::ColourState;
-pub use shared_group::DoorState;
-pub use shared_group::RotationState;
-pub use shared_group::SharedGroupInstance;
-pub use shared_group::TransformState;
+pub use shared_group::{
+    ColourState, DoorState, RotationState, SharedGroupInstance, TransformState,
+};
 
 mod sound;
 pub use sound::SoundInstanceObject;
 
-mod trigger_box;
-pub use trigger_box::TriggerBoxInstanceObject;
-pub use trigger_box::TriggerBoxShape;
+mod treasure;
+pub use treasure::TreasureInstanceObject;
+
+mod vfx;
+pub use vfx::{LineVFXInstanceObject, VFXInstanceObject};
 
 // From https://github.com/NotAdam/Lumina/tree/40dab50183eb7ddc28344378baccc2d63ae71d35/src/Lumina/Data/Parsing/Layer
 // Also see https://github.com/aers/FFXIVClientStructs/blob/6b62122cae38bfbc016bf697bef75f80f37abac1/FFXIVClientStructs/FFXIV/Client/LayoutEngine/ILayoutInstance.cs
@@ -73,7 +78,7 @@ pub use trigger_box::TriggerBoxShape;
 #[repr(i32)]
 #[derive(Debug, PartialEq)]
 pub enum LayerEntryType {
-    AssetNone = 00,
+    AssetNone = 0x0,
     BG = 0x1,
     Attribute = 0x2,
     LayLight = 0x3,
@@ -238,209 +243,11 @@ pub enum LayerEntryData {
 
 #[binrw]
 #[derive(Debug, PartialEq)]
-pub struct VFXInstanceObject {
-    pub asset_path_offset: u32,
-    #[brw(pad_after = 4)] // padding
-    pub soft_particle_fade_range: f32,
-    pub color: Color,
-    #[br(map = read_bool_from::<u8>)]
-    #[bw(map = write_bool_as::<u8>)]
-    pub auto_play: bool,
-    #[br(map = read_bool_from::<u8>)]
-    #[bw(map = write_bool_as::<u8>)]
-    #[brw(pad_after = 2)] // padding
-    pub no_far_clip: bool,
-    pub fade_near_start: f32,
-    pub fade_near_end: f32,
-    pub fade_far_start: f32,
-    pub fade_far_end: f32,
-    pub z_correct: f32,
-}
-
-#[binrw]
-#[derive(Debug, PartialEq)]
-pub struct GatheringInstanceObject {
-    #[brw(pad_after = 4)] // padding
-    pub gathering_point_id: u32,
-}
-
-#[binrw]
-#[derive(Debug, PartialEq)]
-pub struct TreasureInstanceObject {
-    #[brw(pad_after = 11)] // padding
-    pub nonpop_init_zone: u8,
-}
-
-#[binrw]
-#[derive(Debug, PartialEq)]
-pub struct MapRangeInstanceObject {
-    pub parent_data: TriggerBoxInstanceObject,
-    map: u32,
-    /// Name for the general location. Index into the PlaceName Sxcel sheet.
-    pub place_name_block: u32,
-    /// Name for the specific spot. Index into the PlaceName Sxcel sheet.
-    pub place_name_spot: u32,
-    weather: u32,
-    bgm: u32,
-    padding: [u8; 10],
-    housing_block_id: u8,
-    /// Most likely affects whether the EXP bonus affects this area.
-    #[br(map = read_bool_from::<u8>)]
-    #[bw(map = write_bool_as::<u8>)]
-    pub rest_bonus_effective: bool,
-    /// Map discovery ID.
-    pub discovery_id: u8,
-    #[br(map = read_bool_from::<u8>)]
-    #[bw(map = write_bool_as::<u8>)]
-    map_enabled: bool,
-    /// Probably to enable indication in the little place name UI element.
-    #[br(map = read_bool_from::<u8>)]
-    #[bw(map = write_bool_as::<u8>)]
-    pub place_name_enabled: bool,
-    /// Whether this place is discoverable (see `discovery_id`.)
-    #[br(map = read_bool_from::<u8>)]
-    #[bw(map = write_bool_as::<u8>)]
-    pub discovery_enabled: bool,
-    #[br(map = read_bool_from::<u8>)]
-    #[bw(map = write_bool_as::<u8>)]
-    bgm_enabled: bool,
-    #[br(map = read_bool_from::<u8>)]
-    #[bw(map = write_bool_as::<u8>)]
-    weather_enabled: bool,
-    /// Whether this area is marked as a sanctuary.
-    #[br(map = read_bool_from::<u8>)]
-    #[bw(map = write_bool_as::<u8>)]
-    pub rest_bonus_enabled: bool,
-    #[br(map = read_bool_from::<u8>)]
-    #[bw(map = write_bool_as::<u8>)]
-    bgm_play_zone_in_only: bool,
-    #[br(map = read_bool_from::<u8>)]
-    #[bw(map = write_bool_as::<u8>)]
-    lift_enabled: bool,
-    #[br(map = read_bool_from::<u8>)]
-    #[bw(map = write_bool_as::<u8>)]
-    housing_enabled: bool,
-    padding2: [u8; 2],
-}
-
-#[binrw]
-#[derive(Debug, PartialEq)]
-pub struct EventInstanceObject {
-    pub parent_data: GameInstanceObject,
-    /// A reference to another object, most likely.
-    pub bound_instance_id: u32,
-    #[brw(pad_after = 8)] // padding?
-    pub linked_instance_id: u32,
-}
-
-#[binrw]
-#[derive(Debug, PartialEq)]
-#[br(import(string_heap: &StringHeap))]
-#[bw(import(string_heap: &mut StringHeap))]
-pub struct EnvLocationObject {
-    #[brw(args(string_heap))]
-    pub ambient_light_asset_path: HeapString,
-    #[brw(args(string_heap))]
-    pub env_map_asset_path: HeapString,
-    pub padding: [u8; 24], // TODO: UNKNOWN, MAYBE WRONG
-}
-
-#[binrw]
-#[derive(Debug, PartialEq)]
-pub struct EventRangeInstanceObject {
-    pub parent_data: TriggerBoxInstanceObject,
-    pub unk_flags: [u8; 12],
-}
-
-#[binrw]
-#[derive(Debug, PartialEq)]
-pub struct QuestMarkerInstanceObject {}
-
-#[binrw]
-#[derive(Debug, PartialEq)]
-#[br(import(string_heap: &StringHeap))]
-#[bw(import(string_heap: &mut StringHeap))]
-pub struct CollisionBoxInstanceObject {
-    pub parent_data: TriggerBoxInstanceObject,
-    attribute_mask: u32,
-    attribute: u32,
-    push_player_out: u8,
-    padding: [u8; 3],
-    // TODO: this seems... wrong
-    #[brw(args(string_heap))]
-    collision_asset_path: HeapString,
-    padding2: u32,
-}
-
-#[binrw]
-#[derive(Debug, PartialEq)]
-pub struct LineVFXInstanceObject {}
-
-#[binrw]
-#[derive(Debug, PartialEq)]
-pub struct PathControlPoint {
-    pub position: [f32; 3],
-    pub point_id: u16,
-    pub select: u8,
-    pub _padding: u8,
-}
-
-#[binrw]
-#[derive(Debug, PartialEq)]
-pub struct PathInstanceObject {
-    pub control_points_unk: i32,
-    #[br(temp)]
-    #[bw(calc = control_points.len() as i32)]
-    control_point_count: i32,
-    _padding: [u32; 2],
-    #[br(count = control_point_count)]
-    pub control_points: Vec<PathControlPoint>,
-}
-
-#[binrw]
-#[derive(Debug, PartialEq)]
-pub struct ClientPathInstanceObject {
-    pub parent_data: PathInstanceObject,
-    pub ring: u8,
-    _padding: u8,
-}
-
-#[binrw]
-#[derive(Debug, PartialEq)]
-pub struct ServerPathInstanceObject {}
-
-#[binrw]
-#[derive(Debug, PartialEq)]
 pub struct GimmickRangeInstanceObject {}
 
 #[binrw]
 #[derive(Debug, PartialEq)]
 pub struct TargetMarkerInstanceObject {}
-
-#[binrw]
-#[brw(repr = u32)]
-#[repr(u32)]
-#[derive(Debug, PartialEq)]
-pub enum ChairType {
-    Chair = 0x0,
-    Bed = 0x1,
-}
-
-#[binrw]
-#[derive(Debug, PartialEq)]
-pub struct ChairMarkerInstanceObject {
-    #[br(map = read_bool_from::<u8>)]
-    #[bw(map = write_bool_as::<u8>)]
-    left_enable: bool,
-    #[br(map = read_bool_from::<u8>)]
-    #[bw(map = write_bool_as::<u8>)]
-    right_enable: bool,
-    #[br(map = read_bool_from::<u8>)]
-    #[bw(map = write_bool_as::<u8>)]
-    back_enable: bool,
-    padding: u8,
-    chair_type: ChairType,
-}
 
 #[binrw]
 #[derive(Debug, PartialEq)]
@@ -453,10 +260,6 @@ pub struct PrefetchRangeInstanceObject {
     pub bound_instance_id: u32,
     padding: u32,
 }
-
-#[binrw]
-#[derive(Debug, PartialEq)]
-pub struct FateRangeInstanceObject {}
 
 #[binrw]
 #[brw(repr = i32)]
@@ -560,6 +363,16 @@ struct OBSetEnableReferenced {
     #[bw(map = write_bool_as::<u8>)]
     ob_set_emissive_enable: bool,
     padding: [u8; 2],
+}
+
+#[binrw]
+#[derive(Debug, Clone, Copy, PartialEq)]
+#[repr(C)]
+#[allow(dead_code)] // most of the fields are unused at the moment
+pub struct Transformation {
+    pub translation: [f32; 3],
+    pub rotation: [f32; 3],
+    pub scale: [f32; 3],
 }
 
 #[binrw]

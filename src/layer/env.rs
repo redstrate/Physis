@@ -3,7 +3,10 @@
 
 use binrw::binrw;
 
-use crate::common_file_operations::write_bool_as;
+use crate::{
+    common_file_operations::write_bool_as,
+    string_heap::{HeapString, StringHeap},
+};
 
 use super::read_bool_from;
 
@@ -32,4 +35,16 @@ pub struct EnvSetInstanceObject {
     pub reverb: f32,
     pub filter: f32,
     pub sound_asset_path_offset: u32,
+}
+
+#[binrw]
+#[derive(Debug, PartialEq)]
+#[br(import(string_heap: &StringHeap))]
+#[bw(import(string_heap: &mut StringHeap))]
+pub struct EnvLocationObject {
+    #[brw(args(string_heap))]
+    pub ambient_light_asset_path: HeapString,
+    #[brw(args(string_heap))]
+    pub env_map_asset_path: HeapString,
+    pub padding: [u8; 24], // TODO: UNKNOWN, MAYBE WRONG
 }
