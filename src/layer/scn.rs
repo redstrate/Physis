@@ -8,6 +8,7 @@ use binrw::{BinReaderExt, BinResult, BinWrite, binrw};
 use crate::{
     common_file_operations::{read_bool_from, write_bool_as},
     string_heap::{HeapPointer, HeapStringFromPointer, StringHeap},
+    tmb::Tmb,
 };
 
 #[binrw::writer(writer, endian)]
@@ -230,12 +231,8 @@ pub struct ScnTimeline {
     offset_instances: i32,
     num_instances: i32,
     offset_action_timeline_key: i32, // TODO: may be be a string? or at least clientstructs claims its one
-    offset_tmlb: i32,
-    tmlb_size: i32,
-
-    /// Bytes of a TMLB file.
-    #[br(seek_before = SeekFrom::Current(offset_tmlb as i64), count = tmlb_size, restore_position)]
-    pub tmlb: Vec<u8>,
+    offset_tmb: i32,
+    tmb_size: i32,
 
     unk1: [u8; 4], // empty(?)
     #[br(map = read_bool_from::<u8>)]
@@ -245,6 +242,10 @@ pub struct ScnTimeline {
     #[bw(map = write_bool_as::<u8>)]
     pub loop_animation: bool,
     unk2: [u8; 10], // unsure
+
+    /// Bytes of a TMLB file.
+    #[br(seek_before = SeekFrom::Current(offset_tmb as i64 - ScnTimeline::SIZE as i64), restore_position)]
+    pub tmb: Tmb,
 
     #[br(seek_before = SeekFrom::Current(offset_instances as i64 - ScnTimeline::SIZE as i64))]
     #[br(count = num_instances, restore_position)]
