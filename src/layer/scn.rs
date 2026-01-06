@@ -45,7 +45,7 @@ pub struct ScnSection {
     offset_unk1: i32, // Points to 5 bytes of data
     unk4: i32,
     unk5: i32,
-    unk6: i32,
+    housing_offset: i32, // According to Lumina?
     unk7: i32,
     unk8: i32,
     unk9: i32,
