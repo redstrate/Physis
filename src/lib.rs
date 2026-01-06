@@ -82,7 +82,7 @@ pub mod pbd;
 mod crc;
 mod sha1;
 
-/// Types for layer group binary (`.lgb`) files.
+/// Types for layer-related things, used by the [lgb] and [sgb] modules.
 pub mod layer;
 
 /// Types for terrain (`.tera`) files.
@@ -171,6 +171,9 @@ pub mod existing_dirs;
 
 /// Reading data from executables
 pub mod execlookup;
+
+/// Types for layer group binary (`.lgb`) files.
+pub mod lgb;
 
 use crate::common::Platform;
 
