@@ -13,14 +13,68 @@ use binrw::binrw;
 
 #[binrw]
 #[derive(Debug)]
+pub struct Tmdh {
+    unk1: u16,
+    unk2: u16,
+    unk3: u16,
+    unk4: u16,
+}
+
+#[binrw]
+#[derive(Debug)]
+pub struct Tmal {
+    offset: u32,
+    count: u32,
+    // TODO: read u16s
+}
+
+#[binrw]
+#[derive(Debug)]
+pub struct Tmac {
+    unk1: u32, // VFXEdit cals this "ability delay" lol
+    unk2: u32,
+    offset: u32,
+    count: u32,
+    // TODO: read temp ids
+    unk3: u32,
+}
+
+#[binrw]
+#[derive(Debug)]
+pub struct Tmtr {
+    offset: u32,
+    count: u32,
+    // TODO: read temp ids
+    unk1: u32,
+    unk2: u32,
+}
+
+#[binrw]
+#[br(import(tag: &str, size: u32))]
+#[derive(Debug)]
+pub enum TimelineNodeData {
+    #[br(pre_assert(tag == "TMDH"))]
+    Tmdh(Tmdh),
+    #[br(pre_assert(tag == "TMAL"))]
+    Tmal(Tmal),
+    #[br(pre_assert(tag == "TMAC"))]
+    Tmac(Tmac),
+    #[br(pre_assert(tag == "TMTR"))]
+    Tmtr(Tmtr),
+    Unknown(#[br(count = size - 8)] Vec<u8>),
+}
+
+#[binrw]
+#[derive(Debug)]
 pub struct TimelineNode {
     #[bw(write_with = write_short_identifier)]
     #[br(parse_with = read_short_identifier)]
     tag: String,
     /// Size in bytes, including the tag.
     size: u32,
-    #[br(count = size - 8)]
-    data: Vec<u8>,
+    #[br(args(&tag, size))]
+    #[bw(ignore)] // TODO: suppoort writing
+    data: TimelineNodeData,
 }
 
 /// Timeline binary file, usually with the `.tmb` file extension.
