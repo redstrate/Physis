@@ -495,6 +495,7 @@ pub struct Part {
     pub part_type: PartType,
 }
 
+#[repr(C)]
 #[derive(Debug, Clone)]
 pub enum PartType {
     Normal,
