@@ -52,7 +52,7 @@ struct SceneChunkHeader {
 /// This is basically a "prefab".
 #[derive(Debug)]
 pub struct Sgb {
-    file_id: String,
+    pub file_id: String,
     pub chunks: Vec<SgbLayerGroup>,
 }
 
