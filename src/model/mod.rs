@@ -497,8 +497,8 @@ pub struct Part {
 
 #[derive(Debug, Clone)]
 pub enum PartType {
-    Mesh,
-    WaterMesh,
+    Normal,
+    Water,
 }
 
 #[derive(Debug, Clone)]
