@@ -130,10 +130,6 @@ pub struct ScnSection {
     #[br(restore_position)]
     unk1: ScnUnknown1Section,
 
-    #[br(seek_before = SeekFrom::Current(offset_unk2 as i64 - ScnSection::SIZE as i64))]
-    #[br(restore_position)]
-    unk2_section: ScnUnknown2Section,
-
     #[br(seek_before = SeekFrom::Current(offset_unk3 as i64 - ScnSection::SIZE as i64))]
     #[br(restore_position)]
     unk3: ScnUnknown3Section,
@@ -313,13 +309,6 @@ pub struct ScnTimelineInstance {
 #[derive(Debug)]
 pub struct ScnUnknown1Section {
     unk: [u8; 5],
-}
-
-// TODO: definitely not correct
-#[binrw]
-#[derive(Debug)]
-pub struct ScnUnknown2Section {
-    unk: [u8; 39],
 }
 
 // TODO: definitely not correct
