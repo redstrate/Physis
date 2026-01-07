@@ -56,8 +56,11 @@ pub use range::{
 };
 
 mod scn;
-pub use scn::ScnSection;
 pub(crate) use scn::write_scns;
+pub use scn::{
+    ScnEnvSpace, ScnFilter, ScnFiltersSection, ScnGeneralSection, ScnLayerGroup, ScnSection,
+    ScnTimeline, ScnTimelineInstance, ScnTimelinesSection,
+};
 
 mod shared_group;
 pub use shared_group::{
