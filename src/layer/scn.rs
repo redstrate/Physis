@@ -88,22 +88,26 @@ pub struct ScnSection {
     offset_unk2: i32, // Points to 39 bytes of data
     offset_unk3: i32, // Points to 64 bytes of data
 
+    /// List of embedded layer groups.
     #[br(count = num_layer_groups, args { inner: (string_heap,) })]
     #[br(seek_before = SeekFrom::Current(offset_layer_groups as i64 - ScnSection::SIZE as i64))]
     #[br(restore_position)]
     #[bw(ignore)] // TODO: support writing
     pub layer_groups: Vec<ScnLayerGroup>,
 
+    /// General information.
     #[br(seek_before = SeekFrom::Current(offset_general as i64 - ScnSection::SIZE as i64))]
     #[br(restore_position)]
     #[brw(args(string_heap))]
     pub general: ScnGeneralSection,
 
+    /// Filter information.
     #[br(seek_before = SeekFrom::Current(offset_filters as i64 - ScnSection::SIZE as i64))]
     #[br(restore_position)]
     #[brw(args(string_heap))]
     pub filters: ScnFiltersSection,
 
+    /// Embedded animation timelines.
     #[br(seek_before = SeekFrom::Current(offset_timelines as i64 - ScnSection::SIZE as i64))]
     #[br(restore_position)]
     #[br(args(string_heap))]
@@ -114,6 +118,7 @@ pub struct ScnSection {
     #[br(restore_position)]
     offset_path_layer_group_resources: Vec<i32>,
 
+    /// Associated [crate::lgb] paths.
     #[br(parse_with = strings_from_offsets)]
     #[br(args(&offset_path_layer_group_resources))]
     #[br(restore_position)]
@@ -176,9 +181,7 @@ pub struct ScnGeneralSection {
     #[bw(ignore)]
     heap_pointer: HeapPointer,
 
-    #[br(map = read_bool_from::<i32>)]
-    #[bw(map = write_bool_as::<i32>)]
-    pub have_layer_groups: bool, // TODO: this is probably not what is according to Sapphire?
+    unk9: i32,
 
     #[br(args(heap_pointer, string_heap))]
     #[bw(args(string_heap))]
@@ -215,7 +218,7 @@ pub struct ScnGeneralSection {
 
     #[br(map = read_bool_from::<i32>)]
     #[bw(map = write_bool_as::<i32>)]
-    pub have_lcbuw: bool,
+    have_lcbuw: bool,
 
     #[br(count = num_env_spaces)]
     #[br(seek_before = SeekFrom::Current(offset_env_spaces as i64 - ScnGeneralSection::SIZE as i64))]
