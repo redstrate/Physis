@@ -185,6 +185,32 @@ struct MeshLod {
 #[binrw]
 #[derive(Debug, Clone, PartialEq)]
 #[allow(dead_code)]
+struct MeshExtraLod {
+    light_shaft_mesh_index: u16,
+    light_shaft_mesh_count: u16,
+    glass_mesh_index: u16,
+    glass_mesh_count: u16,
+    material_change_mesh_index: u16,
+    material_change_mesh_count: u16,
+    crest_change_mesh_index: u16,
+    crest_change_mesh_count: u16,
+    unk1: u16,
+    unk2: u16,
+    unk3: u16,
+    unk4: u16,
+    unk5: u16,
+    unk6: u16,
+    unk7: u16,
+    unk8: u16,
+    unk9: u16,
+    unk10: u16,
+    unk11: u16,
+    unk12: u16,
+}
+
+#[binrw]
+#[derive(Debug, Clone, PartialEq)]
+#[allow(dead_code)]
 struct Mesh {
     #[brw(pad_after = 2)]
     vertex_count: u16,
@@ -358,6 +384,9 @@ pub struct ModelData {
 
     #[br(count = 3)]
     lods: Vec<MeshLod>,
+
+    #[br(count = if header.flags2.contains(ModelFlags2::ExtraLodEnabled) { 3 } else { 0 })]
+    extra_lods: Vec<MeshExtraLod>,
 
     #[br(count = header.mesh_count)]
     meshes: Vec<Mesh>,
