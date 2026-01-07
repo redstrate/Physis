@@ -15,7 +15,6 @@ use binrw::BinResult;
 use binrw::VecArgs;
 use binrw::binrw;
 
-/// Reads a 4 byte string.
 #[binrw::parser(reader, endian)]
 pub(crate) fn read_timeline_list(struct_offset: i64) -> BinResult<Vec<u16>> {
     let offset: i32 = reader.read_type_args(endian, ())?;
@@ -27,6 +26,32 @@ pub(crate) fn read_timeline_list(struct_offset: i64) -> BinResult<Vec<u16>> {
 
     let list =
         reader.read_type_args(endian, VecArgs::builder().count(count as usize).finalize())?;
+
+    reader.seek(SeekFrom::Start(pos))?;
+
+    Ok(list)
+}
+
+#[binrw::parser(reader, endian)]
+pub(crate) fn read_timeline_list_2(struct_offset: i64) -> BinResult<Vec<TmfcData>> {
+    let offset: i32 = reader.read_type_args(endian, ())?;
+    let count: i32 = reader.read_type_args(endian, ())?;
+
+    let pos = reader.stream_position()?;
+
+    reader.seek(SeekFrom::Current(offset as i64 - 4 as i64 - struct_offset))?;
+
+    let mut list: Vec<TmfcData> =
+        reader.read_type_args(endian, VecArgs::builder().count(count as usize).finalize())?;
+
+    for data in &mut list {
+        data.rows = reader
+            .read_type_args(
+                endian,
+                VecArgs::builder().count(data.row_count as usize).finalize(),
+            )
+            .unwrap();
+    }
 
     reader.seek(SeekFrom::Start(pos))?;
 
@@ -94,11 +119,42 @@ pub struct C013 {
 pub struct Tmfc {
     id: u16,
     time: u16,
-    start_offset: i32,
-    data_count: i32,
+    #[br(parse_with = read_timeline_list_2, args(4))]
+    list: Vec<TmfcData>,
     unk1: i32,
     end_offset: i32,
     unk2: i32,
+}
+
+#[binrw]
+#[derive(Debug)]
+pub struct TmfcData {
+    unk1: u32,
+
+    unk2: u8,
+    unk3: u8,
+    unk4: u8,
+    unk5: u8,
+
+    unk6: u8,
+    unk7: u8,
+    unk8: u8,
+    unk9: u8,
+
+    row_count: u32,
+    #[brw(ignore)] // read in read_timeline_list_2
+    rows: Vec<TmfcRow>,
+}
+
+#[binrw]
+#[derive(Debug)]
+pub struct TmfcRow {
+    unk1: u32,
+    time: f32,
+    unk2: f32,
+    unk3: f32,
+    unk4: f32,
+    unk5: f32,
 }
 
 #[binrw]
