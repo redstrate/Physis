@@ -61,11 +61,9 @@ impl ScnLayerGroup {
 #[derive(Debug)]
 #[brw(magic = b"SCN1")]
 pub struct ScnSection {
-    #[br(dbg)]
     /// Size of this header. Should be equal to `ScnHeader::SIZE`.
     total_size: u32,
     /// Offset to FileLayerGroupHeader[NumEmbeddedLayerGroups].
-    #[br(dbg)]
     pub(crate) offset_layer_groups: i32,
     /// Number of embedded layer groups.
     pub(crate) num_layer_groups: i32,
