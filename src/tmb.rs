@@ -63,7 +63,7 @@ pub(crate) fn read_timeline_list_2(struct_offset: i64) -> BinResult<Vec<TmfcData
 pub struct Tmdh {
     unk1: u16,
     unk2: u16,
-    duration: u16,
+    pub duration: u16,
     unk4: u16,
 }
 
@@ -73,54 +73,60 @@ pub struct Tmdh {
 pub struct Tmal {
     /// The relevant [Tmac] IDs.
     #[br(parse_with = read_timeline_list, args(0))]
-    tmac_ids: Vec<u16>,
+    pub tmac_ids: Vec<u16>,
 }
 
 /// Timeline Actor Control(?)
 #[binrw]
 #[derive(Debug)]
 pub struct Tmac {
-    id: u16,
-    time: u16,
+    pub id: u16,
+    pub time: u16,
     unk1: u32, // VFXEdit cals this "ability delay" lol
     unk2: u32,
+    /// List of Tmtr nodes associated with this actor.
     #[br(parse_with = read_timeline_list, args(12))]
-    list: Vec<u16>,
+    pub list: Vec<u16>,
 }
 
 impl Tmac {
     pub const SIZE: usize = 0x0C;
 }
 
+/// Timeline tracks.
 #[binrw]
 #[derive(Debug)]
 pub struct Tmtr {
-    id: u16,
-    time: u16,
+    pub id: u16,
+    pub time: u16,
+    /// List of IDs to CXXX nodes.
     #[br(parse_with = read_timeline_list, args(4))]
-    list: Vec<u16>,
+    pub animations: Vec<u16>,
     // TODO: read temp ids
     unk2: u32,
 }
 
+/// Model animation.
 #[binrw]
 #[derive(Debug)]
 pub struct C013 {
-    id: u16,
-    time: u16,
-    duration: i32,
+    pub id: u16,
+    pub time: u16,
+    pub duration: i32,
     unk2: i32,
-    tmfc_id: i32,
+    /// ID of the Tmfc node associated with this animation.
+    pub tmfc_id: i32,
     placement: i32,
 }
 
+/// Timeline F-Curve.
 #[binrw]
 #[derive(Debug)]
 pub struct Tmfc {
-    id: u16,
-    time: u16,
+    pub id: u16,
+    pub time: u16,
     #[br(parse_with = read_timeline_list_2, args(4))]
-    list: Vec<TmfcData>,
+    pub list: Vec<TmfcData>,
     unk1: i32,
     end_offset: i32,
     unk2: i32,
@@ -143,14 +149,14 @@ pub struct TmfcData {
 
     row_count: u32,
     #[brw(ignore)] // read in read_timeline_list_2
-    rows: Vec<TmfcRow>,
+    pub rows: Vec<TmfcRow>,
 }
 
 #[binrw]
 #[derive(Debug)]
 pub struct TmfcRow {
     unk1: u32,
-    time: f32,
+    pub time: f32,
     unk2: f32,
     unk3: f32,
     unk4: f32,
@@ -186,7 +192,7 @@ pub struct TimelineNode {
     size: u32,
     #[br(args(&tag, size))]
     #[bw(ignore)] // TODO: suppoort writing
-    data: TimelineNodeData,
+    pub data: TimelineNodeData,
 }
 
 /// Timeline binary file, usually with the `.tmb` file extension.
