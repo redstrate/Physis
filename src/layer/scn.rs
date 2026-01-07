@@ -7,6 +7,7 @@ use binrw::{BinReaderExt, BinResult, BinWrite, binrw};
 
 use crate::{
     common_file_operations::{read_bool_from, write_bool_as},
+    layer::Layer,
     string_heap::{HeapPointer, HeapStringFromPointer, StringHeap},
     tmb::Tmb,
 };
@@ -20,6 +21,29 @@ pub(crate) fn write_scns(scns: &Vec<ScnSection>, string_heap: &mut StringHeap) -
     Ok(())
 }
 
+#[binrw]
+#[derive(Debug)]
+pub struct ScnLayerGroup {
+    pub layer_group_id: u32,
+    name_offset: u32, // TODO: read as string
+    layer_offsets_start: i32,
+    layer_offsets_count: i32,
+
+    #[br(count = layer_offsets_count)]
+    #[br(seek_before = SeekFrom::Current(layer_offsets_start as i64 - ScnLayerGroup::SIZE as i64))]
+    #[br(restore_position)]
+    offsets_layers: Vec<i32>,
+
+    #[br(restore_position, parse_with = layers_from_offsets, args(&offsets_layers))]
+    #[br(seek_before = SeekFrom::Current(layer_offsets_start as i64 - ScnLayerGroup::SIZE as i64))]
+    #[bw(ignore)] // TODO: support writing
+    pub layers: Vec<Layer>,
+}
+
+impl ScnLayerGroup {
+    pub const SIZE: usize = 0x10;
+}
+
 /// SCN1 section used in LVBs and SGBs.
 #[binrw]
 #[br(import(string_heap: &StringHeap))]
@@ -27,9 +51,11 @@ pub(crate) fn write_scns(scns: &Vec<ScnSection>, string_heap: &mut StringHeap) -
 #[derive(Debug)]
 #[brw(magic = b"SCN1")]
 pub struct ScnSection {
+    #[br(dbg)]
     /// Size of this header. Should be equal to `ScnHeader::SIZE`.
     total_size: u32,
     /// Offset to FileLayerGroupHeader[NumEmbeddedLayerGroups].
+    #[br(dbg)]
     pub(crate) offset_layer_groups: i32,
     /// Number of embedded layer groups.
     pub(crate) num_layer_groups: i32,
@@ -53,6 +79,12 @@ pub struct ScnSection {
     unk10: i32,
     offset_unk2: i32, // Points to 39 bytes of data
     offset_unk3: i32, // Points to 64 bytes of data
+
+    #[br(count = num_layer_groups)]
+    #[br(seek_before = SeekFrom::Current(offset_layer_groups as i64 - ScnSection::SIZE as i64))]
+    #[br(restore_position)]
+    #[br(dbg)]
+    pub layer_groups: Vec<ScnLayerGroup>,
 
     #[br(seek_before = SeekFrom::Current(offset_general as i64 - ScnSection::SIZE as i64))]
     #[br(restore_position)]
@@ -364,4 +396,20 @@ fn strings_from_offsets(offsets: &Vec<i32>) -> BinResult<Vec<String>> {
     }
 
     Ok(strings)
+}
+
+#[binrw::parser(reader, endian)]
+fn layers_from_offsets(offsets: &Vec<i32>) -> BinResult<Vec<Layer>> {
+    let base_offset = reader.stream_position()?;
+
+    let mut layers: Vec<Layer> = vec![];
+
+    for offset in offsets {
+        let layer_offset = *offset as u64;
+
+        reader.seek(SeekFrom::Start(base_offset + layer_offset))?;
+        layers.push(Layer::read(endian, reader).unwrap());
+    }
+
+    Ok(layers)
 }

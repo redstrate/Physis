@@ -3,9 +3,8 @@
 
 #![allow(unused_variables)] // just binrw things with br(temp)
 
-use std::io::{Cursor, Seek, SeekFrom};
+use std::io::{Read, Seek, SeekFrom};
 
-use crate::ByteSpan;
 use crate::common_file_operations::{read_bool_from, write_bool_as};
 use crate::string_heap::{HeapString, StringHeap};
 use binrw::{BinRead, BinReaderExt};
@@ -450,8 +449,8 @@ pub struct Layer {
 
 impl Layer {
     /// Read from `cursor` with `endianness`.
-    pub(crate) fn read(endianness: Endian, cursor: &mut Cursor<ByteSpan>) -> Option<Layer> {
-        let old_pos = cursor.position();
+    pub(crate) fn read<T: Read + Seek>(endianness: Endian, cursor: &mut T) -> Option<Layer> {
+        let old_pos = cursor.stream_position().unwrap();
 
         let string_heap = StringHeap::from(old_pos);
         let data_heap = StringHeap::from(old_pos);
