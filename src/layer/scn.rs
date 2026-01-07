@@ -22,10 +22,20 @@ pub(crate) fn write_scns(scns: &Vec<ScnSection>, string_heap: &mut StringHeap) -
 }
 
 #[binrw]
+#[br(import(string_heap: &StringHeap))]
+#[bw(import(string_heap: &mut StringHeap))]
 #[derive(Debug)]
 pub struct ScnLayerGroup {
+    #[br(temp)]
+    #[bw(ignore)]
+    heap_pointer: HeapPointer,
+
     pub layer_group_id: u32,
-    name_offset: u32, // TODO: read as string
+
+    #[br(args(heap_pointer, string_heap))]
+    #[bw(args(string_heap))]
+    pub name: HeapStringFromPointer,
+
     layer_offsets_start: i32,
     layer_offsets_count: i32,
 
@@ -80,10 +90,10 @@ pub struct ScnSection {
     offset_unk2: i32, // Points to 39 bytes of data
     offset_unk3: i32, // Points to 64 bytes of data
 
-    #[br(count = num_layer_groups)]
+    #[br(count = num_layer_groups, args { inner: (string_heap,) })]
     #[br(seek_before = SeekFrom::Current(offset_layer_groups as i64 - ScnSection::SIZE as i64))]
     #[br(restore_position)]
-    #[br(dbg)]
+    #[bw(ignore)] // TODO: support writing
     pub layer_groups: Vec<ScnLayerGroup>,
 
     #[br(seek_before = SeekFrom::Current(offset_general as i64 - ScnSection::SIZE as i64))]
