@@ -9,7 +9,7 @@ extern crate core;
 /// A continuous block of memory which is not owned, and comes either from an in-memory location or from a file.
 pub type ByteSpan<'a> = &'a [u8];
 
-/// Acontinuous block of memory which is owned.
+/// A continuous block of memory which is owned.
 pub type ByteBuffer = Vec<u8>;
 
 /// Parsing game repositories, such as "ffxiv", "ex1" and their version information.
