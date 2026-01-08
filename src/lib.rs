@@ -4,13 +4,8 @@
 #![doc = include_str!("../README.md")]
 #![allow(unused_assignments)] // Too many false positives caused by binrw
 
-extern crate core;
-
-/// A continuous block of memory which is not owned, and comes either from an in-memory location or from a file.
-pub type ByteSpan<'a> = &'a [u8];
-
-/// A continuous block of memory which is owned.
-pub type ByteBuffer = Vec<u8>;
+#[doc(hidden)]
+pub const PHYSIS_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 /// Parsing game repositories, such as "ffxiv", "ex1" and their version information.
 pub mod repository;
@@ -21,6 +16,7 @@ pub mod bootdata;
 /// SqPack file formats - including Db, Data and Index/Index2 files.
 pub mod sqpack;
 
+/// Implementation details for SqPack.
 mod compression;
 
 /// Types for model (`.mdl`) files.
@@ -35,8 +31,14 @@ pub mod exl;
 /// Dealing with equipment and its data.
 pub mod equipment;
 
-/// Common structures, enumerations and functions used by other modules.
-pub mod common;
+// NOTE: Should be brought up to top-level because these are the most used types.
+mod common;
+#[cfg(test)]
+pub(crate) use common::pass_random_invalid;
+pub use common::{
+    ByteBuffer, ByteSpan, Language, Platform, ReadableFile, Region, Version, WritableFile,
+    get_language_code, read_version,
+};
 
 /// Types for ZiPatch (`.patch`) files.
 pub mod patch;
@@ -74,11 +76,13 @@ pub mod savedata;
 /// Types for and writing the plaintext config (`.cfg`) files.
 pub mod cfg;
 
+/// Havok file parsing currently used for reading skeletons.
 mod havok;
 
 /// Types for pre-bone deform (`.pbd`) files.
 pub mod pbd;
 
+/// Algorithms used everywhere.
 mod crc;
 mod sha1;
 
@@ -88,14 +92,14 @@ pub mod layer;
 /// Types for terrain (`.tera`) files.
 pub mod tera;
 
+/// Implementation details for various file types.
 mod common_file_operations;
+
+/// Implementation details for EXDs.
 mod exd_file_operations;
 
 /// Types for word dictionary (`.dic`) files.
 pub mod dic;
-
-#[doc(hidden)]
-pub const PHYSIS_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 /// Types for UI layout definition (`.uld`) files.
 pub mod uld;
@@ -161,8 +165,10 @@ pub mod cutb;
 
 pub mod excel;
 
+/// Implementation detail for textures.
 mod bcn;
 
+// NOTE: Should be brought up to the top-level because it's a basic error type.
 mod error;
 pub use error::Error;
 
@@ -180,36 +186,3 @@ pub mod string_heap;
 
 /// SCN1 sections used in a few file types.
 pub mod scn;
-
-use crate::common::Platform;
-
-/// A file that can be parsed from its serialized byte form.
-///
-/// This should be implemented for all types readable from SqPack.
-pub trait ReadableFile: Sized {
-    /// Read an existing file.
-    fn from_existing(platform: Platform, buffer: ByteSpan) -> Option<Self>;
-}
-
-/// A file that can be written back to its serialized byte form.
-///
-/// This should be implemented for all types readable from SqPack, on a best-effort basis.
-pub trait WritableFile: Sized {
-    /// Writes data back to a buffer.
-    fn write_to_buffer(&self, platform: Platform) -> Option<ByteBuffer>;
-}
-
-/// Used for basic sanity checking tests in other modules.
-#[cfg(test)]
-fn pass_random_invalid<T: crate::ReadableFile>() {
-    let mut d = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    d.push("resources/tests");
-    d.push("random");
-
-    // Feeding it invalid data should not panic
-    // Note that we don't check the Option currently, because some types like Hwc return Some regardless.
-    T::from_existing(
-        Platform::Win32,
-        &std::fs::read(d).expect("Could not read random test file"),
-    );
-}

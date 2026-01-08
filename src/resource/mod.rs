@@ -104,7 +104,7 @@ pub trait Resource: Send + Sync + ClonableResource + 'static {
     /// ```should_panic
     /// # use physis::resource::{Resource, SqPackResource, SqPackRelease};
     /// # use std::io::Write;
-    /// # use physis::common::Platform;
+    /// # use physis::Platform;
     /// let mut game = SqPackResource::from_existing("SquareEnix/Final Fantasy XIV - A Realm Reborn/game");
     /// let data = game.read("exd/root.exl").unwrap();
     ///
@@ -120,7 +120,7 @@ pub trait Resource: Send + Sync + ClonableResource + 'static {
     /// # Example
     ///
     /// ```
-    /// # use physis::common::Platform;
+    /// # use physis::Platform;
     /// # use physis::resource::{Resource, SqPackResource, SqPackRelease};
     /// let mut game = SqPackResource::from_existing("SquareEnix/Final Fantasy XIV - A Realm Reborn/game");
     /// if game.exists("exd/cid.exl") {

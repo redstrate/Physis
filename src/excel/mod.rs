@@ -13,7 +13,7 @@
 //!
 //! ```no_run
 //! # use physis::resource::{UnpackedResource, ResourceResolver};
-//! # use physis::common::Language;
+//! # use physis::Language;
 //! # use physis::Error;
 //! # let resource = UnpackedResource::from_existing(".");
 //! # let mut resolver = ResourceResolver::new();

@@ -162,6 +162,43 @@ impl Ord for Version<'_> {
     }
 }
 
+/// A file that can be parsed from its serialized byte form.
+///
+/// This should be implemented for all types readable from SqPack.
+pub trait ReadableFile: Sized {
+    /// Read an existing file.
+    fn from_existing(platform: Platform, buffer: ByteSpan) -> Option<Self>;
+}
+
+/// A file that can be written back to its serialized byte form.
+///
+/// This should be implemented for all types readable from SqPack, on a best-effort basis.
+pub trait WritableFile: Sized {
+    /// Writes data back to a buffer.
+    fn write_to_buffer(&self, platform: Platform) -> Option<ByteBuffer>;
+}
+
+/// Used for basic sanity checking tests in other modules.
+#[cfg(test)]
+pub fn pass_random_invalid<T: ReadableFile>() {
+    let mut d = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    d.push("resources/tests");
+    d.push("random");
+
+    // Feeding it invalid data should not panic
+    // Note that we don't check the Option currently, because some types like Hwc return Some regardless.
+    T::from_existing(
+        Platform::Win32,
+        &std::fs::read(d).expect("Could not read random test file"),
+    );
+}
+
+/// A continuous block of memory which is not owned, and comes either from an in-memory location or from a file.
+pub type ByteSpan<'a> = &'a [u8];
+
+/// A continuous block of memory which is owned.
+pub type ByteBuffer = Vec<u8>;
+
 #[cfg(test)]
 mod tests {
     use super::*;

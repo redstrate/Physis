@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2023 Joshua Goins <josh@redstrate.com>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-use crate::{ByteBuffer, ByteSpan, ReadableFile, WritableFile, common::Platform};
+use crate::{ByteBuffer, ByteSpan, Platform, ReadableFile, WritableFile};
 use std::io::{BufRead, BufReader, BufWriter, Cursor, Write};
 
 /// Excel list file, usually with the `.exl` file extension.
@@ -73,7 +73,7 @@ impl EXL {
     /// # use std::fs::read;
     /// # use std::path::PathBuf;
     /// # use physis::exl::EXL;
-    /// # use physis::common::Platform;
+    /// # use physis::Platform;
     /// # use physis::ReadableFile;
     /// # let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     /// # d.push("resources/tests");

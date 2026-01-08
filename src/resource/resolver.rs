@@ -2,8 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 use crate::{
-    ByteBuffer, Error, ReadableFile,
-    common::Language,
+    ByteBuffer, Error, Language, ReadableFile,
     excel::Sheet,
     exh::EXH,
     resource::{
@@ -22,7 +21,7 @@ use super::Resource;
 ///
 /// ```
 /// # use physis::resource::{ResourceResolver, SqPackResource, UnpackedResource, SqPackRelease};
-/// # use physis::common::Platform;
+/// # use physis::Platform;
 /// let sqpack_source = SqPackResource::from_existing("SquareEnix/Final Fantasy XIV - A Realm Reborn/game");
 /// let file_source = UnpackedResource::from_existing("unpacked/");
 /// let mut resolver = ResourceResolver::new();
@@ -66,7 +65,7 @@ impl ResourceResolver {
     /// # use physis::resource::{Resource, SqPackResource, SqPackRelease, ResourceResolver};
     /// # use physis::exl::EXL;
     /// # use std::io::Write;
-    /// # use physis::common::Platform;
+    /// # use physis::Platform;
     /// let mut resolver = ResourceResolver::new();
     /// resolver.add_source(SqPackResource::from_existing("SquareEnix/Final Fantasy XIV - A Realm Reborn/game"));
     ///
