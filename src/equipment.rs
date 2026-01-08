@@ -14,25 +14,25 @@ pub enum Slot {
     MainHand,
     /// The off-hand weapon slot.
     OffHand,
-    /// The head slot. Shorthand is "met".
+    /// The head slot.
     Head,
-    /// The hands slot. Shorthand is "glv".
+    /// The hands slot.
     Hands,
-    /// The legs slot. Shorthand is "dwn".
+    /// The legs slot.
     Legs,
-    /// The feet slot. Shorthand is "sho".
+    /// The feet slot.
     Feet,
-    /// The body or chest slot. Shorthand is "top".
+    /// The body or chest slot.
     Body,
-    /// The earrings slot. Shorthand is "ear".
+    /// The earrings slot.
     Earring,
-    /// The neck slot. Shorthand is "nek".
+    /// The neck slot.
     Neck,
-    /// The wrists slot. Shorthand is "wrs".
+    /// The wrists slot.
     Wrists,
-    /// The right ring slot. Shorthand is "ril".
+    /// The right ring slot.
     RingLeft,
-    /// The left ring slot. Shorthand is "rir".
+    /// The left ring slot.
     RingRight,
 }
 
