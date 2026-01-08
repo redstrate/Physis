@@ -10,6 +10,7 @@ use super::{ColorHDRI, read_bool_from};
 #[binrw]
 #[brw(repr = i32)]
 #[derive(Debug, PartialEq)]
+#[repr(C)]
 pub enum LightType {
     None = 0x0,
     Directional = 0x1,
@@ -23,6 +24,7 @@ pub enum LightType {
 #[binrw]
 #[brw(repr = i32)]
 #[derive(Debug, PartialEq)]
+#[repr(C)]
 pub enum PointLightType {
     Sphere = 0x0,
     Hemisphere = 0x1,
