@@ -296,10 +296,11 @@ impl ScnTimeline {
 }
 
 #[binrw]
-#[derive(Debug)]
+#[derive(Debug, Clone)]
+#[repr(C)]
 pub struct ScnTimelineInstance {
-    /// Points to a [crate::tmb::Tmac] node.
-    pub tmac_id: i32,
+    /// Points to a [crate::tmb::Tmac] node with this `time`.
+    pub tmac_time: i32,
     /// Points to an instance object ID in the embedded layer groups.
     pub instance_id: i32,
 }

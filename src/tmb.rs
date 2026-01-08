@@ -59,7 +59,8 @@ pub(crate) fn read_timeline_list_2(struct_offset: i64) -> BinResult<Vec<TmfcData
 }
 
 #[binrw]
-#[derive(Debug)]
+#[derive(Debug, Clone)]
+#[repr(C)]
 pub struct Tmdh {
     unk1: u16,
     unk2: u16,
@@ -86,7 +87,7 @@ pub struct Tmac {
     unk2: u32,
     /// List of Tmtr nodes associated with this actor.
     #[br(parse_with = read_timeline_list, args(12))]
-    pub list: Vec<u16>,
+    pub tmtr_ids: Vec<u16>,
 }
 
 impl Tmac {
@@ -98,17 +99,18 @@ impl Tmac {
 #[derive(Debug)]
 pub struct Tmtr {
     pub id: u16,
-    pub time: u16,
+    pub time: u16, // TODO: is this really the correct name?
     /// List of IDs to CXXX nodes.
     #[br(parse_with = read_timeline_list, args(4))]
-    pub animations: Vec<u16>,
+    pub animation_ids: Vec<u16>,
     // TODO: read temp ids
     unk2: u32,
 }
 
 /// Model animation.
 #[binrw]
-#[derive(Debug)]
+#[derive(Debug, Clone)]
+#[repr(C)]
 pub struct C013 {
     pub id: u16,
     pub time: u16,
@@ -126,7 +128,7 @@ pub struct Tmfc {
     pub id: u16,
     pub time: u16,
     #[br(parse_with = read_timeline_list_2, args(4))]
-    pub list: Vec<TmfcData>,
+    pub data: Vec<TmfcData>,
     unk1: i32,
     end_offset: i32,
     unk2: i32,
@@ -134,10 +136,28 @@ pub struct Tmfc {
 
 #[binrw]
 #[derive(Debug)]
+pub enum Attribute {
+    #[brw(magic = 64u8)]
+    PositionX,
+    #[brw(magic = 65u8)]
+    PositionY,
+    #[brw(magic = 66u8)]
+    PositionZ,
+    #[brw(magic = 67u8)]
+    RotationX,
+    #[brw(magic = 68u8)]
+    RotationY,
+    #[brw(magic = 69u8)]
+    RotationZ,
+    Unknown(u8),
+}
+
+#[binrw]
+#[derive(Debug)]
 pub struct TmfcData {
     unk1: u32,
 
-    unk2: u8,
+    pub attribute: Attribute,
     unk3: u8,
     unk4: u8,
     unk5: u8,
@@ -153,12 +173,13 @@ pub struct TmfcData {
 }
 
 #[binrw]
-#[derive(Debug)]
+#[repr(C)]
+#[derive(Debug, Clone)]
 pub struct TmfcRow {
     unk1: u32,
     pub time: f32,
-    unk2: f32,
-    unk3: f32,
+    velocity: f32, // According to vfxedit, but I have no idea
+    pub value: f32,
     unk4: f32,
     unk5: f32,
 }
