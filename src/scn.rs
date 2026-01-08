@@ -128,7 +128,7 @@ pub struct ScnSection {
 
     #[br(seek_before = SeekFrom::Current(offset_unk1 as i64 - ScnSection::SIZE as i64))]
     #[br(restore_position)]
-    unk1: ScnUnknown1Section,
+    pub action_descriptors: ScnSGActionDescriptors,
 
     #[br(seek_before = SeekFrom::Current(offset_unk3 as i64 - ScnSection::SIZE as i64))]
     #[br(restore_position)]
@@ -305,11 +305,63 @@ pub struct ScnTimelineInstance {
     pub instance_id: i32,
 }
 
-// TODO: definitely not correct
+// TODO: header is definitely not correct
 #[binrw]
 #[derive(Debug)]
-pub struct ScnUnknown1Section {
-    unk: [u8; 5],
+pub struct ScnSGActionDescriptors {
+    unk: [u8; 16],
+    timeline_offset: i32,
+    unk2: [u8; 20],
+    count: i32, // TODO: unsure
+    unk3: [u8; 4],
+    #[br(count = count)]
+    pub descriptors: Vec<ScnSGActionControllerDescriptor>,
+}
+
+#[binrw]
+#[repr(C)]
+#[derive(Debug, Clone)]
+pub enum ScnSGActionControllerDescriptor {
+    #[brw(magic = 2i32)]
+    Rotation(ScnRotationActionDescription),
+    Unknown(i32),
+}
+
+#[binrw]
+#[repr(C)]
+#[derive(Debug, Clone, Copy)]
+pub enum RotationAxis {
+    #[brw(magic = 0i32)]
+    X,
+    #[brw(magic = 1i32)]
+    Y,
+    #[brw(magic = 2i32)]
+    Z,
+}
+
+#[binrw]
+#[repr(C)]
+#[derive(Debug, Clone)]
+pub struct ScnRotationActionDescription {
+    check_if_1: u8, // client checks if this isn't 0, but im unsure what is after this
+    unk: [u8; 11],  // seems to be empty, but not confirmed yet
+    /// Instance ID of the BG object to animate.
+    pub bg_part_id: u8,
+    unk2: [u8; 3], // seems to be empty, but not confirmed yet
+    pub axis: RotationAxis,
+    // TODO: figure out the units
+    pub duration: f32,
+    /// How many degrees to add during the `duration`.
+    pub value: f32,
+    pub vfx_child1_id: u8,
+    #[br(map = read_bool_from::<u8>)]
+    #[bw(map = write_bool_as::<u8>)]
+    pub vfx_has_child1: bool,
+    unk_fields: [u8; 4], // read individually as bytes, but i don't know what they do,
+    pub vfx_child_2_id: u8,
+    #[br(map = read_bool_from::<u8>)]
+    #[bw(map = write_bool_as::<u8>)]
+    pub vfx_has_child2: bool,
 }
 
 // TODO: definitely not correct
