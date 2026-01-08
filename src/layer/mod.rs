@@ -55,13 +55,6 @@ pub use range::{
     PopRangeInstanceObject, PopType, PrefetchRangeInstanceObject,
 };
 
-mod scn;
-pub(crate) use scn::write_scns;
-pub use scn::{
-    ScnEnvSpace, ScnFilter, ScnFiltersSection, ScnGeneralSection, ScnLayerGroup, ScnSection,
-    ScnTimeline, ScnTimelineInstance, ScnTimelinesSection,
-};
-
 mod shared_group;
 pub use shared_group::{
     ColourState, DoorState, RotationState, SharedGroupInstance, TransformState,

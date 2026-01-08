@@ -4,7 +4,7 @@
 use std::io::Cursor;
 
 use crate::common::Platform;
-use crate::layer::ScnSection;
+use crate::scn::ScnSection;
 use crate::string_heap::StringHeap;
 use crate::{ByteSpan, ReadableFile};
 use binrw::BinRead;

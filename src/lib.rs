@@ -178,6 +178,9 @@ pub mod lgb;
 /// Implementation detail for some types.
 pub mod string_heap;
 
+/// SCN1 sections used in a few file types.
+pub mod scn;
+
 use crate::common::Platform;
 
 /// A file that can be parsed from its serialized byte form.
