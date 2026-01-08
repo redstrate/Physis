@@ -4,8 +4,6 @@
 use std::io::Cursor;
 
 use crate::common::Platform;
-use crate::common_file_operations::read_short_identifier;
-use crate::common_file_operations::write_short_identifier;
 use crate::layer::ScnSection;
 use crate::string_heap::StringHeap;
 use crate::{ByteSpan, ReadableFile};
@@ -18,11 +16,9 @@ use binrw::binrw;
 #[binrw]
 #[br(import(string_heap: &StringHeap))]
 #[bw(import(string_heap: &mut StringHeap))]
+#[brw(magic = b"SGB1")]
 #[derive(Debug)]
 pub struct Sgb {
-    #[bw(write_with = write_short_identifier)]
-    #[br(parse_with = read_short_identifier)]
-    pub file_id: String,
     file_size: i32,
     total_chunk_count: i32,
     #[br(count = total_chunk_count, args { inner: (string_heap,) })]

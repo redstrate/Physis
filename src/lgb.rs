@@ -12,20 +12,18 @@ use crate::{
     string_heap::{HeapString, StringHeap},
 };
 
-/// "LGB1"
-pub const LGB1_ID: u32 = u32::from_le_bytes(*b"LGB1");
-/// "LGP1"
-pub const LGP1_ID: u32 = u32::from_le_bytes(*b"LGP1");
-
 #[binrw]
 #[derive(Debug)]
 #[allow(dead_code)] // most of the fields are unused at the moment
+#[brw(magic = b"LGB1")]
 struct LgbHeader {
-    // Example: "LGB1"
-    file_id: u32,
     // File size *including* this header
     file_size: i32,
     total_chunk_count: i32,
+}
+
+impl LgbHeader {
+    pub const SIZE: usize = 0x0C;
 }
 
 #[binrw]
@@ -33,8 +31,8 @@ struct LgbHeader {
 #[br(import(string_heap: &StringHeap), stream = r)]
 #[bw(import(string_heap: &mut StringHeap))]
 #[allow(dead_code)] // most of the fields are unused at the moment
+#[brw(magic = b"LGP1")]
 struct LayerChunkHeader {
-    chunk_id: u32,
     chunk_size: i32,
     layer_group_id: i32,
     #[brw(args(string_heap))]
@@ -49,8 +47,6 @@ impl LayerChunkHeader {
 
 #[derive(Debug)]
 pub struct LayerChunk {
-    // Example: "LGP1"
-    pub chunk_id: u32,
     pub layer_group_id: i32,
     pub name: String,
     pub layers: Vec<Layer>,
@@ -61,7 +57,6 @@ pub struct LayerChunk {
 /// Contains information about where game objects are placed.
 #[derive(Debug)]
 pub struct Lgb {
-    pub file_id: u32,
     pub chunks: Vec<LayerChunk>,
 }
 
@@ -70,7 +65,7 @@ impl ReadableFile for Lgb {
         let mut cursor = Cursor::new(buffer);
         let endianness = platform.endianness();
 
-        let file_header = LgbHeader::read_options(&mut cursor, endianness, ()).unwrap();
+        let file_header = LgbHeader::read_options(&mut cursor, endianness, ()).ok()?;
         if file_header.file_size <= 0 || file_header.total_chunk_count <= 0 {
             return None;
         }
@@ -81,10 +76,7 @@ impl ReadableFile for Lgb {
         let chunk_header =
             LayerChunkHeader::read_options(&mut cursor, endianness, (&chunk_string_heap,)).unwrap();
         if chunk_header.chunk_size <= 0 {
-            return Some(Lgb {
-                file_id: file_header.file_id,
-                chunks: Vec::new(),
-            });
+            return Some(Lgb { chunks: Vec::new() });
         }
 
         let old_pos = cursor.position();
@@ -106,14 +98,12 @@ impl ReadableFile for Lgb {
         }
 
         let layer_chunk = LayerChunk {
-            chunk_id: chunk_header.chunk_id,
             layer_group_id: chunk_header.layer_group_id,
             name: chunk_header.name.value,
             layers,
         };
 
         Some(Lgb {
-            file_id: file_header.file_id,
             chunks: vec![layer_chunk],
         })
     }
@@ -128,7 +118,7 @@ impl WritableFile for Lgb {
 
             // skip header, will be writing it later
             cursor
-                .seek(SeekFrom::Start(std::mem::size_of::<LgbHeader>() as u64))
+                .seek(SeekFrom::Start(LgbHeader::SIZE as u64))
                 .unwrap();
 
             // base offset for deferred data
@@ -205,7 +195,6 @@ impl WritableFile for Lgb {
 
             // TODO: support multiple layer chunks
             let layer_chunk = LayerChunkHeader {
-                chunk_id: self.chunks[0].chunk_id,
                 chunk_size: 24, // double lol
                 layer_group_id: self.chunks[0].layer_group_id,
                 name: HeapString {
@@ -257,7 +246,6 @@ impl WritableFile for Lgb {
             // write the header, now that we now the file size
             cursor.seek(SeekFrom::Start(0)).ok()?;
             let lgb_header = LgbHeader {
-                file_id: self.file_id,
                 file_size,
                 total_chunk_count: self.chunks.len() as i32,
             };
@@ -292,11 +280,9 @@ mod tests {
         d.push("empty_planlive.lgb");
 
         let lgb = Lgb::from_existing(Platform::Win32, &read(d).unwrap()).unwrap();
-        assert_eq!(lgb.file_id, LGB1_ID);
         assert_eq!(lgb.chunks.len(), 1);
 
         let chunk = &lgb.chunks[0];
-        assert_eq!(chunk.chunk_id, LGP1_ID);
         assert_eq!(chunk.layer_group_id, 261);
         assert_eq!(chunk.name, "PlanLive".to_string());
         assert!(chunk.layers.is_empty());
@@ -311,9 +297,7 @@ mod tests {
         let good_lgb_bytes = read(d).unwrap();
 
         let lgb = Lgb {
-            file_id: LGB1_ID,
             chunks: vec![LayerChunk {
-                chunk_id: LGP1_ID,
                 layer_group_id: 261,
                 name: "PlanLive".to_string(),
                 layers: Vec::new(),
@@ -332,11 +316,9 @@ mod tests {
         d.push("simple_planevent.lgb");
 
         let lgb = Lgb::from_existing(Platform::Win32, &read(d).unwrap()).unwrap();
-        assert_eq!(lgb.file_id, LGB1_ID);
         assert_eq!(lgb.chunks.len(), 1);
 
         let chunk = &lgb.chunks[0];
-        assert_eq!(chunk.chunk_id, LGP1_ID);
         assert_eq!(chunk.layer_group_id, 260);
         assert_eq!(chunk.name, "PlanEvent".to_string());
         assert_eq!(
@@ -383,9 +365,7 @@ mod tests {
         let good_lgb_bytes = read(d).unwrap();
 
         let lgb = Lgb {
-            file_id: LGB1_ID,
             chunks: vec![LayerChunk {
-                chunk_id: LGP1_ID,
                 layer_group_id: 260,
                 name: "PlanEvent".to_string(),
                 layers: vec![Layer {
