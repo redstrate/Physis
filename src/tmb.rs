@@ -22,7 +22,7 @@ pub(crate) fn read_timeline_list(struct_offset: i64) -> BinResult<Vec<u16>> {
 
     let pos = reader.stream_position()?;
 
-    reader.seek(SeekFrom::Current(offset as i64 - 8 as i64 - struct_offset))?;
+    reader.seek(SeekFrom::Current(offset as i64 - 8_i64 - struct_offset))?;
 
     let list =
         reader.read_type_args(endian, VecArgs::builder().count(count as usize).finalize())?;
@@ -39,7 +39,7 @@ pub(crate) fn read_timeline_list_2(struct_offset: i64) -> BinResult<Vec<TmfcData
 
     let pos = reader.stream_position()?;
 
-    reader.seek(SeekFrom::Current(offset as i64 - 4 as i64 - struct_offset))?;
+    reader.seek(SeekFrom::Current(offset as i64 - 4_i64 - struct_offset))?;
 
     let mut list: Vec<TmfcData> =
         reader.read_type_args(endian, VecArgs::builder().count(count as usize).finalize())?;

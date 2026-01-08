@@ -189,7 +189,7 @@ pub enum LayerEntryData {
     LayLight(LightInstanceObject),
     /// Visual effect.
     #[br(pre_assert(*magic == LayerEntryType::Vfx))]
-    Vfx(VFXInstanceObject),
+    Vfx(#[brw(args(string_heap))] VFXInstanceObject),
     /// Unknown purpose.
     #[br(pre_assert(*magic == LayerEntryType::PositionMarker))]
     PositionMarker(PositionMarkerInstanceObject),
@@ -198,7 +198,7 @@ pub enum LayerEntryData {
     SharedGroup(#[brw(args(string_heap))] SharedGroupInstance),
     /// Unknown purpose.
     #[br(pre_assert(*magic == LayerEntryType::Sound))]
-    Sound(SoundInstanceObject),
+    Sound(#[brw(args(string_heap))] SoundInstanceObject),
     /// Event NPC.
     #[br(pre_assert(*magic == LayerEntryType::EventNPC))]
     EventNPC(ENPCInstanceObject),
