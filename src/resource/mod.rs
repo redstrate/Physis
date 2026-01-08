@@ -44,7 +44,7 @@
 //! }
 //! ```
 //!
-//! Due of limitations in Rust traits, helpers like the ones shown above are implemented automatically. But you can re-use the generic ones like [generic_parsed] and wrap them in your type.
+//! Due of limitations in Rust traits, helpers like the ones shown above can't be implemented automatically. But you can re-use the generic ones like [generic_parsed] and wrap them in your type.
 
 mod resolver;
 pub use resolver::ResourceResolver;
