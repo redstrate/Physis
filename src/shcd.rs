@@ -35,13 +35,13 @@ pub struct SHCD {
     #[bw(pad_size_to = 4)]
     #[bw(map = |x : &String | x.as_bytes())]
     #[br(map = | x: Vec<u8> | String::from_utf8(x).unwrap().trim_matches(char::from(0)).to_string())]
-    format: String,
+    pub format: String,
 
     file_length: u32,
     shader_offset: u32,
     parameter_offset: u32,
     #[brw(pad_size_to = 4)]
-    stage: ShaderStage,
+    pub stage: ShaderStage,
     shader_data_length: u32,
 
     // TODO: there's other interesting data in here
