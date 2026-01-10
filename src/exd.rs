@@ -101,14 +101,12 @@ impl EXD {
         language: Language,
         page: &ExcelDataPagination,
     ) -> String {
-        use crate::common::get_language_code;
-
         match language {
             Language::None => {
                 format!("{name}_{}.exd", page.start_id)
             }
             lang => {
-                format!("{name}_{}_{}.exd", page.start_id, get_language_code(&lang))
+                format!("{name}_{}_{}.exd", page.start_id, lang.shortname())
             }
         }
     }

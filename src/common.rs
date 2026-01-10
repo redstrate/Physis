@@ -30,19 +30,21 @@ pub enum Language {
     Korean,
 }
 
-/// Returns the shorthand language code for `language`.
-///
-/// For example, English becomes "en".
-pub fn get_language_code(lang: &Language) -> &'static str {
-    match &lang {
-        Language::None => "",
-        Language::Japanese => "ja",
-        Language::English => "en",
-        Language::German => "de",
-        Language::French => "fr",
-        Language::ChineseSimplified => "chs",
-        Language::ChineseTraditional => "cht",
-        Language::Korean => "ko",
+impl Language {
+    /// Returns the shorthand language code for `language`.
+    ///
+    /// For example, English becomes "en".
+    pub fn shortname(&self) -> &'static str {
+        match self {
+            Language::None => "",
+            Language::Japanese => "ja",
+            Language::English => "en",
+            Language::German => "de",
+            Language::French => "fr",
+            Language::ChineseSimplified => "chs",
+            Language::ChineseTraditional => "cht",
+            Language::Korean => "ko",
+        }
     }
 }
 
