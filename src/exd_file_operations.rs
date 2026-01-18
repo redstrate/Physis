@@ -136,8 +136,7 @@ impl EXD {
                 Some(Field::String(string))
             }
             ColumnDataType::Bool => {
-                // FIXME: i believe Bool is int8?
-                let bool_data: i32 = Self::read_data_raw(cursor).unwrap();
+                let bool_data: i8 = Self::read_data_raw(cursor).unwrap();
 
                 Some(Field::Bool(bool_data == 1))
             }
