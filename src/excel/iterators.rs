@@ -28,24 +28,25 @@ impl<'a> Iterator for SheetIterator<'a> {
     type Item = (u32, &'a [(u16, Row)]);
 
     fn next(&mut self) -> Option<Self::Item> {
+        if let Some(iterator) = &mut self.page_iterator
+            && let Some(item) = iterator.next()
+        {
+            return Some(item);
+        }
+
         let page_index = self.page_index;
+        self.page_index += 1;
+
+        if page_index >= self.sheet.pages.len() as u32 {
+            return None;
+        }
+
+        self.page_iterator = Some(self.sheet.pages[page_index as usize].into_iter());
 
         if let Some(iterator) = &mut self.page_iterator {
             iterator.next()
         } else {
-            self.page_index += 1;
-
-            if page_index > self.sheet.pages.len() as u32 {
-                return None;
-            }
-
-            self.page_iterator = Some(self.sheet.pages[page_index as usize].into_iter());
-
-            if let Some(iterator) = &mut self.page_iterator {
-                iterator.next()
-            } else {
-                None
-            }
+            None
         }
     }
 }
@@ -90,7 +91,7 @@ impl<'a> Iterator for PageIterator<'a> {
         let row_index = self.row_index;
         self.row_index += 1;
 
-        if row_index as usize > self.page.row_count() {
+        if row_index as usize >= self.page.row_count() {
             return None;
         }
 
@@ -116,7 +117,7 @@ impl<'a> Iterator for RowIterator<'a> {
         let row_index = self.row_index;
         self.row_index += 1;
 
-        if row_index as usize > self.page.row_count() {
+        if row_index as usize >= self.page.row_count() {
             return None;
         }
 
@@ -138,9 +139,8 @@ mod tests {
 
     use super::*;
 
-    // super simple EXD to read, it's just a few rows of only int8's
     #[test]
-    fn test_read() {
+    fn test_simple_iterators() {
         // exh
         let exh;
         {
@@ -298,5 +298,39 @@ mod tests {
                 )
             ]
         );
+    }
+
+    #[test]
+    fn test_multiple_pages() {
+        // exh
+        let exh;
+        {
+            let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+            d.push("resources/tests");
+            d.push("gcshop.exh");
+
+            exh = EXH::from_existing(Platform::Win32, &read(d).unwrap()).unwrap();
+        }
+
+        // exd
+        let exd;
+        {
+            let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+            d.push("resources/tests");
+            d.push("gcshop_1441792.exd");
+
+            exd = EXD::from_existing(Platform::Win32, &read(d).unwrap()).unwrap();
+        }
+
+        let page = Page::from_exd(&exh, exd);
+
+        let excel = Sheet {
+            exh,
+            pages: vec![page.clone(), page],
+        };
+
+        // page behavior
+        let expected_iterator: Vec<(u32, &[(u16, Row)])> = excel.into_iter().collect();
+        assert_eq!(expected_iterator.len(), 8);
     }
 }
