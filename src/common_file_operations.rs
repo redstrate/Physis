@@ -4,7 +4,7 @@
 use binrw::{BinReaderExt, BinResult, binread};
 use half::f16;
 use std::ffi::CString;
-use std::io::SeekFrom;
+use std::io::{Read, SeekFrom};
 
 pub(crate) fn read_bool_from<T: std::convert::From<u8> + std::cmp::PartialEq>(x: T) -> bool {
     x == T::from(1u8)
@@ -12,6 +12,28 @@ pub(crate) fn read_bool_from<T: std::convert::From<u8> + std::cmp::PartialEq>(x:
 
 pub(crate) fn write_bool_as<T: std::convert::From<u8>>(x: &bool) -> T {
     if *x { T::from(1u8) } else { T::from(0u8) }
+}
+
+/// Read a null-terminated UTF-8 string from a reader at its current position.
+pub(crate) fn read_null_terminated_utf8<R: Read>(reader: &mut R) -> String {
+    let mut bytes = Vec::new();
+    let mut buf = [0u8; 1];
+    while reader.read_exact(&mut buf).is_ok() && buf[0] != 0 {
+        bytes.push(buf[0]);
+    }
+    String::from_utf8(bytes).unwrap_or_default()
+}
+
+/// Read a null-terminated UTF-8 string from a byte slice starting at `offset`.
+/// Returns the decoded string and the offset immediately after the null terminator.
+pub(crate) fn null_terminated_utf8(data: &[u8], offset: usize) -> (String, usize) {
+    let end = data[offset..]
+        .iter()
+        .position(|&b| b == 0)
+        .map(|p| p + offset)
+        .unwrap_or(data.len());
+    let s = String::from_utf8(data[offset..end].to_vec()).unwrap_or_default();
+    (s, end + 1)
 }
 
 pub(crate) fn read_string(byte_stream: Vec<u8>) -> String {
@@ -37,18 +59,8 @@ pub(crate) fn strings_parser(
     let mut strings: Vec<String> = vec![];
 
     for offset in strings_offset {
-        let string_offset = base_offset + *offset as u64;
-
-        let mut string = String::new();
-
-        reader.seek(SeekFrom::Start(string_offset))?;
-        let mut next_char = reader.read_le::<u8>().unwrap() as char;
-        while next_char != '\0' {
-            string.push(next_char);
-            next_char = reader.read_le::<u8>().unwrap() as char;
-        }
-
-        strings.push(string);
+        reader.seek(SeekFrom::Start(base_offset + *offset as u64))?;
+        strings.push(read_null_terminated_utf8(reader));
     }
 
     Ok(strings)
@@ -56,14 +68,7 @@ pub(crate) fn strings_parser(
 
 #[binrw::parser(reader)]
 pub(crate) fn read_string_until_null() -> BinResult<String> {
-    let mut string = String::new();
-
-    let mut next_char = reader.read_le::<u8>().unwrap() as char;
-    while next_char != '\0' {
-        string.push(next_char);
-        next_char = reader.read_le::<u8>().unwrap() as char;
-    }
-    Ok(string)
+    Ok(read_null_terminated_utf8(reader))
 }
 
 fn read_half1(data: [u16; 1]) -> Half1 {
@@ -183,5 +188,74 @@ mod tests {
             crate::common_file_operations::get_string_len(&"FOO".to_string()),
             4
         );
+    }
+
+    #[test]
+    fn read_null_terminated_utf8_ascii() {
+        let data = b"hello\0rest";
+        let mut cursor = std::io::Cursor::new(&data[..]);
+        assert_eq!(read_null_terminated_utf8(&mut cursor), "hello");
+        // cursor should be positioned right after the null byte
+        assert_eq!(cursor.position(), 6);
+    }
+
+    #[test]
+    fn read_null_terminated_utf8_chinese() {
+        // "你好" in UTF-8: [0xE4,0xBD,0xA0, 0xE5,0xA5,0xBD] + null
+        let data = b"\xe4\xbd\xa0\xe5\xa5\xbd\0";
+        let mut cursor = std::io::Cursor::new(&data[..]);
+        assert_eq!(read_null_terminated_utf8(&mut cursor), "你好");
+    }
+
+    #[test]
+    fn read_null_terminated_utf8_empty() {
+        let data = b"\0trailing";
+        let mut cursor = std::io::Cursor::new(&data[..]);
+        assert_eq!(read_null_terminated_utf8(&mut cursor), "");
+    }
+
+    #[test]
+    fn read_null_terminated_utf8_invalid_fallback() {
+        // Invalid UTF-8 sequence: 0xFF is never valid in UTF-8
+        let data: &[u8] = &[0xFF, 0xFE, 0x00];
+        let mut cursor = std::io::Cursor::new(data);
+        assert_eq!(read_null_terminated_utf8(&mut cursor), "");
+    }
+
+    #[test]
+    fn null_terminated_utf8_ascii() {
+        let data = b"foo\0bar\0";
+        let (s, next) = null_terminated_utf8(data, 0);
+        assert_eq!(s, "foo");
+        assert_eq!(next, 4);
+        let (s2, next2) = null_terminated_utf8(data, next);
+        assert_eq!(s2, "bar");
+        assert_eq!(next2, 8);
+    }
+
+    #[test]
+    fn null_terminated_utf8_chinese() {
+        // "装备" in UTF-8: [0xE8,0xA3,0x85, 0xE5,0xA4,0x87] + null
+        let data = b"\xe8\xa3\x85\xe5\xa4\x87\0";
+        let (s, _) = null_terminated_utf8(data, 0);
+        assert_eq!(s, "装备");
+    }
+
+    #[test]
+    fn null_terminated_utf8_at_offset() {
+        let data = b"\0hello\0world\0";
+        let (s, next) = null_terminated_utf8(data, 1);
+        assert_eq!(s, "hello");
+        assert_eq!(next, 7);
+        let (s2, _) = null_terminated_utf8(data, next);
+        assert_eq!(s2, "world");
+    }
+
+    #[test]
+    fn null_terminated_utf8_empty_at_offset() {
+        let data = b"a\0\0b\0";
+        let (s, next) = null_terminated_utf8(data, 2);
+        assert_eq!(s, "");
+        assert_eq!(next, 3);
     }
 }

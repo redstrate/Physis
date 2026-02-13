@@ -136,7 +136,9 @@ impl Dictionary {
             }
 
             let chara = Dictionary::index_to_rune(&lut, id as u32);
-            self.dump_dict_node(&mut result, *v as i32, String::from(chara as u8 as char))
+            if let Some(c) = char::from_u32(chara as u32) {
+                self.dump_dict_node(&mut result, *v as i32, String::from(c))
+            }
         }
 
         Some(result)
