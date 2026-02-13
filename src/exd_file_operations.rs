@@ -8,6 +8,8 @@ use std::{
 
 use binrw::{BinRead, BinWrite, Endian};
 
+use crate::common_file_operations::read_null_terminated_utf8;
+
 use crate::{
     excel::{Field, Row},
     exd::EXD,
@@ -125,15 +127,7 @@ impl EXD {
                     ))
                     .ok()?;
 
-                let mut string = String::new();
-
-                let mut byte: u8 = Self::read_data_raw(cursor).unwrap();
-                while byte != 0 {
-                    string.push(byte as char);
-                    byte = Self::read_data_raw(cursor).unwrap();
-                }
-
-                Some(Field::String(string))
+                Some(Field::String(read_null_terminated_utf8(cursor)))
             }
             ColumnDataType::Bool => {
                 let bool_data: i8 = Self::read_data_raw(cursor).unwrap();

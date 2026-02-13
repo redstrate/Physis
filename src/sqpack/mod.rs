@@ -6,7 +6,7 @@ use std::io::{Read, Seek, SeekFrom, Write};
 use binrw::{BinRead, BinWrite, Endian, binrw};
 use data::{BlockHeader, CompressionMode};
 
-use crate::common::{Platform, Region};
+use crate::common::Platform;
 use crate::compression::no_header_decompress;
 
 mod data;

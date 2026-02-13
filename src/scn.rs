@@ -3,10 +3,10 @@
 
 use std::io::SeekFrom;
 
-use binrw::{BinReaderExt, BinResult, BinWrite, binrw};
+use binrw::{BinResult, BinWrite, binrw};
 
 use crate::{
-    common_file_operations::{read_bool_from, write_bool_as},
+    common_file_operations::{read_bool_from, read_null_terminated_utf8, write_bool_as},
     layer::Layer,
     string_heap::{HeapPointer, HeapStringFromPointer, StringHeap},
     tmb::Tmb,
@@ -438,16 +438,8 @@ fn strings_from_offsets(offsets: &Vec<i32>) -> BinResult<Vec<String>> {
     for offset in offsets {
         let string_offset = *offset as u64;
 
-        let mut string = String::new();
-
         reader.seek(SeekFrom::Start(base_offset + string_offset))?;
-        let mut next_char = reader.read_le::<u8>().unwrap() as char;
-        while next_char != '\0' {
-            string.push(next_char);
-            next_char = reader.read_le::<u8>().unwrap() as char;
-        }
-
-        strings.push(string);
+        strings.push(read_null_terminated_utf8(reader));
     }
 
     Ok(strings)

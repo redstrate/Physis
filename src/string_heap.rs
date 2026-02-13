@@ -5,7 +5,7 @@ use std::io::{Cursor, Read, Seek, SeekFrom, Write};
 
 use binrw::{BinRead, BinReaderExt, BinResult, BinWrite, Endian, Error, binrw};
 
-use crate::{ByteBuffer, common_file_operations::write_string};
+use crate::{ByteBuffer, common_file_operations::{read_null_terminated_utf8, write_string}};
 
 /// A string that exists in a different location in the file, usually a heap with a bunch of other strings.
 #[binrw]
@@ -166,18 +166,11 @@ impl StringHeap {
     {
         let offset = self.pos + offset as u64;
 
-        let mut string = String::new();
-
         let old_pos = reader.stream_position().unwrap();
-
         reader.seek(SeekFrom::Start(offset)).unwrap();
-        let mut next_char = reader.read_le::<u8>().unwrap() as char;
-        while next_char != '\0' {
-            string.push(next_char);
-            next_char = reader.read_le::<u8>().unwrap() as char;
-        }
+        let s = read_null_terminated_utf8(reader);
         reader.seek(SeekFrom::Start(old_pos)).unwrap();
-        string
+        s
     }
 }
 

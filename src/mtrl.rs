@@ -6,7 +6,7 @@
 use std::io::Cursor;
 
 use crate::common::Platform;
-use crate::common_file_operations::{Half1, Half2, Half3};
+use crate::common_file_operations::{Half1, Half2, Half3, null_terminated_utf8};
 use crate::mtrl::ColorDyeTable::{
     DawntrailColorDyeTable, LegacyColorDyeTable, OpaqueColorDyeTable,
 };
@@ -471,31 +471,15 @@ impl ReadableFile for Material {
 
         let mut offset = 0;
         for _ in 0..mat_data.file_header.texture_count {
-            let mut string = String::new();
-
-            let mut next_char = mat_data.strings[offset] as char;
-            while next_char != '\0' {
-                string.push(next_char);
-                offset += 1;
-                next_char = mat_data.strings[offset] as char;
-            }
-
-            texture_paths.push(string);
-
-            offset += 1;
+            let (s, next) = null_terminated_utf8(&mat_data.strings, offset);
+            texture_paths.push(s);
+            offset = next;
         }
 
-        // TODO: move to reusable function
-        let mut shader_package_name = String::new();
-
-        offset = mat_data.file_header.shader_package_name_offset as usize;
-
-        let mut next_char = mat_data.strings[offset] as char;
-        while next_char != '\0' {
-            shader_package_name.push(next_char);
-            offset += 1;
-            next_char = mat_data.strings[offset] as char;
-        }
+        let (shader_package_name, _) = null_terminated_utf8(
+            &mat_data.strings,
+            mat_data.file_header.shader_package_name_offset as usize,
+        );
 
         // bg/ffxiv/wil_w1/evt/w1eb/material/w1eb_f1_vfog1a.mtrl has a shader value list of 9, which doesn't make sense in this system
         // eventually we need to un-hardcode it from vec4 or whatever

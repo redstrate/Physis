@@ -16,7 +16,7 @@ use binrw::{BinWrite, BinWriterExt, binrw};
 use bitflags::bitflags;
 
 use crate::common::Platform;
-use crate::common_file_operations::{read_bool_from, write_bool_as};
+use crate::common_file_operations::{null_terminated_utf8, read_bool_from, write_bool_as};
 use crate::{ByteBuffer, ByteSpan, ReadableFile, WritableFile};
 use vertex_declarations::{
     VERTEX_ELEMENT_SIZE, VertexDeclaration, VertexType, VertexUsage, vertex_element_parser,
@@ -770,33 +770,15 @@ impl ReadableFile for MDL {
         let mut affected_bone_names = vec![];
 
         for offset in &model.bone_name_offsets {
-            let mut offset = *offset;
-            let mut string = String::new();
-
-            let mut next_char = model.header.strings[offset as usize] as char;
-            while next_char != '\0' {
-                string.push(next_char);
-                offset += 1;
-                next_char = model.header.strings[offset as usize] as char;
-            }
-
-            affected_bone_names.push(string);
+            let (name, _) = null_terminated_utf8(&model.header.strings, *offset as usize);
+            affected_bone_names.push(name);
         }
 
         let mut material_names = vec![];
 
         for offset in &model.material_name_offsets {
-            let mut offset = *offset;
-            let mut string = String::new();
-
-            let mut next_char = model.header.strings[offset as usize] as char;
-            while next_char != '\0' {
-                string.push(next_char);
-                offset += 1;
-                next_char = model.header.strings[offset as usize] as char;
-            }
-
-            material_names.push(string);
+            let (name, _) = null_terminated_utf8(&model.header.strings, *offset as usize);
+            material_names.push(name);
         }
 
         let mut lods = vec![];
@@ -1075,18 +1057,10 @@ impl ReadableFile for MDL {
                             vertex.position[2] = new_vertex.position[2] - old_vertex.position[2];
                         }
 
-                        let mut offset = shape.string_offset;
-                        let mut string = String::new();
-
-                        let mut next_char = model.header.strings[offset as usize] as char;
-                        while next_char != '\0' {
-                            string.push(next_char);
-                            offset += 1;
-                            next_char = model.header.strings[offset as usize] as char;
-                        }
+                        let (name, _) = null_terminated_utf8(&model.header.strings, shape.string_offset as usize);
 
                         shapes.push(Shape {
-                            name: string,
+                            name,
                             morphed_vertices,
                         });
                     }
