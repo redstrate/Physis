@@ -48,7 +48,8 @@ pub(crate) struct SqPackHeader {
     unk1: u32,
     unk2: u32,
 
-    region: Region,
+    // TODO: this is possibly region, but CN users reported this as 0 so maybe not?
+    region: u8,
 
     #[brw(pad_before = 924)]
     #[brw(pad_after = 44)]
