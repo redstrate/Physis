@@ -13,7 +13,7 @@ use binrw::binrw;
 
 #[binrw]
 #[derive(Debug)]
-struct ScdHeader {
+pub struct Scd {
     #[bw(write_with = write_short_identifier)]
     #[br(parse_with = read_short_identifier)]
     pub file_type: String,
@@ -44,15 +44,10 @@ struct ScdHeader {
     end_of_file_padding_size: u16,
 }
 
-#[derive(Debug)]
-pub struct Scd {}
-
 impl ReadableFile for Scd {
     fn from_existing(platform: Platform, buffer: ByteSpan) -> Option<Self> {
         let mut cursor = Cursor::new(buffer);
-        ScdHeader::read_options(&mut cursor, platform.endianness(), ()).ok()?;
-
-        Some(Scd {})
+        Scd::read_options(&mut cursor, platform.endianness(), ()).ok()
     }
 }
 
