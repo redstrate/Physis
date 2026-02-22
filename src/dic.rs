@@ -64,6 +64,7 @@ struct DictionaryHeader {
 /// Dictionary containing words, usually with the `.dic` file extension.
 ///
 /// This is used to store a list of forbidden (or vulgar) words blocked in chat.
+#[derive(Debug)]
 pub struct Dictionary {
     header: DictionaryHeader,
     /// List of words in this dictionary.
