@@ -466,52 +466,52 @@ impl ReadableFile for Avfx {
                     avfx.ags_enabled = read_bool(&mut cursor);
                 }
                 AvfxData::NumSchedulers => {
-                    todo!()
+                    // STUB
                 }
                 AvfxData::NumTimelines => {
-                    todo!()
+                    // STUB
                 }
                 AvfxData::NumEmitters => {
-                    todo!()
+                    // STUB
                 }
                 AvfxData::NumParticles => {
-                    todo!()
+                    // STUB
                 }
                 AvfxData::NumEffectors => {
-                    todo!()
+                    // STUB
                 }
                 AvfxData::NumBinders => {
-                    todo!()
+                    // STUB
                 }
                 AvfxData::NumTextures => {
-                    todo!()
+                    // STUB
                 }
                 AvfxData::NumModels => {
-                    todo!()
+                    // STUB
                 }
                 AvfxData::Scheduler => {
-                    todo!()
+                    // STUB
                 }
                 AvfxData::Timeline => {
-                    todo!()
+                    // STUB
                 }
                 AvfxData::Emitter => {
-                    todo!()
+                    // STUB
                 }
                 AvfxData::Particle => {
-                    todo!()
+                    // STUB
                 }
                 AvfxData::Effector => {
-                    todo!()
+                    // STUB
                 }
                 AvfxData::Binder => {
-                    todo!()
+                    // STUB
                 }
                 AvfxData::Texture => {
-                    todo!()
+                    // STUB
                 }
                 AvfxData::Model => {
-                    todo!()
+                    // STUB
                 }
                 AvfxData::Unknown() => {}
             }
