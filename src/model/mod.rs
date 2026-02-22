@@ -1057,7 +1057,10 @@ impl ReadableFile for MDL {
                             vertex.position[2] = new_vertex.position[2] - old_vertex.position[2];
                         }
 
-                        let (name, _) = null_terminated_utf8(&model.header.strings, shape.string_offset as usize);
+                        let (name, _) = null_terminated_utf8(
+                            &model.header.strings,
+                            shape.string_offset as usize,
+                        );
 
                         shapes.push(Shape {
                             name,

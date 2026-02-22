@@ -12,6 +12,7 @@ use crate::common::Platform;
 use crate::common_file_operations::read_string;
 use crate::common_file_operations::read_string_until_null;
 use crate::common_file_operations::write_string;
+use crate::tmb::TimelineNode;
 use binrw::BinRead;
 use binrw::binrw;
 
@@ -139,21 +140,6 @@ pub struct CTTLNode {
     // TODO: unsure if this is really a count
     #[br(count = node_count)]
     node: Vec<TimelineNode>,
-}
-
-#[binrw]
-#[derive(Debug)]
-pub struct TimelineNode {
-    #[br(count = 4)]
-    #[bw(pad_size_to = 4)]
-    #[bw(map = write_string)]
-    #[br(map = read_string)]
-    name: String,
-    /// The size of this whole struct
-    size: u32,
-    // TODO: parse this data
-    #[br(count = size - 8)]
-    data: Vec<u8>,
 }
 
 impl ReadableFile for Cutscene {

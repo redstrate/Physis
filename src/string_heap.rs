@@ -5,7 +5,10 @@ use std::io::{Cursor, Read, Seek, SeekFrom, Write};
 
 use binrw::{BinRead, BinReaderExt, BinResult, BinWrite, Endian, Error, binrw};
 
-use crate::{ByteBuffer, common_file_operations::{read_null_terminated_utf8, write_string}};
+use crate::{
+    ByteBuffer,
+    common_file_operations::{read_null_terminated_utf8, write_string},
+};
 
 /// A string that exists in a different location in the file, usually a heap with a bunch of other strings.
 #[binrw]

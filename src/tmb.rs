@@ -228,7 +228,6 @@ pub struct Tmb {
     num_nodes: u32,
     #[br(count = num_nodes)]
     pub nodes: Vec<TimelineNode>,
-    // NOTE: there is extra data at the end, presumably it contains the actual animation data?,
 }
 
 impl ReadableFile for Tmb {
