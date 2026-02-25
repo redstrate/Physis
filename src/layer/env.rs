@@ -24,7 +24,6 @@ pub enum EnvSetShape {
 #[br(import(string_heap: &StringHeap))]
 #[bw(import(string_heap: &mut StringHeap))]
 pub struct EnvSetInstanceObject {
-    // pub asset_path_offset: u32,
     #[brw(args(string_heap))]
     pub asset_path: HeapString,
     pub bound_instance_id: u32,
