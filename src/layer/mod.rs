@@ -204,7 +204,7 @@ pub enum LayerEntryData {
     Aetheryte(AetheryteInstanceObject),
     /// Unknown purpose.
     #[br(pre_assert(*magic == LayerEntryType::EnvSet))]
-    EnvSet(EnvSetInstanceObject),
+    EnvSet(#[brw(args(string_heap))] EnvSetInstanceObject),
     /// Unknown purpose.
     #[br(pre_assert(*magic == LayerEntryType::Gathering))]
     Gathering(GatheringInstanceObject),
