@@ -21,8 +21,11 @@ pub enum EnvSetShape {
 
 #[binrw]
 #[derive(Debug, PartialEq)]
+#[br(import(string_heap: &StringHeap))]
+#[bw(import(string_heap: &mut StringHeap))]
 pub struct EnvSetInstanceObject {
-    pub asset_path_offset: u32,
+    #[brw(args(string_heap))]
+    pub asset_path: HeapString,
     pub bound_instance_id: u32,
     pub shape: EnvSetShape,
     #[br(map = read_bool_from::<u8>)]
@@ -34,7 +37,8 @@ pub struct EnvSetInstanceObject {
     pub interpolation_time: i32,
     pub reverb: f32,
     pub filter: f32,
-    pub sound_asset_path_offset: u32,
+    #[brw(args(string_heap))]
+    pub sound_asset_path: HeapString,
 }
 
 #[binrw]
