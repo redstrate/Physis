@@ -3,11 +3,14 @@
 
 use std::io::Cursor;
 
+use crate::ByteBuffer;
 use crate::ByteSpan;
 use crate::ReadableFile;
+use crate::WritableFile;
 use crate::common::Platform;
 use crate::string_heap::StringHeap;
 use binrw::BinRead;
+use binrw::BinWrite;
 use binrw::binrw;
 
 /// Environment binary file, usually with the `.envb` file extension.
@@ -15,8 +18,9 @@ use binrw::binrw;
 #[derive(Debug)]
 #[br(import(string_heap: &StringHeap))]
 #[bw(import(string_heap: &mut StringHeap))]
+#[brw(magic = b"ENVB")]
 pub struct Envb {
-    magic: EnvbMagic,
+    /// Size of the file, including this header.
     file_size: u32,
     chunk_count: u32,
 
@@ -28,20 +32,14 @@ pub struct Envb {
 #[brw(magic = b"ENVS")]
 #[derive(Debug)]
 pub struct Envs {
-    unk0: u32,
+    /// Size of this header, in bytes.
+    size: u32,
     unk1: u32,
     unk2: u32,
     children_count: u32,
-}
-
-#[binrw]
-#[derive(Debug)]
-#[brw()]
-struct EnvbMagic {
-    #[br(temp)]
-    #[bw(calc = *b"ENVB")]
-    #[br(assert(magic == *b"ENVB"))]
-    magic: [u8; 4],
+    unk3: u32,
+    #[brw(pad_after = 8)] // empty?
+    unk4: u32,
 }
 
 #[binrw]
@@ -76,6 +74,28 @@ impl ReadableFile for Envb {
     }
 }
 
+impl WritableFile for Envb {
+    fn write_to_buffer(&self, platform: Platform) -> Option<crate::ByteBuffer> {
+        let mut buffer = ByteBuffer::new();
+
+        {
+            let mut string_heap = StringHeap::from(0);
+
+            // TODO: need dual pass
+
+            let mut cursor = Cursor::new(&mut buffer);
+                self.write_options(&mut cursor, platform.endianness(), (&mut string_heap,))
+                .ok()?;
+
+            string_heap
+                .write_options(&mut cursor, platform.endianness(), ())
+                .ok()?;
+        }
+
+        Some(buffer)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use std::{fs::read, path::PathBuf};
@@ -88,10 +108,22 @@ mod tests {
         d.push("resources/tests");
         d.push("lenv_s1h1_outdoor.envb");
 
-        let lgb = Envb::from_existing(Platform::Win32, &read(d).unwrap()).unwrap();
-        assert_eq!(lgb.envs.len(), 1);
+        let envb = Envb::from_existing(Platform::Win32, &read(d).unwrap()).unwrap();
+        assert_eq!(envb.envs.len(), 1);
 
-        let envs = &lgb.envs[0];
+        let envs = &envb.envs[0];
         assert_eq!(envs.children_count, 0);
+    }
+
+    #[test]
+    fn write_empty_envb() {
+        let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        d.push("resources/tests");
+        d.push("lenv_s1h1_outdoor.envb");
+
+        let envb_bytes = read(d).unwrap();
+        let env = Envb::from_existing(Platform::Win32, &envb_bytes).unwrap();
+
+        assert_eq!(env.write_to_buffer(Platform::Win32).unwrap(), envb_bytes);
     }
 }
