@@ -67,6 +67,9 @@ pub mod mtrl;
 /// Types for shader packages (`.shpk`) files.
 pub mod shpk;
 
+/// Types for environment binary files (`.envb`) files.
+pub mod envb;
+
 /// Types for character make parameter (`.cmp`) files.
 pub mod cmp;
 
