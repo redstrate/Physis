@@ -66,7 +66,8 @@ impl EnvsHeader {
 pub struct EnvChildSection {
     offset: u32, // 0xc in size
     count: u32,
-    unk3: u32,
+    /// Which weather this appleis in. Index into the Weather Excel sheet.
+    weather_id: u32,
     offset_to_floats: u32,
 
     #[br(count = count, args { inner: (string_heap,) })]

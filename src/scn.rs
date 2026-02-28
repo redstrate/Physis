@@ -153,7 +153,8 @@ pub struct ScnEnvSpace {
     pub envb_path: HeapString,
 
     unk1: i32,
-    unk2: i32,
+    /// ID to an EnvLocation InstanceObject in this scene.
+    pub env_location_instance_id: i32,
 
     #[br(args(heap_pointer, string_heap))]
     #[bw(args(string_heap))]
