@@ -150,7 +150,7 @@ pub struct ScnEnvSpace {
 
     #[br(args(heap_pointer, string_heap))]
     #[bw(args(string_heap))]
-    pub env_path: HeapStringFromPointer,
+    pub envb_path: HeapStringFromPointer,
 
     unk1: i32,
     unk2: i32,
