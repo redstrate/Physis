@@ -40,6 +40,8 @@ struct LayerChunkHeader {
     heap_pointer: HeapPointer,
 
     layer_group_id: i32,
+
+    /// Name of this layer.
     #[br(args(heap_pointer, string_heap))]
     #[bw(args(string_heap))]
     pub name: HeapString,
@@ -53,8 +55,11 @@ impl LayerChunkHeader {
 
 #[derive(Debug)]
 pub struct LayerChunk {
+    /// The ID of this chunk.
     pub layer_group_id: i32,
+    /// Name of this layer chunk.
     pub name: String,
+    /// The layers in this chunk.
     pub layers: Vec<Layer>,
 }
 

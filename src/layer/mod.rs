@@ -474,11 +474,11 @@ pub struct ObjectSetEnableReferenced {
 #[repr(C)]
 #[allow(dead_code)] // most of the fields are unused at the moment
 pub struct Transformation {
-    /// X, Y, Z of the location in space.
+    /// X, Y, Z of the location in world space.
     pub translation: [f32; 3],
-    /// Yaw, pitch and roll of the rotation in space.
+    /// Yaw, pitch and roll of the rotation in world space.
     pub rotation: [f32; 3],
-    /// Width, height and depth of the scale in space.
+    /// Width, height and depth of the scale in world space.
     pub scale: [f32; 3],
 }
 
@@ -500,7 +500,7 @@ pub struct InstanceObject {
     #[br(args(heap_pointer, string_heap))]
     #[bw(args(string_heap))]
     pub name: HeapString,
-    /// The object's transformation in space.
+    /// The object's transformation in the world space.
     pub transform: Transformation,
     /// The data associated with this object.
     #[br(args(&asset_type, string_heap, heap_pointer))]
