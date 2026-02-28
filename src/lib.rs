@@ -195,3 +195,6 @@ pub mod essb;
 
 /// ENVS sections used in a few file types.
 pub mod envs;
+
+/// Types for ambient set (`.amb`) files.
+pub mod amb;

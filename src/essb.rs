@@ -33,14 +33,6 @@ pub struct Essb {
     pub envs: Vec<EnvsHeader>,
 }
 
-#[binrw]
-#[derive(Debug)]
-pub struct Ending {
-    // NOTE: not always 0x14 and 0x14! Some files have 0x3E instead.
-    // string heap is somewhere in here for some reason
-    unk1: [u8; 13],
-}
-
 impl ReadableFile for Essb {
     fn from_existing(platform: Platform, buffer: ByteSpan) -> Option<Self> {
         let endianness = platform.endianness();
