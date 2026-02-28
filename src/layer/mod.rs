@@ -364,23 +364,34 @@ pub struct LayerHeader {
     #[bw(calc = data_heap.get_free_offset_args(&layer_set_referenced_list))]
     pub(crate) layer_set_referenced_list_offset: i32,
 
-    /// The other referenced layer sets.
+    /// The layer set referenced list.
     #[br(calc = data_heap.read_args(r, heap_pointer, layer_set_referenced_list_offset))]
     #[bw(ignore)]
     pub layer_set_referenced_list: LayerSetReferencedList,
-    /// The festival ID associated with this layer.
+
+    /// Only show this layer if this festival ID is active.
     pub festival_id: u16,
-    /// The festival phase ID associated with this layer.
+    /// Only show this layer if this festival phase ID is active..
     pub festival_phase_id: u16,
-    pub(crate) is_temporary: u8,
-    pub(crate) is_housing: u8,
-    pub(crate) version_mask: u16,
+
+    /// Whether this layer is temporary.
+    #[br(map = read_bool_from::<u8>)]
+    #[bw(map = write_bool_as::<u8>)]
+    pub is_temporary: bool,
+
+    /// Whether this is a housing-related layer.
+    #[br(map = read_bool_from::<u8>)]
+    #[bw(map = write_bool_as::<u8>)]
+    pub is_housing: bool,
+
+    /// Unknown purpose, but probably version related.
+    pub version_mask: u16,
 
     #[brw(pad_before = 4)]
     pub(crate) ob_set_referenced_list_offset: i32,
     pub(crate) ob_set_referenced_list_count: i32,
 
-    /// The other referenced layer sets.
+    /// The object set referenced.
     #[br(calc = data_heap.read_vec_args(r, string_heap, heap_pointer, ob_set_referenced_list_count as usize, ob_set_referenced_list_offset))]
     #[bw(ignore)]
     pub object_set_referenced: Vec<ObjectSetReferenced>,
@@ -388,7 +399,7 @@ pub struct LayerHeader {
     pub(crate) ob_set_enable_referenced_list_offset: i32,
     pub(crate) ob_set_enable_referenced_list_count: i32,
 
-    /// The other referenced layer sets.
+    /// The object set enable referenced.
     #[br(calc = data_heap.read_vec_args(r, string_heap, heap_pointer, ob_set_enable_referenced_list_count as usize, ob_set_enable_referenced_list_offset))]
     #[bw(ignore)]
     pub object_set_enable_referenced: Vec<ObjectSetEnableReferenced>,

@@ -79,6 +79,15 @@ impl ReadableFile for Lgb {
             return None;
         }
 
+        // This actually matches client behavior, because of course they have padding here.
+        loop {
+            let magic = <[u8; 4]>::read_options(&mut cursor, endianness, ()).ok()?;
+            if &magic == b"LGP1" {
+                cursor.seek(SeekFrom::Current(-4)).ok()?;
+                break;
+            }
+        }
+
         let chunk_header =
             LayerChunkHeader::read_options(&mut cursor, endianness, (&string_heap,)).unwrap();
         if chunk_header.chunk_size <= 0 {
@@ -89,7 +98,7 @@ impl ReadableFile for Lgb {
 
         let mut layer_offsets = vec![0i32; chunk_header.layer_count as usize];
         for i in 0..chunk_header.layer_count {
-            layer_offsets[i as usize] = cursor.read_type_args::<i32>(endianness, ()).unwrap();
+            layer_offsets[i as usize] = cursor.read_type_args::<i32>(endianness, ()).ok()?;
         }
 
         let mut layers = Vec::new();
@@ -296,6 +305,17 @@ mod tests {
     }
 
     #[test]
+    fn read_padded_planlive() {
+        let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        d.push("resources/tests");
+        d.push("padded_planner.lgb");
+
+        // NOTE: It would be nice to read these eventually, but I'm pretty sure all cases are empty and useless.
+        // So the best we could do right now is not panic while reading them.
+        assert!(Lgb::from_existing(Platform::Win32, &read(d).unwrap()).is_none());
+    }
+
+    #[test]
     fn write_empty_planlive() {
         let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
         d.push("resources/tests");
@@ -350,8 +370,8 @@ mod tests {
                     },
                     festival_id: 0,
                     festival_phase_id: 0,
-                    is_temporary: 0,
-                    is_housing: 0,
+                    is_temporary: false,
+                    is_housing: false,
                     version_mask: 47,
                     ob_set_referenced_list_offset: 68,
                     ob_set_referenced_list_count: 0,
@@ -397,8 +417,8 @@ mod tests {
                         },
                         festival_id: 0,
                         festival_phase_id: 0,
-                        is_temporary: 0,
-                        is_housing: 0,
+                        is_temporary: false,
+                        is_housing: false,
                         version_mask: 47,
                         ob_set_referenced_list_offset: 68,
                         ob_set_referenced_list_count: 0,
