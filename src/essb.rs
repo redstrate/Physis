@@ -22,8 +22,8 @@ use binrw::binrw;
 #[derive(Debug)]
 #[br(import(string_heap: &StringHeap))]
 #[bw(import(string_heap: &mut StringHeap))]
-#[brw(magic = b"ENVB")]
-pub struct Envb {
+#[brw(magic = b"ESSB")]
+pub struct Essb {
     /// Size of the file, including this header.
     file_size: u32,
     envs_count: u32,
@@ -33,17 +33,25 @@ pub struct Envb {
     pub envs: Vec<EnvsHeader>,
 }
 
-impl ReadableFile for Envb {
+#[binrw]
+#[derive(Debug)]
+pub struct Ending {
+    // NOTE: not always 0x14 and 0x14! Some files have 0x3E instead.
+    // string heap is somewhere in here for some reason
+    unk1: [u8; 13],
+}
+
+impl ReadableFile for Essb {
     fn from_existing(platform: Platform, buffer: ByteSpan) -> Option<Self> {
         let endianness = platform.endianness();
         let mut cursor = Cursor::new(buffer);
         let string_heap = StringHeap::from(cursor.position());
 
-        Envb::read_options(&mut cursor, endianness, (&string_heap,)).ok()
+        Essb::read_options(&mut cursor, endianness, (&string_heap,)).ok()
     }
 }
 
-impl WritableFile for Envb {
+impl WritableFile for Essb {
     fn write_to_buffer(&self, platform: Platform) -> Option<crate::ByteBuffer> {
         let mut buffer = ByteBuffer::new();
 
@@ -70,39 +78,12 @@ impl WritableFile for Envb {
 
 #[cfg(test)]
 mod tests {
-    use std::{fs::read, path::PathBuf};
-
     use crate::pass_random_invalid;
 
     use super::*;
 
     #[test]
     fn test_invalid() {
-        pass_random_invalid::<Envb>();
-    }
-
-    #[test]
-    fn read_empty_envb() {
-        let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-        d.push("resources/tests");
-        d.push("lenv_s1h1_outdoor.envb");
-
-        let envb = Envb::from_existing(Platform::Win32, &read(d).unwrap()).unwrap();
-        assert_eq!(envb.envs.len(), 1);
-
-        let envs = &envb.envs[0];
-        assert_eq!(envs.sections.len(), 0);
-    }
-
-    #[test]
-    fn write_empty_envb() {
-        let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-        d.push("resources/tests");
-        d.push("lenv_s1h1_outdoor.envb");
-
-        let envb_bytes = read(d).unwrap();
-        let env = Envb::from_existing(Platform::Win32, &envb_bytes).unwrap();
-
-        assert_eq!(env.write_to_buffer(Platform::Win32).unwrap(), envb_bytes);
+        pass_random_invalid::<Essb>();
     }
 }

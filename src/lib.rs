@@ -189,3 +189,9 @@ pub mod string_heap;
 
 /// SCN1 sections used in a few file types.
 pub mod scn;
+
+/// Types for environment sound scape files (`.essb`) files.
+pub mod essb;
+
+/// ENVS sections used in a few file types.
+pub mod envs;
