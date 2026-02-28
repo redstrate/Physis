@@ -409,7 +409,8 @@ pub struct LayerHeader {
 #[derive(Debug, PartialEq)]
 #[allow(dead_code)] // most of the fields are unused at the moment
 pub struct LayerSetReferenced {
-    /// The ID of the referenced layer set.
+    // TODO: normalize all of the vocabulary here
+    /// Corresponds to an ID of a `ScnFilter`.
     pub layer_set_id: u32,
 }
 

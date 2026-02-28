@@ -411,7 +411,8 @@ pub struct ScnFilter {
     #[bw(args(string_heap))]
     pub nvm_path: HeapString,
 
-    unk1: i32,
+    /// The ID of this filter.
+    pub id: i32,
     unk2: i32,
     unk3: i32,
 
