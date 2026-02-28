@@ -54,7 +54,7 @@ impl LobbyBlowfish {
         s
     }
 
-    /// Encrypts a block of data. If the encryption for any reason fails, returns None.
+    /// Encrypts a block of data.
     pub fn encrypt(&self, data: &mut [u8]) {
         let padded_size = Self::padded_length(data.len());
 
@@ -73,6 +73,7 @@ impl LobbyBlowfish {
         ((length as i32) & -32) as usize
     }
 
+    /// Decrypts a block of data.
     pub fn decrypt(&self, data: &mut [u8]) {
         let padded_size = Self::padded_length(data.len());
 

@@ -100,7 +100,7 @@ pub enum Category {
     Debug = 0x13,
 }
 
-pub fn string_to_category(string: &str) -> Option<Category> {
+pub(crate) fn string_to_category(string: &str) -> Option<Category> {
     use crate::repository::Category::*;
 
     match string {

@@ -76,7 +76,9 @@ impl SqexArgBlowfish {
         s
     }
 
-    /// Encrypts a block of data. If the encryption for any reason fails, returns None.
+    /// Encrypts a block of data.
+    ///
+    /// If the encryption for any reason fails, returns [None].
     pub fn encrypt(&self, data: &[u8]) -> Option<Vec<u8>> {
         let padded_data = SqexArgBlowfish::pad_buffer(data);
 
@@ -108,8 +110,9 @@ impl SqexArgBlowfish {
         vec
     }
 
-    /// Decrypts a block of data. If the decryption fails due to buffer overflow issues, will return
-    /// None - but this does not indicate that the wrong key was used.
+    /// Decrypts a block of data.
+    ///
+    /// If the decryption fails due to buffer overflow issues, will return [None] - but this does not indicate that the wrong key was used.
     pub fn decrypt(&self, data: &[u8]) -> Option<Vec<u8>> {
         let padded_data = SqexArgBlowfish::pad_buffer(data);
 

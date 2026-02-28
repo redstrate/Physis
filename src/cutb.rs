@@ -82,6 +82,7 @@ pub struct Cutscene {
     /// In bytes, including the header and the magic.
     size_of_file: u32,
     num_nodes: u32,
+    /// The nodes for this cutscene.
     #[br(count = num_nodes)]
     pub nodes: Vec<CutsceneNode>,
 }

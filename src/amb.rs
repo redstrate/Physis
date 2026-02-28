@@ -34,7 +34,7 @@ pub struct Amb {
 }
 
 impl Amb {
-    pub const ENTRY_COUNT: usize = 0x20;
+    pub(crate) const ENTRY_COUNT: usize = 0x20;
 }
 
 #[binrw::parser(reader, endian)]
@@ -50,6 +50,7 @@ fn read_amb_entry(counts: &[i32]) -> BinResult<[Vec<AmbEntry>; Amb::ENTRY_COUNT]
     Ok(entries)
 }
 
+/// Entry into an [Amb] file.
 #[binrw]
 #[derive(Debug)]
 pub struct AmbEntry {
@@ -70,10 +71,6 @@ pub struct AmbEntry {
     unk14: u64,
     unk15: u64,
     unk16: u64,
-}
-
-impl AmbEntry {
-    pub const SIZE: usize = 0x70;
 }
 
 impl ReadableFile for Amb {

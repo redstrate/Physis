@@ -30,7 +30,7 @@ pub(crate) struct EXDHeader {
 }
 
 impl EXDHeader {
-    pub const SIZE: usize = 0x20;
+    pub(crate) const SIZE: usize = 0x20;
 }
 
 #[binrw]

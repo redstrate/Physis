@@ -56,7 +56,7 @@ pub(crate) fn write_child_sections(
 }
 
 impl EnvsHeader {
-    pub const SIZE: usize = 0x18;
+    pub(crate) const SIZE: usize = 0x18;
 }
 
 #[binrw]
@@ -83,7 +83,7 @@ pub struct EnvChildSection {
 }
 
 impl EnvChildSection {
-    pub const SIZE: usize = 0x10;
+    pub(crate) const SIZE: usize = 0x10;
 }
 
 #[binrw::parser(reader)]
@@ -131,7 +131,7 @@ pub struct EnvUnknown1 {
 }
 
 impl EnvUnknown1 {
-    pub const SIZE: usize = 0xc;
+    pub(crate) const SIZE: usize = 0xc;
 }
 
 #[binrw]
@@ -172,8 +172,4 @@ pub struct EnvUnknown2 {
     pub unk22: f32,
     pub unk23: f32,
     pub unk24: f32,
-}
-
-impl EnvUnknown2 {
-    pub const SIZE: usize = 0x20; // unconfirmed
 }

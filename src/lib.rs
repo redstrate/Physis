@@ -143,7 +143,7 @@ pub mod stm;
 /// Types for patch lists.
 pub mod patchlist;
 
-/// Types for `.uwb` files.
+/// Types for uwb (`.uwb`) files.
 pub mod uwb;
 
 /// Types for level collision binary (`.lcb`) files.

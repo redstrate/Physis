@@ -54,7 +54,7 @@ pub struct RacialScalingParameters {
 /// This is used to determine various scaling limits for height, and so on.
 #[derive(Debug)]
 pub struct CMP {
-    /// The racial scaling parameters
+    /// The racial scaling parameters.
     pub parameters: Vec<RacialScalingParameters>,
 }
 

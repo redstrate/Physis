@@ -23,7 +23,7 @@ struct LgbHeader {
 }
 
 impl LgbHeader {
-    pub const SIZE: usize = 0x0C;
+    pub(crate) const SIZE: usize = 0x0C;
 }
 
 #[binrw]

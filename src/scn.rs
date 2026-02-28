@@ -51,7 +51,7 @@ pub struct ScnLayerGroup {
 }
 
 impl ScnLayerGroup {
-    pub const SIZE: usize = 0x10;
+    pub(crate) const SIZE: usize = 0x10;
 }
 
 /// SCN1 section used in LVBs and SGBs.
@@ -136,7 +136,7 @@ pub struct ScnSection {
 }
 
 impl ScnSection {
-    pub const SIZE: usize = 0x48;
+    pub(crate) const SIZE: usize = 0x48;
 }
 
 #[binrw]
@@ -163,10 +163,6 @@ pub struct ScnEnvSpace {
     // TODO: I have no idea, but there's 8 extra bytes unaccounted for here. Probably a mistake elsewhere.
     #[br(restore_position)]
     unk: u64,
-}
-
-impl ScnEnvSpace {
-    pub const SIZE: usize = 0x10;
 }
 
 #[binrw]
@@ -235,7 +231,7 @@ pub fn write_env_spaces(scns: &Vec<ScnEnvSpace>, string_heap: &mut StringHeap) -
 }
 
 impl ScnGeneralSection {
-    pub const SIZE: usize = 0x58;
+    pub(crate) const SIZE: usize = 0x58;
 }
 
 #[binrw]
@@ -252,7 +248,7 @@ pub struct ScnTimelinesSection {
 }
 
 impl ScnTimelinesSection {
-    pub const SIZE: usize = 0x8;
+    pub(crate) const SIZE: usize = 0x8;
 }
 
 #[binrw]
@@ -293,7 +289,7 @@ pub struct ScnTimeline {
 }
 
 impl ScnTimeline {
-    pub const SIZE: usize = 0x2C;
+    pub(crate) const SIZE: usize = 0x2C;
 }
 
 #[binrw]
@@ -396,7 +392,7 @@ pub fn write_filters(scns: &Vec<ScnFilter>, string_heap: &mut StringHeap) -> Bin
 }
 
 impl ScnFiltersSection {
-    pub const SIZE: usize = 0x8;
+    pub(crate) const SIZE: usize = 0x8;
 }
 
 #[binrw]
@@ -425,10 +421,6 @@ pub struct ScnFilter {
     #[br(args(heap_pointer, string_heap))]
     #[bw(args(string_heap))]
     pub nvx_path: HeapString,
-}
-
-impl ScnFilter {
-    pub const SIZE: usize = 0x1C;
 }
 
 #[binrw::parser(reader)]

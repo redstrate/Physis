@@ -90,10 +90,6 @@ pub struct Tmac {
     pub tmtr_ids: Vec<u16>,
 }
 
-impl Tmac {
-    pub const SIZE: usize = 0x0C;
-}
-
 /// Timeline tracks.
 #[binrw]
 #[derive(Debug)]

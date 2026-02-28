@@ -106,7 +106,7 @@ pub struct ResourceNode {
 }
 
 impl ResourceNode {
-    pub const HEADER_SIZE: usize = 0x30;
+    pub(crate) const HEADER_SIZE: usize = 0x30;
 }
 
 #[binrw]

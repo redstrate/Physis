@@ -1,7 +1,10 @@
 // SPDX-FileCopyrightText: 2025 Joshua Goins <josh@redstrate.com>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-use std::io::{Cursor, Read, Seek, SeekFrom, Write};
+use std::{
+    fmt::{Display, Formatter},
+    io::{Cursor, Read, Seek, SeekFrom, Write},
+};
 
 use binrw::{BinRead, BinReaderExt, BinResult, BinWrite, Endian, Error, VecArgs, binrw};
 
@@ -15,22 +18,34 @@ use crate::{
 #[binrw]
 #[br(import(pointer: HeapPointer, string_heap: &StringHeap), stream = r)]
 #[bw(import(string_heap: &mut StringHeap))]
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, PartialEq)]
 pub struct HeapString {
     #[br(temp)]
     // TODO: this cast is stupid
     #[bw(calc = string_heap.get_free_offset_string(value) as u32)]
-    pub offset: u32,
+    pub(crate) offset: u32,
     #[br(calc = string_heap.read_string(r, offset.saturating_add(pointer.pos as u32),))]
     #[bw(ignore)]
     pub value: String,
 }
 
+impl Display for HeapString {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "\"{}\"", self.value)
+    }
+}
+
+impl std::fmt::Debug for HeapString {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "\"{}\"", self.value)
+    }
+}
+
 #[derive(Debug)]
 pub struct StringHeap {
-    pub pos: u64,
-    pub bytes: Vec<u8>,
-    pub free_pos: u64,
+    pub(crate) pos: u64,
+    pub(crate) bytes: Vec<u8>,
+    pub(crate) free_pos: u64,
 }
 
 #[binrw]
@@ -38,11 +53,11 @@ pub struct StringHeap {
 pub struct HeapPointer {
     #[br(parse_with = read_pointer_pos)]
     #[bw(ignore)]
-    pub pos: u64,
+    pub(crate) pos: u64,
 }
 
 #[binrw::parser(reader)]
-pub fn read_pointer_pos() -> BinResult<u64> {
+pub(crate) fn read_pointer_pos() -> BinResult<u64> {
     Ok(reader.stream_position().unwrap())
 }
 

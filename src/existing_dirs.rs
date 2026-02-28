@@ -11,27 +11,27 @@ use std::path::PathBuf;
 
 use crate::resource::SqPackResource;
 
-/// Where the existing installation came from
+/// Where the existing installation came from.
 #[derive(Clone, Copy)]
 #[repr(C)]
 pub enum ExistingInstallType {
-    /// Installed via the official launcher
+    /// Installed via the official launcher.
     OfficialLauncher,
-    /// Installed via XIVQuickLauncher
+    /// Installed via XIVQuickLauncher.
     XIVQuickLauncher,
-    /// Installed via XIVLauncherCore
+    /// Installed via XIVLauncherCore.
     XIVLauncherCore,
-    /// Installed via XIVOnMac
+    /// Installed via XIVOnMac.
     XIVOnMac,
-    /// Installed via Astra
+    /// Installed via Astra.
     Astra,
 }
 
-/// An existing install location on disk
+/// An existing install location on disk.
 pub struct ExistingGameDirectory {
-    /// The application where this installation was from
+    /// The application where this installation was from.
     pub install_type: ExistingInstallType,
-    /// The path to the "main folder" where "game" and "boot" sits
+    /// The path to the "main folder" where "game" and "boot" sits.
     pub path: String,
     /// The latest expansion and game version in this directory.
     pub version: String,
@@ -51,7 +51,9 @@ fn read_version(path: &str) -> String {
     String::default()
 }
 
-/// Finds existing installations on disk. Will only return locations that actually have files in them, and a really basic check to see if the data is valid.
+/// Finds existing installations on disk.
+///
+/// Will only return locations that actually have files in them, and a really basic check to see if the data is valid.
 pub fn find_existing_game_dirs() -> Vec<ExistingGameDirectory> {
     let mut install_dirs = Vec::new();
 
@@ -144,15 +146,17 @@ pub fn find_existing_game_dirs() -> Vec<ExistingGameDirectory> {
         .collect()
 }
 
-/// An existing user directory
+/// An existing user directory.
 pub struct ExistingUserDirectory {
-    /// The application where this directory was from
+    /// The application where this directory was from.
     pub install_type: ExistingInstallType,
-    /// The path to the user folder
+    /// The path to the user folder.
     pub path: String,
 }
 
-/// Finds existing user folders on disk. Will only return locations that actually have files in them, and a really basic check to see if the data is valid.
+/// Finds existing user folders on disk.
+///
+/// Will only return locations that actually have files in them, and a really basic check to see if the data is valid.
 pub fn find_existing_user_dirs() -> Vec<ExistingUserDirectory> {
     let mut user_dirs = Vec::new();
     #[allow(deprecated)] // We still want std::env::home_dir

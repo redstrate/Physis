@@ -12,6 +12,7 @@ use binrw::BinRead;
 use binrw::BinWrite;
 use binrw::binrw;
 
+/// Uwb file, usually with the `.uwb` file extension.
 #[binrw]
 #[derive(Debug)]
 #[brw(magic = b"UWB1")]
@@ -48,7 +49,7 @@ pub struct Uwc {
 }
 
 impl Uwc {
-    pub const SIZE: usize = 88;
+    pub(crate) const SIZE: usize = 88;
 }
 
 impl ReadableFile for Uwb {

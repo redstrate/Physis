@@ -153,6 +153,12 @@ pub struct EXH {
     pub languages: Vec<Language>,
 }
 
+impl Default for EXH {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ReadableFile for EXH {
     fn from_existing(_platform: Platform, buffer: ByteSpan) -> Option<Self> {
         Self::read(&mut Cursor::new(&buffer)).ok()

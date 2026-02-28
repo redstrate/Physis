@@ -292,11 +292,15 @@ impl ReadableFile for Avfx {
 
         let mut avfx = Avfx::default();
 
-        let read_bool = |cursor: &mut Cursor<ByteSpan>| cursor.read_le::<u8>().unwrap() == 1u8;
+        let read_bool = |cursor: &mut Cursor<ByteSpan>| {
+            cursor.read_type::<u8>(platform.endianness()).unwrap() == 1u8
+        };
 
-        let read_uint = |cursor: &mut Cursor<ByteSpan>| cursor.read_le::<u32>().unwrap();
+        let read_uint =
+            |cursor: &mut Cursor<ByteSpan>| cursor.read_type::<u32>(platform.endianness()).unwrap();
 
-        let read_float = |cursor: &mut Cursor<ByteSpan>| cursor.read_le::<f32>().unwrap();
+        let read_float =
+            |cursor: &mut Cursor<ByteSpan>| cursor.read_type::<f32>(platform.endianness()).unwrap();
 
         while cursor.position() < header.size as u64 {
             let last_pos = cursor.position();

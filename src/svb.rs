@@ -28,6 +28,10 @@ pub struct Svb {
     pub svcs: Vec<Svc>,
 }
 
+impl Svb {
+    pub(crate) const HEADER_SIZE: u32 = 12;
+}
+
 #[binrw]
 #[derive(Debug)]
 #[brw(magic = b"SVC1")]
@@ -48,7 +52,7 @@ pub struct Svc {
 }
 
 impl Svc {
-    pub const HEADER_SIZE: u32 = 20;
+    pub(crate) const HEADER_SIZE: u32 = 20;
 }
 
 #[binrw]
@@ -96,8 +100,7 @@ impl Svb {
 
     fn calculate_file_size(&self) -> u32 {
         // TODO: take entries into account
-        12 // LCB1 header
-        + Svc::HEADER_SIZE // LCC1 header
+        Svb::HEADER_SIZE + Svc::HEADER_SIZE
     }
 }
 

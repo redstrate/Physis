@@ -48,7 +48,7 @@ pub struct Lcc {
 }
 
 impl Lcc {
-    pub const HEADER_SIZE: u32 = 20;
+    pub(crate) const HEADER_SIZE: u32 = 20;
 }
 
 #[binrw]
