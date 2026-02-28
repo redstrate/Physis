@@ -12,7 +12,8 @@ use super::read_bool_from;
 
 #[binrw]
 #[brw(repr = i32)]
-#[derive(Debug, PartialEq)]
+#[repr(C)]
+#[derive(Debug, PartialEq, Clone, Copy)]
 pub enum EnvSetShape {
     Ellipsoid = 0x1,
     Cuboid = 0x2,
