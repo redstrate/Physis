@@ -16,7 +16,7 @@ use binrw::BinRead;
 use binrw::BinWrite;
 use binrw::binrw;
 
-/// Object behavior set, usually with the `.obsb` file extension.
+/// Object behavior set binary, usually with the `.obsb` file extension.
 #[binrw]
 #[derive(Debug)]
 #[br(import(string_heap: &StringHeap))]
