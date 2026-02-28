@@ -198,3 +198,6 @@ pub mod envs;
 
 /// Types for ambient set (`.amb`) files.
 pub mod amb;
+
+/// Types for object behavior set (`.obsb`) files.
+pub mod obsb;
