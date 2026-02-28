@@ -37,7 +37,7 @@ pub struct HeapStringFromPointer {
     // TODO: this cast is stupid
     #[bw(calc = string_heap.get_free_offset_string(value) as u32)]
     pub offset: u32,
-    #[br(calc = string_heap.read_string(r, offset + pointer.pos as u32,))]
+    #[br(calc = string_heap.read_string(r, offset.saturating_add(pointer.pos as u32),))]
     #[bw(ignore)]
     pub value: String,
 }
