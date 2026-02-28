@@ -10,12 +10,15 @@ use crate::common::Platform;
 use binrw::BinRead;
 use binrw::binread;
 
+/// Graphics pipeline shader stage.
 #[binread]
 #[derive(Debug, Clone, Copy)]
 #[repr(C)]
 pub enum ShaderStage {
+    /// Vertex stage.
     #[br(magic = 0u8)]
     Vertex,
+    /// Pixel/fragment stage.
     #[br(magic = 1u8)]
     Pixel,
 }
@@ -30,7 +33,7 @@ pub enum ShaderStage {
 pub struct SHCD {
     version: i32,
 
-    // "DX9\0" or "DX11"
+    /// "DX9\0" or "DX11".
     #[br(count = 4)]
     #[bw(pad_size_to = 4)]
     #[bw(map = |x : &String | x.as_bytes())]
@@ -40,6 +43,7 @@ pub struct SHCD {
     file_length: u32,
     shader_offset: u32,
     parameter_offset: u32,
+    /// The stage this shader runs in.
     #[brw(pad_size_to = 4)]
     pub stage: ShaderStage,
     shader_data_length: u32,

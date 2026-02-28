@@ -69,8 +69,8 @@ pub struct ScnSection {
     pub(crate) num_layer_groups: i32,
     /// Offset to FileSceneGeneral.
     offset_general: i32,
-    /// Offset to FileSceneFilterList.
-    offset_filters: i32,
+    /// Offset to ScnLayerSetsSection.
+    offset_layer_sets: i32,
     /// Offset to FileSceneTimelineList.
     offset_timelines: i32,
     /// offset to a list of path offsets (ints)
@@ -101,11 +101,11 @@ pub struct ScnSection {
     #[brw(args(string_heap))]
     pub general: ScnGeneralSection,
 
-    /// Filter information.
-    #[br(seek_before = SeekFrom::Current(offset_filters as i64 - ScnSection::SIZE as i64))]
+    /// Layer set information.
+    #[br(seek_before = SeekFrom::Current(offset_layer_sets as i64 - ScnSection::SIZE as i64))]
     #[br(restore_position)]
     #[brw(args(string_heap))]
-    pub filters: ScnFiltersSection,
+    pub layer_sets: ScnLayerSetsSection,
 
     /// Embedded animation timelines.
     #[br(seek_before = SeekFrom::Current(offset_timelines as i64 - ScnSection::SIZE as i64))]
@@ -372,18 +372,18 @@ pub struct ScnUnknown3Section {
 #[br(import(string_heap: &StringHeap))]
 #[bw(import(string_heap: &mut StringHeap))]
 #[derive(Debug)]
-pub struct ScnFiltersSection {
-    filter_offset: i32,
-    filter_count: i32,
+pub struct ScnLayerSetsSection {
+    offset: i32,
+    count: i32,
 
-    #[br(seek_before = SeekFrom::Current(filter_offset as i64 - ScnFiltersSection::SIZE as i64))]
-    #[br(count = filter_count, restore_position, args { inner: (string_heap,) })]
-    #[bw(write_with = write_filters, args(string_heap))]
-    pub filters: Vec<ScnFilter>,
+    #[br(seek_before = SeekFrom::Current(offset as i64 - ScnLayerSetsSection::SIZE as i64))]
+    #[br(count = count, restore_position, args { inner: (string_heap,) })]
+    #[bw(write_with = write_layersets, args(string_heap))]
+    pub layer_sets: Vec<ScnLayerSet>,
 }
 
 #[binrw::writer(writer, endian)]
-pub fn write_filters(scns: &Vec<ScnFilter>, string_heap: &mut StringHeap) -> BinResult<()> {
+pub fn write_layersets(scns: &Vec<ScnLayerSet>, string_heap: &mut StringHeap) -> BinResult<()> {
     for scn in scns {
         scn.write_options(writer, endian, (string_heap,))?;
     }
@@ -391,7 +391,7 @@ pub fn write_filters(scns: &Vec<ScnFilter>, string_heap: &mut StringHeap) -> Bin
     Ok(())
 }
 
-impl ScnFiltersSection {
+impl ScnLayerSetsSection {
     pub(crate) const SIZE: usize = 0x8;
 }
 
@@ -399,16 +399,17 @@ impl ScnFiltersSection {
 #[br(import(string_heap: &StringHeap))]
 #[bw(import(string_heap: &mut StringHeap))]
 #[derive(Debug)]
-pub struct ScnFilter {
+pub struct ScnLayerSet {
     #[br(temp)]
     #[bw(ignore)]
     heap_pointer: HeapPointer,
 
+    /// Path to the `.nvm` file for this layer set.
     #[br(args(heap_pointer, string_heap))]
     #[bw(args(string_heap))]
     pub nvm_path: HeapString,
 
-    /// The ID of this filter.
+    /// The ID of this layer set.
     pub id: i32,
     unk2: i32,
     unk3: i32,
@@ -418,6 +419,7 @@ pub struct ScnFilter {
 
     unk5: i32,
 
+    /// Path to the `.nvx` file for this layer set.
     #[br(args(heap_pointer, string_heap))]
     #[bw(args(string_heap))]
     pub nvx_path: HeapString,

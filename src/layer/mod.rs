@@ -409,8 +409,7 @@ pub struct LayerHeader {
 #[derive(Debug, PartialEq)]
 #[allow(dead_code)] // most of the fields are unused at the moment
 pub struct LayerSetReferenced {
-    // TODO: normalize all of the vocabulary here
-    /// Corresponds to an ID of a `ScnFilter`.
+    /// Corresponds to an ID of a [ScnLayerSet](crate::scn::ScnLayerSet).
     pub layer_set_id: u32,
 }
 

@@ -91,7 +91,7 @@ pub struct EXD {
 
     #[br(count = header.data_section_size)]
     #[bw(ignore)]
-    pub remaining_data: Vec<u8>,
+    pub(crate) remaining_data: Vec<u8>,
 }
 
 impl EXD {
