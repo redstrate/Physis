@@ -6,15 +6,16 @@ use binrw::binrw;
 use crate::{
     common_file_operations::{read_bool_from, write_bool_as},
     layer::Color,
-    string_heap::{HeapString, StringHeap},
+    string_heap::{HeapPointer, HeapString, StringHeap},
 };
 
 #[binrw]
-#[br(import(string_heap: &StringHeap))]
+#[br(import(string_heap: &StringHeap, heap_pointer: HeapPointer))]
 #[bw(import(string_heap: &mut StringHeap))]
 #[derive(Debug, PartialEq)]
 pub struct VFXInstanceObject {
-    #[brw(args(string_heap))]
+    #[br(args(heap_pointer, string_heap))]
+    #[bw(args(string_heap))]
     pub asset_path: HeapString,
     #[brw(pad_after = 4)] // padding
     pub soft_particle_fade_range: f32,

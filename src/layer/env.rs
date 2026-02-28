@@ -5,7 +5,7 @@ use binrw::binrw;
 
 use crate::{
     common_file_operations::write_bool_as,
-    string_heap::{HeapString, StringHeap},
+    string_heap::{HeapPointer, HeapString, StringHeap},
 };
 
 use super::read_bool_from;
@@ -22,10 +22,11 @@ pub enum EnvSetShape {
 
 #[binrw]
 #[derive(Debug, PartialEq)]
-#[br(import(string_heap: &StringHeap))]
+#[br(import(string_heap: &StringHeap, heap_pointer: HeapPointer))]
 #[bw(import(string_heap: &mut StringHeap))]
 pub struct EnvSetInstanceObject {
-    #[brw(args(string_heap))]
+    #[br(args(heap_pointer, string_heap))]
+    #[bw(args(string_heap))]
     pub asset_path: HeapString,
     pub bound_instance_id: u32,
     pub shape: EnvSetShape,
@@ -38,18 +39,21 @@ pub struct EnvSetInstanceObject {
     pub interpolation_time: i32,
     pub reverb: f32,
     pub filter: f32,
-    #[brw(args(string_heap))]
+    #[br(args(heap_pointer, string_heap))]
+    #[bw(args(string_heap))]
     pub sound_asset_path: HeapString,
 }
 
 #[binrw]
 #[derive(Debug, PartialEq)]
-#[br(import(string_heap: &StringHeap))]
+#[br(import(string_heap: &StringHeap, heap_pointer: HeapPointer))]
 #[bw(import(string_heap: &mut StringHeap))]
 pub struct EnvLocationObject {
-    #[brw(args(string_heap))]
+    #[br(args(heap_pointer, string_heap))]
+    #[bw(args(string_heap))]
     pub ambient_light_asset_path: HeapString,
-    #[brw(args(string_heap))]
+    #[br(args(heap_pointer, string_heap))]
+    #[bw(args(string_heap))]
     pub env_map_asset_path: HeapString,
     pub padding: [u8; 24], // TODO: UNKNOWN, MAYBE WRONG
 }

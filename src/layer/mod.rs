@@ -6,7 +6,7 @@
 use std::io::{Read, Seek, SeekFrom};
 
 use crate::common_file_operations::{read_bool_from, write_bool_as};
-use crate::string_heap::{HeapString, StringHeap};
+use crate::string_heap::{HeapPointer, HeapString, StringHeap};
 use binrw::{BinRead, BinReaderExt};
 use binrw::{Endian, binrw};
 
@@ -169,7 +169,7 @@ pub enum LayerEntryType {
 
 #[binrw]
 #[derive(Debug, PartialEq)]
-#[br(import(magic: &LayerEntryType, string_heap: &StringHeap))]
+#[br(import(magic: &LayerEntryType, string_heap: &StringHeap, heap_pointer: HeapPointer))]
 #[bw(import(string_heap: &mut StringHeap))]
 pub enum LayerEntryData {
     /// Representing nothing.
@@ -177,22 +177,38 @@ pub enum LayerEntryData {
     None,
     /// Background model.
     #[br(pre_assert(*magic == LayerEntryType::BG))]
-    BG(#[brw(args(string_heap))] BGInstanceObject),
+    BG(
+        #[br(args(string_heap, heap_pointer))]
+        #[bw(args(string_heap))]
+        BGInstanceObject,
+    ),
     /// Light source.
     #[br(pre_assert(*magic == LayerEntryType::LayLight))]
     LayLight(LightInstanceObject),
     /// Visual effect.
     #[br(pre_assert(*magic == LayerEntryType::Vfx))]
-    Vfx(#[brw(args(string_heap))] VFXInstanceObject),
+    Vfx(
+        #[br(args(string_heap, heap_pointer))]
+        #[bw(args(string_heap))]
+        VFXInstanceObject,
+    ),
     /// Unknown purpose.
     #[br(pre_assert(*magic == LayerEntryType::PositionMarker))]
     PositionMarker(PositionMarkerInstanceObject),
     /// Instance of a prefab.
     #[br(pre_assert(*magic == LayerEntryType::SharedGroup))]
-    SharedGroup(#[brw(args(string_heap))] SharedGroupInstance),
+    SharedGroup(
+        #[br(args(string_heap, heap_pointer))]
+        #[bw(args(string_heap))]
+        SharedGroupInstance,
+    ),
     /// Unknown purpose.
     #[br(pre_assert(*magic == LayerEntryType::Sound))]
-    Sound(#[brw(args(string_heap))] SoundInstanceObject),
+    Sound(
+        #[br(args(string_heap, heap_pointer))]
+        #[bw(args(string_heap))]
+        SoundInstanceObject,
+    ),
     /// Event NPC.
     #[br(pre_assert(*magic == LayerEntryType::EventNPC))]
     EventNPC(ENPCInstanceObject),
@@ -204,7 +220,11 @@ pub enum LayerEntryData {
     Aetheryte(AetheryteInstanceObject),
     /// Unknown purpose.
     #[br(pre_assert(*magic == LayerEntryType::EnvSet))]
-    EnvSet(#[brw(args(string_heap))] EnvSetInstanceObject),
+    EnvSet(
+        #[br(args(string_heap, heap_pointer))]
+        #[bw(args(string_heap))]
+        EnvSetInstanceObject,
+    ),
     /// Unknown purpose.
     #[br(pre_assert(*magic == LayerEntryType::Gathering))]
     Gathering(GatheringInstanceObject),
@@ -225,7 +245,11 @@ pub enum LayerEntryData {
     EventObject(EventInstanceObject),
     /// Unknown purpose.
     #[br(pre_assert(*magic == LayerEntryType::EnvLocation))]
-    EnvLocation(#[brw(args(string_heap))] EnvLocationObject),
+    EnvLocation(
+        #[br(args(string_heap, heap_pointer))]
+        #[bw(args(string_heap))]
+        EnvLocationObject,
+    ),
     /// Unknown purpose.
     #[br(pre_assert(*magic == LayerEntryType::EventRange))]
     EventRange(EventRangeInstanceObject),
@@ -234,7 +258,11 @@ pub enum LayerEntryData {
     QuestMarker(QuestMarkerInstanceObject),
     /// Unknown purpose.
     #[br(pre_assert(*magic == LayerEntryType::CollisionBox))]
-    CollisionBox(#[brw(args(string_heap))] CollisionBoxInstanceObject),
+    CollisionBox(
+        #[br(args(string_heap, heap_pointer))]
+        #[bw(args(string_heap))]
+        CollisionBoxInstanceObject,
+    ),
     /// Unknown purpose.
     #[br(pre_assert(*magic == LayerEntryType::LineVFX))]
     LineVFX(LineVFXInstanceObject),
@@ -298,11 +326,16 @@ pub enum LayerSetReferencedType {
 #[bw(import(data_heap: &mut StringHeap, string_heap: &mut StringHeap))]
 #[allow(dead_code)] // most of the fields are unused at the moment
 pub struct LayerHeader {
+    #[br(temp)]
+    #[bw(ignore)]
+    heap_pointer: HeapPointer,
+
     /// ID of this layer.
     pub layer_id: u32,
 
     /// The name of this layer.
-    #[brw(args(string_heap))]
+    #[br(args(heap_pointer, string_heap))]
+    #[bw(args(string_heap))]
     pub name: HeapString,
 
     pub(crate) instance_object_offset: i32,
@@ -332,7 +365,7 @@ pub struct LayerHeader {
     pub(crate) layer_set_referenced_list_offset: i32,
 
     /// The other referenced layer sets.
-    #[br(calc = data_heap.read_args(r, layer_set_referenced_list_offset))]
+    #[br(calc = data_heap.read_args(r, heap_pointer, layer_set_referenced_list_offset))]
     #[bw(ignore)]
     pub layer_set_referenced_list: LayerSetReferencedList,
     /// The festival ID associated with this layer.
@@ -344,10 +377,21 @@ pub struct LayerHeader {
     pub(crate) version_mask: u16,
 
     #[brw(pad_before = 4)]
-    pub(crate) ob_set_referenced_list: i32,
+    pub(crate) ob_set_referenced_list_offset: i32,
     pub(crate) ob_set_referenced_list_count: i32,
-    pub(crate) ob_set_enable_referenced_list: i32,
+
+    /// The other referenced layer sets.
+    #[br(calc = data_heap.read_vec_args(r, string_heap, heap_pointer, ob_set_referenced_list_count as usize, ob_set_referenced_list_offset))]
+    #[bw(ignore)]
+    pub object_set_referenced: Vec<ObjectSetReferenced>,
+
+    pub(crate) ob_set_enable_referenced_list_offset: i32,
     pub(crate) ob_set_enable_referenced_list_count: i32,
+
+    /// The other referenced layer sets.
+    #[br(calc = data_heap.read_vec_args(r, string_heap, heap_pointer, ob_set_enable_referenced_list_count as usize, ob_set_enable_referenced_list_offset))]
+    #[bw(ignore)]
+    pub object_set_enable_referenced: Vec<ObjectSetEnableReferenced>,
 }
 
 #[binrw]
@@ -359,11 +403,11 @@ pub struct LayerSetReferenced {
 }
 
 #[binrw]
-#[derive(Debug, PartialEq)]
 #[br(import(data_heap: &StringHeap), stream = r)]
 #[bw(import(data_heap: &mut StringHeap))]
+#[derive(Debug, PartialEq)]
 pub struct LayerSetReferencedList {
-    /// The tpye of reference.
+    /// The type of reference.
     pub referenced_type: LayerSetReferencedType,
     #[br(temp)]
     #[bw(calc = data_heap.get_free_offset(&layer_sets))]
@@ -377,26 +421,39 @@ pub struct LayerSetReferencedList {
 }
 
 #[binrw]
-#[derive(Debug)]
-#[allow(dead_code)] // most of the fields are unused at the moment
-struct OBSetReferenced {
-    asset_type: LayerEntryType,
-    instance_id: u32,
-    ob_set_asset_path_offset: u32,
+#[br(import(string_heap: &StringHeap), stream = r)]
+#[bw(import(string_heap: &mut StringHeap))]
+#[derive(Debug, PartialEq)]
+pub struct ObjectSetReferenced {
+    #[br(temp)]
+    #[bw(ignore)]
+    heap_pointer: HeapPointer,
+
+    /// The type of InstanceObject of `instance_id`.
+    pub asset_type: LayerEntryType,
+
+    /// Instance ID referring to an object within this LGB.
+    pub instance_id: u32,
+
+    /// Path to an `.obsb` file.
+    #[br(args(heap_pointer, string_heap))]
+    #[bw(args(string_heap))]
+    pub obsb_path: HeapString,
 }
 
 #[binrw]
-#[derive(Debug)]
-#[allow(dead_code)] // most of the fields are unused at the moment
-struct OBSetEnableReferenced {
-    asset_type: LayerEntryType,
-    instance_id: u32,
+#[br(import(string_heap: &StringHeap), stream = r)]
+#[bw(import(string_heap: &mut StringHeap))]
+#[derive(Debug, PartialEq)]
+pub struct ObjectSetEnableReferenced {
+    pub asset_type: LayerEntryType,
+    pub instance_id: u32,
     #[br(map = read_bool_from::<u8>)]
     #[bw(map = write_bool_as::<u8>)]
-    ob_set_enable: bool,
+    pub ob_set_enable: bool,
     #[br(map = read_bool_from::<u8>)]
     #[bw(map = write_bool_as::<u8>)]
-    ob_set_emissive_enable: bool,
+    pub ob_set_emissive_enable: bool,
     padding: [u8; 2],
 }
 
@@ -421,16 +478,21 @@ pub struct Transformation {
 #[bw(import(string_heap: &mut StringHeap))]
 #[allow(dead_code)] // most of the fields are unused at the moment
 pub struct InstanceObject {
+    #[br(temp)]
+    #[bw(ignore)]
+    heap_pointer: HeapPointer,
+
     asset_type: LayerEntryType,
     /// The unique ID of this object.
     pub instance_id: u32,
     /// The name of this object.
-    #[brw(args(string_heap))]
+    #[br(args(heap_pointer, string_heap))]
+    #[bw(args(string_heap))]
     pub name: HeapString,
     /// The object's transformation in space.
     pub transform: Transformation,
     /// The data associated with this object.
-    #[br(args(&asset_type, string_heap))]
+    #[br(args(&asset_type, string_heap, heap_pointer))]
     #[bw(args(string_heap))]
     pub data: LayerEntryData,
 }
@@ -446,14 +508,16 @@ pub struct Layer {
 
 impl Layer {
     /// Read from `cursor` with `endianness`.
-    pub(crate) fn read<T: Read + Seek>(endianness: Endian, cursor: &mut T) -> Option<Layer> {
+    pub(crate) fn read<T: Read + Seek>(
+        endianness: Endian,
+        cursor: &mut T,
+        data_heap: &StringHeap,
+        string_heap: &StringHeap,
+    ) -> Option<Layer> {
         let old_pos = cursor.stream_position().unwrap();
 
-        let string_heap = StringHeap::from(old_pos);
-        let data_heap = StringHeap::from(old_pos);
-
         let header =
-            LayerHeader::read_options(cursor, endianness, (&data_heap, &string_heap)).unwrap();
+            LayerHeader::read_options(cursor, endianness, (data_heap, string_heap)).unwrap();
 
         let mut objects = Vec::new();
         // read instance objects
@@ -474,10 +538,9 @@ impl Layer {
                     .unwrap();
 
                 let start = cursor.stream_position().unwrap();
-                let string_heap = StringHeap::from(start);
 
                 objects
-                    .push(InstanceObject::read_options(cursor, endianness, (&string_heap,)).ok()?);
+                    .push(InstanceObject::read_options(cursor, endianness, (string_heap,)).ok()?);
 
                 let after_immediate_read = cursor.stream_position().unwrap();
 
@@ -486,7 +549,7 @@ impl Layer {
                         + header.instance_object_offset as u64
                         + instance_offsets[i as usize + 1] as u64
                 } else {
-                    old_pos + header.ob_set_referenced_list as u64
+                    old_pos + header.ob_set_referenced_list_offset as u64
                 };
 
                 let expected_size = next_offset as u64 - start;
@@ -502,30 +565,6 @@ impl Layer {
                         actual_size
                     );
                 }*/
-            }
-        }
-
-        // read ob set referenced
-        {
-            cursor
-                .seek(SeekFrom::Start(
-                    old_pos + header.ob_set_referenced_list as u64,
-                ))
-                .unwrap();
-            for _ in 0..header.ob_set_referenced_list_count {
-                OBSetReferenced::read_options(cursor, endianness, ()).unwrap();
-            }
-        }
-
-        // read ob set enable referenced list
-        {
-            cursor
-                .seek(SeekFrom::Start(
-                    old_pos + header.ob_set_enable_referenced_list as u64,
-                ))
-                .unwrap();
-            for _ in 0..header.ob_set_enable_referenced_list_count {
-                OBSetEnableReferenced::read_options(cursor, endianness, ()).unwrap();
             }
         }
 

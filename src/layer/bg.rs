@@ -3,9 +3,12 @@
 
 use binrw::binrw;
 
-use crate::common_file_operations::write_bool_as;
+use crate::{
+    common_file_operations::write_bool_as,
+    string_heap::{HeapPointer, HeapString},
+};
 
-use super::{HeapString, StringHeap, read_bool_from};
+use super::{StringHeap, read_bool_from};
 
 #[binrw]
 #[brw(repr = i32)]
@@ -18,12 +21,14 @@ pub enum ModelCollisionType {
 
 #[binrw]
 #[derive(Debug, PartialEq)]
-#[br(import(string_heap: &StringHeap))]
+#[br(import(string_heap: &StringHeap, heap_pointer: HeapPointer))]
 #[bw(import(string_heap: &mut StringHeap))]
 pub struct BGInstanceObject {
-    #[brw(args(string_heap))]
+    #[br(args(heap_pointer, string_heap))]
+    #[bw(args(string_heap))]
     pub asset_path: HeapString,
-    #[brw(args(string_heap))]
+    #[br(args(heap_pointer, string_heap))]
+    #[bw(args(string_heap))]
     pub collision_asset_path: HeapString,
     pub collision_type: ModelCollisionType,
     pub attribute_mask: u32,

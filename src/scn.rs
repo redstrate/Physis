@@ -8,7 +8,7 @@ use binrw::{BinResult, BinWrite, binrw};
 use crate::{
     common_file_operations::{read_bool_from, read_null_terminated_utf8, write_bool_as},
     layer::Layer,
-    string_heap::{HeapPointer, HeapStringFromPointer, StringHeap},
+    string_heap::{HeapPointer, HeapString, StringHeap},
     tmb::Tmb,
 };
 
@@ -34,7 +34,7 @@ pub struct ScnLayerGroup {
 
     #[br(args(heap_pointer, string_heap))]
     #[bw(args(string_heap))]
-    pub name: HeapStringFromPointer,
+    pub name: HeapString,
 
     layer_offsets_start: i32,
     layer_offsets_count: i32,
@@ -44,7 +44,7 @@ pub struct ScnLayerGroup {
     #[br(restore_position)]
     offsets_layers: Vec<i32>,
 
-    #[br(restore_position, parse_with = layers_from_offsets, args(&offsets_layers))]
+    #[br(restore_position, parse_with = layers_from_offsets, args(&offsets_layers, string_heap))]
     #[br(seek_before = SeekFrom::Current(layer_offsets_start as i64 - ScnLayerGroup::SIZE as i64))]
     #[bw(ignore)] // TODO: support writing
     pub layers: Vec<Layer>,
@@ -150,14 +150,14 @@ pub struct ScnEnvSpace {
 
     #[br(args(heap_pointer, string_heap))]
     #[bw(args(string_heap))]
-    pub envb_path: HeapStringFromPointer,
+    pub envb_path: HeapString,
 
     unk1: i32,
     unk2: i32,
 
     #[br(args(heap_pointer, string_heap))]
     #[bw(args(string_heap))]
-    pub essb_path: HeapStringFromPointer,
+    pub essb_path: HeapString,
 
     // TODO: I have no idea, but there's 8 extra bytes unaccounted for here. Probably a mistake elsewhere.
     #[br(restore_position)]
@@ -181,7 +181,7 @@ pub struct ScnGeneralSection {
 
     #[br(args(heap_pointer, string_heap))]
     #[bw(args(string_heap))]
-    pub bg_path: HeapStringFromPointer,
+    pub bg_path: HeapString,
 
     offset_env_spaces: i32,
     num_env_spaces: i32,
@@ -190,7 +190,7 @@ pub struct ScnGeneralSection {
 
     #[br(args(heap_pointer, string_heap))]
     #[bw(args(string_heap))]
-    pub svb_path: HeapStringFromPointer,
+    pub svb_path: HeapString,
 
     unk2: i32,
     unk3: i32,
@@ -202,7 +202,7 @@ pub struct ScnGeneralSection {
 
     #[br(args(heap_pointer, string_heap))]
     #[bw(args(string_heap))]
-    pub lcb_path: HeapStringFromPointer,
+    pub lcb_path: HeapString,
 
     unk10: i32,
     unk11: i32,
@@ -266,7 +266,7 @@ pub struct ScnTimeline {
     pub sub_id: u32,
     #[br(args(heap_pointer, string_heap))]
     #[bw(args(string_heap))]
-    pub animation_type: HeapStringFromPointer,
+    pub animation_type: HeapString,
     offset_instances: i32,
     num_instances: i32,
     offset_action_timeline_key: i32, // TODO: may be be a string? or at least clientstructs claims its one
@@ -409,7 +409,7 @@ pub struct ScnFilter {
 
     #[br(args(heap_pointer, string_heap))]
     #[bw(args(string_heap))]
-    pub nvm_path: HeapStringFromPointer,
+    pub nvm_path: HeapString,
 
     unk1: i32,
     unk2: i32,
@@ -422,7 +422,7 @@ pub struct ScnFilter {
 
     #[br(args(heap_pointer, string_heap))]
     #[bw(args(string_heap))]
-    pub nvx_path: HeapStringFromPointer,
+    pub nvx_path: HeapString,
 }
 
 impl ScnFilter {
@@ -446,7 +446,7 @@ fn strings_from_offsets(offsets: &Vec<i32>) -> BinResult<Vec<String>> {
 }
 
 #[binrw::parser(reader, endian)]
-fn layers_from_offsets(offsets: &Vec<i32>) -> BinResult<Vec<Layer>> {
+fn layers_from_offsets(offsets: &Vec<i32>, string_heap: &StringHeap) -> BinResult<Vec<Layer>> {
     let base_offset = reader.stream_position()?;
 
     let mut layers: Vec<Layer> = vec![];
@@ -455,7 +455,8 @@ fn layers_from_offsets(offsets: &Vec<i32>) -> BinResult<Vec<Layer>> {
         let layer_offset = *offset as u64;
 
         reader.seek(SeekFrom::Start(base_offset + layer_offset))?;
-        layers.push(Layer::read(endian, reader).unwrap());
+        // TODO: need separate data heap eventually
+        layers.push(Layer::read(endian, reader, string_heap, string_heap).unwrap());
     }
 
     Ok(layers)

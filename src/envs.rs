@@ -6,7 +6,7 @@ use std::io::SeekFrom;
 
 use binrw::{BinRead, BinResult, BinWrite, binrw};
 
-use crate::string_heap::{HeapPointer, HeapStringFromPointer, StringHeap};
+use crate::string_heap::{HeapPointer, HeapString, StringHeap};
 
 #[binrw::writer(writer, endian)]
 pub(crate) fn write_envs(envs: &Vec<EnvsHeader>, string_heap: &mut StringHeap) -> BinResult<()> {
@@ -157,10 +157,10 @@ pub struct EnvUnknown2 {
     heap_pointer: HeapPointer,
     #[br(args(heap_pointer, string_heap))]
     #[bw(args(string_heap))]
-    pub name: HeapStringFromPointer,
+    pub name: HeapString,
     #[br(args(heap_pointer, string_heap))]
     #[bw(args(string_heap))]
-    pub name2: HeapStringFromPointer,
+    pub name2: HeapString,
     pub unk15: f32,
     pub unk16: f32,
     pub unk17: f32,

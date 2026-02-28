@@ -9,7 +9,7 @@ use crate::{
     ByteBuffer, ByteSpan, ReadableFile, WritableFile,
     common::Platform,
     layer::Layer,
-    string_heap::{HeapString, StringHeap},
+    string_heap::{HeapPointer, HeapString, StringHeap},
 };
 
 #[binrw]
@@ -34,8 +34,14 @@ impl LgbHeader {
 #[brw(magic = b"LGP1")]
 struct LayerChunkHeader {
     chunk_size: i32,
+
+    #[br(temp)]
+    #[bw(ignore)]
+    heap_pointer: HeapPointer,
+
     layer_group_id: i32,
-    #[brw(args(string_heap))]
+    #[br(args(heap_pointer, string_heap))]
+    #[bw(args(string_heap))]
     pub name: HeapString,
     layer_offset: i32,
     layer_count: i32,
@@ -65,16 +71,16 @@ impl ReadableFile for Lgb {
         let mut cursor = Cursor::new(buffer);
         let endianness = platform.endianness();
 
+        let string_heap = StringHeap::from(cursor.position());
+        let data_heap = StringHeap::from(cursor.position());
+
         let file_header = LgbHeader::read_options(&mut cursor, endianness, ()).ok()?;
         if file_header.file_size <= 0 || file_header.total_chunk_count <= 0 {
             return None;
         }
 
-        // yes, for some reason it begins at 8 bytes in?!?!
-        let chunk_string_heap = StringHeap::from(cursor.position() + 8);
-
         let chunk_header =
-            LayerChunkHeader::read_options(&mut cursor, endianness, (&chunk_string_heap,)).unwrap();
+            LayerChunkHeader::read_options(&mut cursor, endianness, (&string_heap,)).unwrap();
         if chunk_header.chunk_size <= 0 {
             return Some(Lgb { chunks: Vec::new() });
         }
@@ -93,7 +99,7 @@ impl ReadableFile for Lgb {
                 .seek(SeekFrom::Start(old_pos + layer_offsets[i as usize] as u64))
                 .unwrap();
 
-            let layer = Layer::read(endianness, &mut cursor)?;
+            let layer = Layer::read(endianness, &mut cursor, &data_heap, &string_heap)?;
             layers.push(layer);
         }
 
@@ -265,6 +271,7 @@ mod tests {
         LayerHeader, LayerSetReferenced, LayerSetReferencedList, LayerSetReferencedType,
     };
     use crate::pass_random_invalid;
+    use crate::string_heap::HeapString;
 
     use super::*;
 
@@ -346,10 +353,12 @@ mod tests {
                     is_temporary: 0,
                     is_housing: 0,
                     version_mask: 47,
-                    ob_set_referenced_list: 68,
+                    ob_set_referenced_list_offset: 68,
                     ob_set_referenced_list_count: 0,
-                    ob_set_enable_referenced_list: 68,
-                    ob_set_enable_referenced_list_count: 0
+                    object_set_referenced: vec![],
+                    ob_set_enable_referenced_list_offset: 68,
+                    ob_set_enable_referenced_list_count: 0,
+                    object_set_enable_referenced: vec![],
                 },
                 objects: vec![]
             }]
@@ -391,10 +400,12 @@ mod tests {
                         is_temporary: 0,
                         is_housing: 0,
                         version_mask: 47,
-                        ob_set_referenced_list: 68,
+                        ob_set_referenced_list_offset: 68,
                         ob_set_referenced_list_count: 0,
-                        ob_set_enable_referenced_list: 68,
+                        object_set_referenced: vec![],
+                        ob_set_enable_referenced_list_offset: 68,
                         ob_set_enable_referenced_list_count: 0,
+                        object_set_enable_referenced: vec![],
                     },
                     objects: vec![],
                 }],

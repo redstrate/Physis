@@ -5,7 +5,8 @@ use binrw::binrw;
 
 use crate::{
     common_file_operations::write_bool_as,
-    layer::{HeapString, StringHeap},
+    layer::StringHeap,
+    string_heap::{HeapPointer, HeapString},
 };
 
 use super::read_bool_from;
@@ -49,11 +50,12 @@ pub enum ColourState {
 
 #[binrw]
 #[derive(Debug, PartialEq)]
-#[br(import(string_heap: &StringHeap))]
+#[br(import(string_heap: &StringHeap, heap_pointer: HeapPointer))]
 #[bw(import(string_heap: &mut StringHeap))]
 pub struct SharedGroupInstance {
     /// The path to the `.sgb` file.
-    #[brw(args(string_heap))]
+    #[br(args(heap_pointer, string_heap))]
+    #[bw(args(string_heap))]
     pub asset_path: HeapString,
     pub initial_door_state: DoorState,
     pub overriden_members: i32,

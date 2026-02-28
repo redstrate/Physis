@@ -3,7 +3,7 @@
 
 use std::io::{Cursor, Read, Seek, SeekFrom, Write};
 
-use binrw::{BinRead, BinReaderExt, BinResult, BinWrite, Endian, Error, binrw};
+use binrw::{BinRead, BinReaderExt, BinResult, BinWrite, Endian, Error, VecArgs, binrw};
 
 use crate::{
     ByteBuffer,
@@ -11,28 +11,12 @@ use crate::{
 };
 
 /// A string that exists in a different location in the file, usually a heap with a bunch of other strings.
-#[binrw]
-#[br(import(string_heap: &StringHeap), stream = r)]
-#[bw(import(string_heap: &mut StringHeap))]
-#[derive(Clone, Debug, PartialEq)]
-pub struct HeapString {
-    #[br(temp)]
-    // TODO: this cast is stupid
-    #[bw(calc = string_heap.get_free_offset_string(value) as u32)]
-    pub offset: u32,
-    #[br(calc = string_heap.read_string(r, offset,))]
-    #[bw(ignore)]
-    pub value: String,
-}
-
-// TODO: merge with HeapString once LayerGroup can be ported
-/// A string that exists in a different location in the file, usually a heap with a bunch of other strings.
 /// Pointer points to where the string offset is relative to, usually the start of a struct.
 #[binrw]
 #[br(import(pointer: HeapPointer, string_heap: &StringHeap), stream = r)]
 #[bw(import(string_heap: &mut StringHeap))]
 #[derive(Clone, Debug, PartialEq)]
-pub struct HeapStringFromPointer {
+pub struct HeapString {
     #[br(temp)]
     // TODO: this cast is stupid
     #[bw(calc = string_heap.get_free_offset_string(value) as u32)]
@@ -63,7 +47,7 @@ pub fn read_pointer_pos() -> BinResult<u64> {
 }
 
 impl StringHeap {
-    pub fn from(pos: u64) -> Self {
+    pub(crate) fn from(pos: u64) -> Self {
         Self {
             pos,
             bytes: Vec::new(),
@@ -71,7 +55,7 @@ impl StringHeap {
         }
     }
 
-    pub fn get_free_offset_args<T>(&mut self, obj: &T) -> i32
+    pub(crate) fn get_free_offset_args<T>(&mut self, obj: &T) -> i32
     where
         T: for<'a> BinWrite<Args<'a> = (&'a mut StringHeap,)> + std::fmt::Debug,
     {
@@ -112,7 +96,7 @@ impl StringHeap {
         old_pos as i32
     }
 
-    pub fn get_free_offset<T>(&mut self, obj: &T) -> i32
+    pub(crate) fn get_free_offset<T>(&mut self, obj: &T) -> i32
     where
         T: for<'a> BinWrite<Args<'a> = ()> + std::fmt::Debug,
     {
@@ -130,40 +114,33 @@ impl StringHeap {
         old_pos as i32
     }
 
-    pub fn get_free_offset_string(&mut self, str: &String) -> i32 {
+    pub(crate) fn get_free_offset_string(&mut self, str: &String) -> i32 {
         let bytes = write_string(str);
         self.get_free_offset(&bytes)
     }
 
-    pub fn read<R, T>(&self, reader: &mut R, offset: i32) -> T
-    where
-        R: Read + Seek,
-        T: for<'a> BinRead<Args<'a> = ()>,
-    {
-        let old_pos = reader.stream_position().unwrap();
-        reader
-            .seek(SeekFrom::Start((self.pos as i32 + offset) as u64))
-            .unwrap();
-        let obj = reader.read_le::<T>().unwrap();
-        reader.seek(SeekFrom::Start(old_pos)).unwrap();
-        obj
-    }
-
-    pub fn read_args<R, T>(&self, reader: &mut R, offset: i32) -> T
+    pub(crate) fn read_args<R, T>(
+        &self,
+        reader: &mut R,
+        heap_pointer: HeapPointer,
+        offset: i32,
+    ) -> T
     where
         R: Read + Seek,
         T: for<'a> BinRead<Args<'a> = (&'a StringHeap,)>,
     {
         let old_pos = reader.stream_position().unwrap();
         reader
-            .seek(SeekFrom::Start((self.pos as i32 + offset) as u64))
+            .seek(SeekFrom::Start(
+                (self.pos as i32 + heap_pointer.pos as i32 + offset) as u64,
+            ))
             .unwrap();
         let obj = reader.read_le_args::<T>((self,)).unwrap();
         reader.seek(SeekFrom::Start(old_pos)).unwrap();
         obj
     }
 
-    pub fn read_string<R>(&self, reader: &mut R, offset: u32) -> String
+    pub(crate) fn read_string<R>(&self, reader: &mut R, offset: u32) -> String
     where
         R: Read + Seek,
     {
@@ -174,6 +151,38 @@ impl StringHeap {
         let s = read_null_terminated_utf8(reader);
         reader.seek(SeekFrom::Start(old_pos)).unwrap();
         s
+    }
+
+    pub(crate) fn read_vec_args<R, T>(
+        &self,
+        reader: &mut R,
+        string_heap: &StringHeap,
+        heap_pointer: HeapPointer,
+        count: usize,
+        offset: i32,
+    ) -> Vec<T>
+    where
+        R: Read + Seek,
+        T: for<'a> BinRead<Args<'a> = (&'a StringHeap,)> + 'static,
+    {
+        let old_pos = reader.stream_position().unwrap();
+        reader
+            .seek(SeekFrom::Start(
+                (self.pos as i32 + heap_pointer.pos as i32 + offset) as u64,
+            ))
+            .unwrap();
+
+        let obj: Vec<T> = reader
+            .read_type_args(
+                Endian::Little,
+                VecArgs::builder()
+                    .count(count)
+                    .inner((string_heap,))
+                    .finalize(),
+            )
+            .unwrap();
+        reader.seek(SeekFrom::Start(old_pos)).unwrap();
+        obj
     }
 }
 
