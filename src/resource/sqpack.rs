@@ -4,7 +4,7 @@
 use std::{
     collections::HashMap,
     fs::{self, DirEntry, ReadDir},
-    path::PathBuf,
+    path::{Path, PathBuf},
 };
 
 use crate::{
@@ -17,7 +17,7 @@ use crate::{
         generic_get_all_sheet_names, generic_parsed, generic_read_excel_sheet,
         generic_read_excel_sheet_header,
     },
-    sqpack::{Hash, IndexEntry, SqPackData, SqPackIndex},
+    sqpack::{Hash, IndexEntry, IndexType, SqPackData, SqPackIndex},
 };
 
 use super::Resource;
@@ -72,7 +72,7 @@ pub struct SqPackResource {
     /// Repositories in the game directory.
     pub repositories: Vec<Repository>,
 
-    index_files: HashMap<String, SqPackIndex>,
+    index_files: HashMap<PathBuf, SqPackIndex>,
 
     /// The platform this resource was designed for.
     platform: Platform,
@@ -228,33 +228,34 @@ impl SqPackResource {
         Some((&self.repositories[0], string_to_category(tokens[0])?))
     }
 
-    fn get_index_filenames(&self, path: &str) -> Option<Vec<String>> {
+    fn get_index_filenames(&self, path: &str) -> Option<Vec<PathBuf>> {
         let (repository, category) = self.parse_repository_category(path)?;
 
-        let mut index_filenames = vec![];
+        const MAX_CHUNK: u8 = 255;
+        let mut index_filenames = Vec::with_capacity(MAX_CHUNK as usize * 2);
 
-        for chunk in 0..255 {
+        for chunk in 0..MAX_CHUNK {
             let index_path: PathBuf = [
                 &self.game_directory,
                 "sqpack",
                 &repository.name,
-                &repository.index_filename(chunk, category),
+                &repository.index_filename(chunk, category, IndexType::Index1),
             ]
             .iter()
             .collect();
 
-            index_filenames.push(index_path.into_os_string().into_string().unwrap());
+            index_filenames.push(index_path);
 
             let index2_path: PathBuf = [
                 &self.game_directory,
                 "sqpack",
                 &repository.name,
-                &repository.index2_filename(chunk, category),
+                &repository.index_filename(chunk, category, IndexType::Index2),
             ]
             .iter()
             .collect();
 
-            index_filenames.push(index2_path.into_os_string().into_string().unwrap());
+            index_filenames.push(index2_path);
         }
 
         Some(index_filenames)
@@ -367,20 +368,20 @@ impl SqPackResource {
         Ok(())
     }
 
-    fn cache_index_file(&mut self, filename: &str) {
+    fn cache_index_file(&mut self, filename: &Path) {
         if !self.index_files.contains_key(filename)
             && let Some(index_file) = SqPackIndex::from_existing(self.platform, filename)
         {
-            self.index_files.insert(filename.to_string(), index_file);
+            self.index_files.insert(filename.to_path_buf(), index_file);
         }
     }
 
-    fn get_index_file(&self, filename: &str) -> Option<&SqPackIndex> {
+    fn get_index_file(&self, filename: &Path) -> Option<&SqPackIndex> {
         self.index_files.get(filename)
     }
 
     /// Finds the index entry for `path`, if it exists. Also returns the path of the index file it was found in.
-    fn find_entry(&mut self, path: &str) -> Option<(IndexEntry, String)> {
+    fn find_entry(&mut self, path: &str) -> Option<(IndexEntry, PathBuf)> {
         let index_paths = self.get_index_filenames(path)?;
 
         for index_path in index_paths {
@@ -419,20 +420,21 @@ impl SqPackResource {
             if index_path.extension().unwrap_or_default() == "index"
                 || index_path.extension().unwrap_or_default() == "index2"
             {
-                self.cache_index_file(&index_path.into_os_string().into_string().unwrap());
+                self.cache_index_file(&index_path);
             }
         }
     }
 
     /// Reads a file based on an index hash and the index file you want to read from.
-    pub fn read_from_hash(&mut self, index_path: &str, hash: Hash) -> Option<ByteBuffer> {
+    pub fn read_from_hash(&mut self, index_path: &Path, hash: Hash) -> Option<ByteBuffer> {
         self.cache_index_file(index_path);
         let index_file = self.get_index_file(index_path)?;
 
         let slice = index_file.find_entry_from_hash(hash);
         match slice {
             Some(entry) => {
-                let mut dat_file = self.get_dat_file(index_path, entry.data_file_id.into())?;
+                let mut dat_file =
+                    self.get_dat_file(&index_path.to_string_lossy(), entry.data_file_id.into())?;
                 dat_file.read_from_offset(entry.offset)
             }
             None => None,
@@ -470,7 +472,8 @@ impl Resource for SqPackResource {
         let slice = self.find_entry(path);
         match slice {
             Some((entry, index_path)) => {
-                let mut dat_file = self.get_dat_file(&index_path, entry.data_file_id.into())?;
+                let mut dat_file =
+                    self.get_dat_file(&index_path.to_string_lossy(), entry.data_file_id.into())?;
 
                 dat_file.read_from_offset(entry.offset)
             }

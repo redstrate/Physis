@@ -8,6 +8,7 @@ use std::io::Read;
 use std::io::Seek;
 use std::io::SeekFrom;
 use std::io::Write;
+use std::path::Path;
 
 use crate::common::Platform;
 use crate::crc::Jamcrc;
@@ -37,6 +38,15 @@ pub enum IndexType {
     Index1 = 0,
     /// `.index2` files.
     Index2 = 2,
+}
+
+impl IndexType {
+    pub fn file_extension(&self) -> &'static str {
+        match self {
+            IndexType::Index1 => "index",
+            IndexType::Index2 => "index2",
+        }
+    }
 }
 
 #[binrw]
@@ -190,14 +200,10 @@ const CRC: Jamcrc = Jamcrc::new();
 
 impl SqPackIndex {
     /// Creates a new reference to an existing index file.
-    pub fn from_existing(platform: Platform, path: &str) -> Option<Self> {
-        let mut index_file = std::fs::File::open(path).ok()?;
-
+    pub fn from_existing(platform: Platform, path: &Path) -> Option<Self> {
         // Index files are individually small, so we can easily load them entirely to memory.
         // Our current index-reading code uses seeking, and that's *very* slow when reading from a disk.
-        let mut buf = Vec::new();
-        index_file.read_to_end(&mut buf).ok()?;
-
+        let buf = std::fs::read(path).ok()?;
         Self::read_options(&mut std::io::Cursor::new(buf), platform.endianness(), ()).ok()
     }
 
@@ -283,7 +289,7 @@ mod tests {
         d.push("random");
 
         // Feeding it invalid data should not panic
-        SqPackIndex::from_existing(Platform::Win32, d.to_str().unwrap());
+        SqPackIndex::from_existing(Platform::Win32, &d);
     }
 
     #[test]

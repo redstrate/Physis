@@ -238,7 +238,7 @@ impl Page {
     fn read_descriptors(exh: &EXH, exd: &EXD) -> Vec<Entry> {
         let mut cursor = Cursor::new(&exd.remaining_data);
         let header_offset = EXDHeader::SIZE as u64 + exd.header.data_offset_size as u64;
-        let mut rows = Vec::new();
+        let mut rows = Vec::with_capacity(exh.header.row_count as usize); // FIXME: This over-estimates for subrow sheets
 
         for offset in &exd.data_offsets {
             cursor

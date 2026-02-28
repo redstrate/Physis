@@ -8,6 +8,7 @@ use std::path::{Path, PathBuf};
 use crate::common::{Platform, read_version};
 use crate::repository::RepositoryType::{Base, Expansion};
 use crate::resource::SqPackRelease;
+use crate::sqpack::IndexType;
 
 /// The type of repository, discerning game data from expansion data.
 #[derive(Debug, PartialEq, Eq, Copy, Clone)]
@@ -179,20 +180,16 @@ impl Repository {
     }
 
     /// Calculate an index filename for a specific category, like _"0a0000.win32.index"_.
-    pub fn index_filename(&self, chunk: u8, category: Category) -> String {
+    pub fn index_filename(&self, chunk: u8, category: Category, index_type: IndexType) -> String {
         format!(
-            "{:02x}{:02}{:02}.{}{}.index",
+            "{:02x}{:02}{:02}.{}{}.{}",
             category as i32,
             self.expansion(),
             chunk,
             self.platform.shortname(),
             self.release.suffix(),
+            index_type.file_extension(),
         )
-    }
-
-    /// Calculate an index2 filename for a specific category, like _"0a0000.win32.index"_.
-    pub fn index2_filename(&self, chunk: u8, category: Category) -> String {
-        format!("{}2", self.index_filename(chunk, category))
     }
 
     fn expansion(&self) -> i32 {
@@ -251,11 +248,11 @@ mod tests {
         };
 
         assert_eq!(
-            repo.index_filename(0, Category::Music),
+            repo.index_filename(0, Category::Music, IndexType::Index1),
             "0c0000.win32.index"
         );
         assert_eq!(
-            repo.index2_filename(0, Category::Music),
+            repo.index_filename(0, Category::Music, IndexType::Index2),
             "0c0000.win32.index2"
         );
     }
@@ -270,9 +267,12 @@ mod tests {
             version: None,
         };
 
-        assert_eq!(repo.index_filename(0, Category::Music), "0c0000.ps3.index");
         assert_eq!(
-            repo.index2_filename(0, Category::Music),
+            repo.index_filename(0, Category::Music, IndexType::Index1),
+            "0c0000.ps3.index"
+        );
+        assert_eq!(
+            repo.index_filename(0, Category::Music, IndexType::Index2),
             "0c0000.ps3.index2"
         );
     }
@@ -287,9 +287,12 @@ mod tests {
             version: None,
         };
 
-        assert_eq!(repo.index_filename(0, Category::Music), "0c0000.ps4.index");
         assert_eq!(
-            repo.index2_filename(0, Category::Music),
+            repo.index_filename(0, Category::Music, IndexType::Index1),
+            "0c0000.ps4.index"
+        );
+        assert_eq!(
+            repo.index_filename(0, Category::Music, IndexType::Index2),
             "0c0000.ps4.index2"
         );
     }
@@ -305,11 +308,11 @@ mod tests {
         };
 
         assert_eq!(
-            repo.index_filename(0, Category::Music),
+            repo.index_filename(0, Category::Music, IndexType::Index1),
             "0c0000.ps3.d.index"
         );
         assert_eq!(
-            repo.index2_filename(0, Category::Music),
+            repo.index_filename(0, Category::Music, IndexType::Index2),
             "0c0000.ps3.d.index2"
         );
     }
