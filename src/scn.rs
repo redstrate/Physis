@@ -77,7 +77,7 @@ pub struct ScnSection {
     offset_layer_group_resources: i32,
     num_layer_group_resources: i32,
     unk2: i32,
-    offset_unk1: i32, // Points to 5 bytes of data
+    offset_action_descriptors: i32,
     unk4: i32,
     unk5: i32,
     housing_offset: i32, // According to Lumina?
@@ -126,7 +126,7 @@ pub struct ScnSection {
     #[bw(ignore)] // TODO: support
     pub lgb_paths: Vec<String>,
 
-    #[br(seek_before = SeekFrom::Current(offset_unk1 as i64 - ScnSection::SIZE as i64))]
+    #[br(seek_before = SeekFrom::Current(offset_action_descriptors as i64 - ScnSection::SIZE as i64))]
     #[br(restore_position)]
     pub action_descriptors: ScnSGActionDescriptors,
 
