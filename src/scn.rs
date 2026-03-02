@@ -189,12 +189,12 @@ pub struct ScnGeneralSection {
     #[bw(args(string_heap))]
     pub svb_path: HeapString,
 
-    unk2: i32,
-    unk3: i32,
-    unk4: i32,
-    unk5: i32,
-    unk6: i32,
-    unk7: i32,
+    unk2: f32,
+    unk3: f32,
+    unk4: f32,
+    unk5: f32,
+    unk6: f32,
+    unk7: f32,
     unk8: i32, // points to 4 bytes in the string heap
 
     #[br(args(heap_pointer, string_heap))]
@@ -202,12 +202,12 @@ pub struct ScnGeneralSection {
     pub lcb_path: HeapString,
 
     unk10: i32,
-    unk11: i32,
+    unk11: f32,
     unk12: i32,
     unk13: i32,
-    unk14: i32,
+    unk14: f32,
     unk15: i32,
-    unk16: i32,
+    unk16: f32,
 
     #[br(map = read_bool_from::<i32>)]
     #[bw(map = write_bool_as::<i32>)]
@@ -443,7 +443,9 @@ pub struct ScnLayerSet {
     unk3: i32,
 
     /// Refers to a row in the TerritoryType Excel sheet.
-    pub territory_type_id: i32,
+    pub territory_type_id: u16,
+    /// Refers to a row in the ContentFinderCondition Excel sheet.
+    pub content_finder_condition_id: u16,
 
     unk5: i32,
 
