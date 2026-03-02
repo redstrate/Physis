@@ -50,9 +50,9 @@ pub use path::{
 
 mod range;
 pub use range::{
-    ClickableRangeInstanceObject, EventRangeInstanceObject, ExitRangeInstanceObject, ExitType,
-    FateRangeInstanceObject, GimmickRangeInstanceObject, MapRangeInstanceObject,
-    PopRangeInstanceObject, PopType, PrefetchRangeInstanceObject,
+    ClickableRangeInstanceObject, DoorRangeInstanceObject, EventRangeInstanceObject,
+    ExitRangeInstanceObject, ExitType, FateRangeInstanceObject, GimmickRangeInstanceObject,
+    MapRangeInstanceObject, PopRangeInstanceObject, PopType, PrefetchRangeInstanceObject,
 };
 
 mod shared_group;
@@ -304,7 +304,7 @@ pub enum LayerEntryData {
     Unk4(),
     /// Unknown purpose.
     #[br(pre_assert(*magic == LayerEntryType::DoorRange))]
-    DoorRange(),
+    DoorRange(DoorRangeInstanceObject),
     /// Unhandled or unknown type.
     Unknown(),
 }

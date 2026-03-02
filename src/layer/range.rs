@@ -134,3 +134,9 @@ pub struct PrefetchRangeInstanceObject {
     pub bound_instance_id: u32,
     padding: u32,
 }
+
+#[binrw]
+#[derive(Debug, PartialEq)]
+pub struct DoorRangeInstanceObject {
+    pub parent_data: TriggerBoxInstanceObject,
+}
