@@ -37,7 +37,7 @@ pub use light::{LightInstanceObject, LightType, PointLightType};
 mod marker;
 pub use marker::{
     ChairMarkerInstanceObject, ChairType, PositionMarkerInstanceObject, PositionMarkerType,
-    QuestMarkerInstanceObject, TargetMarkerInstanceObject,
+    QuestMarkerInstanceObject, TargetMarkerInstanceObject, TargetMarkerType,
 };
 
 mod npc;
@@ -67,7 +67,7 @@ mod treasure;
 pub use treasure::TreasureInstanceObject;
 
 mod vfx;
-pub use vfx::{LineVFXInstanceObject, VFXInstanceObject};
+pub use vfx::{LineStyle, LineVFXInstanceObject, VFXInstanceObject};
 
 // From https://github.com/NotAdam/Lumina/tree/40dab50183eb7ddc28344378baccc2d63ae71d35/src/Lumina/Data/Parsing/Layer
 // Also see https://github.com/aers/FFXIVClientStructs/blob/6b62122cae38bfbc016bf697bef75f80f37abac1/FFXIVClientStructs/FFXIV/Client/LayoutEngine/ILayoutInstance.cs

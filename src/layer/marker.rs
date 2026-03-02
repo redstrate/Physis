@@ -53,5 +53,20 @@ pub struct ChairMarkerInstanceObject {
 pub struct QuestMarkerInstanceObject {}
 
 #[binrw]
+#[brw(repr = i32)]
+#[repr(C)]
+#[derive(Debug, PartialEq, Clone, Copy)]
+pub enum TargetMarkerType {
+    UiTarget = 0x0,
+    UiNameplate = 0x1,
+    LookAt = 0x2,
+    BodyDyn = 0x3,
+    Root = 0x4,
+}
+
+#[binrw]
 #[derive(Debug, PartialEq)]
-pub struct TargetMarkerInstanceObject {}
+pub struct TargetMarkerInstanceObject {
+    pub nameplate_offset_y: f32,
+    pub target_marker_type: TargetMarkerType,
+}

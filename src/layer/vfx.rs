@@ -35,5 +35,17 @@ pub struct VFXInstanceObject {
 }
 
 #[binrw]
+#[brw(repr = i32)]
+#[repr(C)]
+#[derive(Debug, PartialEq, Clone, Copy)]
+pub enum LineStyle {
+    Red = 0x1,
+    Blue = 0x2,
+}
+
+#[binrw]
 #[derive(Debug, PartialEq)]
-pub struct LineVFXInstanceObject {}
+pub struct LineVFXInstanceObject {
+    pub line_style: LineStyle,
+    padding: [u32; 2],
+}
