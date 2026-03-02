@@ -129,10 +129,10 @@ pub struct ScnSection {
     #[br(seek_before = SeekFrom::Current(offset_action_descriptors as i64 - ScnSection::SIZE as i64))]
     #[br(restore_position)]
     pub action_descriptors: ScnSGActionDescriptors,
-
-    #[br(seek_before = SeekFrom::Current(offset_unk3 as i64 - ScnSection::SIZE as i64))]
-    #[br(restore_position)]
-    unk3: ScnUnknown3Section,
+    // TODO: re-enable once this is readable
+    // #[br(seek_before = SeekFrom::Current(offset_unk3 as i64 - ScnSection::SIZE as i64))]
+    // #[br(restore_position)]
+    // unk3: ScnUnknown3Section,
 }
 
 impl ScnSection {

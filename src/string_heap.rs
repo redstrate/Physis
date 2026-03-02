@@ -137,6 +137,7 @@ impl StringHeap {
     pub(crate) fn read_args<R, T>(
         &self,
         reader: &mut R,
+        endian: Endian,
         heap_pointer: HeapPointer,
         offset: i32,
     ) -> T
@@ -150,7 +151,7 @@ impl StringHeap {
                 (self.pos as i32 + heap_pointer.pos as i32 + offset) as u64,
             ))
             .unwrap();
-        let obj = reader.read_le_args::<T>((self,)).unwrap();
+        let obj = reader.read_type_args::<T>(endian, (self,)).unwrap();
         reader.seek(SeekFrom::Start(old_pos)).unwrap();
         obj
     }
@@ -171,13 +172,14 @@ impl StringHeap {
     pub(crate) fn read_vec_args<R, T>(
         &self,
         reader: &mut R,
+        endian: Endian,
         string_heap: &StringHeap,
         heap_pointer: HeapPointer,
         count: usize,
         offset: i32,
     ) -> Vec<T>
     where
-        R: Read + Seek,
+        R: Read + Seek + BinReaderExt,
         T: for<'a> BinRead<Args<'a> = (&'a StringHeap,)> + 'static,
     {
         let old_pos = reader.stream_position().unwrap();
@@ -189,7 +191,7 @@ impl StringHeap {
 
         let obj: Vec<T> = reader
             .read_type_args(
-                Endian::Little,
+                endian,
                 VecArgs::builder()
                     .count(count)
                     .inner((string_heap,))

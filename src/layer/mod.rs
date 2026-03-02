@@ -321,7 +321,7 @@ pub enum LayerSetReferencedType {
 /// Metadata information for a [Layer].
 #[binrw]
 #[derive(Debug, PartialEq)]
-#[br(import(data_heap: &StringHeap, string_heap: &StringHeap), stream = r)]
+#[br(import(endianness: Endian, data_heap: &StringHeap, string_heap: &StringHeap), stream = r)]
 #[bw(import(data_heap: &mut StringHeap, string_heap: &mut StringHeap))]
 #[allow(dead_code)] // most of the fields are unused at the moment
 pub struct LayerHeader {
@@ -364,7 +364,7 @@ pub struct LayerHeader {
     pub(crate) layer_set_referenced_list_offset: i32,
 
     /// The layer set referenced list.
-    #[br(calc = data_heap.read_args(r, heap_pointer, layer_set_referenced_list_offset))]
+    #[br(calc = data_heap.read_args(r, endianness, heap_pointer, layer_set_referenced_list_offset))]
     #[bw(ignore)]
     pub layer_set_referenced_list: LayerSetReferencedList,
 
@@ -391,7 +391,7 @@ pub struct LayerHeader {
     pub(crate) ob_set_referenced_list_count: i32,
 
     /// The object set referenced.
-    #[br(calc = data_heap.read_vec_args(r, string_heap, heap_pointer, ob_set_referenced_list_count as usize, ob_set_referenced_list_offset))]
+    #[br(calc = data_heap.read_vec_args(r, endianness, string_heap, heap_pointer, ob_set_referenced_list_count as usize, ob_set_referenced_list_offset))]
     #[bw(ignore)]
     pub object_set_referenced: Vec<ObjectSetReferenced>,
 
@@ -399,7 +399,7 @@ pub struct LayerHeader {
     pub(crate) ob_set_enable_referenced_list_count: i32,
 
     /// The object set enable referenced.
-    #[br(calc = data_heap.read_vec_args(r, string_heap, heap_pointer, ob_set_enable_referenced_list_count as usize, ob_set_enable_referenced_list_offset))]
+    #[br(calc = data_heap.read_vec_args(r, endianness, string_heap, heap_pointer, ob_set_enable_referenced_list_count as usize, ob_set_enable_referenced_list_offset))]
     #[bw(ignore)]
     pub object_set_enable_referenced: Vec<ObjectSetEnableReferenced>,
 }
@@ -527,7 +527,8 @@ impl Layer {
         let old_pos = cursor.stream_position().unwrap();
 
         let header =
-            LayerHeader::read_options(cursor, endianness, (data_heap, string_heap)).unwrap();
+            LayerHeader::read_options(cursor, endianness, (endianness, data_heap, string_heap))
+                .unwrap();
 
         let mut objects = Vec::new();
         // read instance objects
