@@ -319,9 +319,37 @@ pub struct ScnSGActionDescriptors {
 #[repr(C)]
 #[derive(Debug, Clone)]
 pub enum ScnSGActionControllerDescriptor {
+    #[brw(magic = 1i32)]
+    Door(ScnDoorActionDescription),
     #[brw(magic = 2i32)]
     Rotation(ScnRotationActionDescription),
     Unknown(i32),
+}
+
+#[binrw]
+#[repr(C)]
+#[derive(Debug, Clone)]
+pub struct ScnDoorActionDescription {
+    check_if_1: u8, // client checks if this isn't 0, but im unsure what is after this
+    unk: [u8; 11],  // seems to be empty, but not confirmed yet
+    /// Instance ID of a BG object to animate.
+    pub door_object_0: u8,
+    /// Instance ID of a BG object to animate.
+    pub door_object_1: u8,
+    unk2: [u8; 2],
+    pub door_type: i32,
+    unk1: f32,
+    pub max_rotation: f32,
+    pub max_translation: f32,
+    /// Instance ID of a sound to play.
+    pub sound_0: u8,
+    /// Instance ID of a sound to play.
+    pub sound_1: u8,
+    /// Instance ID of a BG object to animate.
+    pub door_object_2: u8,
+    /// Instance ID of a BG object to animate.
+    pub door_object_3: u8,
+    // TODO: unsure if there's other things here
 }
 
 #[binrw]
