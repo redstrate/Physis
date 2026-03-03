@@ -12,13 +12,15 @@ use crate::common::Platform;
 use crate::common_file_operations::read_string;
 use crate::common_file_operations::read_string_until_null;
 use crate::common_file_operations::write_string;
+use crate::string_heap::StringHeap;
 use crate::tmb::TimelineNode;
 use binrw::BinRead;
 use binrw::binrw;
 
 #[binrw]
+#[br(import(name: &str, string_heap: &StringHeap))]
+#[bw(import(string_heap: &mut StringHeap))]
 #[derive(Debug)]
-#[brw(import(name: &str))]
 pub enum NodeData {
     #[br(pre_assert(name == "CTRL"))]
     CTRL(CTRLNode),
@@ -27,11 +29,13 @@ pub enum NodeData {
     #[br(pre_assert(name == "CTDS"))]
     CTDS(CTDSNode),
     #[br(pre_assert(name == "CTTL"))]
-    CTTL(CTTLNode),
+    CTTL(#[brw(args(string_heap,))] CTTLNode),
     Unknown,
 }
 
 #[binrw]
+#[br(import(string_heap: &StringHeap))]
+#[bw(import(string_heap: &mut StringHeap))]
 #[derive(Debug)]
 pub struct CutsceneNode {
     #[br(count = 4)]
@@ -47,7 +51,8 @@ pub struct CutsceneNode {
 
     #[br(seek_before = SeekFrom::Current(data_offset as i64 - 4))]
     #[br(restore_position)]
-    #[br(args(&name))]
+    #[br(args(&name, string_heap))]
+    #[bw(args(string_heap,))]
     pub node_data: NodeData,
 
     /// Size of the node's data *including* the node information.
@@ -77,13 +82,17 @@ pub struct StringNode {
 /// Describes animated cutscenes to be played in-game.
 #[binrw]
 #[brw(magic = b"CUTB")]
+#[br(import(string_heap: &StringHeap))]
+#[bw(import(string_heap: &mut StringHeap))]
 #[derive(Debug)]
 pub struct Cutscene {
     /// In bytes, including the header and the magic.
     size_of_file: u32,
     num_nodes: u32,
     /// The nodes for this cutscene.
-    #[br(count = num_nodes)]
+    #[br(count = num_nodes, args { inner: (string_heap,) })]
+    //#[bw(args(string_heap,))]
+    #[bw(ignore)]
     pub nodes: Vec<CutsceneNode>,
 }
 
@@ -129,6 +138,8 @@ pub struct CTDSNode {
 }
 
 #[binrw]
+#[br(import(string_heap: &StringHeap))]
+#[bw(import(string_heap: &mut StringHeap))]
 #[derive(Debug)]
 pub struct CTTLNode {
     #[br(count = 4)]
@@ -139,14 +150,16 @@ pub struct CTTLNode {
     size: u32,
     node_count: u32,
     // TODO: unsure if this is really a count
-    #[br(count = node_count)]
+    #[br(count = node_count, args { inner: (string_heap,) })]
+    #[bw(ignore)]
     node: Vec<TimelineNode>,
 }
 
 impl ReadableFile for Cutscene {
     fn from_existing(platform: Platform, buffer: ByteSpan) -> Option<Cutscene> {
         let mut cursor = Cursor::new(buffer);
-        Cutscene::read_options(&mut cursor, platform.endianness(), ()).ok()
+        let string_heap = StringHeap::from(0);
+        Cutscene::read_options(&mut cursor, platform.endianness(), (&string_heap,)).ok()
     }
 }
 

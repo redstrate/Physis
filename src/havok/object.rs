@@ -10,7 +10,7 @@ use std::sync::Arc;
 
 use bitflags::bitflags;
 
-#[derive(PartialEq, Eq, Clone, Copy)]
+#[derive(PartialEq, Eq, Clone, Copy, Debug)]
 pub struct HavokValueType(u32);
 
 bitflags! {
@@ -88,6 +88,7 @@ impl HavokValueType {
 pub type HavokInteger = i32;
 pub type HavokReal = f32;
 
+#[derive(Debug)]
 pub enum HavokValue {
     Integer(HavokInteger),
     Real(HavokReal),
@@ -143,6 +144,7 @@ impl HavokValue {
     }
 }
 
+#[derive(Debug)]
 pub struct HavokRootObject {
     object: Arc<RefCell<HavokObject>>,
 }
@@ -166,6 +168,7 @@ impl HavokRootObject {
     }
 }
 
+#[derive(Debug)]
 pub struct HavokObjectTypeMember {
     pub name: Arc<str>,
     pub type_: HavokValueType,
@@ -189,6 +192,7 @@ impl HavokObjectTypeMember {
     }
 }
 
+#[derive(Debug)]
 pub struct HavokObjectType {
     pub name: Arc<str>,
     parent: Option<Arc<HavokObjectType>>,
@@ -228,6 +232,7 @@ impl HavokObjectType {
     }
 }
 
+#[derive(Debug)]
 pub struct HavokObject {
     pub object_type: Arc<HavokObjectType>,
     data: HashMap<usize, HavokValue>,

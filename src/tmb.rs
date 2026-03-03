@@ -7,8 +7,13 @@ use std::io::SeekFrom;
 use crate::ByteSpan;
 use crate::ReadableFile;
 use crate::common::Platform;
+use crate::common_file_operations::read_bool_from;
 use crate::common_file_operations::read_short_identifier;
+use crate::common_file_operations::write_bool_as;
 use crate::common_file_operations::write_short_identifier;
+use crate::string_heap::HeapPointer;
+use crate::string_heap::HeapString;
+use crate::string_heap::StringHeap;
 use binrw::BinRead;
 use binrw::BinReaderExt;
 use binrw::BinResult;
@@ -103,6 +108,27 @@ pub struct Tmtr {
     unk2: u32,
 }
 
+/// Unknown purpose.
+#[binrw]
+#[br(import(string_heap: &StringHeap))]
+#[bw(import(string_heap: &mut StringHeap))]
+#[derive(Debug, Clone)]
+#[repr(C)]
+pub struct C009 {
+    pub id: u16,
+    pub time: u16,
+    pub duration: i32,
+
+    #[br(temp)]
+    #[bw(ignore)]
+    heap_pointer: HeapPointer,
+
+    unk1: i32,
+    #[br(args(heap_pointer, string_heap))]
+    #[bw(args(string_heap))]
+    pub path: HeapString,
+}
+
 /// Model animation.
 #[binrw]
 #[derive(Debug, Clone)]
@@ -115,6 +141,21 @@ pub struct C013 {
     /// ID of the Tmfc node associated with this animation.
     pub tmfc_id: i32,
     placement: i32,
+}
+
+/// Footstep sound.
+#[binrw]
+#[derive(Debug, Clone)]
+#[repr(C)]
+pub struct C042 {
+    pub id: u16,
+    pub time: u16,
+    #[br(map = read_bool_from::<i32>)]
+    #[bw(map = write_bool_as::<i32>)]
+    pub enabled: bool,
+    unk2: i32,
+    foot_id: i32,
+    sound_id: i32,
 }
 
 /// Timeline F-Curve.
@@ -181,7 +222,8 @@ pub struct TmfcRow {
 }
 
 #[binrw]
-#[br(import(tag: &str, size: u32))]
+#[br(import(tag: &str, size: u32, string_heap: &StringHeap))]
+#[bw(import(string_heap: &mut StringHeap))]
 #[derive(Debug)]
 pub enum TimelineNodeData {
     #[br(pre_assert(tag == "TMDH"))]
@@ -194,12 +236,18 @@ pub enum TimelineNodeData {
     Tmtr(Tmtr),
     #[br(pre_assert(tag == "TMFC"))]
     Tmfc(Tmfc),
+    #[br(pre_assert(tag == "C009"))]
+    C009(#[brw(args(string_heap,))] C009),
     #[br(pre_assert(tag == "C013"))]
     C013(C013),
+    #[br(pre_assert(tag == "C042"))]
+    C042(C042),
     Unknown(#[br(count = size - 8)] Vec<u8>),
 }
 
 #[binrw]
+#[br(import(string_heap: &StringHeap))]
+#[bw(import(string_heap: &mut StringHeap))]
 #[derive(Debug)]
 pub struct TimelineNode {
     #[bw(write_with = write_short_identifier)]
@@ -207,7 +255,7 @@ pub struct TimelineNode {
     tag: String,
     /// Size in bytes, including the tag.
     size: u32,
-    #[br(args(&tag, size))]
+    #[br(args(&tag, size, string_heap,))]
     #[bw(ignore)] // TODO: suppoort writing
     pub data: TimelineNodeData,
 }
@@ -217,19 +265,23 @@ pub struct TimelineNode {
 /// Contains animation information, and also seen being embedded into SGBs.
 #[binrw]
 #[brw(magic = b"TMLB")]
+#[br(import(string_heap: &StringHeap))]
+#[bw(import(string_heap: &mut StringHeap))]
 #[derive(Debug)]
 pub struct Tmb {
     /// In bytes, including this header.
     file_size: u32,
     num_nodes: u32,
-    #[br(count = num_nodes)]
+    #[br(count = num_nodes, args { inner: (string_heap,) })]
+    #[bw(ignore)]
     pub nodes: Vec<TimelineNode>,
 }
 
 impl ReadableFile for Tmb {
     fn from_existing(platform: Platform, buffer: ByteSpan) -> Option<Self> {
         let mut cursor = Cursor::new(buffer);
-        Tmb::read_options(&mut cursor, platform.endianness(), ()).ok()
+        let string_heap = StringHeap::from(0);
+        Tmb::read_options(&mut cursor, platform.endianness(), (&string_heap,)).ok()
     }
 }
 

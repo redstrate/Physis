@@ -76,8 +76,8 @@ impl ReadableFile for Lgb {
         let mut cursor = Cursor::new(buffer);
         let endianness = platform.endianness();
 
-        let string_heap = StringHeap::from(cursor.position());
-        let data_heap = StringHeap::from(cursor.position());
+        let string_heap = StringHeap::from(cursor.position() as i64);
+        let data_heap = StringHeap::from(cursor.position() as i64);
 
         let file_header = LgbHeader::read_options(&mut cursor, endianness, ()).ok()?;
         if file_header.file_size <= 0 || file_header.total_chunk_count <= 0 {
@@ -145,13 +145,13 @@ impl WritableFile for Lgb {
             let mut data_base = cursor.stream_position().unwrap();
 
             let mut chunk_data_heap = StringHeap {
-                pos: data_base + 4,
+                pos: data_base as i64 + 4,
                 bytes: Vec::new(),
                 free_pos: data_base + 4,
             };
 
             let mut chunk_string_heap = StringHeap {
-                pos: data_base + 4,
+                pos: data_base as i64 + 4,
                 bytes: Vec::new(),
                 free_pos: data_base + 4,
             };
@@ -198,12 +198,12 @@ impl WritableFile for Lgb {
 
             // second pass: write layers again, we want to get a correct *chunk_string_heap* now that we know of the size of chunk_data_heap
             chunk_string_heap = StringHeap {
-                pos: data_base + 4 + chunk_data_heap.bytes.len() as u64,
+                pos: data_base as i64 + 4 + chunk_data_heap.bytes.len() as i64,
                 bytes: Vec::new(),
                 free_pos: data_base + 4 + chunk_data_heap.bytes.len() as u64,
             };
             chunk_data_heap = StringHeap {
-                pos: data_base + 4,
+                pos: data_base as i64 + 4,
                 bytes: Vec::new(),
                 free_pos: data_base + 4,
             };

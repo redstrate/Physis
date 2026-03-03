@@ -281,6 +281,7 @@ pub struct ScnTimeline {
 
     /// Bytes of a TMLB file.
     #[br(seek_before = SeekFrom::Current(offset_tmb as i64 - ScnTimeline::SIZE as i64), restore_position)]
+    #[brw(args(string_heap,))]
     pub tmb: Tmb,
 
     #[br(seek_before = SeekFrom::Current(offset_instances as i64 - ScnTimeline::SIZE as i64))]

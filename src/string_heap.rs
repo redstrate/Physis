@@ -43,7 +43,7 @@ impl std::fmt::Debug for HeapString {
 
 #[derive(Debug)]
 pub struct StringHeap {
-    pub(crate) pos: u64,
+    pub(crate) pos: i64,
     pub(crate) bytes: Vec<u8>,
     pub(crate) free_pos: u64,
 }
@@ -62,7 +62,7 @@ pub(crate) fn read_pointer_pos() -> BinResult<u64> {
 }
 
 impl StringHeap {
-    pub(crate) fn from(pos: u64) -> Self {
+    pub(crate) fn from(pos: i64) -> Self {
         Self {
             pos,
             bytes: Vec::new(),
@@ -94,7 +94,7 @@ impl StringHeap {
 
         {
             let mut data_heap = StringHeap {
-                pos: buffer.len() as u64,
+                pos: buffer.len() as i64,
                 bytes: Vec::new(),
                 free_pos: buffer.len() as u64,
             };
@@ -160,10 +160,10 @@ impl StringHeap {
     where
         R: Read + Seek,
     {
-        let offset = self.pos + offset as u64;
+        let offset = self.pos + offset as i64;
 
         let old_pos = reader.stream_position().unwrap();
-        reader.seek(SeekFrom::Start(offset)).unwrap();
+        reader.seek(SeekFrom::Start(offset as u64)).unwrap();
         let s = read_null_terminated_utf8(reader);
         reader.seek(SeekFrom::Start(old_pos)).unwrap();
         s

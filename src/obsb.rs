@@ -36,7 +36,7 @@ impl ReadableFile for Obsb {
     fn from_existing(platform: Platform, buffer: ByteSpan) -> Option<Self> {
         let endianness = platform.endianness();
         let mut cursor = Cursor::new(buffer);
-        let string_heap = StringHeap::from(cursor.position());
+        let string_heap = StringHeap::from(cursor.position() as i64);
 
         Obsb::read_options(&mut cursor, endianness, (&string_heap,)).ok()
     }
