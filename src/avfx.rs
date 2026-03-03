@@ -1,531 +1,283 @@
 // SPDX-FileCopyrightText: 2024 Joshua Goins <josh@redstrate.com>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-use std::io::{Cursor, Seek, SeekFrom};
+#![allow(unused)]
+
+use std::io::Cursor;
 
 use crate::common::Platform;
+use crate::common_file_operations::read_string;
 use crate::{ByteSpan, ReadableFile};
-use binrw::BinRead;
+use binrw::{BinRead, BinResult};
 use binrw::{BinReaderExt, binread, binrw};
 
+#[binread]
+#[derive(Debug)]
+struct AvfxBlock<T: BinRead + std::fmt::Debug>
+where
+    T: for<'a> BinRead<Args<'a> = ()>,
+{
+    #[br(count = 4)]
+    #[bw(pad_size_to = 4)]
+    #[bw(map = write_string)]
+    #[br(map = read_string)]
+    name: String,
+    size: u32,
+    data: T,
+}
+
+#[binrw::parser(reader, endian)]
+fn read_block<T>(magic: &str) -> BinResult<T>
+where
+    T: for<'a> BinRead<Args<'a> = ()> + std::fmt::Debug,
+{
+    let block: AvfxBlock<T> = reader.read_type(endian)?;
+    if block.name == magic.chars().rev().collect::<String>() {
+        return Err(binrw::Error::BadMagic {
+            pos: reader.stream_position()?,
+            found: Box::new(block.name),
+        });
+    }
+    // TODO: check size
+
+    Ok(block.data)
+}
+
+#[binread]
+#[br(import(magic: &str))]
+#[derive(Debug)]
+struct PlaceholderBlock {
+    #[br(count = 4)]
+    #[bw(pad_size_to = 4)]
+    #[bw(map = write_string)]
+    #[br(map = read_string)]
+    #[br(assert(name == magic.chars().rev().collect::<String>()))]
+    name: String,
+    size: u32,
+    #[brw(pad_size_to = size)]
+    #[br(count = size)]
+    data: Vec<u8>,
+}
+
+// FIXME: these are flags maybe? VFXEditor has them marked as such
 #[binrw]
+#[brw(repr = u32)]
 #[derive(Debug)]
-struct AvfxHeader {
-    name: u32,
-    size: u32,
+pub enum DrawLayer {
+    Screen = 0,
+    BaseUpper = 1,
+    Base = 2,
+    BaseLower = 3,
+    InWater = 4,
+    BeforeCloud = 5,
+    BehindCloud = 6,
+    BeforeSky = 7,
+    PostUI = 8,
+    PrevUI = 9,
+    FitWater = 10,
+    Max = 11,
 }
 
-#[binread]
-#[derive(Debug)]
-enum AvfxData {
-    #[brw(magic = b"XFVA")]
-    AvfxBase,
-    #[brw(magic = b"reV\0")]
-    Version,
-    #[brw(magic = b"PFDb")]
-    IsDelayFastParticle,
-    #[brw(magic = b"GFb\0")]
-    IsFitGround,
-    #[brw(magic = b"STb\0")]
-    IsTransformSkip,
-    #[brw(magic = b"HSAb")]
-    IsAllStopOnHide,
-    #[brw(magic = b"CBCb")]
-    CanBeClippedOut,
-    #[brw(magic = b"luCb")]
-    ClipBoxEnabled,
-    #[brw(magic = b"xPBC")]
-    ClipBoxX,
-    #[brw(magic = b"yPBC")]
-    ClipBoxY,
-    #[brw(magic = b"zPBC")]
-    ClipBoxZ,
-    #[brw(magic = b"xSBC")]
-    ClipBoxSizeX,
-    #[brw(magic = b"ySBC")]
-    ClipBoxSizeY,
-    #[brw(magic = b"zSBC")]
-    ClipBoxSizeZ,
-    #[brw(magic = b"sMBZ")]
-    BiasZmaxScale,
-    #[brw(magic = b"dMBZ")]
-    BiasZmaxDistance,
-    #[brw(magic = b"SmCb")]
-    IsCameraSpace,
-    #[brw(magic = b"LEFb")]
-    IsFullEnvLight,
-    #[brw(magic = b"tSOb")]
-    IsClipOwnSetting,
-    #[brw(magic = b"BCN\0")]
-    NearClipBegin,
-    #[brw(magic = b"ECN\0")]
-    NearClipEnd,
-    #[brw(magic = b"BCF\0")]
-    FarClipBegin,
-    #[brw(magic = b"ECF\0")]
-    FarClipEnd,
-    #[brw(magic = b"RFPS")]
-    SoftParticleFadeRange,
-    #[brw(magic = b"OKS\0")]
-    SoftKeyOffset,
-    #[brw(magic = b"yLwD")]
-    DrawLayerType,
-    #[brw(magic = b"TOwD")]
-    DrawOrderType,
-    #[brw(magic = b"TSLD")]
-    DirectionalLightSourceType,
-    #[brw(magic = b"S1LP")]
-    PointLightsType1,
-    #[brw(magic = b"S2LP")]
-    PointLightsType2,
-    #[brw(magic = b"xPvR")]
-    RevisedValuesPosX,
-    #[brw(magic = b"yPvR")]
-    RevisedValuesPosY,
-    #[brw(magic = b"zPvR")]
-    RevisedValuesPosZ,
-    #[brw(magic = b"xRvR")]
-    RevisedValuesRotX,
-    #[brw(magic = b"yRvR")]
-    RevisedValuesRotY,
-    #[brw(magic = b"zRvR")]
-    RevisedValuesRotZ,
-    #[brw(magic = b"xSvR")]
-    RevisedValuesScaleX,
-    #[brw(magic = b"ySvR")]
-    RevisedValuesScaleY,
-    #[brw(magic = b"zSvR")]
-    RevisedValuesScaleZ,
-    #[brw(magic = b"RvR\0")]
-    RevisedValuesColorR,
-    #[brw(magic = b"GvR\0")]
-    RevisedValuesColorG,
-    #[brw(magic = b"BvR\0")]
-    RevisedValuesColorB,
-    #[brw(magic = b"eXFA")]
-    FadeEnabledX,
-    #[brw(magic = b"iXFA")]
-    FadeInnerX,
-    #[brw(magic = b"oXFA")]
-    FadeOuterX,
-    #[brw(magic = b"eYFA")]
-    FadeEnabledY,
-    #[brw(magic = b"iYFA")]
-    FadeInnerY,
-    #[brw(magic = b"oYFA")]
-    FadeOuterY,
-    #[brw(magic = b"eZFA")]
-    FadeEnabledZ,
-    #[brw(magic = b"iZFA")]
-    FadeInnerZ,
-    #[brw(magic = b"oZFA")]
-    FadeOuterZ,
-    #[brw(magic = b"EFGb")]
-    GlobalFogEnabled,
-    #[brw(magic = b"MIFG")]
-    GlobalFogInfluence,
-    #[brw(magic = b"SGAb")]
-    AgsEnabled,
-    #[brw(magic = b"STLb")]
-    LtsEnabled,
-    #[brw(magic = b"nCcS")]
-    NumSchedulers,
-    #[brw(magic = b"nClT")]
-    NumTimelines,
-    #[brw(magic = b"nCmE")]
-    NumEmitters,
-    #[brw(magic = b"nCrP")]
-    NumParticles,
-    #[brw(magic = b"nCfE")]
-    NumEffectors,
-    #[brw(magic = b"nCdB")]
-    NumBinders,
-    #[brw(magic = b"nCxT")]
-    NumTextures,
-    #[brw(magic = b"nCdM")]
-    NumModels,
-    #[brw(magic = b"dhcS")]
-    Scheduler,
-    #[brw(magic = b"nLmT")]
-    Timeline,
-    #[brw(magic = b"timE")]
-    Emitter,
-    #[brw(magic = b"lctP")]
-    Particle,
-    #[brw(magic = b"tcfE")]
-    Effector,
-    #[brw(magic = b"dniB")]
-    Binder,
-    #[brw(magic = b"xeT\0")]
-    Texture,
-    #[brw(magic = b"ldoM")]
-    Model,
-    Unknown(#[br(temp)] [u8; 4]),
+#[binrw]
+#[brw(repr = u32)]
+#[derive(Debug, PartialEq)]
+pub enum DirectionalLightSource {
+    None = 0,
+    InLocal = 1,
+    InGame = 2,
+    Max = 3,
 }
 
-#[binread]
+#[binrw]
+#[brw(repr = u32)]
 #[derive(Debug)]
-struct AvfxBlock {
-    #[br(pad_before = 4)]
-    size: u32,
+pub enum DrawOrder {
+    Default = 0,
+    Reverse = 1,
+    Depth = 2,
+    Max = 3,
+}
 
-    #[br(seek_before = SeekFrom::Current(-8))]
-    #[br(pad_after = 4)] // skip over size
-    data: AvfxData,
+#[binrw]
+#[brw(repr = u32)]
+#[derive(Debug)]
+pub enum PointLightSource {
+    Default = 0,
+    Reverse = 1,
+    Depth = 2,
+    Max = 3,
 }
 
 /// Animated VFX file, usually with the `.avfx` file extension.
 ///
 /// This is used for the animated VFX effects in-game.
+#[binread]
 #[derive(Debug)]
 #[allow(dead_code)]
 pub struct Avfx {
-    clip_box: [f32; 3],
-    clip_box_size: [f32; 3],
-    revised_values_position: [f32; 3],
-    revised_values_rotation: [f32; 3],
-    revised_values_scale: [f32; 3],
-    revised_values_color: [f32; 3],
-
+    #[br(parse_with = read_block, args("Ver"))]
     version: u32,
-    draw_layer_type: u32,
-    draw_order_type: u32,
-    directional_light_source_type: u32,
-    point_lights_type1: u32,
-    point_lights_type2: u32,
 
+    #[br(parse_with = read_block, args("bDFP"))]
+    is_delay_fast_particle: u32,
+    #[br(parse_with = read_block, args("bFG"))]
+    is_fit_ground: u32,
+    #[br(parse_with = read_block, args("bTS"))]
+    is_transform_skip: u32,
+    #[br(parse_with = read_block, args("bASH"))]
+    is_all_stop_on_hide: u32,
+    #[br(parse_with = read_block, args("bCBC"))]
+    can_be_clipped_out: u32,
+
+    #[br(parse_with = read_block, args("bCul"))]
+    clip_box_enabled: u32,
+    #[br(parse_with = read_block, args("CBPx"))]
+    clip_box_x: f32,
+    #[br(parse_with = read_block, args("CBPy"))]
+    clip_box_y: f32,
+    #[br(parse_with = read_block, args("CBPz"))]
+    clip_box_z: f32,
+    #[br(parse_with = read_block, args("CBSx"))]
+    clip_box_size_x: f32,
+    #[br(parse_with = read_block, args("CBSy"))]
+    clip_box_size_y: f32,
+    #[br(parse_with = read_block, args("CBSz"))]
+    clip_box_size_z: f32,
+
+    #[br(parse_with = read_block, args("ZBMs"))]
     bias_z_max_scale: f32,
+    #[br(parse_with = read_block, args("ZBMd"))]
     bias_z_max_distance: f32,
-    near_clip_begin: f32,
-    near_clip_end: f32,
-    fade_inner: [f32; 3],
-    fade_outer: [f32; 3],
-    far_clip_begin: f32,
-    far_clip_end: f32,
+
+    #[br(parse_with = read_block, args("bCmS"))]
+    is_camera_space: u32,
+    #[br(parse_with = read_block, args("bFEL"))]
+    is_full_env_light: u32,
+    #[br(parse_with = read_block, args("bOSt"))]
+    clip_own_setting: u32,
+    #[br(parse_with = read_block, args("SPFR"))]
     soft_particle_fade_range: f32,
+    #[br(parse_with = read_block, args("SKO"))]
     soft_key_offset: f32,
+
+    #[br(parse_with = read_block, args("DwLy"))]
+    draw_layer: DrawLayer,
+    #[br(parse_with = read_block, args("DwOT"))]
+    draw_order: DrawOrder,
+
+    #[br(parse_with = read_block, args("DLST"))]
+    directional_light_source: DirectionalLightSource,
+    #[br(parse_with = read_block, args("PL1S"))]
+    point_light1: DirectionalLightSource,
+    #[br(parse_with = read_block, args("PL2S"))]
+    point_light2: DirectionalLightSource,
+
+    #[br(parse_with = read_block, args("RvPx"))]
+    revised_values_position_x: f32,
+    #[br(parse_with = read_block, args("RvPy"))]
+    revised_values_position_y: f32,
+    #[br(parse_with = read_block, args("RvPz"))]
+    revised_values_position_z: f32,
+    #[br(parse_with = read_block, args("RvRx"))]
+    revised_values_rotation_x: f32,
+    #[br(parse_with = read_block, args("RvRy"))]
+    revised_values_rotation_y: f32,
+    #[br(parse_with = read_block, args("RvRz"))]
+    revised_values_rotation_z: f32,
+    #[br(parse_with = read_block, args("RvSx"))]
+    revised_values_scale_x: f32,
+    #[br(parse_with = read_block, args("RvSy"))]
+    revised_values_scale_y: f32,
+    #[br(parse_with = read_block, args("RvSz"))]
+    revised_values_scale_z: f32,
+    #[br(parse_with = read_block, args("RvR"))]
+    revised_values_red: f32,
+    #[br(parse_with = read_block, args("RvG"))]
+    revised_values_green: f32,
+    #[br(parse_with = read_block, args("RvB"))]
+    revised_values_blue: f32,
+
+    #[br(parse_with = read_block, args("AFXe"))]
+    fade_enabled_x: u32,
+    #[br(parse_with = read_block, args("AFXi"))]
+    fade_inner_x: f32,
+    #[br(parse_with = read_block, args("AFXo"))]
+    fade_outer_x: f32,
+
+    #[br(parse_with = read_block, args("AFYe"))]
+    fade_enabled_y: u32,
+    #[br(parse_with = read_block, args("AFYi"))]
+    fade_inner_y: f32,
+    #[br(parse_with = read_block, args("AFYo"))]
+    fade_outer_y: f32,
+
+    #[br(parse_with = read_block, args("AFZe"))]
+    fade_enabled_z: u32,
+    #[br(parse_with = read_block, args("AFZi"))]
+    fade_inner_z: f32,
+    #[br(parse_with = read_block, args("AFZo"))]
+    fade_outer_z: f32,
+
+    #[br(parse_with = read_block, args("bGFE"))]
+    global_fog_enabled: u32,
+    #[br(parse_with = read_block, args("GFIM"))]
     global_fog_influence: f32,
 
-    is_delay_fast_particle: bool,
-    is_fit_ground: bool,
-    is_transform_skip: bool,
-    is_all_stop_on_hide: bool,
-    can_be_clipped_out: bool,
-    clip_box_enabled: bool,
-    is_camera_space: bool,
-    is_full_env_light: bool,
-    is_clip_own_setting: bool,
-    fade_enabled_x: bool,
-    fade_enabled_y: bool,
-    fade_enabled_z: bool,
-    global_fog_enabled: bool,
-    lts_enabled: bool,
-    ags_enabled: bool,
+    #[br(parse_with = read_block, args("bLTS"), if(directional_light_source == DirectionalLightSource::InLocal))]
+    lts_enabled: u32,
 
-    schedulers: Vec<AvfxBlock>,
-    timelines: Vec<AvfxBlock>,
-    emitters: Vec<AvfxBlock>,
-    particles: Vec<AvfxBlock>,
-    effectors: Vec<AvfxBlock>,
-    binders: Vec<AvfxBlock>,
-    textures: Vec<String>,
-    model: Vec<AvfxBlock>,
-}
+    #[br(parse_with = read_block, args("ScCn"))]
+    scheduler_count: u32,
+    #[br(parse_with = read_block, args("TlCn"))]
+    timeline_count: u32,
+    #[br(parse_with = read_block, args("EmCn"))]
+    emitter_count: u32,
+    #[br(parse_with = read_block, args("PrCn"))]
+    particle_count: u32,
+    #[br(parse_with = read_block, args("EfCn"))]
+    effector_count: u32,
+    #[br(parse_with = read_block, args("BdCn"))]
+    binder_count: u32,
+    #[br(parse_with = read_block, args("TxCn"))]
+    texture_count: u32,
+    #[br(parse_with = read_block, args("MdCn"))]
+    model_count: u32,
 
-impl Default for Avfx {
-    fn default() -> Self {
-        Self {
-            clip_box: [0.0; 3],
-            clip_box_size: [0.0; 3],
-            revised_values_position: [0.0; 3],
-            revised_values_rotation: [0.0; 3],
-            revised_values_scale: [0.0; 3],
-            revised_values_color: [0.0; 3],
-            version: 0,
-            draw_layer_type: 0,
-            draw_order_type: 0,
-            directional_light_source_type: 0,
-            point_lights_type1: 0,
-            point_lights_type2: 0,
-            bias_z_max_scale: 0.0,
-            bias_z_max_distance: 0.0,
-            near_clip_begin: 0.0,
-            near_clip_end: 0.0,
-            fade_inner: [0.0; 3],
-            fade_outer: [0.0; 3],
-            far_clip_begin: 0.0,
-            far_clip_end: 0.0,
-            soft_particle_fade_range: 0.0,
-            soft_key_offset: 0.0,
-            global_fog_influence: 0.0,
-            is_delay_fast_particle: false,
-            is_fit_ground: false,
-            is_transform_skip: false,
-            is_all_stop_on_hide: false,
-            can_be_clipped_out: false,
-            clip_box_enabled: false,
-            is_camera_space: false,
-            is_full_env_light: false,
-            is_clip_own_setting: false,
-            fade_enabled_x: false,
-            fade_enabled_y: false,
-            fade_enabled_z: false,
-            global_fog_enabled: false,
-            lts_enabled: false,
-            ags_enabled: false,
-            schedulers: vec![],
-            timelines: vec![],
-            emitters: vec![],
-            particles: vec![],
-            effectors: vec![],
-            binders: vec![],
-            textures: vec![],
-            model: vec![],
-        }
-    }
+    #[br(args { inner: ("Schd",) }, count = scheduler_count)]
+    schedulers: Vec<PlaceholderBlock>,
+    #[br(args { inner: ("TmLn",) }, count = timeline_count)]
+    timelines: Vec<PlaceholderBlock>,
+    #[br(args { inner: ("Emit",) }, count = emitter_count)]
+    emitters: Vec<PlaceholderBlock>,
+    #[br(args { inner: ("Ptcl",) }, count = particle_count)]
+    particles: Vec<PlaceholderBlock>,
+    #[br(args { inner: ("Bind",) }, count = binder_count)]
+    binders: Vec<PlaceholderBlock>,
+    // TODO: doesn't work lol
+    // #[br(dbg, args { inner: ("Tex",) }, count = texture_count)]
+    // textures: Vec<PlaceholderBlock>,
+
+    // TODO: selectively enabled, but with what?
+    // #[br(parse_with = read_block, args("bAGS"))]
+    // ags_enabled: u32,
+    // #[br(parse_with = read_block, args("bOSE"))]
+    // ose: u32,
+    // #[br(parse_with = read_block, args("NCB"))]
+    // near_clip_begin: f32,
+    // #[br(parse_with = read_block, args("NCE"))]
+    // near_clip_end: f32,
+    // #[br(parse_with = read_block, args("FCB"))]
+    // far_clip_begin: f32,
+    // #[br(parse_with = read_block, args("FCE"))]
+    // far_clip_end: f32,
 }
 
 impl ReadableFile for Avfx {
     fn from_existing(platform: Platform, buffer: ByteSpan) -> Option<Self> {
         let mut cursor = Cursor::new(buffer);
-        let header = AvfxHeader::read_options(&mut cursor, platform.endianness(), ()).ok()?;
-
-        let mut avfx = Avfx::default();
-
-        let read_bool = |cursor: &mut Cursor<ByteSpan>| {
-            cursor.read_type::<u8>(platform.endianness()).unwrap() == 1u8
-        };
-
-        let read_uint =
-            |cursor: &mut Cursor<ByteSpan>| cursor.read_type::<u32>(platform.endianness()).unwrap();
-
-        let read_float =
-            |cursor: &mut Cursor<ByteSpan>| cursor.read_type::<f32>(platform.endianness()).unwrap();
-
-        while cursor.position() < header.size as u64 {
-            let last_pos = cursor.position();
-            let block = AvfxBlock::read_options(&mut cursor, platform.endianness(), ()).unwrap();
-            match block.data {
-                AvfxData::AvfxBase => {}
-                AvfxData::Version => {
-                    avfx.version = read_uint(&mut cursor);
-                }
-                AvfxData::IsDelayFastParticle => {
-                    avfx.is_delay_fast_particle = read_bool(&mut cursor);
-                }
-                AvfxData::IsFitGround => {
-                    avfx.is_fit_ground = read_bool(&mut cursor);
-                }
-                AvfxData::IsTransformSkip => {
-                    avfx.is_transform_skip = read_bool(&mut cursor);
-                }
-                AvfxData::IsAllStopOnHide => {
-                    avfx.is_all_stop_on_hide = read_bool(&mut cursor);
-                }
-                AvfxData::CanBeClippedOut => {
-                    avfx.can_be_clipped_out = read_bool(&mut cursor);
-                }
-                AvfxData::ClipBoxEnabled => {
-                    avfx.clip_box_enabled = read_bool(&mut cursor);
-                }
-                AvfxData::ClipBoxX => {
-                    avfx.clip_box[0] = read_float(&mut cursor);
-                }
-                AvfxData::ClipBoxY => {
-                    avfx.clip_box[1] = read_float(&mut cursor);
-                }
-                AvfxData::ClipBoxZ => {
-                    avfx.clip_box[2] = read_float(&mut cursor);
-                }
-                AvfxData::ClipBoxSizeX => {
-                    avfx.clip_box_size[0] = read_float(&mut cursor);
-                }
-                AvfxData::ClipBoxSizeY => {
-                    avfx.clip_box_size[1] = read_float(&mut cursor);
-                }
-                AvfxData::ClipBoxSizeZ => {
-                    avfx.clip_box_size[2] = read_float(&mut cursor);
-                }
-                AvfxData::BiasZmaxScale => {
-                    avfx.bias_z_max_scale = read_float(&mut cursor);
-                }
-                AvfxData::BiasZmaxDistance => {
-                    avfx.bias_z_max_distance = read_float(&mut cursor);
-                }
-                AvfxData::IsCameraSpace => {
-                    avfx.is_camera_space = read_bool(&mut cursor);
-                }
-                AvfxData::IsFullEnvLight => {
-                    avfx.is_full_env_light = read_bool(&mut cursor);
-                }
-                AvfxData::IsClipOwnSetting => {
-                    avfx.is_clip_own_setting = read_bool(&mut cursor);
-                }
-                AvfxData::NearClipBegin => {
-                    avfx.near_clip_begin = read_float(&mut cursor);
-                }
-                AvfxData::NearClipEnd => {
-                    avfx.near_clip_end = read_float(&mut cursor);
-                }
-                AvfxData::FarClipBegin => {
-                    avfx.far_clip_begin = read_float(&mut cursor);
-                }
-                AvfxData::FarClipEnd => {
-                    avfx.far_clip_end = read_float(&mut cursor);
-                }
-                AvfxData::SoftParticleFadeRange => {
-                    avfx.soft_particle_fade_range = read_float(&mut cursor);
-                }
-                AvfxData::SoftKeyOffset => {
-                    avfx.soft_key_offset = read_float(&mut cursor);
-                }
-                AvfxData::DrawLayerType => {
-                    avfx.draw_layer_type = read_uint(&mut cursor);
-                }
-                AvfxData::DrawOrderType => {
-                    avfx.draw_order_type = read_uint(&mut cursor);
-                }
-                AvfxData::DirectionalLightSourceType => {
-                    avfx.directional_light_source_type = read_uint(&mut cursor);
-                }
-                AvfxData::PointLightsType1 => {
-                    avfx.point_lights_type1 = read_uint(&mut cursor);
-                }
-                AvfxData::PointLightsType2 => {
-                    avfx.point_lights_type2 = read_uint(&mut cursor);
-                }
-                AvfxData::RevisedValuesPosX => {
-                    avfx.revised_values_position[0] = read_float(&mut cursor);
-                }
-                AvfxData::RevisedValuesPosY => {
-                    avfx.revised_values_position[1] = read_float(&mut cursor);
-                }
-                AvfxData::RevisedValuesPosZ => {
-                    avfx.revised_values_position[2] = read_float(&mut cursor);
-                }
-                AvfxData::RevisedValuesRotX => {
-                    avfx.revised_values_rotation[0] = read_float(&mut cursor);
-                }
-                AvfxData::RevisedValuesRotY => {
-                    avfx.revised_values_rotation[1] = read_float(&mut cursor);
-                }
-                AvfxData::RevisedValuesRotZ => {
-                    avfx.revised_values_rotation[2] = read_float(&mut cursor);
-                }
-                AvfxData::RevisedValuesScaleX => {
-                    avfx.revised_values_scale[0] = read_float(&mut cursor);
-                }
-                AvfxData::RevisedValuesScaleY => {
-                    avfx.revised_values_scale[1] = read_float(&mut cursor);
-                }
-                AvfxData::RevisedValuesScaleZ => {
-                    avfx.revised_values_scale[2] = read_float(&mut cursor);
-                }
-                AvfxData::RevisedValuesColorR => {
-                    avfx.revised_values_color[0] = read_float(&mut cursor);
-                }
-                AvfxData::RevisedValuesColorG => {
-                    avfx.revised_values_color[1] = read_float(&mut cursor);
-                }
-                AvfxData::RevisedValuesColorB => {
-                    avfx.revised_values_color[2] = read_float(&mut cursor);
-                }
-                AvfxData::FadeEnabledX => {
-                    avfx.fade_enabled_x = read_bool(&mut cursor);
-                }
-                AvfxData::FadeInnerX => {
-                    avfx.fade_inner[0] = read_float(&mut cursor);
-                }
-                AvfxData::FadeOuterX => {
-                    avfx.fade_outer[0] = read_float(&mut cursor);
-                }
-                AvfxData::FadeEnabledY => {
-                    avfx.fade_enabled_y = read_bool(&mut cursor);
-                }
-                AvfxData::FadeInnerY => {
-                    avfx.fade_inner[1] = read_float(&mut cursor);
-                }
-                AvfxData::FadeOuterY => {
-                    avfx.fade_outer[1] = read_float(&mut cursor);
-                }
-                AvfxData::FadeEnabledZ => {
-                    avfx.fade_enabled_z = read_bool(&mut cursor);
-                }
-                AvfxData::FadeInnerZ => {
-                    avfx.fade_inner[2] = read_float(&mut cursor);
-                }
-                AvfxData::FadeOuterZ => {
-                    avfx.fade_outer[2] = read_float(&mut cursor);
-                }
-                AvfxData::GlobalFogEnabled => {
-                    avfx.global_fog_enabled = read_bool(&mut cursor);
-                }
-                AvfxData::GlobalFogInfluence => {
-                    avfx.global_fog_influence = read_float(&mut cursor);
-                }
-                AvfxData::LtsEnabled => {
-                    avfx.lts_enabled = read_bool(&mut cursor);
-                }
-                AvfxData::AgsEnabled => {
-                    avfx.ags_enabled = read_bool(&mut cursor);
-                }
-                AvfxData::NumSchedulers => {
-                    // STUB
-                }
-                AvfxData::NumTimelines => {
-                    // STUB
-                }
-                AvfxData::NumEmitters => {
-                    // STUB
-                }
-                AvfxData::NumParticles => {
-                    // STUB
-                }
-                AvfxData::NumEffectors => {
-                    // STUB
-                }
-                AvfxData::NumBinders => {
-                    // STUB
-                }
-                AvfxData::NumTextures => {
-                    // STUB
-                }
-                AvfxData::NumModels => {
-                    // STUB
-                }
-                AvfxData::Scheduler => {
-                    // STUB
-                }
-                AvfxData::Timeline => {
-                    // STUB
-                }
-                AvfxData::Emitter => {
-                    // STUB
-                }
-                AvfxData::Particle => {
-                    // STUB
-                }
-                AvfxData::Effector => {
-                    // STUB
-                }
-                AvfxData::Binder => {
-                    // STUB
-                }
-                AvfxData::Texture => {
-                    // STUB
-                }
-                AvfxData::Model => {
-                    // STUB
-                }
-                AvfxData::Unknown() => {}
-            }
-            let new_pos = cursor.position();
-            let read_bytes = (new_pos - last_pos) - 8;
-            let padding = block.size as u64 - read_bytes;
-            cursor.seek(SeekFrom::Current(padding as i64)).ok()?;
-        }
-
-        Some(avfx)
+        let header =
+            AvfxBlock::<Avfx>::read_options(&mut cursor, platform.endianness(), ()).ok()?;
+        Some(header.data)
     }
 }
 
