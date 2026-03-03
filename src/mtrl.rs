@@ -144,15 +144,18 @@ pub struct LegacyColorTableRow {
 
     pub tile_set: u16,
 
-    #[br(map = |x: Half2| { [x.x.to_f32(), x.y.to_f32()] })]
-    pub material_repeat: [f32; 2],
+    #[br(map = |x: Half1| { x.value.to_f32() })]
+    pub material_repeat_x: f32,
 
     #[br(map = |x: Half2| { [x.x.to_f32(), x.y.to_f32()] })]
     pub material_skew: [f32; 2],
+
+    #[br(map = |x: Half1| { x.value.to_f32() })]
+    pub material_repeat_y: f32,
 }
 
 #[binrw]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 #[allow(dead_code)]
 pub struct LegacyColorTableData {
     #[br(count = 16)]
@@ -160,7 +163,7 @@ pub struct LegacyColorTableData {
 }
 
 #[binrw]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 #[allow(dead_code)]
 pub struct DawntrailColorTableData {
     #[br(count = 32)]
@@ -168,7 +171,7 @@ pub struct DawntrailColorTableData {
 }
 
 #[binrw]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 #[allow(dead_code)]
 pub struct OpaqueColorTableData {
     // TODO: Support
@@ -354,10 +357,17 @@ pub struct Sampler {
 
 #[binrw::parser(reader, endian)]
 fn parse_color_table(table_dimension_logs: u8) -> BinResult<Option<ColorTable>> {
+    // NOTE: the unwrap_or_default is intentional, as some materials (like `bg/ffxiv/fst_f1/fld/common/material/f1f0_treesdw04a.mtrl`) have a color table but its not actually written.
     Ok(Some(match table_dimension_logs {
-        0 | 0x42 => LegacyColorTable(LegacyColorTableData::read_options(reader, endian, ())?),
-        0x53 => DawntrailColorTable(DawntrailColorTableData::read_options(reader, endian, ())?),
-        _ => OpaqueColorTable(OpaqueColorTableData::read_options(reader, endian, ())?),
+        0 | 0x42 => LegacyColorTable(
+            LegacyColorTableData::read_options(reader, endian, ()).unwrap_or_default(),
+        ),
+        0x53 => DawntrailColorTable(
+            DawntrailColorTableData::read_options(reader, endian, ()).unwrap_or_default(),
+        ),
+        _ => OpaqueColorTable(
+            OpaqueColorTableData::read_options(reader, endian, ()).unwrap_or_default(),
+        ),
     }))
 }
 
