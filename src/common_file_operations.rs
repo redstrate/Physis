@@ -116,6 +116,16 @@ pub(crate) struct Half3 {
     pub b: f16,
 }
 
+impl From<Half3> for [f32; 3] {
+    fn from(val: Half3) -> Self {
+        [
+            val.r.to_f32_const(),
+            val.g.to_f32_const(),
+            val.b.to_f32_const(),
+        ]
+    }
+}
+
 /// Reads a 4 byte string.
 #[binrw::parser(reader, endian)]
 pub(crate) fn read_short_identifier() -> BinResult<String> {
