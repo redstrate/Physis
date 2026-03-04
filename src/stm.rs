@@ -23,7 +23,6 @@ const MAX_ELEMENTS: usize = 254;
 #[allow(dead_code)]
 struct StainingTemplateEntry {
     #[br(map = calc_byte_counts, count = num_colors + num_scalars)]
-    #[br(dbg)]
     byte_counts: Vec<u16>,
 
     #[br(parse_with = read_color_array, args(&byte_counts, num_colors))]
@@ -196,11 +195,9 @@ pub struct Stm {
 
     // NOTE: older versions i think is u16?
     #[br(count = entry_count)]
-    #[br(dbg)]
     keys: Vec<u32>,
 
     #[br(count = entry_count)]
-    #[br(dbg)]
     offsets: Vec<u32>,
 
     #[br(calc = 3)]
