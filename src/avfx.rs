@@ -6,9 +6,9 @@
 use std::io::Cursor;
 
 use crate::common::Platform;
-use crate::common_file_operations::read_string;
+use crate::common_file_operations::{read_string, read_string_until_null};
 use crate::{ByteSpan, ReadableFile};
-use binrw::{BinRead, BinResult};
+use binrw::{BinRead, BinResult, VecArgs};
 use binrw::{BinReaderExt, binread, binrw};
 
 #[binread]
@@ -22,6 +22,7 @@ where
     #[bw(map = write_string)]
     #[br(map = read_string)]
     name: String,
+    #[br(map = |x: u32| x.div_ceil(4) * 4)] // Align to 4 byte boundary
     size: u32,
     data: T,
 }
@@ -32,7 +33,7 @@ where
     T: for<'a> BinRead<Args<'a> = ()> + std::fmt::Debug,
 {
     let block: AvfxBlock<T> = reader.read_type(endian)?;
-    if block.name == magic.chars().rev().collect::<String>() {
+    if block.name != magic.chars().rev().collect::<String>() {
         return Err(binrw::Error::BadMagic {
             pos: reader.stream_position()?,
             found: Box::new(block.name),
@@ -51,8 +52,9 @@ struct PlaceholderBlock {
     #[bw(pad_size_to = 4)]
     #[bw(map = write_string)]
     #[br(map = read_string)]
-    #[br(assert(name == magic.chars().rev().collect::<String>()))]
+    #[br(assert(name == magic.chars().rev().collect::<String>()), err_context("expected {}", magic))]
     name: String,
+    #[br(map = |x: u32| x.div_ceil(4) * 4)] // Align to 4 byte boundary
     size: u32,
     #[brw(pad_size_to = size)]
     #[br(count = size)]
@@ -106,6 +108,74 @@ pub enum PointLightSource {
     Reverse = 1,
     Depth = 2,
     Max = 3,
+}
+
+#[binread]
+#[derive(Debug)]
+pub struct EmitVertex {
+    pub position: [f32; 3],
+    pub normal: [f32; 3],
+    pub color: [u8; 4], // TODO: parse correctly
+}
+
+#[binread]
+#[derive(Debug)]
+pub struct DrawVertex {
+    pub position: [u16; 4], // TODO: parse correctly
+    pub normal: [u8; 4],
+    pub tangent: [u8; 4],
+    pub color: [u8; 4],
+    pub uv: [u16; 4],
+}
+
+#[binread]
+#[derive(Debug)]
+pub struct DrawTriangle {
+    pub indices: [i16; 3],
+}
+
+#[binread]
+#[derive(Debug)]
+pub struct AvfxEmitterModel {
+    #[br(parse_with = read_block_sized_array, args("VNum"))]
+    pub vertex_numbers: Vec<u16>,
+    #[br(parse_with = read_block_sized_array, args("VEmt"))]
+    pub vertices: Vec<EmitVertex>,
+}
+
+#[binread]
+#[derive(Debug)]
+pub struct AvfxDrawModel {
+    #[br(parse_with = read_block_sized_array, args("VDrw"))]
+    pub vertices: Vec<DrawVertex>,
+    #[br(parse_with = read_block_sized_array, args("VIdx"))]
+    pub triangles: Vec<DrawTriangle>,
+}
+
+#[binrw::parser(reader, endian)]
+fn read_block_sized_array<T>(magic: &str) -> BinResult<Vec<T>>
+where
+    T: for<'a> BinRead<Args<'a> = ()> + std::fmt::Debug + 'static,
+{
+    let block: PlaceholderBlock = reader.read_type_args(endian, (magic,))?;
+    if block.name != magic.chars().rev().collect::<String>() {
+        return Err(binrw::Error::BadMagic {
+            pos: reader.stream_position()?,
+            found: Box::new(block.name),
+        });
+    }
+    // TODO: check size
+
+    let count = block.data.len() / std::mem::size_of::<T>();
+    let mut array_cursor = Cursor::new(block.data);
+    array_cursor.read_type_args(endian, VecArgs::builder().count(count).finalize())
+}
+
+#[binread]
+#[derive(Debug)]
+pub struct AvfxTexture {
+    #[br(parse_with = read_string_until_null)]
+    path: String,
 }
 
 /// Animated VFX file, usually with the `.avfx` file extension.
@@ -253,10 +323,10 @@ pub struct Avfx {
     particles: Vec<PlaceholderBlock>,
     #[br(args { inner: ("Bind",) }, count = binder_count)]
     binders: Vec<PlaceholderBlock>,
-    // TODO: doesn't work lol
-    // #[br(dbg, args { inner: ("Tex",) }, count = texture_count)]
-    // textures: Vec<PlaceholderBlock>,
-
+    #[br(parse_with = read_block_array, args("Tex", texture_count))]
+    pub textures: Vec<AvfxTexture>,
+    #[br(parse_with = read_block_pair_array, args("Modl", model_count))]
+    pub models: Vec<(AvfxEmitterModel, AvfxDrawModel)>,
     // TODO: selectively enabled, but with what?
     // #[br(parse_with = read_block, args("bAGS"))]
     // ags_enabled: u32,
@@ -270,6 +340,62 @@ pub struct Avfx {
     // far_clip_begin: f32,
     // #[br(parse_with = read_block, args("FCE"))]
     // far_clip_end: f32,
+}
+
+#[binrw::parser(reader, endian)]
+fn read_block_pair_array<T, E>(magic: &str, count: u32) -> BinResult<Vec<(T, E)>>
+where
+    T: for<'a> BinRead<Args<'a> = ()> + std::fmt::Debug + 'static,
+    E: for<'a> BinRead<Args<'a> = ()> + std::fmt::Debug + 'static,
+{
+    let mut res = Vec::new();
+    for _ in 0..count / 2 {
+        let block: PlaceholderBlock = reader.read_type_args(endian, (magic,))?;
+        if block.name != magic.chars().rev().collect::<String>() {
+            return Err(binrw::Error::BadMagic {
+                pos: reader.stream_position()?,
+                found: Box::new(block.name),
+            });
+        }
+
+        let mut array_cursor = Cursor::new(block.data);
+        let first = array_cursor.read_type(endian)?;
+
+        let block: PlaceholderBlock = reader.read_type_args(endian, (magic,))?;
+        if block.name != magic.chars().rev().collect::<String>() {
+            return Err(binrw::Error::BadMagic {
+                pos: reader.stream_position()?,
+                found: Box::new(block.name),
+            });
+        }
+
+        let mut array_cursor = Cursor::new(block.data);
+        let second = array_cursor.read_type(endian)?;
+
+        res.push((first, second));
+    }
+    Ok(res)
+}
+
+#[binrw::parser(reader, endian)]
+fn read_block_array<T>(magic: &str, count: u32) -> BinResult<Vec<T>>
+where
+    T: for<'a> BinRead<Args<'a> = ()> + std::fmt::Debug + 'static,
+{
+    let mut res = Vec::new();
+    for _ in 0..count {
+        let block: PlaceholderBlock = reader.read_type_args(endian, (magic,))?;
+        if block.name != magic.chars().rev().collect::<String>() {
+            return Err(binrw::Error::BadMagic {
+                pos: reader.stream_position()?,
+                found: Box::new(block.name),
+            });
+        }
+
+        let mut array_cursor = Cursor::new(block.data);
+        res.push(array_cursor.read_type(endian)?)
+    }
+    Ok(res)
 }
 
 impl ReadableFile for Avfx {
