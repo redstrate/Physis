@@ -4,7 +4,7 @@ SPDX-PackageSupplier = "Joshua Goins <josh@redstrate.com>"
 SPDX-PackageDownloadLocation = "https://github.com/redstrate/Physis"
 
 [[annotations]]
-path = ["README.md", "deny.toml", "Cargo.toml", "resources/**", ".github/**", "CONTRIBUTING.md", "REUSE.toml"]
+path = ["README.md", "deny.toml", "Cargo.toml", "resources/**", ".github/**", "CONTRIBUTING.md", "REUSE.toml", ".gitattributes"]
 precedence = "aggregate"
 SPDX-FileCopyrightText = "Joshua Goins <josh@redstrate.com>"
 SPDX-License-Identifier = "CC0-1.0"
