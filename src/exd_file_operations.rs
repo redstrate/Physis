@@ -6,7 +6,7 @@ use std::{
     io::{Read, Seek, SeekFrom, Write},
 };
 
-use binrw::{BinRead, BinWrite, Endian};
+use binrw::{BinRead, BinResult, BinWrite, Endian};
 
 use crate::common_file_operations::read_null_terminated_utf8;
 
@@ -26,9 +26,13 @@ pub(crate) fn read_row<T: Read + Seek>(reader: &mut T, exh: &EXH, row_offset: u6
             .seek(SeekFrom::Start(row_offset + column.offset as u64))
             .ok()?;
 
-        subrow
-            .columns
-            .push(EXD::read_column(reader, exh, row_offset, column).unwrap());
+        if let Some(column) = EXD::read_column(reader, exh, row_offset, column) {
+            subrow.columns.push(column);
+        } else if cfg!(debug_assertions) {
+            println!(
+                "Failed to read column {column:?}, please report this as a bug if it's a problem?"
+            );
+        }
     }
 
     Some(subrow)
@@ -100,8 +104,10 @@ pub(crate) fn write_row<T: Write + Seek>(writer: &mut T, exh: &EXH, row: &Row) {
 }
 
 impl EXD {
-    fn read_data_raw<T: Read + Seek, Z: BinRead<Args<'static> = ()>>(cursor: &mut T) -> Option<Z> {
-        Z::read_options(cursor, Endian::Big, ()).ok()
+    fn read_data_raw<T: Read + Seek, Z: BinRead<Args<'static> = ()>>(
+        cursor: &mut T,
+    ) -> BinResult<Z> {
+        Z::read_options(cursor, Endian::Big, ())
     }
 
     pub(crate) fn read_column<T: Read + Seek>(
@@ -119,7 +125,7 @@ impl EXD {
 
         match column.data_type {
             ColumnDataType::String => {
-                let string_offset: u32 = Self::read_data_raw(cursor).unwrap();
+                let string_offset: u32 = Self::read_data_raw(cursor).ok()?;
 
                 cursor
                     .seek(SeekFrom::Start(
@@ -130,19 +136,19 @@ impl EXD {
                 Some(Field::String(read_null_terminated_utf8(cursor)))
             }
             ColumnDataType::Bool => {
-                let bool_data: i8 = Self::read_data_raw(cursor).unwrap();
+                let bool_data: i8 = Self::read_data_raw(cursor).ok()?;
 
                 Some(Field::Bool(bool_data == 1))
             }
-            ColumnDataType::Int8 => Some(Field::Int8(Self::read_data_raw(cursor).unwrap())),
-            ColumnDataType::UInt8 => Some(Field::UInt8(Self::read_data_raw(cursor).unwrap())),
-            ColumnDataType::Int16 => Some(Field::Int16(Self::read_data_raw(cursor).unwrap())),
-            ColumnDataType::UInt16 => Some(Field::UInt16(Self::read_data_raw(cursor).unwrap())),
-            ColumnDataType::Int32 => Some(Field::Int32(Self::read_data_raw(cursor).unwrap())),
-            ColumnDataType::UInt32 => Some(Field::UInt32(Self::read_data_raw(cursor).unwrap())),
-            ColumnDataType::Float32 => Some(Field::Float32(Self::read_data_raw(cursor).unwrap())),
-            ColumnDataType::Int64 => Some(Field::Int64(Self::read_data_raw(cursor).unwrap())),
-            ColumnDataType::UInt64 => Some(Field::UInt64(Self::read_data_raw(cursor).unwrap())),
+            ColumnDataType::Int8 => Some(Field::Int8(Self::read_data_raw(cursor).ok()?)),
+            ColumnDataType::UInt8 => Some(Field::UInt8(Self::read_data_raw(cursor).ok()?)),
+            ColumnDataType::Int16 => Some(Field::Int16(Self::read_data_raw(cursor).ok()?)),
+            ColumnDataType::UInt16 => Some(Field::UInt16(Self::read_data_raw(cursor).ok()?)),
+            ColumnDataType::Int32 => Some(Field::Int32(Self::read_data_raw(cursor).ok()?)),
+            ColumnDataType::UInt32 => Some(Field::UInt32(Self::read_data_raw(cursor).ok()?)),
+            ColumnDataType::Float32 => Some(Field::Float32(Self::read_data_raw(cursor).ok()?)),
+            ColumnDataType::Int64 => Some(Field::Int64(Self::read_data_raw(cursor).ok()?)),
+            ColumnDataType::UInt64 => Some(Field::UInt64(Self::read_data_raw(cursor).ok()?)),
             ColumnDataType::PackedBool0 => Some(Field::Bool(read_packed_bool(0))),
             ColumnDataType::PackedBool1 => Some(Field::Bool(read_packed_bool(1))),
             ColumnDataType::PackedBool2 => Some(Field::Bool(read_packed_bool(2))),
