@@ -11,6 +11,8 @@ use binrw::{Endian, binrw};
 #[repr(u8)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 /// Language the game data is written for.
+///
+/// Keep in mind that the selection of languages vary depending on the client's region.
 pub enum Language {
     /// Used for data that is language-agnostic.
     None,
@@ -28,6 +30,8 @@ pub enum Language {
     ChineseTraditional,
     /// Korean language. Only available in the Korean client.
     Korean,
+    /// (Traditional) Chinese language. Only available in the Taiwanese client.
+    TraditionalChinese,
 }
 
 impl Language {
@@ -44,6 +48,7 @@ impl Language {
             Language::ChineseSimplified => "chs",
             Language::ChineseTraditional => "cht",
             Language::Korean => "ko",
+            Language::TraditionalChinese => "tc",
         }
     }
 }
