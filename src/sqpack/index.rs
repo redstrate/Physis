@@ -167,7 +167,6 @@ pub struct FolderEntry {
 
 #[derive(Debug)]
 pub struct IndexEntry {
-    pub hash: u64,
     pub data_file_id: u8,
     pub offset: u64,
 }
@@ -259,12 +258,7 @@ impl SqPackIndex {
 
     pub fn find_entry_from_hash(&self, hash: Hash) -> Option<IndexEntry> {
         if let Some(entry) = self.entries.iter().find(|s| s.hash == hash) {
-            let full_hash = match hash {
-                Hash::SplitPath { name, path } => ((path as u64) << 32) | (name as u64),
-                Hash::FullPath(hash) => hash as u64,
-            };
             return Some(IndexEntry {
-                hash: 0,
                 data_file_id: entry.data.data_file_id,
                 offset: entry.data.offset,
             });
