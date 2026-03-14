@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2024 Joshua Goins <josh@redstrate.com>
+// SPDX-FileCopyrightText: 2026 OhKannaDuh
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 use binrw::binrw;
 
 /// Transformation within the world space.
