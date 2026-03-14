@@ -63,6 +63,9 @@ pub use shared_group::{
 mod sound;
 pub use sound::SoundInstanceObject;
 
+mod transformation;
+pub use transformation::Transformation;
+
 mod treasure;
 pub use treasure::TreasureInstanceObject;
 
@@ -465,20 +468,6 @@ pub struct ObjectSetEnableReferenced {
     #[bw(map = write_bool_as::<u8>)]
     pub ob_set_emissive_enable: bool,
     padding: [u8; 2],
-}
-
-/// Transformation within the world space.
-#[binrw]
-#[derive(Debug, Clone, Copy, PartialEq)]
-#[repr(C)]
-#[allow(dead_code)] // most of the fields are unused at the moment
-pub struct Transformation {
-    /// X, Y, Z of the location in world space.
-    pub translation: [f32; 3],
-    /// Yaw, pitch and roll of the rotation in world space.
-    pub rotation: [f32; 3],
-    /// Width, height and depth of the scale in world space.
-    pub scale: [f32; 3],
 }
 
 /// Represents a single object in a [Layer], which could be anything from a light to an aetheryte.
