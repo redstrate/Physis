@@ -56,9 +56,10 @@ bitflags! {
 // From https://github.com/aers/FFXIVClientStructs/blob/344f5d488197e9c9d5fd78e92439e7104f25e2e0/FFXIVClientStructs/FFXIV/Client/Graphics/Kernel/Texture.cs#L97
 #[binrw]
 #[brw(repr = u32)]
-#[derive(Debug)]
+#[repr(u32)]
+#[derive(Debug, Clone, Copy)]
 #[allow(non_camel_case_types)] // NOTE: It's currently allowed to make updating this list not a giant pain
-enum TextureFormat {
+pub enum TextureFormat {
     L8_UNORM = 0x1130,
     A8_UNORM = 0x1131,
     R8_UNORM = 0x1132,
@@ -122,15 +123,17 @@ pub enum TextureType {
 ///
 /// Contains a texture, which optionally be compressed or represent a more complex type like a 3D image.
 pub struct Texture {
-    /// Type of texture
+    /// Type of texture.
     pub texture_type: TextureType,
-    /// Width of the texture in pixels
+    /// Format of the texture.
+    pub format: TextureFormat,
+    /// Width of the texture in pixels.
     pub width: u32,
-    /// Height of the texture in pixels
+    /// Height of the texture in pixels.
     pub height: u32,
-    /// Depth of the texture in pixels
+    /// Depth of the texture in pixels.
     pub depth: u32,
-    /// Raw RGBA data
+    /// Raw RGBA data.
     pub rgba: Vec<u8>,
 }
 
@@ -245,6 +248,7 @@ impl ReadableFile for Texture {
             } else {
                 TextureType::TwoDimensional
             },
+            format: header.format,
             width: header.width as u32,
             height: header.height as u32,
             depth: header.depth as u32,
