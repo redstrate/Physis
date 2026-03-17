@@ -27,6 +27,10 @@ pub(crate) fn read_null_terminated_utf8<R: Read>(reader: &mut R) -> String {
 /// Read a null-terminated UTF-8 string from a byte slice starting at `offset`.
 /// Returns the decoded string and the offset immediately after the null terminator.
 pub(crate) fn null_terminated_utf8(data: &[u8], offset: usize) -> (String, usize) {
+    if offset > data.len() {
+        return (String::default(), 0);
+    }
+
     let end = data[offset..]
         .iter()
         .position(|&b| b == 0)
