@@ -62,7 +62,7 @@ See [CONTRIBUTING](CONTRIBUTING.md) for more information about contributing back
 * [ironworks](https://github.com/ackwell/ironworks) for inspiration and reference.
 * [goatcorp](https://goatcorp.github.io) for XIVQuickLauncher, docs.xiv.dev, and more.
 * [Ioncannon](http://ffxivexplorer.fragmenterworks.com/research.php) for initially documenting the file formats.
-* [binrw team](https://binrw.rs) for the awesome Rust library that powers our parsing!
+* [binrw team](https://github.com/jam1garner/binrw) for the awesome Rust library that powers our parsing!
 * [sha1-smol](https://github.com/mitsuhiko/sha1-smol) for a dependency-free SHA1 implementation.
 * [FFXIVTools](https://github.com/dlunch/FFXIVTools) for it's Havok parsing implementation.
 * [texture2ddecoder](https://github.com/UniversalGameExtraction/texture2ddecoder/) for it's BCn texture decoding functions.
