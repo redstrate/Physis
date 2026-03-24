@@ -215,6 +215,9 @@ impl SqPackResource {
         }
 
         let tokens: Vec<&str> = path.split('/').collect();
+        if tokens.len() < 2 {
+            return None;
+        }
 
         // Search for expansions
         let repository_token = tokens[1];
