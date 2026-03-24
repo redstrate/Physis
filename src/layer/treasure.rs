@@ -7,5 +7,6 @@ use binrw::binrw;
 #[derive(Debug, PartialEq)]
 pub struct TreasureInstanceObject {
     #[brw(pad_after = 11)] // padding
-    pub nonpop_init_zone: u8,
+    /// Index into the Treasure Excel sheet.
+    pub base_id: u8,
 }
