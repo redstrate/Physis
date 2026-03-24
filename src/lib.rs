@@ -200,3 +200,6 @@ pub mod amb;
 
 /// Types for object behavior set binary (`.obsb`) files.
 pub mod obsb;
+
+/// Types for font data table (`.fdt`) files.
+pub mod fdt;
