@@ -21,7 +21,7 @@ pub struct Color {
 
 #[binrw]
 #[repr(C)]
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct ColorHDRI {
     pub red: u8,
     pub green: u8,
