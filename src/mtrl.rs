@@ -480,7 +480,7 @@ impl ReadableFile for Material {
         let mut texture_paths = vec![];
 
         // Right now lets consider an empty string buffer to be an indicator for an invalid MTRL file.
-        if mat_data.strings.len() == 0 {
+        if mat_data.strings.is_empty() {
             return None;
         }
 
