@@ -35,4 +35,9 @@ half = { version = "2.7", features = ["std"], default-features = false }
 # needed for c-style bitflags used in some formats (such as tex files)
 bitflags = { version = "2.11", default-features = false }
 
+# For optional math support
 glam = { version = "0.32", optional = true }
+
+# Doing cool stuff with enums Rust doesn't have built-in
+strum = { version = "0.28", default-features = false }
+strum_macros = { version = "0.28", default-features = false }

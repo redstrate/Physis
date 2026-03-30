@@ -223,38 +223,30 @@ impl Texture {
 
                 Some(dst)
             }
-            TextureFormat::BC1_UNORM => {
-                Some(Texture::decode(
-                    &self.data,
-                    self.width as usize,
-                    self.height as usize * self.depth as usize,
-                    decode_bc1,
-                ))
-            }
-            TextureFormat::BC3_UNORM => {
-                Some(Texture::decode(
-                    &self.data,
-                    self.width as usize,
-                    self.height as usize * self.depth as usize,
-                    decode_bc3,
-                ))
-            }
-            TextureFormat::BC5_UNORM => {
-                Some(Texture::decode(
-                    &self.data,
-                    self.width as usize,
-                    self.height as usize * self.depth as usize,
-                    decode_bc5,
-                ))
-            }
-            TextureFormat::BC7_UNORM => {
-                Some(Texture::decode(
-                    &self.data,
-                    self.width as usize,
-                    self.height as usize * self.depth as usize,
-                    decode_bc7,
-                ))
-            }
+            TextureFormat::BC1_UNORM => Some(Texture::decode(
+                &self.data,
+                self.width as usize,
+                self.height as usize * self.depth as usize,
+                decode_bc1,
+            )),
+            TextureFormat::BC3_UNORM => Some(Texture::decode(
+                &self.data,
+                self.width as usize,
+                self.height as usize * self.depth as usize,
+                decode_bc3,
+            )),
+            TextureFormat::BC5_UNORM => Some(Texture::decode(
+                &self.data,
+                self.width as usize,
+                self.height as usize * self.depth as usize,
+                decode_bc5,
+            )),
+            TextureFormat::BC7_UNORM => Some(Texture::decode(
+                &self.data,
+                self.width as usize,
+                self.height as usize * self.depth as usize,
+                decode_bc7,
+            )),
             _ => {
                 println!("Unsupported texture format {:?}!", self.format);
                 None
