@@ -36,7 +36,8 @@ mod common;
 #[cfg(test)]
 pub(crate) use common::pass_random_invalid;
 pub use common::{
-    ByteBuffer, ByteSpan, Language, Platform, ReadableFile, Version, WritableFile, read_version,
+    ByteBuffer, ByteSpan, Language, Platform, ReadableFile, TerritoryIntendedUse, Version,
+    WritableFile, read_version,
 };
 
 /// Types for ZiPatch (`.patch`) files.

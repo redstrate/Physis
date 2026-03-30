@@ -2,36 +2,23 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 use binrw::binrw;
-
-use crate::Error;
+use strum_macros::FromRepr;
 
 /// The playable genders in the game.
 #[binrw]
 #[brw(repr = u8)]
-#[derive(PartialEq, Eq, Clone, Debug)]
+#[derive(PartialEq, Eq, Clone, Debug, FromRepr)]
 #[repr(u8)]
 pub enum Gender {
     Male = 0,
     Female = 1,
 }
 
-impl std::convert::TryFrom<u8> for Gender {
-    type Error = crate::Error;
-
-    fn try_from(value: u8) -> Result<Self, Error> {
-        match value {
-            0 => Ok(Self::Male),
-            1 => Ok(Self::Female),
-            _ => Err(Error::Unknown),
-        }
-    }
-}
-
 /// The playable tribes in the game.
 /// Each race has two similar-looking tribes, with the exception of Highlander Hyur which are visually distinct.
 #[binrw]
 #[brw(repr = u8)]
-#[derive(PartialEq, Eq, Clone, Copy, Debug)]
+#[derive(PartialEq, Eq, Clone, Copy, Debug, FromRepr)]
 #[repr(u8)]
 pub enum Tribe {
     Midlander = 1,
@@ -52,36 +39,10 @@ pub enum Tribe {
     Veena = 16,
 }
 
-impl std::convert::TryFrom<u8> for Tribe {
-    type Error = crate::Error;
-
-    fn try_from(value: u8) -> Result<Self, Error> {
-        match value {
-            1 => Ok(Self::Midlander),
-            2 => Ok(Self::Highlander),
-            3 => Ok(Self::Wildwood),
-            4 => Ok(Self::Duskwight),
-            5 => Ok(Self::Plainsfolk),
-            6 => Ok(Self::Dunesfolk),
-            7 => Ok(Self::Seeker),
-            8 => Ok(Self::Keeper),
-            9 => Ok(Self::SeaWolf),
-            10 => Ok(Self::Hellsguard),
-            11 => Ok(Self::Raen),
-            12 => Ok(Self::Xaela),
-            13 => Ok(Self::Hellion),
-            14 => Ok(Self::Lost),
-            15 => Ok(Self::Rava),
-            16 => Ok(Self::Veena),
-            _ => Err(Error::Unknown),
-        }
-    }
-}
-
 /// The playable races in the game.
 #[binrw]
 #[brw(repr = u8)]
-#[derive(PartialEq, Eq, Clone, Copy, Debug)]
+#[derive(PartialEq, Eq, Clone, Copy, Debug, FromRepr)]
 #[repr(u8)]
 pub enum Race {
     Hyur = 1,
@@ -92,24 +53,6 @@ pub enum Race {
     AuRa = 6,
     Hrothgar = 7,
     Viera = 8,
-}
-
-impl std::convert::TryFrom<u8> for Race {
-    type Error = crate::Error;
-
-    fn try_from(value: u8) -> Result<Self, Error> {
-        match value {
-            1 => Ok(Self::Hyur),
-            2 => Ok(Self::Elezen),
-            3 => Ok(Self::Lalafell),
-            4 => Ok(Self::Miqote),
-            5 => Ok(Self::Roegadyn),
-            6 => Ok(Self::AuRa),
-            7 => Ok(Self::Hrothgar),
-            8 => Ok(Self::Viera),
-            _ => Err(Error::Unknown),
-        }
-    }
 }
 
 /// Gets a proper race identifier (such as 101, for Hyur-Midlander-Males) given a race, a tribe,
