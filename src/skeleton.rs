@@ -11,6 +11,7 @@ use std::io::{Cursor, SeekFrom};
 
 use crate::common::Platform;
 use crate::havok::{HavokAnimationContainer, HavokBinaryTagFileReader};
+use crate::race::{Gender, Race, Tribe, get_race_id};
 use crate::{ByteSpan, ReadableFile};
 
 #[binread]
@@ -107,6 +108,14 @@ impl ReadableFile for Skeleton {
         }
 
         Some(skeleton)
+    }
+}
+
+impl Skeleton {
+    /// Builds a game path to the specified skeleton.
+    pub fn path(race: Race, tribe: Tribe, gender: Gender) -> String {
+        let race_id = get_race_id(race, tribe, gender).unwrap();
+        format!("chara/human/c{race_id:04}/skeleton/base/b0001/skl_c{race_id:04}b0001.sklb")
     }
 }
 
