@@ -5,7 +5,7 @@
 
 use crate::ByteBuffer;
 use crate::ByteSpan;
-use crate::equipment::Slot;
+use crate::equipment::EquipSlot;
 use crate::savedata::dat::DatHeader;
 use binrw::NullString;
 use binrw::binrw;
@@ -58,22 +58,22 @@ fn convert_to_gearsets(gearsets: &Vec<Option<GearSet>>) -> Vec<GearSet> {
 
 const NUMBER_OF_GEARSLOTS: usize = 14;
 
-fn convert_from_slots(slots: [GearSlot; NUMBER_OF_GEARSLOTS]) -> HashMap<GearSlotType, GearSlot> {
+fn convert_from_slots(slots: [GearSlot; NUMBER_OF_GEARSLOTS]) -> HashMap<EquipSlot, GearSlot> {
     slots
         .iter()
         .cloned()
         .enumerate()
         .filter_map(|(i, x)| match x.id {
             0 => None,
-            _ => Some((i.try_into().ok()?, x)),
+            _ => Some((EquipSlot::from_repr(i as u16)?, x)),
         })
         .collect()
 }
 
-fn convert_to_slots(slots: &HashMap<GearSlotType, GearSlot>) -> Vec<GearSlot> {
+fn convert_to_slots(slots: &HashMap<EquipSlot, GearSlot>) -> Vec<GearSlot> {
     let mut result = vec![GearSlot::default(); NUMBER_OF_GEARSLOTS];
     for (idx, slot) in slots.iter() {
-        result[idx.clone() as usize] = slot.clone();
+        result[*idx as usize] = slot.clone();
     }
     result
 }
@@ -105,86 +105,6 @@ pub struct GearSlot {
     unknown5: u32,
 }
 
-#[derive(Debug, Clone, Hash, Eq, PartialEq)]
-pub enum GearSlotType {
-    MainHand = 0,
-    SecondaryHand,
-    Head,
-    Body,
-    Hands,
-    Waist, // legacy
-    Legs,
-    Feet,
-    Bracelets,
-    Necklace,
-    Earrings,
-    Ring1,
-    Ring2,
-    Soul,
-}
-
-impl GearSlotType {
-    pub fn to_slot(&self) -> Option<Slot> {
-        match self {
-            GearSlotType::Head => Some(Slot::Head),
-            GearSlotType::Body => Some(Slot::Body),
-            GearSlotType::Hands => Some(Slot::Hands),
-            GearSlotType::Legs => Some(Slot::Legs),
-            GearSlotType::Feet => Some(Slot::Feet),
-            GearSlotType::Bracelets => Some(Slot::Wrists),
-            GearSlotType::Necklace => Some(Slot::Neck),
-            GearSlotType::Earrings => Some(Slot::Earring),
-            GearSlotType::Ring1 => Some(Slot::RingLeft),
-            GearSlotType::Ring2 => Some(Slot::RingRight),
-            _ => None,
-        }
-    }
-}
-
-impl TryFrom<Slot> for GearSlotType {
-    type Error = ();
-
-    fn try_from(v: Slot) -> Result<Self, Self::Error> {
-        match v {
-            Slot::Head => Ok(GearSlotType::Head),
-            Slot::Body => Ok(GearSlotType::Body),
-            Slot::Hands => Ok(GearSlotType::Hands),
-            Slot::Legs => Ok(GearSlotType::Legs),
-            Slot::Feet => Ok(GearSlotType::Feet),
-            Slot::Wrists => Ok(GearSlotType::Bracelets),
-            Slot::Neck => Ok(GearSlotType::Necklace),
-            Slot::Earring => Ok(GearSlotType::Earrings),
-            Slot::RingLeft => Ok(GearSlotType::Ring1),
-            Slot::RingRight => Ok(GearSlotType::Ring2),
-            _ => Err(()),
-        }
-    }
-}
-
-impl TryFrom<usize> for GearSlotType {
-    type Error = ();
-
-    fn try_from(v: usize) -> Result<Self, Self::Error> {
-        match v {
-            x if x == GearSlotType::MainHand as usize => Ok(GearSlotType::MainHand),
-            x if x == GearSlotType::SecondaryHand as usize => Ok(GearSlotType::SecondaryHand),
-            x if x == GearSlotType::Head as usize => Ok(GearSlotType::Head),
-            x if x == GearSlotType::Body as usize => Ok(GearSlotType::Body),
-            x if x == GearSlotType::Hands as usize => Ok(GearSlotType::Hands),
-            x if x == GearSlotType::Waist as usize => Ok(GearSlotType::Waist),
-            x if x == GearSlotType::Legs as usize => Ok(GearSlotType::Legs),
-            x if x == GearSlotType::Feet as usize => Ok(GearSlotType::Feet),
-            x if x == GearSlotType::Bracelets as usize => Ok(GearSlotType::Bracelets),
-            x if x == GearSlotType::Necklace as usize => Ok(GearSlotType::Necklace),
-            x if x == GearSlotType::Earrings as usize => Ok(GearSlotType::Earrings),
-            x if x == GearSlotType::Ring1 as usize => Ok(GearSlotType::Ring1),
-            x if x == GearSlotType::Ring2 as usize => Ok(GearSlotType::Ring2),
-            x if x == GearSlotType::Soul as usize => Ok(GearSlotType::Soul),
-            _ => Err(()),
-        }
-    }
-}
-
 #[binrw]
 #[derive(Debug, Clone, Default)]
 pub struct GearSet {
@@ -200,7 +120,7 @@ pub struct GearSet {
     #[br(map = convert_from_slots)]
     #[bw(map = convert_to_slots)]
     /// The slots of the gear set.
-    pub slots: HashMap<GearSlotType, GearSlot>,
+    pub slots: HashMap<EquipSlot, GearSlot>,
     #[br(map = convert_id_opt)]
     #[bw(map = convert_opt_id)]
     /// The ID of the facewear item.
@@ -315,10 +235,10 @@ mod tests {
         assert_eq!(gearset.name, "White Mage");
         assert!(gearset.facewear.is_none());
         assert_eq!(gearset.slots.len(), 2);
-        let slot = gearset.slots.get(&GearSlotType::MainHand).unwrap();
+        let slot = gearset.slots.get(&EquipSlot::MainHand).unwrap();
         assert_eq!(slot.id, 5269);
         assert_eq!(slot.glamour_id, Some(2453));
-        let slot = gearset.slots.get(&GearSlotType::Body).unwrap();
+        let slot = gearset.slots.get(&EquipSlot::Body).unwrap();
         assert_eq!(slot.id, 8395913);
         assert_eq!(slot.glamour_id, None);
     }

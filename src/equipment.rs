@@ -2,11 +2,46 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 use crate::race::{Gender, Race, Tribe, get_race_id};
+use strum_macros::{EnumCount, EnumIter, FromRepr};
 
+/// Slot names for equipment, such as weapons and armor.
+#[repr(u16)]
+#[derive(Debug, Clone, Copy, Hash, Eq, PartialEq, FromRepr, EnumIter, EnumCount)]
+pub enum EquipSlot {
+    /// The main hand slot.
+    MainHand = 0,
+    /// The secondary/off-hand hand slot.
+    OffHand,
+    /// The head slot.
+    Head,
+    /// The body slot.
+    Body,
+    /// The hands slot.
+    Hands,
+    /// What used to be the belt slot, but it still takes space.
+    Waist,
+    /// The legs slot.
+    Legs,
+    /// The feet slot.
+    Feet,
+    /// The wrists/bracelets slot.
+    Wrists,
+    /// The neck/necklace slot.
+    Neck,
+    /// The ears/earrings slot.
+    Ears,
+    /// The right ring slot.
+    RightRing,
+    /// The left ring slot.
+    LeftRing,
+    /// The soul crystal slot.
+    SoulCrystal,
+}
+
+/// Corresponds to rows in the EquipSlotCategory Excel sheet.
 #[repr(u8)]
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-/// The slot the item is for.
-pub enum Slot {
+pub enum EquipSlotCategory {
     /// No applicable slot.
     // NOTE: this invariant isn't great for Rust, but is needed for the C api.
     Invalid,
@@ -31,63 +66,63 @@ pub enum Slot {
     /// The wrists slot.
     Wrists,
     /// The right ring slot.
-    RingLeft,
+    LeftRing,
     /// The left ring slot.
-    RingRight,
+    RightRing,
 }
 
 /// Returns the shorthand abbreviation of `slot`. For example, Body's shorthand is "top".
-pub fn get_slot_abbreviation(slot: Slot) -> Option<&'static str> {
+pub fn get_slot_abbreviation(slot: EquipSlotCategory) -> Option<&'static str> {
     match slot {
-        Slot::Head => Some("met"),
-        Slot::Hands => Some("glv"),
-        Slot::Legs => Some("dwn"),
-        Slot::Feet => Some("sho"),
-        Slot::Body => Some("top"),
-        Slot::Earring => Some("ear"),
-        Slot::Neck => Some("nek"),
-        Slot::Wrists => Some("wrs"),
-        Slot::RingLeft => Some("ril"),
-        Slot::RingRight => Some("rir"),
+        EquipSlotCategory::Head => Some("met"),
+        EquipSlotCategory::Hands => Some("glv"),
+        EquipSlotCategory::Legs => Some("dwn"),
+        EquipSlotCategory::Feet => Some("sho"),
+        EquipSlotCategory::Body => Some("top"),
+        EquipSlotCategory::Earring => Some("ear"),
+        EquipSlotCategory::Neck => Some("nek"),
+        EquipSlotCategory::Wrists => Some("wrs"),
+        EquipSlotCategory::LeftRing => Some("ril"),
+        EquipSlotCategory::RightRing => Some("rir"),
         _ => None,
     }
 }
 
 /// Determines the correct slot from an id. This can fail, so `Invalid` is returned when no slot matches
 /// that id.
-pub fn get_slot_from_id(id: i32) -> Slot {
+pub fn get_slot_from_id(id: i32) -> EquipSlotCategory {
     match id {
-        1 => Slot::MainHand,
-        2 => Slot::OffHand,
-        3 => Slot::Head,
-        4 => Slot::Body,
-        5 => Slot::Hands,
-        7 => Slot::Legs,
-        8 => Slot::Feet,
-        9 => Slot::Earring,
-        10 => Slot::Neck,
-        11 => Slot::Wrists,
-        12 => Slot::RingLeft,
-        13 => Slot::RingRight,
-        _ => Slot::Invalid,
+        1 => EquipSlotCategory::MainHand,
+        2 => EquipSlotCategory::OffHand,
+        3 => EquipSlotCategory::Head,
+        4 => EquipSlotCategory::Body,
+        5 => EquipSlotCategory::Hands,
+        7 => EquipSlotCategory::Legs,
+        8 => EquipSlotCategory::Feet,
+        9 => EquipSlotCategory::Earring,
+        10 => EquipSlotCategory::Neck,
+        11 => EquipSlotCategory::Wrists,
+        12 => EquipSlotCategory::LeftRing,
+        13 => EquipSlotCategory::RightRing,
+        _ => EquipSlotCategory::Invalid,
     }
 }
 
 /// Determines the correct slot from an id. This can fail, so `Invalid` is returned when no slot matches
 /// that id.
-pub fn get_slot_from_abbreviation(abrev: &str) -> Slot {
+pub fn get_slot_from_abbreviation(abrev: &str) -> EquipSlotCategory {
     match abrev {
-        "met" => Slot::Head,
-        "glv" => Slot::Hands,
-        "dwn" => Slot::Legs,
-        "sho" => Slot::Feet,
-        "top" => Slot::Body,
-        "ear" => Slot::Earring,
-        "nek" => Slot::Neck,
-        "wrs" => Slot::Wrists,
-        "ril" => Slot::RingLeft,
-        "rir" => Slot::RingRight,
-        _ => Slot::Invalid,
+        "met" => EquipSlotCategory::Head,
+        "glv" => EquipSlotCategory::Hands,
+        "dwn" => EquipSlotCategory::Legs,
+        "sho" => EquipSlotCategory::Feet,
+        "top" => EquipSlotCategory::Body,
+        "ear" => EquipSlotCategory::Earring,
+        "nek" => EquipSlotCategory::Neck,
+        "wrs" => EquipSlotCategory::Wrists,
+        "ril" => EquipSlotCategory::LeftRing,
+        "rir" => EquipSlotCategory::RightRing,
+        _ => EquipSlotCategory::Invalid,
     }
 }
 
@@ -97,16 +132,20 @@ pub fn build_equipment_path(
     race: Race,
     tribe: Tribe,
     gender: Gender,
-    slot: Slot,
+    slot: EquipSlotCategory,
 ) -> String {
     let race_id = get_race_id(race, tribe, gender).unwrap();
     match slot {
-        Slot::MainHand | Slot::OffHand => {
+        EquipSlotCategory::MainHand | EquipSlotCategory::OffHand => {
             format!(
                 "chara/weapon/w{model_id:04}/obj/body/b{race_id:04}/model/w{model_id:04}b{race_id:04}.mdl"
             )
         }
-        Slot::Neck | Slot::Earring | Slot::Wrists | Slot::RingLeft | Slot::RingRight => {
+        EquipSlotCategory::Neck
+        | EquipSlotCategory::Earring
+        | EquipSlotCategory::Wrists
+        | EquipSlotCategory::LeftRing
+        | EquipSlotCategory::RightRing => {
             format!(
                 "chara/accessory/a{model_id:04}/model/c{race_id:04}a{model_id:04}_{}.mdl",
                 get_slot_abbreviation(slot).unwrap_or_default()
@@ -208,7 +247,7 @@ pub fn build_tail_material_path(race_code: i32, tail_code: i32, material_name: &
     format!("chara/human/c{race_code:04}/obj/tail/t{tail_code:04}/material/v0001{material_name}")
 }
 
-pub fn deconstruct_equipment_path(path: &str) -> Option<(i32, Slot)> {
+pub fn deconstruct_equipment_path(path: &str) -> Option<(i32, EquipSlotCategory)> {
     let model_id = &path[6..10];
     let slot_name = &path[11..14];
 
@@ -225,7 +264,13 @@ mod tests {
     #[test]
     fn test_equipment_path() {
         assert_eq!(
-            build_equipment_path(0, Race::Hyur, Tribe::Midlander, Gender::Male, Slot::Body),
+            build_equipment_path(
+                0,
+                Race::Hyur,
+                Tribe::Midlander,
+                Gender::Male,
+                EquipSlotCategory::Body
+            ),
             "chara/equipment/e0000/model/c0101e0000_top.mdl"
         );
     }
@@ -234,7 +279,7 @@ mod tests {
     fn test_deconstruct() {
         assert_eq!(
             deconstruct_equipment_path("c0101e0000_top.mdl"),
-            Some((0, Slot::Body))
+            Some((0, EquipSlotCategory::Body))
         );
     }
 }

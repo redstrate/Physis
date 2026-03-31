@@ -39,5 +39,5 @@ bitflags = { version = "2.11", default-features = false }
 glam = { version = "0.32", optional = true }
 
 # Doing cool stuff with enums Rust doesn't have built-in
-strum = { version = "0.28", default-features = false }
+strum = { version = "0.28", features = ["derive", "std"], default-features = false }
 strum_macros = { version = "0.28", default-features = false }
