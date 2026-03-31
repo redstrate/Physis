@@ -17,6 +17,8 @@ use bitflags::bitflags;
 
 use crate::common::Platform;
 use crate::common_file_operations::{null_terminated_utf8, read_bool_from, write_bool_as};
+use crate::equipment::{CharacterCategory, EquipSlotCategory};
+use crate::race::{Gender, Race, Tribe, get_race_id};
 use crate::{ByteBuffer, ByteSpan, ReadableFile, WritableFile};
 use vertex_declarations::{
     VERTEX_ELEMENT_SIZE, VertexDeclaration, VertexType, VertexUsage, vertex_element_parser,
@@ -756,6 +758,57 @@ impl MDL {
         self.model_data.header.shape_count = self.model_data.shapes.len() as u16;
         self.model_data.header.shape_mesh_count = self.model_data.shape_meshes.len() as u16;
         self.model_data.header.shape_value_count = self.model_data.shape_values.len() as u16;
+    }
+
+    /// Builds a game path to the character specified.
+    pub fn character_path(
+        category: CharacterCategory,
+        body_ver: i32,
+        race: Race,
+        tribe: Tribe,
+        gender: Gender,
+    ) -> String {
+        let category_path = category.path();
+        let race_id = get_race_id(race, tribe, gender).unwrap();
+        let category_abbreviation = category.abbreviation();
+        let category_prefix = category.prefix();
+        format!(
+            "chara/human/c{race_id:04}/obj/{category_path}/{category_prefix}{body_ver:04}/model/c{race_id:04}{category_prefix}{body_ver:04}_{category_abbreviation}.mdl"
+        )
+    }
+
+    /// Builds a game path to the equipment specified.
+    pub fn equipment_path(
+        model_id: i32,
+        race: Race,
+        tribe: Tribe,
+        gender: Gender,
+        slot: EquipSlotCategory,
+    ) -> String {
+        let race_id = get_race_id(race, tribe, gender).unwrap();
+        match slot {
+            EquipSlotCategory::MainHand | EquipSlotCategory::OffHand => {
+                format!(
+                    "chara/weapon/w{model_id:04}/obj/body/b{race_id:04}/model/w{model_id:04}b{race_id:04}.mdl"
+                )
+            }
+            EquipSlotCategory::Neck
+            | EquipSlotCategory::Earring
+            | EquipSlotCategory::Wrists
+            | EquipSlotCategory::LeftRing
+            | EquipSlotCategory::RightRing => {
+                format!(
+                    "chara/accessory/a{model_id:04}/model/c{race_id:04}a{model_id:04}_{}.mdl",
+                    slot.abbreviation().unwrap_or_default()
+                )
+            }
+            _ => {
+                format!(
+                    "chara/equipment/e{model_id:04}/model/c{race_id:04}e{model_id:04}_{}.mdl",
+                    slot.abbreviation().unwrap_or_default()
+                )
+            }
+        }
     }
 }
 
@@ -1529,5 +1582,19 @@ mod tests {
 
         // model header
         assert_eq!(mdl.model_data.header.radius, 1.5340779);
+    }
+
+    #[test]
+    fn test_equipment_path() {
+        assert_eq!(
+            MDL::equipment_path(
+                0,
+                Race::Hyur,
+                Tribe::Midlander,
+                Gender::Male,
+                EquipSlotCategory::Body
+            ),
+            "chara/equipment/e0000/model/c0101e0000_top.mdl"
+        );
     }
 }
