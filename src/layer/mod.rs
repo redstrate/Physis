@@ -407,6 +407,17 @@ pub struct LayerHeader {
     pub object_set_enable_referenced: Vec<ObjectSetEnableReferenced>,
 }
 
+impl LayerHeader {
+    /// Whether this layer set ID is included or excluded.
+    pub fn has_layer_set(&self, id: u32) -> bool {
+        match self.layer_set_referenced_list.referenced_type {
+            LayerSetReferencedType::Include => self.layer_set_referenced_list.layer_sets.iter().any(|x| x.layer_set_id == id),
+            LayerSetReferencedType::Exclude => self.layer_set_referenced_list.layer_sets.iter().all(|x| x.layer_set_id != id),
+            _ => false, // Unsure how the other ones should be handled yet
+        }
+    }
+}
+
 #[binrw]
 #[derive(Debug, PartialEq)]
 #[allow(dead_code)] // most of the fields are unused at the moment
