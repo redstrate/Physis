@@ -20,7 +20,7 @@ mod collision;
 pub use collision::{CollisionBoxInstanceObject, TriggerBoxInstanceObject, TriggerBoxShape};
 
 mod common;
-pub use common::{Color, ColorHDRI, GameInstanceObject, RelativePositions};
+pub use common::{Color, ColorHDRI, GameInstanceObject};
 
 mod env;
 pub use env::{EnvLocationObject, EnvSetInstanceObject, EnvSetShape};
@@ -411,8 +411,16 @@ impl LayerHeader {
     /// Whether this layer set ID is included or excluded.
     pub fn has_layer_set(&self, id: u32) -> bool {
         match self.layer_set_referenced_list.referenced_type {
-            LayerSetReferencedType::Include => self.layer_set_referenced_list.layer_sets.iter().any(|x| x.layer_set_id == id),
-            LayerSetReferencedType::Exclude => !self.layer_set_referenced_list.layer_sets.iter().any(|x| x.layer_set_id == id),
+            LayerSetReferencedType::Include => self
+                .layer_set_referenced_list
+                .layer_sets
+                .iter()
+                .any(|x| x.layer_set_id == id),
+            LayerSetReferencedType::Exclude => !self
+                .layer_set_referenced_list
+                .layer_sets
+                .iter()
+                .any(|x| x.layer_set_id == id),
             _ => false, // Unsure how the other ones should be handled yet
         }
     }

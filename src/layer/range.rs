@@ -3,10 +3,7 @@
 
 use binrw::binrw;
 
-use crate::{
-    common_file_operations::{read_bool_from, write_bool_as},
-    layer::RelativePositions,
-};
+use crate::common_file_operations::{read_bool_from, write_bool_as};
 
 use super::TriggerBoxInstanceObject;
 
@@ -101,11 +98,13 @@ pub enum PopType {
 #[derive(Debug, PartialEq)]
 pub struct PopRangeInstanceObject {
     pub pop_type: PopType,
-    pub relative_positions: RelativePositions,
+    pos: i32,
+    pos_count: i32,
     pub inner_radius_ratio: f32,
-    #[brw(pad_after = 7)] // padding
+    #[brw(pad_after = 7)] // not sure what this is, but it's not empty
     pub index: u8,
-    // TODO: read relative positions
+    #[br(count = pos_count)] // NOTE: This is assuming pos is always 24!
+    pub positions: Vec<[f32; 3]>,
 }
 
 #[binrw]

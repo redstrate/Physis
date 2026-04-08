@@ -5,13 +5,6 @@ use binrw::binrw;
 
 #[binrw]
 #[derive(Debug, PartialEq)]
-pub struct RelativePositions {
-    pos: i32,
-    pos_count: i32,
-}
-
-#[binrw]
-#[derive(Debug, PartialEq)]
 pub struct Color {
     pub red: u8,
     pub green: u8,

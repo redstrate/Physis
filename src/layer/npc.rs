@@ -5,8 +5,6 @@ use binrw::binrw;
 
 use crate::layer::GameInstanceObject;
 
-use super::common::RelativePositions;
-
 #[binrw]
 #[derive(Debug, PartialEq)]
 pub struct NPCInstanceObject {
@@ -52,7 +50,8 @@ pub struct BNPCInstanceObject {
     pub link_override: u8,
     pub link_reply: u8,
     pub nonpop: u8,
-    pub relative_positions: RelativePositions,
+    // TODO: restore
+    //pub relative_positions: RelativePositions,
     pub horizontal_pop_range: f32,
     pub vertical_pop_range: f32,
     pub bnpc_base_data: i32,
