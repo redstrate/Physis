@@ -80,7 +80,7 @@ pub struct ScnSection {
     offset_action_descriptors: i32,
     unk4: i32,
     unk5: i32,
-    housing_offset: i32, // According to Lumina?
+    offset_housing: i32,
     unk7: i32,
     unk8: i32,
     unk9: i32,
@@ -126,6 +126,7 @@ pub struct ScnSection {
     #[bw(ignore)] // TODO: support
     pub lgb_paths: Vec<String>,
 
+    /// Animation action descriptors.
     #[br(seek_before = SeekFrom::Current(offset_action_descriptors as i64 - ScnSection::SIZE as i64))]
     #[br(restore_position)]
     pub action_descriptors: ScnSGActionDescriptors,
@@ -133,6 +134,10 @@ pub struct ScnSection {
     // #[br(seek_before = SeekFrom::Current(offset_unk3 as i64 - ScnSection::SIZE as i64))]
     // #[br(restore_position)]
     // unk3: ScnUnknown3Section,
+    /// Housing information.
+    #[br(seek_before = SeekFrom::Current(offset_housing as i64 - ScnSection::SIZE as i64))]
+    #[br(restore_position)]
+    pub housing: ScnHousingSettings,
 }
 
 impl ScnSection {
@@ -487,4 +492,24 @@ fn layers_from_offsets(offsets: &Vec<i32>, string_heap: &StringHeap) -> BinResul
     }
 
     Ok(layers)
+}
+
+#[binrw]
+#[derive(Debug)]
+pub struct ScnHousingSettings {
+    default_color_id: u16,
+    unk1: u8,
+    unk2: u8,
+    unk3: u32,
+    unk4: [u32; 6],
+    unk5: u32,
+    unk6: u32,
+    unk7: u32,
+    unk8: u32,
+    unk9: u32,
+    unk10: u8,
+    unk11: [u8; 3],
+    unk12: u32,
+    unk13: u32,
+    unk14: u32,
 }
