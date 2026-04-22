@@ -795,8 +795,7 @@ impl MDL {
             EquipSlotCategory::Neck
             | EquipSlotCategory::Earring
             | EquipSlotCategory::Wrists
-            | EquipSlotCategory::LeftRing
-            | EquipSlotCategory::RightRing => {
+            | EquipSlotCategory::Rings => {
                 format!(
                     "chara/accessory/a{model_id:04}/model/c{race_id:04}a{model_id:04}_{}.mdl",
                     slot.abbreviation().unwrap_or_default()
