@@ -37,14 +37,41 @@ pub enum EquipSlot {
     SoulCrystal,
 }
 
+impl From<&EquipSlotCategory> for EquipSlot {
+    fn from(value: &EquipSlotCategory) -> Self {
+        match value {
+            EquipSlotCategory::MainHand
+            | EquipSlotCategory::MainHandTwoHand
+            | EquipSlotCategory::MainHandDualWield => EquipSlot::MainHand,
+            EquipSlotCategory::OffHand => EquipSlot::OffHand,
+            EquipSlotCategory::Head => EquipSlot::Head,
+            EquipSlotCategory::Body
+            | EquipSlotCategory::BodyNoHeadHandsLegsFeet
+            | EquipSlotCategory::BodyNoHandsLegs
+            | EquipSlotCategory::BodyNoLegsFeet
+            | EquipSlotCategory::BodyNoHands
+            | EquipSlotCategory::BodyNoLegs => EquipSlot::Body,
+            EquipSlotCategory::Hands => EquipSlot::Hands,
+            EquipSlotCategory::Legs => EquipSlot::Legs,
+            EquipSlotCategory::Feet => EquipSlot::Feet,
+            EquipSlotCategory::Earring => EquipSlot::Ears,
+            EquipSlotCategory::Neck => EquipSlot::Neck,
+            EquipSlotCategory::Wrists => EquipSlot::Wrists,
+            EquipSlotCategory::Rings => EquipSlot::LeftRing,
+            EquipSlotCategory::SoulCrystal => EquipSlot::SoulCrystal,
+            _ => EquipSlot::Waist,
+        }
+    }
+}
+
 /// Corresponds to rows in the EquipSlotCategory Excel sheet.
 #[repr(u8)]
 #[derive(Debug, Clone, PartialEq, Eq, Hash, FromRepr)]
 pub enum EquipSlotCategory {
     /// No applicable slot.
     // NOTE: this invariant isn't great for Rust, but is needed for the C api.
-    Invalid,
-    /// The main weapon slot.
+    Invalid = 0,
+    /// The main weapon slot. By default this is a single-handed weapon, as two-handers and dual-wield weapons are defined below.
     MainHand,
     /// The off-hand weapon slot.
     OffHand,
@@ -66,10 +93,32 @@ pub enum EquipSlotCategory {
     Neck,
     /// The wrists slot.
     Wrists,
-    /// The right ring slot.
-    LeftRing,
-    /// The left ring slot.
-    RightRing,
+    /// The ring slots. This sheet does not differentiate between the two types.
+    Rings,
+    /// A two-handed weapon that goes in the main weapon slot.
+    MainHandTwoHand,
+    /// This seems to be unused, but both main hand and off-hand are considered usable, so we'll include it for possible future use.
+    MainHandDualWield,
+    /// The body or chest slot, but it restricts headgear.
+    BodyNoHead,
+    /// The body or chest slot, but it restricts gloves, legs, and footwear.
+    BodyNoHandsLegsFeet,
+    /// The soul crystal slot.
+    SoulCrystal,
+    /// The legs slot, but it restricts footwear.
+    LegsNoFeet,
+    /// The body or chest slot, but it restricts hats, gloves, legs, and footwear.
+    BodyNoHeadHandsLegsFeet,
+    /// The body or chest slot, but it restricts gloves and legs.
+    BodyNoHandsLegs,
+    /// The body or chest slot, but it resticts legs and footwear.
+    BodyNoLegsFeet,
+    /// The body or chest slot, but it restricts gloves.
+    BodyNoHands,
+    /// The body or chest slot, but it restricts legs.
+    BodyNoLegs,
+    /// No applicable slot, again. Probably just a placeholder.
+    Invalid2 = 24,
 }
 
 impl EquipSlotCategory {
@@ -84,8 +133,7 @@ impl EquipSlotCategory {
             EquipSlotCategory::Earring => Some("ear"),
             EquipSlotCategory::Neck => Some("nek"),
             EquipSlotCategory::Wrists => Some("wrs"),
-            EquipSlotCategory::LeftRing => Some("ril"),
-            EquipSlotCategory::RightRing => Some("rir"),
+            EquipSlotCategory::Rings => Some("ril"),
             _ => None,
         }
     }
@@ -102,8 +150,7 @@ impl From<&str> for EquipSlotCategory {
             "ear" => EquipSlotCategory::Earring,
             "nek" => EquipSlotCategory::Neck,
             "wrs" => EquipSlotCategory::Wrists,
-            "ril" => EquipSlotCategory::LeftRing,
-            "rir" => EquipSlotCategory::RightRing,
+            "ril" => EquipSlotCategory::Rings,
             _ => EquipSlotCategory::Invalid,
         }
     }
