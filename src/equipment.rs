@@ -23,12 +23,12 @@ pub enum EquipSlot {
     Legs,
     /// The feet slot.
     Feet,
-    /// The wrists/bracelets slot.
-    Wrists,
-    /// The neck/necklace slot.
-    Neck,
     /// The ears/earrings slot.
     Ears,
+    /// The neck/necklace slot.
+    Neck,
+    /// The wrists/bracelets slot.
+    Wrists,
     /// The right ring slot.
     RightRing,
     /// The left ring slot.
