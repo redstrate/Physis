@@ -46,13 +46,15 @@ impl From<&EquipSlotCategory> for EquipSlot {
             EquipSlotCategory::OffHand => EquipSlot::OffHand,
             EquipSlotCategory::Head => EquipSlot::Head,
             EquipSlotCategory::Body
+            | EquipSlotCategory::BodyNoHead
+            | EquipSlotCategory::BodyNoHandsLegsFeet
             | EquipSlotCategory::BodyNoHeadHandsLegsFeet
             | EquipSlotCategory::BodyNoHandsLegs
             | EquipSlotCategory::BodyNoLegsFeet
             | EquipSlotCategory::BodyNoHands
             | EquipSlotCategory::BodyNoLegs => EquipSlot::Body,
             EquipSlotCategory::Hands => EquipSlot::Hands,
-            EquipSlotCategory::Legs => EquipSlot::Legs,
+            EquipSlotCategory::Legs | EquipSlotCategory::LegsNoFeet => EquipSlot::Legs,
             EquipSlotCategory::Feet => EquipSlot::Feet,
             EquipSlotCategory::Earring => EquipSlot::Ears,
             EquipSlotCategory::Neck => EquipSlot::Neck,
@@ -66,8 +68,9 @@ impl From<&EquipSlotCategory> for EquipSlot {
 
 /// Corresponds to rows in the EquipSlotCategory Excel sheet.
 #[repr(u8)]
-#[derive(Debug, Clone, PartialEq, Eq, Hash, FromRepr)]
+#[derive(Debug, Default, Clone, PartialEq, Eq, Hash, FromRepr)]
 pub enum EquipSlotCategory {
+    #[default]
     /// No applicable slot.
     // NOTE: this invariant isn't great for Rust, but is needed for the C api.
     Invalid = 0,
