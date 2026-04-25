@@ -421,7 +421,8 @@ impl LayerHeader {
                 .layer_sets
                 .iter()
                 .any(|x| x.layer_set_id == id),
-            _ => false, // Unsure how the other ones should be handled yet
+            LayerSetReferencedType::All => true, // NOTE: This is based on the assumption seen in The Lavender Beds (340)'s pop range in LVD_Zone_01.
+            _ => false,                          // Unsure how the other ones should be handled yet
         }
     }
 }
