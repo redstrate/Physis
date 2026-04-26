@@ -58,13 +58,13 @@ pub(crate) struct SqPackHeader {
 }
 
 pub(crate) fn read_data_block<T: Read + Seek>(
-    mut buf: T,
+    buf: &mut T,
     endianness: Endian,
     starting_position: u64,
 ) -> Option<Vec<u8>> {
     buf.seek(SeekFrom::Start(starting_position)).ok()?;
 
-    let block_header = BlockHeader::read_options(&mut buf, endianness, ()).unwrap();
+    let block_header = BlockHeader::read_options(buf, endianness, ()).unwrap();
 
     match block_header.compression {
         CompressionMode::Compressed {
@@ -92,10 +92,10 @@ pub(crate) fn read_data_block<T: Read + Seek>(
 
 /// A fixed version of read_data_block accounting for differing compressed block sizes in ZiPatch files.
 pub(crate) fn read_data_block_patch<T: Read + Seek>(
-    mut buf: T,
+    buf: &mut T,
     endianness: Endian,
 ) -> Option<Vec<u8>> {
-    let block_header = BlockHeader::read_options(&mut buf, endianness, ()).unwrap();
+    let block_header = BlockHeader::read_options(buf, endianness, ()).unwrap();
 
     match block_header.compression {
         CompressionMode::Compressed {
@@ -132,7 +132,7 @@ pub(crate) fn read_data_block_patch<T: Read + Seek>(
 }
 
 pub(crate) fn write_data_block_patch<T: Write + Seek>(
-    mut writer: T,
+    writer: &mut T,
     endianness: Endian,
     data: Vec<u8>,
 ) {
@@ -146,9 +146,7 @@ pub(crate) fn write_data_block_patch<T: Write + Seek>(
             file_size: data.len() as i32,
         },
     };
-    block_header
-        .write_options(&mut writer, endianness, ())
-        .unwrap();
+    block_header.write_options(writer, endianness, ()).unwrap();
 
-    data.write(&mut writer).unwrap();
+    data.write(writer).unwrap();
 }

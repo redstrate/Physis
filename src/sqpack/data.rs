@@ -6,9 +6,9 @@ use std::io::{Cursor, Read, Seek, SeekFrom};
 
 use crate::ByteBuffer;
 use crate::common::Platform;
-use binrw::BinWrite;
 use binrw::{BinRead, VecArgs};
 use binrw::{BinReaderExt, binrw};
+use binrw::{BinWrite, Endian};
 
 use crate::common_file_operations::{read_bool_from, write_bool_as};
 use crate::model::ModelFileHeader;
@@ -241,20 +241,61 @@ impl SqPackData {
 
         match file_info.file_type {
             FileType::Empty => None,
-            FileType::Standard => self.read_standard_file(offset, &file_info),
-            FileType::Model => self.read_model_file(offset, &file_info),
-            FileType::Texture => self.read_texture_file(offset, &file_info),
+            FileType::Standard => Self::read_standard_file(
+                &mut self.file,
+                self.platform.endianness(),
+                offset,
+                &file_info,
+            ),
+            FileType::Model => Self::read_model_file(
+                &mut self.file,
+                self.platform.endianness(),
+                offset,
+                &file_info,
+            ),
+            FileType::Texture => Self::read_texture_file(
+                &mut self.file,
+                self.platform.endianness(),
+                offset,
+                &file_info,
+            ),
+        }
+    }
+
+    /// Reads from a given reader.
+    ///
+    /// If the block of data is successfully parsed, it returns the file data - otherwise is None.
+    pub fn read_from_reader<R: Read + Seek>(
+        stream: &mut R,
+        platform: Platform,
+    ) -> Option<ByteBuffer> {
+        let file_info = FileInfo::read_options(stream, platform.endianness(), (&platform,)).ok()?;
+
+        match file_info.file_type {
+            FileType::Empty => None,
+            FileType::Standard => {
+                Self::read_standard_file(stream, platform.endianness(), 0, &file_info)
+            }
+            FileType::Model => Self::read_model_file(stream, platform.endianness(), 0, &file_info),
+            FileType::Texture => {
+                Self::read_texture_file(stream, platform.endianness(), 0, &file_info)
+            }
         }
     }
 
     /// Reads a standard file block.
-    fn read_standard_file(&mut self, offset: u64, file_info: &FileInfo) -> Option<ByteBuffer> {
+    fn read_standard_file<R: Read + Seek>(
+        stream: &mut R,
+        endian: Endian,
+        offset: u64,
+        file_info: &FileInfo,
+    ) -> Option<ByteBuffer> {
         let standard_file_info = file_info.standard_info.as_ref()?;
 
         let mut blocks: Vec<Block> = Vec::with_capacity(standard_file_info.num_blocks as usize);
 
         for _ in 0..standard_file_info.num_blocks {
-            blocks.push(Block::read_options(&mut self.file, self.platform.endianness(), ()).ok()?);
+            blocks.push(Block::read_options(stream, endian, ()).ok()?);
         }
 
         let mut data: Vec<u8> = Vec::with_capacity(file_info.file_size as usize);
@@ -264,8 +305,8 @@ impl SqPackData {
         for i in 0..standard_file_info.num_blocks {
             data.append(
                 &mut read_data_block(
-                    &mut self.file,
-                    self.platform.endianness(),
+                    stream,
+                    endian,
                     starting_position + (blocks[i as usize].offset as u64),
                 )
                 .expect("Failed to read data block."),
@@ -276,7 +317,12 @@ impl SqPackData {
     }
 
     /// Reads a model file block.
-    fn read_model_file(&mut self, offset: u64, file_info: &FileInfo) -> Option<ByteBuffer> {
+    fn read_model_file<R: Read + Seek>(
+        stream: &mut R,
+        endian: Endian,
+        offset: u64,
+        file_info: &FileInfo,
+    ) -> Option<ByteBuffer> {
         let model_file_info = file_info.model_info.as_ref()?;
 
         let mut buffer = Cursor::new(Vec::new());
@@ -285,10 +331,9 @@ impl SqPackData {
 
         let total_blocks = model_file_info.num.total();
 
-        let compressed_block_sizes: Vec<u16> = self
-            .file
+        let compressed_block_sizes: Vec<u16> = stream
             .read_type_args(
-                self.platform.endianness(),
+                endian,
                 VecArgs::builder().count(total_blocks as usize).finalize(),
             )
             .ok()?;
@@ -304,7 +349,7 @@ impl SqPackData {
         // start writing at 0x44
         buffer.seek(SeekFrom::Start(0x44)).ok()?;
 
-        self.file
+        stream
             .seek(SeekFrom::Start(
                 base_offset + (model_file_info.offset.stack_size as u64),
             ))
@@ -312,17 +357,17 @@ impl SqPackData {
 
         // read from stack blocks
         let mut read_model_blocks = |offset: u64, size: usize| -> Option<u64> {
-            self.file.seek(SeekFrom::Start(base_offset + offset)).ok()?;
+            stream.seek(SeekFrom::Start(base_offset + offset)).ok()?;
             let stack_start = buffer.position();
             for _ in 0..size {
-                let last_pos = &self.file.stream_position().ok()?;
+                let last_pos = &stream.stream_position().ok()?;
 
-                let data = read_data_block(&self.file, self.platform.endianness(), *last_pos)
-                    .expect("Unable to read block data.");
+                let data =
+                    read_data_block(stream, endian, *last_pos).expect("Unable to read block data.");
                 // write to buffer
                 buffer.write_all(data.as_slice()).ok()?;
 
-                self.file
+                stream
                     .seek(SeekFrom::Start(
                         last_pos + (compressed_block_sizes[current_block] as u64),
                     ))
@@ -356,23 +401,22 @@ impl SqPackData {
                         offsets[i] = 0;
                     }
 
-                    self.file
+                    stream
                         .seek(SeekFrom::Start(base_offset + (offset as u64)))
                         .ok();
 
                     for _ in 0..size {
-                        let last_pos = self.file.stream_position().unwrap();
+                        let last_pos = stream.stream_position().unwrap();
 
-                        let data =
-                            read_data_block(&self.file, self.platform.endianness(), last_pos)
-                                .expect("Unable to read raw model block!");
+                        let data = read_data_block(stream, endian, last_pos)
+                            .expect("Unable to read raw model block!");
 
                         buffer
                             .write_all(data.as_slice())
                             .expect("Unable to write to memory buffer!");
 
                         data_sizes[i] += data.len() as u32;
-                        self.file
+                        stream
                             .seek(SeekFrom::Start(
                                 last_pos + (compressed_block_sizes[current_block] as u64),
                             ))
@@ -422,15 +466,18 @@ impl SqPackData {
 
         buffer.seek(SeekFrom::Start(0)).ok()?;
 
-        header
-            .write_options(&mut buffer, self.platform.endianness(), ())
-            .ok()?;
+        header.write_options(&mut buffer, endian, ()).ok()?;
 
         Some(buffer.into_inner())
     }
 
     /// Reads a texture file block.
-    fn read_texture_file(&mut self, offset: u64, file_info: &FileInfo) -> Option<ByteBuffer> {
+    fn read_texture_file<R: Read + Seek>(
+        mut stream: R,
+        endian: Endian,
+        offset: u64,
+        file_info: &FileInfo,
+    ) -> Option<ByteBuffer> {
         let texture_file_info = file_info.texture_info.as_ref()?;
 
         let mut data: Vec<u8> = Vec::with_capacity(file_info.file_size as usize);
@@ -438,18 +485,18 @@ impl SqPackData {
         // write the header if it exists
         let mipmap_size = texture_file_info.lods[0].compressed_size;
         if mipmap_size != 0 {
-            let original_pos = self.file.stream_position().ok()?;
+            let original_pos = stream.stream_position().ok()?;
 
-            self.file
+            stream
                 .seek(SeekFrom::Start(offset + file_info.size as u64))
                 .ok()?;
 
             let mut header = vec![0u8; texture_file_info.lods[0].compressed_offset as usize];
-            self.file.read_exact(&mut header).ok()?;
+            stream.read_exact(&mut header).ok()?;
 
             data.append(&mut header);
 
-            self.file.seek(SeekFrom::Start(original_pos)).ok()?;
+            stream.seek(SeekFrom::Start(original_pos)).ok()?;
         }
 
         for i in 0..texture_file_info.num_blocks {
@@ -459,20 +506,17 @@ impl SqPackData {
                 + (file_info.size as u64);
 
             for _ in 0..texture_file_info.lods[i as usize].block_count {
-                let original_pos = self.file.stream_position().ok()?;
+                let original_pos = stream.stream_position().ok()?;
 
                 data.append(&mut read_data_block(
-                    &self.file,
-                    self.platform.endianness(),
+                    &mut stream,
+                    endian,
                     running_block_total,
                 )?);
 
-                self.file.seek(SeekFrom::Start(original_pos)).ok()?;
+                stream.seek(SeekFrom::Start(original_pos)).ok()?;
 
-                running_block_total += self
-                    .file
-                    .read_type_args::<i16>(self.platform.endianness(), ())
-                    .ok()? as u64;
+                running_block_total += stream.read_type_args::<i16>(endian, ()).ok()? as u64;
             }
         }
 
@@ -494,19 +538,7 @@ mod tests {
 
         let mut dat = SqPackData::from_existing(Platform::Win32, d.to_str().unwrap()).unwrap();
 
-        let empty_file_info = FileInfo {
-            size: 0,
-            file_type: FileType::Empty,
-            file_size: 0,
-            standard_info: None,
-            model_info: None,
-            texture_info: None,
-        };
-
         // Reading invalid data should just be nothing, but no panics
         assert!(dat.read_from_offset(0).is_none());
-        assert!(dat.read_standard_file(0, &empty_file_info).is_none());
-        assert!(dat.read_model_file(0, &empty_file_info).is_none());
-        assert!(dat.read_texture_file(0, &empty_file_info).is_none());
     }
 }

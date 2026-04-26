@@ -10,7 +10,7 @@ use std::path::{Path, PathBuf};
 
 use crate::ByteBuffer;
 use crate::compression::header_decompress;
-use binrw::{BinRead, Endian};
+use binrw::{BinRead, BinResult, Endian};
 use binrw::{BinWrite, binrw};
 
 use crate::common::Platform;
@@ -20,7 +20,7 @@ use crate::common_file_operations::{
 use crate::sqpack::{read_data_block_patch, write_data_block_patch};
 
 #[binrw]
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 #[brw(little)]
 struct PatchHeader {
     #[br(temp)]
@@ -34,19 +34,19 @@ struct PatchHeader {
 #[binrw]
 #[allow(dead_code)]
 #[brw(little)]
-#[derive(Debug)]
-struct PatchChunk {
+#[derive(Clone, Debug)]
+pub struct PatchChunk {
     #[brw(big)]
     size: u32,
-    chunk_type: ChunkType,
+    pub chunk_type: ChunkType,
     #[br(if(chunk_type != ChunkType::EndOfFile))]
     #[bw(if(*chunk_type != ChunkType::EndOfFile))]
     crc32: u32,
 }
 
 #[binrw]
-#[derive(PartialEq, Debug)]
-enum ChunkType {
+#[derive(PartialEq, Debug, Clone)]
+pub enum ChunkType {
     #[brw(magic = b"FHDR")]
     FileHeader(
         #[brw(pad_before = 2)]
@@ -68,8 +68,8 @@ enum ChunkType {
 }
 
 #[binrw]
-#[derive(PartialEq, Debug)]
-enum FileHeaderChunk {
+#[derive(PartialEq, Debug, Clone)]
+pub enum FileHeaderChunk {
     #[brw(magic = 2u8)]
     Version2(FileHeaderChunk2),
     #[brw(magic = 3u8)]
@@ -77,9 +77,9 @@ enum FileHeaderChunk {
 }
 
 #[binrw]
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Clone)]
 #[brw(big)]
-struct FileHeaderChunk2 {
+pub struct FileHeaderChunk2 {
     #[br(count = 4)]
     #[br(map = read_string)]
     #[bw(map = write_string)]
@@ -90,9 +90,9 @@ struct FileHeaderChunk2 {
 }
 
 #[binrw]
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Clone)]
 #[brw(big)]
-struct FileHeaderChunk3 {
+pub struct FileHeaderChunk3 {
     #[br(count = 4)]
     #[br(map = read_string)]
     #[bw(map = write_string)]
@@ -119,15 +119,15 @@ struct FileHeaderChunk3 {
 #[binrw]
 #[brw(repr = u32)]
 #[brw(big)]
-#[derive(PartialEq, Debug)]
-enum ApplyOption {
+#[derive(PartialEq, Debug, Clone)]
+pub enum ApplyOption {
     IgnoreMissing = 1,
     IgnoreOldMismatch = 2,
 }
 
 #[binrw]
-#[derive(PartialEq, Debug)]
-struct ApplyOptionChunk {
+#[derive(PartialEq, Debug, Clone)]
+pub struct ApplyOptionChunk {
     #[brw(pad_after = 4)]
     option: ApplyOption,
     #[brw(big)]
@@ -135,8 +135,8 @@ struct ApplyOptionChunk {
 }
 
 #[binrw]
-#[derive(PartialEq, Debug)]
-struct DirectoryChunk {
+#[derive(PartialEq, Debug, Clone)]
+pub struct DirectoryChunk {
     #[br(temp)]
     #[brw(big)]
     #[bw(calc = get_string_len(name) as u32)]
@@ -150,8 +150,8 @@ struct DirectoryChunk {
 }
 
 #[binrw]
-#[derive(PartialEq, Debug)]
-enum SqpkOperation {
+#[derive(PartialEq, Debug, Clone)]
+pub enum SqpkOperation {
     #[brw(magic = b'A')]
     AddData(SqpkAddData),
     #[brw(magic = b'D')]
@@ -171,8 +171,8 @@ enum SqpkOperation {
 }
 
 #[binrw]
-#[derive(PartialEq, Debug)]
-struct SqpkPatchInfo {
+#[derive(PartialEq, Debug, Clone)]
+pub struct SqpkPatchInfo {
     status: u8,
     #[brw(pad_after = 1)]
     version: u8,
@@ -182,8 +182,8 @@ struct SqpkPatchInfo {
 }
 
 #[binrw]
-#[derive(PartialEq, Debug)]
-enum SqpkFileOperation {
+#[derive(PartialEq, Debug, Clone)]
+pub enum SqpkFileOperation {
     #[brw(magic = b'A')]
     AddFile,
     #[brw(magic = b'R')]
@@ -195,9 +195,9 @@ enum SqpkFileOperation {
 }
 
 #[binrw]
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Clone)]
 #[brw(big)]
-struct SqpkAddData {
+pub struct SqpkAddData {
     #[brw(pad_before = 3)]
     main_id: u16,
     sub_id: u16,
@@ -211,13 +211,13 @@ struct SqpkAddData {
     block_delete_number: u64,
 
     #[br(count = block_number)]
-    block_data: Vec<u8>,
+    pub block_data: Vec<u8>,
 }
 
 #[binrw]
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Clone)]
 #[brw(big)]
-struct SqpkDeleteData {
+pub struct SqpkDeleteData {
     #[brw(pad_before = 3)]
     main_id: u16,
     sub_id: u16,
@@ -230,8 +230,8 @@ struct SqpkDeleteData {
 }
 
 #[binrw]
-#[derive(PartialEq, Debug)]
-enum TargetFileKind {
+#[derive(PartialEq, Debug, Clone)]
+pub enum TargetFileKind {
     #[brw(magic = b'D')]
     Dat,
     #[brw(magic = b'I')]
@@ -239,8 +239,8 @@ enum TargetFileKind {
 }
 
 #[binrw]
-#[derive(PartialEq, Debug)]
-enum TargetHeaderKind {
+#[derive(PartialEq, Debug, Clone)]
+pub enum TargetHeaderKind {
     #[brw(magic = b'V')]
     Version,
     #[brw(magic = b'I')]
@@ -250,11 +250,11 @@ enum TargetHeaderKind {
 }
 
 #[binrw]
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Clone)]
 #[brw(big)]
-struct SqpkHeaderUpdateData {
-    file_kind: TargetFileKind,
-    header_kind: TargetHeaderKind,
+pub struct SqpkHeaderUpdateData {
+    pub file_kind: TargetFileKind,
+    pub header_kind: TargetHeaderKind,
 
     #[brw(pad_before = 1)]
     main_id: u16,
@@ -262,15 +262,15 @@ struct SqpkHeaderUpdateData {
     file_id: u32,
 
     #[br(count = 1024)]
-    header_data: Vec<u8>,
+    pub header_data: Vec<u8>,
 }
 
 #[binrw]
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Clone)]
 #[brw(big)]
-struct SqpkFileOperationData {
+pub struct SqpkFileOperationData {
     #[brw(pad_after = 2)]
-    operation: SqpkFileOperation,
+    pub operation: SqpkFileOperation,
 
     offset: u64,
     file_size: u64,
@@ -286,13 +286,30 @@ struct SqpkFileOperationData {
     #[br(count = path_length)]
     #[br(map = read_string)]
     #[bw(map = write_string)]
-    path: String,
+    pub path: String,
+
+    #[br(parse_with = read_file_operation_data, args(file_size,))]
+    data: Vec<u8>,
+}
+
+#[binrw::parser(reader)]
+fn read_file_operation_data(file_size: u64) -> BinResult<Vec<u8>> {
+    let mut data: Vec<u8> = Vec::with_capacity(file_size as usize);
+
+    while data.len() < file_size as usize {
+        data.append(
+            &mut read_data_block_patch(reader, Endian::Little) // TODO: don't hardcode to little
+                .unwrap(),
+        );
+    }
+
+    Ok(data)
 }
 
 #[binrw]
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Clone)]
 #[brw(big)]
-struct SqpkTargetInfo {
+pub struct SqpkTargetInfo {
     #[brw(pad_before = 3)]
     #[brw(pad_size_to = 2)]
     platform: Platform, // Platform is read as a u16, but the enum is u8
@@ -309,8 +326,8 @@ struct SqpkTargetInfo {
 }
 
 #[binrw]
-#[derive(PartialEq, Debug)]
-enum SqpkIndexCommand {
+#[derive(PartialEq, Debug, Clone)]
+pub enum SqpkIndexCommand {
     #[brw(magic = b'A')]
     Add,
     #[brw(magic = b'D')]
@@ -318,9 +335,9 @@ enum SqpkIndexCommand {
 }
 
 #[binrw]
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Clone)]
 #[brw(big)]
-struct SqpkIndex {
+pub struct SqpkIndex {
     command: SqpkIndexCommand,
     #[br(map = read_bool_from::<u8>)]
     #[bw(map = write_bool_as::<u8>)]
@@ -335,17 +352,17 @@ struct SqpkIndex {
 }
 
 #[binrw]
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Clone)]
 #[brw(big)]
-struct SqpkChunk {
+pub struct SqpkChunk {
     size: u32,
-    operation: SqpkOperation,
+    pub operation: SqpkOperation,
 }
 
 #[binrw]
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Clone)]
 #[brw(little)]
-struct EntryChunks {
+pub struct EntryChunks {
     #[bw(calc = path.len() as u32)]
     #[brw(big)]
     path_size: u32,
@@ -364,8 +381,8 @@ struct EntryChunks {
 }
 
 #[binrw]
-#[derive(PartialEq, Debug)]
-enum EntryOperation {
+#[derive(PartialEq, Debug, Clone)]
+pub enum EntryOperation {
     #[brw(magic = b'A')]
     Add,
     #[brw(magic = b'D')]
@@ -375,8 +392,8 @@ enum EntryOperation {
 }
 
 #[binrw]
-#[derive(PartialEq, Debug)]
-enum EntryCompressionMode {
+#[derive(PartialEq, Debug, Clone)]
+pub enum EntryCompressionMode {
     #[brw(magic = b'N')]
     NoCompression,
     #[brw(magic = b'Z')]
@@ -384,9 +401,9 @@ enum EntryCompressionMode {
 }
 
 #[binrw]
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Clone)]
 #[brw(little)]
-struct EntryChunk {
+pub struct EntryChunk {
     #[brw(pad_size_to = 4)]
     operation: EntryOperation,
     prev_hash: [u8; 20],
@@ -508,7 +525,10 @@ fn recurse(path: impl AsRef<Path>) -> Vec<PathBuf> {
         .collect()
 }
 
-pub struct ZiPatch;
+#[derive(Clone, Debug)]
+pub struct ZiPatch {
+    pub chunks: Vec<PatchChunk>,
+}
 
 impl ZiPatch {
     /// Applies a boot or a game patch to the specified _data_dir_.
@@ -683,22 +703,6 @@ impl ZiPatch {
                                 SqpkFileOperation::AddFile => {
                                     fs::create_dir_all(parent_directory)?;
 
-                                    // reverse reading crc32
-                                    file.seek(SeekFrom::Current(-4))?;
-
-                                    let mut data: Vec<u8> =
-                                        Vec::with_capacity(fop.file_size as usize);
-
-                                    while data.len() < fop.file_size as usize {
-                                        data.append(
-                                            &mut read_data_block_patch(&mut file, Endian::Little) // TODO: don't hardcode to little
-                                                .ok_or(PatchError::ParseError)?,
-                                        );
-                                    }
-
-                                    // re-apply crc32
-                                    file.seek(SeekFrom::Current(4))?;
-
                                     // now apply the file!
                                     let new_file = OpenOptions::new()
                                         .write(true)
@@ -712,7 +716,7 @@ impl ZiPatch {
                                         }
 
                                         file.seek(SeekFrom::Start(fop.offset))?;
-                                        file.write_all(&data)?;
+                                        file.write_all(&fop.data)?;
                                     } else {
                                         // silently skip if it does not exist
                                     }
@@ -867,6 +871,7 @@ impl ZiPatch {
                             file_size: file_data.len() as u64,
                             expansion_id: 0,
                             path: relative_path,
+                            data: Vec::default(),
                         }),
                     }),
                     crc32: 0,
@@ -903,6 +908,7 @@ impl ZiPatch {
                             file_size: 0,
                             expansion_id: 0,
                             path: relative_path,
+                            data: Vec::default(),
                         }),
                     }),
                     crc32: 0,
@@ -920,6 +926,36 @@ impl ZiPatch {
         }
 
         Some(buffer)
+    }
+
+    /// List all patch chunks (or "operations") in this ZiPatch file.
+    pub fn list_operations(patch_path: &str) -> Result<Self, PatchError> {
+        let mut file = File::open(patch_path)?;
+
+        let file_length = file.metadata()?.len();
+
+        PatchHeader::read(&mut file)?;
+
+        let mut patch = Self { chunks: Vec::new() };
+
+        loop {
+            // for 1.x patches, break at the end because it doesn't have an EOF marker
+            if file.stream_position()? == file_length {
+                return Ok(patch);
+            }
+
+            patch.chunks.push(PatchChunk::read(&mut file)?);
+            if let Some(chunk) = patch.chunks.last()
+                && matches!(chunk.chunk_type, ChunkType::EndOfFile)
+            {
+                return Ok(patch);
+            }
+
+            // for 1.x patches, break at the last four bytes as they don't have an EOF marker
+            if file.stream_position()? == file_length - 4 {
+                return Ok(patch);
+            }
+        }
     }
 }
 
