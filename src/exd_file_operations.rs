@@ -47,7 +47,7 @@ pub(crate) fn write_row<T: Write + Seek>(writer: &mut T, exh: &EXH, row: &Row) {
         .collect::<Vec<_>>();
 
     // we need to sort them by offset
-    column_definitions.sort_by(|(a, _), (b, _)| a.offset.cmp(&b.offset));
+    column_definitions.sort_by_key(|(a, _)| a.offset);
 
     // handle packed bools
     let mut packed_bools: HashMap<u16, u8> = HashMap::new();
