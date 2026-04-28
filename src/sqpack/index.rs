@@ -266,6 +266,14 @@ impl SqPackIndex {
 
         None
     }
+
+    pub fn find_entry_from_offset(&self, offset: u64) -> Option<Hash> {
+        if let Some(entry) = self.entries.iter().find(|s| s.data.offset == offset) {
+            return Some(entry.hash);
+        }
+
+        None
+    }
 }
 
 #[cfg(test)]

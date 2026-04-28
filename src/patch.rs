@@ -199,12 +199,12 @@ pub enum SqpkFileOperation {
 #[brw(big)]
 pub struct SqpkAddData {
     #[brw(pad_before = 3)]
-    main_id: u16,
-    sub_id: u16,
-    file_id: u32,
+    pub main_id: u16,
+    pub sub_id: u16,
+    pub file_id: u32,
 
     #[br(map = | x : u32 | (x as u64) << 7 )]
-    block_offset: u64,
+    pub block_offset: u64,
     #[br(map = | x : u32 | (x as u64) << 7 )]
     block_number: u64,
     #[br(map = | x : u32 | (x as u64) << 7 )]
@@ -289,7 +289,7 @@ pub struct SqpkFileOperationData {
     pub path: String,
 
     #[br(parse_with = read_file_operation_data, args(file_size,))]
-    data: Vec<u8>,
+    pub data: Vec<u8>,
 }
 
 #[binrw::parser(reader)]
@@ -307,6 +307,7 @@ fn read_file_operation_data(file_size: u64) -> BinResult<Vec<u8>> {
 }
 
 #[binrw]
+#[repr(C)]
 #[derive(PartialEq, Debug, Clone)]
 #[brw(big)]
 pub struct SqpkTargetInfo {
@@ -541,53 +542,6 @@ impl ZiPatch {
 
         let mut target_info: Option<SqpkTargetInfo> = None;
 
-        let get_dat_path =
-            |target_info: &SqpkTargetInfo, main_id: u16, sub_id: u16, file_id: u32| -> PathBuf {
-                let filename = format!(
-                    "{:02x}{:04x}.{}.dat{}",
-                    main_id,
-                    sub_id,
-                    target_info.platform.shortname(),
-                    file_id
-                );
-                let path: PathBuf = [
-                    data_dir,
-                    "sqpack",
-                    &get_expansion_folder_sub(sub_id),
-                    &filename,
-                ]
-                .iter()
-                .collect();
-
-                path
-            };
-
-        let get_index_path =
-            |target_info: &SqpkTargetInfo, main_id: u16, sub_id: u16, file_id: u32| -> PathBuf {
-                let mut filename = format!(
-                    "{:02x}{:04x}.{}.index",
-                    main_id,
-                    sub_id,
-                    target_info.platform.shortname()
-                );
-
-                // index files have no special ending if it's file_id == 0
-                if file_id != 0 {
-                    filename += &*format!("{}", file_id);
-                }
-
-                let path: PathBuf = [
-                    data_dir,
-                    "sqpack",
-                    &get_expansion_folder_sub(sub_id),
-                    &filename,
-                ]
-                .iter()
-                .collect();
-
-                path
-            };
-
         loop {
             // for 1.x patches, break at the end because it doesn't have an EOF marker
             if file.stream_position()? == file_length {
@@ -600,12 +554,17 @@ impl ZiPatch {
                 ChunkType::Sqpk(pchunk) => {
                     match pchunk.operation {
                         SqpkOperation::AddData(add) => {
-                            let filename = get_dat_path(
-                                target_info.as_ref().ok_or(PatchError::ParseError)?,
-                                add.main_id,
-                                add.sub_id,
-                                add.file_id,
-                            );
+                            let filename: PathBuf = [
+                                PathBuf::from(data_dir),
+                                Self::dat_path(
+                                    target_info.as_ref().ok_or(PatchError::ParseError)?,
+                                    add.main_id,
+                                    add.sub_id,
+                                    add.file_id,
+                                ),
+                            ]
+                            .iter()
+                            .collect();
 
                             fs::create_dir_all(filename.parent().ok_or(PatchError::ParseError)?)?;
 
@@ -622,12 +581,17 @@ impl ZiPatch {
                             wipe(&new_file, add.block_delete_number as usize)?;
                         }
                         SqpkOperation::DeleteData(delete) => {
-                            let filename = get_dat_path(
-                                target_info.as_ref().ok_or(PatchError::ParseError)?,
-                                delete.main_id,
-                                delete.sub_id,
-                                delete.file_id,
-                            );
+                            let filename: PathBuf = [
+                                PathBuf::from(data_dir),
+                                Self::dat_path(
+                                    target_info.as_ref().ok_or(PatchError::ParseError)?,
+                                    delete.main_id,
+                                    delete.sub_id,
+                                    delete.file_id,
+                                ),
+                            ]
+                            .iter()
+                            .collect();
 
                             let new_file = OpenOptions::new()
                                 .write(true)
@@ -642,12 +606,17 @@ impl ZiPatch {
                             )?;
                         }
                         SqpkOperation::ExpandData(expand) => {
-                            let filename = get_dat_path(
-                                target_info.as_ref().ok_or(PatchError::ParseError)?,
-                                expand.main_id,
-                                expand.sub_id,
-                                expand.file_id,
-                            );
+                            let filename: PathBuf = [
+                                PathBuf::from(data_dir),
+                                Self::dat_path(
+                                    target_info.as_ref().ok_or(PatchError::ParseError)?,
+                                    expand.main_id,
+                                    expand.sub_id,
+                                    expand.file_id,
+                                ),
+                            ]
+                            .iter()
+                            .collect();
 
                             fs::create_dir_all(filename.parent().ok_or(PatchError::ParseError)?)?;
 
@@ -664,20 +633,25 @@ impl ZiPatch {
                             )?;
                         }
                         SqpkOperation::HeaderUpdate(header) => {
-                            let file_path = match header.file_kind {
-                                TargetFileKind::Dat => get_dat_path(
-                                    target_info.as_ref().ok_or(PatchError::ParseError)?,
-                                    header.main_id,
-                                    header.sub_id,
-                                    header.file_id,
-                                ),
-                                TargetFileKind::Index => get_index_path(
-                                    target_info.as_ref().ok_or(PatchError::ParseError)?,
-                                    header.main_id,
-                                    header.sub_id,
-                                    header.file_id,
-                                ),
-                            };
+                            let file_path: PathBuf = [
+                                PathBuf::from(data_dir),
+                                match header.file_kind {
+                                    TargetFileKind::Dat => Self::dat_path(
+                                        target_info.as_ref().ok_or(PatchError::ParseError)?,
+                                        header.main_id,
+                                        header.sub_id,
+                                        header.file_id,
+                                    ),
+                                    TargetFileKind::Index => Self::index_path(
+                                        target_info.as_ref().ok_or(PatchError::ParseError)?,
+                                        header.main_id,
+                                        header.sub_id,
+                                        header.file_id,
+                                    ),
+                                },
+                            ]
+                            .iter()
+                            .collect();
 
                             fs::create_dir_all(file_path.parent().ok_or(PatchError::ParseError)?)?;
 
@@ -956,6 +930,51 @@ impl ZiPatch {
                 return Ok(patch);
             }
         }
+    }
+
+    pub fn dat_path(
+        target_info: &SqpkTargetInfo,
+        main_id: u16,
+        sub_id: u16,
+        file_id: u32,
+    ) -> PathBuf {
+        let filename = format!(
+            "{:02x}{:04x}.{}.dat{}",
+            main_id,
+            sub_id,
+            target_info.platform.shortname(),
+            file_id
+        );
+        let path: PathBuf = ["sqpack", &get_expansion_folder_sub(sub_id), &filename]
+            .iter()
+            .collect();
+
+        path
+    }
+
+    pub fn index_path(
+        target_info: &SqpkTargetInfo,
+        main_id: u16,
+        sub_id: u16,
+        file_id: u32,
+    ) -> PathBuf {
+        let mut filename = format!(
+            "{:02x}{:04x}.{}.index",
+            main_id,
+            sub_id,
+            target_info.platform.shortname()
+        );
+
+        // index files have no special ending if it's file_id == 0
+        if file_id != 0 {
+            filename += &*format!("{}", file_id);
+        }
+
+        let path: PathBuf = ["sqpack", &get_expansion_folder_sub(sub_id), &filename]
+            .iter()
+            .collect();
+
+        path
     }
 }
 
