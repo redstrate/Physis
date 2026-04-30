@@ -25,11 +25,13 @@ fn main() -> Result<(), Error> {
 }
 ```
 
-Physis can be used to [apply patches for launchers](https://github.com/redstrate/Astra), [build modding tools](https://github.com/redstrate/Novus) - and these are C++ projects! We can also [power server emulators](https://redstrate.com/Kawari) which deal with a lot of Excel and zone data. Our dependency tree is small, so [we are also easy to use on the web](https://github.com/redstrate/Auracite).
+Physis can be used to [apply patches for launchers](https://github.com/redstrate/Astra) or [build modding tools](https://github.com/redstrate/Novus)! We can also [power server emulators](https://redstrate.com/Kawari) which deal with a lot of Excel and zone data.
 
 ## Supported Game Versions
 
-We aim to support all game versions (A Realm Reborn onward), including the benchmarks. We also try to support all platforms - including the Playstation 3.
+We aim to support all game versions and expansions, including the benchmarks. We also try to support all platforms, including defunct ones like the Playstation 3.
+
+Physis does not support FINAL FANTASY XIV 1.x, except for applying their ZiPatch files.
 
 ## Supported Target Platforms
 

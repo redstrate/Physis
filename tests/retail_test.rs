@@ -4,9 +4,8 @@
 use std::env;
 
 use physis::{
-    ReadableFile,
-    common::{Language, Platform},
-    excel::{ExcelRowKind, Field},
+    Language, Platform, ReadableFile,
+    excel::Field,
     race::{Gender, Race, Tribe, build_skeleton_path},
     resource::{Resource, ResourceResolver, SqPackResource},
     skeleton::Skeleton,
@@ -34,25 +33,22 @@ fn test_item_read() {
 
     let mut resolver = ResourceResolver::new();
 
-    resolver.add_source(Box::new(SqPackResource::from_existing(
+    resolver.add_source(SqPackResource::from_existing(
         format!("{}/game", game_dir).as_str(),
-    )));
+    ));
 
     let exh = resolver.read_excel_sheet_header("Item").unwrap();
     let exd = resolver
-        .read_excel_sheet(exh, "Item", Language::English)
+        .read_excel_sheet(&exh, "Item", Language::English)
         .unwrap();
-    for row in &exd.pages[0].rows {
-        match &row.kind {
-            ExcelRowKind::SingleRow(row) => match &row.columns[9] {
-                Field::String(val) => {
-                    if val == "Dated Canvas Beret" {
-                        return;
-                    }
+    for (id, row) in exd.pages[0].into_iter().flatten_subrows() {
+        match &row.columns[9] {
+            Field::String(val) => {
+                if val == "Dated Canvas Beret" {
+                    return;
                 }
-                _ => panic!("Expected a string column!"),
-            },
-            _ => panic!("Expected a single row!"),
+            }
+            _ => panic!("Expected a string column!"),
         }
     }
 

@@ -19,20 +19,20 @@ default = []
 
 glam = ["dep:glam"]
 
-# testing only features
+# Testing only features
 retail_testing = []
 
 [dependencies]
-# amazing binary parsing/writing library
+# Amazing binary parsing/writing library
 binrw = { version = "0.15", features = ["std"], default-features = false }
 
-# used for zlib compression in sqpack files
+# Used for zlib compression in sqpack files
 libz-rs-sys = { version = "0.6", features = ["std", "rust-allocator"], default-features = false }
 
-# needed for half-float support which FFXIV uses in its model data
+# Needed for half-float support which FFXIV uses in its model data
 half = { version = "2.7", features = ["std"], default-features = false }
 
-# needed for c-style bitflags used in some formats (such as tex files)
+# Needed for c-style bitflags used in some formats (such as tex files)
 bitflags = { version = "2.11", default-features = false }
 
 # For optional math support
