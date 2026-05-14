@@ -318,9 +318,10 @@ fn write_bone_tables_v2(bone_tables_v2: &BoneTablesV2) -> BinResult<()> {
 #[binrw]
 #[derive(Default, Debug, Clone, Copy, PartialEq)]
 #[allow(dead_code)]
-struct BoundingBox {
-    min: [f32; 4],
-    max: [f32; 4],
+#[repr(C)]
+pub struct BoundingBox {
+    pub min: [f32; 4],
+    pub max: [f32; 4],
 }
 
 #[binrw]
@@ -441,7 +442,7 @@ pub struct ModelData {
     #[br(count = padding_amount)]
     unknown_padding: Vec<u8>,
 
-    bounding_box: BoundingBox,
+    pub bounding_box: BoundingBox,
     model_bounding_box: BoundingBox,
     water_bounding_box: BoundingBox,
     vertical_fog_bounding_box: BoundingBox,
