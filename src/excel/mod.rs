@@ -386,7 +386,7 @@ pub struct Sheet {
 }
 
 impl Sheet {
-    /// Returns the entry matching `row_id` and returns a reference to it, otherwise returns [None].
+    /// Returns a reference to the entry matching `row_id` and returns a reference to it, otherwise returns [None].
     ///
     /// This is only useful if you need to discriminate between single row and subrow sheets. In most cases, you want to use [row](Self::row) or [subrow](Self::subrow).
     pub fn entry(&self, row_id: u32) -> Option<&Entry> {
@@ -394,6 +394,16 @@ impl Sheet {
         let page = self.pages.get(page_index)?;
 
         page.entries.iter().find(|row| row.id == row_id)
+    }
+
+    /// Returns a mutable to the entry matching `row_id` and returns a reference to it, otherwise returns [None].
+    ///
+    /// This is only useful if you need to discriminate between single row and subrow sheets. In most cases, you want to use [row](Self::row) or [subrow](Self::subrow).
+    pub fn entry_mut(&mut self, row_id: u32) -> Option<&mut Entry> {
+        let page_index = self.exh.get_page(row_id);
+        let page = self.pages.get_mut(page_index)?;
+
+        page.entries.iter_mut().find(|row| row.id == row_id)
     }
 
     /// Finds a row matching `row_id` and returns a reference to it, otherwise returns [None].
