@@ -78,8 +78,16 @@ pub(crate) fn write_row<T: Write + Seek>(writer: &mut T, exh: &EXH, row: &Row) {
         };
     }
 
+    let largest_offset = column_definitions.iter().map(|x| x.0.offset).max().unwrap();
+
+    // Rows must be at least 4 bytes long and live along this boundary too
+    let padded_length = (largest_offset.div_ceil(4) * 4).max(4);
+    let padding = padded_length - largest_offset;
+
     let mut strings_len = 0;
     for (definition, column) in &column_definitions {
+        let original_pos = writer.stream_position().unwrap();
+
         EXD::write_column(
             writer,
             column,
@@ -88,18 +96,14 @@ pub(crate) fn write_row<T: Write + Seek>(writer: &mut T, exh: &EXH, row: &Row) {
             &mut packed_bools,
         );
 
-        // For some reason, if there is only *one* column it pads it by four bytes.
-        // Seen in the TerritoryTypeTransient and GCShop sheets.
-        if column_definitions.len() == 1 {
-            0u32.write_le(writer).unwrap();
-        }
+        let new_pos = writer.stream_position().unwrap();
+        let written_length = new_pos - original_pos;
 
-        // TODO: temporary workaround until i can figure out why this *specific* packed boolean column in TerritoryType has three extra bytes at the end
-        if definition.offset == 60
-            && definition.data_type == ColumnDataType::PackedBool0
-            && column_definitions.len() == 44
-        {
-            [0u8; 3].write_le(writer).unwrap();
+        // Add any needed padding at the end
+        if definition.offset == largest_offset {
+            for _ in 0..(padding as u64).saturating_sub(written_length) {
+                0u8.write_le(writer).unwrap();
+            }
         }
     }
 }
