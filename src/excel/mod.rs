@@ -787,4 +787,35 @@ mod tests {
         let actual_exd_bytes = page.write_to_buffer(&exh).unwrap();
         assert_eq!(actual_exd_bytes, expected_exd_bytes);
     }
+
+    // just a column of int16
+    #[test]
+    fn test_simple_int16() {
+        // exh
+        let exh;
+        {
+            let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+            d.push("resources/tests");
+            d.push("territorytypetransient.exh");
+
+            exh = EXH::from_existing(Platform::Win32, &read(d).unwrap()).unwrap();
+        }
+
+        // exd
+        let expected_exd_bytes;
+        let expected_exd;
+        {
+            let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+            d.push("resources/tests");
+            d.push("territorytypetransient_1.exd");
+
+            expected_exd_bytes = read(d).unwrap();
+            expected_exd = EXD::from_existing(Platform::Win32, &expected_exd_bytes).unwrap();
+        }
+
+        let page = Page::from_exd(&exh, expected_exd);
+
+        let actual_exd_bytes = page.write_to_buffer(&exh).unwrap();
+        assert_eq!(actual_exd_bytes, expected_exd_bytes);
+    }
 }

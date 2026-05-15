@@ -88,8 +88,9 @@ pub(crate) fn write_row<T: Write + Seek>(writer: &mut T, exh: &EXH, row: &Row) {
             &mut packed_bools,
         );
 
-        // TODO: temporary workaround until i can figure out why it has 4 extra bytes in test_write's case
-        if definition.data_type == ColumnDataType::Int8 && column_definitions.len() == 1 {
+        // For some reason, if there is only *one* column it pads it by four bytes.
+        // Seen in the TerritoryTypeTransient and GCShop sheets.
+        if column_definitions.len() == 1 {
             0u32.write_le(writer).unwrap();
         }
 
