@@ -25,7 +25,7 @@ fn main() -> Result<(), Error> {
 }
 ```
 
-Physis can be used to [apply patches for launchers](https://github.com/redstrate/Astra) or [build modding tools](https://github.com/redstrate/Novus)! We can also [power server emulators](https://redstrate.com/Kawari) which deal with a lot of Excel and zone data.
+Physis can be used to [apply patches for launchers](https://github.com/redstrate/Astra) or [build modding tools](https://github.com/redstrate/Novus)! We can also [power server emulators](https://github.com/redstrate/Kawari) which deal with a lot of Excel and zone data.
 
 ## Supported Game Versions
 
