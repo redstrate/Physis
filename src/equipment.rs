@@ -130,9 +130,16 @@ impl EquipSlotCategory {
         match self {
             EquipSlotCategory::Head => Some("met"),
             EquipSlotCategory::Hands => Some("glv"),
-            EquipSlotCategory::Legs => Some("dwn"),
+            EquipSlotCategory::Legs | EquipSlotCategory::LegsNoFeet => Some("dwn"),
             EquipSlotCategory::Feet => Some("sho"),
-            EquipSlotCategory::Body => Some("top"),
+            EquipSlotCategory::Body
+            | EquipSlotCategory::BodyNoHead
+            | EquipSlotCategory::BodyNoHandsLegsFeet
+            | EquipSlotCategory::BodyNoHeadHandsLegsFeet
+            | EquipSlotCategory::BodyNoHandsLegs
+            | EquipSlotCategory::BodyNoLegsFeet
+            | EquipSlotCategory::BodyNoHands
+            | EquipSlotCategory::BodyNoLegs => Some("top"),
             EquipSlotCategory::Earring => Some("ear"),
             EquipSlotCategory::Neck => Some("nek"),
             EquipSlotCategory::Wrists => Some("wrs"),
