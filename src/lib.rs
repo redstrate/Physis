@@ -204,3 +204,6 @@ pub mod obsb;
 
 /// Types for font data table (`.fdt`) files.
 pub mod fdt;
+
+/// Types for attach offset (`.atch`) files.
+pub mod atch;
