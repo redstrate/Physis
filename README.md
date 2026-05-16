@@ -68,6 +68,7 @@ See [CONTRIBUTING](CONTRIBUTING.md) for more information about contributing back
 * [sha1-smol](https://github.com/mitsuhiko/sha1-smol) for a dependency-free SHA1 implementation.
 * [FFXIVTools](https://github.com/dlunch/FFXIVTools) for it's Havok parsing implementation.
 * [texture2ddecoder](https://github.com/UniversalGameExtraction/texture2ddecoder/) for it's BCn texture decoding functions.
+* [VFXEditor](https://github.com/0ceal0t/Dalamud-VFXEditor/) for reference of the game's visual formats.
 
 And everyone else who writes open-source software for FFXIV!
 
