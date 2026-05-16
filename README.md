@@ -31,7 +31,7 @@ Physis can be used to [apply patches for launchers](https://github.com/redstrate
 
 We aim to support all game versions and expansions, including the benchmarks. We also try to support all platforms, including defunct ones like the Playstation 3.
 
-Physis does not support FINAL FANTASY XIV 1.x, except for applying their ZiPatch files.
+Physis does not support FINAL FANTASY XIV 1.x, except for applying their ZiPatch files. Check out our sister project [Krasis](https://codeberg.org/redstrate/Krasis).
 
 ## Supported Target Platforms
 
