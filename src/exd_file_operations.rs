@@ -84,8 +84,20 @@ pub(crate) fn write_row<T: Write + Seek>(writer: &mut T, exh: &EXH, row: &Row) {
     let padded_length = (largest_offset.div_ceil(4) * 4).max(4);
     let padding = padded_length - largest_offset;
 
+    let mut current_offset = 0;
+
     let mut strings_len = 0;
     for (definition, column) in &column_definitions {
+        //  Seen in PlaceName. Why does sqex do this?!
+        let expected_offset = definition.offset as u64;
+        if expected_offset > current_offset {
+            let missing = expected_offset - current_offset;
+            for _ in 0..missing {
+                0u8.write_le(writer).unwrap();
+                current_offset += 1;
+            }
+        }
+
         let original_pos = writer.stream_position().unwrap();
 
         EXD::write_column(
@@ -98,6 +110,8 @@ pub(crate) fn write_row<T: Write + Seek>(writer: &mut T, exh: &EXH, row: &Row) {
 
         let new_pos = writer.stream_position().unwrap();
         let written_length = new_pos - original_pos;
+
+        current_offset += written_length;
 
         // Add any needed padding at the end
         if definition.offset == largest_offset {
