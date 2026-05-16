@@ -788,10 +788,7 @@ impl MDL {
     ) -> String {
         let race_id = get_race_id(race, tribe, gender).unwrap();
         match slot {
-            EquipSlotCategory::MainHand
-            | EquipSlotCategory::OffHand
-            | EquipSlotCategory::MainHandTwoHand
-            | EquipSlotCategory::MainHandDualWield => {
+            EquipSlotCategory::MainHand | EquipSlotCategory::OffHand => {
                 format!(
                     "chara/weapon/w{model_id:04}/obj/body/b{race_id:04}/model/w{model_id:04}b{race_id:04}.mdl"
                 )
