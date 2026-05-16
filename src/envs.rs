@@ -32,7 +32,7 @@ pub(crate) fn write_envs(envs: &Vec<EnvsHeader>, string_heap: &mut StringHeap) -
 #[brw(magic = b"ENVS")]
 #[br(import(string_heap: &StringHeap))]
 #[bw(import(string_heap: &mut StringHeap))]
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct EnvsHeader {
     /// Size of this header, in bytes. Should be the same as [EnvsHeader::SIZE].
     size: u32,
@@ -73,7 +73,7 @@ impl EnvsHeader {
 #[binrw]
 #[br(import(string_heap: &StringHeap))]
 #[bw(import(string_heap: &mut StringHeap))]
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct EnvChildSection {
     offset: u32,
 
@@ -127,7 +127,7 @@ where
 #[binrw]
 #[br(import(index: u32, offset: u32, unknown2_offsets: &[i32], string_heap: &StringHeap))]
 #[bw(import(string_heap: &mut StringHeap))]
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub enum EnvUnknownElement {
     #[br(pre_assert(index == 0))]
     Element0(
@@ -262,13 +262,14 @@ pub enum EnvUnknownElement {
         #[bw(ignore)] // TODO: support writing
         Vec<Element35>,
     ),
+    #[default] // TODO: is this is a sensible default?
     UnknownNeedsParsing,
 }
 
 #[binrw]
 #[br(import(string_heap: &StringHeap))]
 #[bw(import(string_heap: &mut StringHeap))]
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct EnvUnknown1 {
     offset: u32,
     count: u32,
@@ -490,7 +491,7 @@ pub struct Element10 {
 }
 
 #[binrw]
-#[derive(Debug)]
+#[derive(Debug, Default)]
 #[br(import(string_heap: &StringHeap))]
 #[bw(import(string_heap: &mut StringHeap))]
 pub struct Element11 {
@@ -581,7 +582,7 @@ pub struct Element13 {
 }
 
 #[binrw]
-#[derive(Debug)]
+#[derive(Debug, Default)]
 #[br(import(string_heap: &StringHeap))]
 #[bw(import(string_heap: &mut StringHeap))]
 pub struct Element20 {
@@ -668,4 +669,37 @@ pub struct Element35 {
     unk2: u32,
     unk3: u32,
     unk4: f32,
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn test_envheader_size() {
+        // FIXME: Needs StringHeap
+        // ensure_size::<EnvsHeader, { EnvsHeader::SIZE }>();
+    }
+
+    #[test]
+    fn test_envchildsection_size() {
+        // FIXME: Needs StringHeap
+        // ensure_size::<EnvChildSection, {EnvChildSection::SIZE }>();
+    }
+
+    #[test]
+    fn test_envunknown1_size() {
+        // FIXME: Needs StringHeap
+        // ensure_size::<EnvUnknown1, { EnvUnknown1::SIZE }>();
+    }
+
+    #[test]
+    fn test_element20_size() {
+        // FIXME: Needs StringHeap
+        // ensure_size::<Element11, { Element11::SIZE }>();
+    }
+
+    #[test]
+    fn test_element11_size() {
+        // FIXME: Needs StringHeap
+        // ensure_size::<Element20, { Element20::SIZE }>();
+    }
 }

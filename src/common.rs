@@ -4,6 +4,8 @@
 use std::fs;
 use std::path::Path;
 
+#[cfg(test)]
+use binrw::BinWrite;
 use binrw::{Endian, binrw};
 use strum_macros::{Display, FromRepr};
 
@@ -188,6 +190,21 @@ pub fn pass_random_invalid<T: ReadableFile>() {
         Platform::Win32,
         &std::fs::read(d).expect("Could not read random test file"),
     );
+}
+
+/// Helper to ensure that type `T` is written to `EXPECTED_SIZE`.
+#[cfg(test)]
+pub fn ensure_size<T: BinWrite + Default, const EXPECTED_SIZE: usize>()
+where
+    for<'a> T: BinWrite<Args<'a> = ()> + 'a + Default,
+{
+    use std::io::Cursor;
+
+    let mut cursor = Cursor::new(Vec::new());
+    let instance = T::default();
+    instance.write_ne(&mut cursor).expect("Failed to write!");
+
+    assert_eq!(cursor.position() as usize, EXPECTED_SIZE);
 }
 
 /// A continuous block of memory which is not owned, and comes either from an in-memory location or from a file.

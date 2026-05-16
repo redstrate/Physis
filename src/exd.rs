@@ -16,7 +16,7 @@ use crate::{ByteSpan, ReadableFile};
 #[brw(magic = b"EXDF")]
 #[brw(big)]
 #[allow(dead_code)]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub(crate) struct EXDHeader {
     /// Usually 2, I don't think I've seen any other version
     pub(crate) version: u16,
@@ -121,12 +121,17 @@ impl ReadableFile for EXD {
 // For more complex tests, see `excel.rs`.
 #[cfg(test)]
 mod tests {
-    use crate::pass_random_invalid;
+    use crate::{common::ensure_size, pass_random_invalid};
 
     use super::*;
 
     #[test]
     fn test_invalid() {
         pass_random_invalid::<EXD>();
+    }
+
+    #[test]
+    fn test_exdheader_size() {
+        ensure_size::<EXDHeader, { EXDHeader::SIZE }>();
     }
 }

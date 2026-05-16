@@ -37,7 +37,7 @@ impl Uwb {
 }
 
 #[binrw]
-#[derive(Debug)]
+#[derive(Debug, Default)]
 #[brw(magic = b"UWC1")]
 pub struct Uwc {
     /// Including this header, in bytes.
@@ -75,12 +75,17 @@ impl WritableFile for Uwb {
 
 #[cfg(test)]
 mod tests {
-    use crate::pass_random_invalid;
+    use crate::{common::ensure_size, pass_random_invalid};
 
     use super::*;
 
     #[test]
     fn test_invalid() {
         pass_random_invalid::<Uwb>();
+    }
+
+    #[test]
+    fn test_uwc_size() {
+        ensure_size::<Uwc, { Uwc::SIZE }>();
     }
 }

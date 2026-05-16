@@ -13,7 +13,7 @@ use crate::{
 };
 
 #[binrw]
-#[derive(Debug)]
+#[derive(Debug, Default)]
 #[allow(dead_code)] // most of the fields are unused at the moment
 #[brw(magic = b"LGB1")]
 struct LgbHeader {
@@ -27,7 +27,7 @@ impl LgbHeader {
 }
 
 #[binrw]
-#[derive(Debug)]
+#[derive(Debug, Default)]
 #[br(import(string_heap: &StringHeap), stream = r)]
 #[bw(import(string_heap: &mut StringHeap))]
 #[allow(dead_code)] // most of the fields are unused at the moment
@@ -281,6 +281,7 @@ mod tests {
     use std::fs::read;
     use std::path::PathBuf;
 
+    use crate::common::ensure_size;
     use crate::layer::{
         LayerHeader, LayerSetReferenced, LayerSetReferencedList, LayerSetReferencedType,
     };
@@ -440,5 +441,16 @@ mod tests {
             lgb.write_to_buffer(Platform::Win32).unwrap(),
             good_lgb_bytes
         );
+    }
+
+    #[test]
+    fn test_lgbheader_size() {
+        ensure_size::<LgbHeader, { LgbHeader::SIZE }>();
+    }
+
+    #[test]
+    fn test_layerchunkheader_size() {
+        // FIXME: Needs StringHeap
+        // ensure_size::<LayerChunkHeader, { LayerChunkHeader::SIZE }>();
     }
 }

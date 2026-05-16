@@ -18,7 +18,7 @@ use crate::{
 #[binrw]
 #[br(import(pointer: HeapPointer, string_heap: &StringHeap), stream = r)]
 #[bw(import(string_heap: &mut StringHeap))]
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, Default)]
 pub struct HeapString {
     #[br(temp)]
     // TODO: this cast is stupid

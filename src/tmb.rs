@@ -267,7 +267,7 @@ pub struct TimelineNode {
 #[brw(magic = b"TMLB")]
 #[br(import(string_heap: &StringHeap))]
 #[bw(import(string_heap: &mut StringHeap))]
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct Tmb {
     /// In bytes, including this header.
     file_size: u32,

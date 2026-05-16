@@ -24,7 +24,7 @@ pub(crate) fn write_scns(scns: &Vec<ScnSection>, string_heap: &mut StringHeap) -
 #[binrw]
 #[br(import(string_heap: &StringHeap))]
 #[bw(import(string_heap: &mut StringHeap))]
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct ScnLayerGroup {
     #[br(temp)]
     #[bw(ignore)]
@@ -58,7 +58,7 @@ impl ScnLayerGroup {
 #[binrw]
 #[br(import(string_heap: &StringHeap))]
 #[bw(import(string_heap: &mut StringHeap))]
-#[derive(Debug)]
+#[derive(Debug, Default)]
 #[brw(magic = b"SCN1")]
 pub struct ScnSection {
     /// Size of this header. Should be equal to `ScnHeader::SIZE`.
@@ -173,7 +173,7 @@ pub struct ScnEnvSpace {
 #[binrw]
 #[br(import(string_heap: &StringHeap))]
 #[bw(import(string_heap: &mut StringHeap))]
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct ScnGeneralSection {
     #[br(temp)]
     #[bw(ignore)]
@@ -241,7 +241,7 @@ impl ScnGeneralSection {
 
 #[binrw]
 #[br(import(string_heap: &StringHeap))]
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct ScnTimelinesSection {
     offset_entries: i32,
     num_entries: i32,
@@ -259,7 +259,7 @@ impl ScnTimelinesSection {
 #[binrw]
 #[br(import(string_heap: &StringHeap))]
 #[bw(import(string_heap: &mut StringHeap))]
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct ScnTimeline {
     #[br(temp)]
     #[bw(ignore)]
@@ -310,7 +310,7 @@ pub struct ScnTimelineInstance {
 
 // TODO: header is definitely not correct
 #[binrw]
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct ScnSGActionDescriptors {
     unk: [u8; 16],
     timeline_offset: i32,
@@ -405,7 +405,7 @@ pub struct ScnUnknown3Section {
 #[binrw]
 #[br(import(string_heap: &StringHeap))]
 #[bw(import(string_heap: &mut StringHeap))]
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct ScnLayerSetsSection {
     offset: i32,
     count: i32,
@@ -495,7 +495,7 @@ fn layers_from_offsets(offsets: &Vec<i32>, string_heap: &StringHeap) -> BinResul
 }
 
 #[binrw]
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct ScnHousingSettings {
     default_color_id: u16,
     unk1: u8,
@@ -512,4 +512,44 @@ pub struct ScnHousingSettings {
     unk12: u32,
     unk13: u32,
     unk14: u32,
+}
+
+#[cfg(test)]
+mod tests {
+
+    #[test]
+    fn test_scnlayergroup_size() {
+        // FIXME: Needs StringHeap
+        // ensure_size::<ScnLayerGroup, { ScnLayerGroup::SIZE }>();
+    }
+
+    #[test]
+    fn test_scnsection_size() {
+        // FIXME: Needs StringHeap
+        // ensure_size::<ScnSection, { ScnSection::SIZE }>();
+    }
+
+    #[test]
+    fn test_scngeneralsection_size() {
+        // FIXME: Needs StringHeap
+        // ensure_size::<ScnGeneralSection, { ScnGeneralSection::SIZE }>();
+    }
+
+    #[test]
+    fn test_scntimelinessection_size() {
+        // FIXME: Needs StringHeap
+        // ensure_size::<ScnTimelinesSection, { ScnTimelinesSection::SIZE }>();
+    }
+
+    #[test]
+    fn test_scntimeline_size() {
+        // FIXME: Needs StringHeap
+        // ensure_size::<ScnTimeline, { ScnTimeline::SIZE }>();
+    }
+
+    #[test]
+    fn test_scnlayersetssection_size() {
+        // FIXME: Needs StringHeap
+        // ensure_size::<ScnLayerSetsSection, { ScnLayerSetsSection::SIZE }>();
+    }
 }
