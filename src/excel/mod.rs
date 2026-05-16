@@ -217,8 +217,6 @@ pub struct Entry {
 /// A page of rows, inside of a [Sheet].
 #[derive(Debug, Clone)]
 pub struct Page {
-    exd: EXD,
-
     /// The row descriptors for this page.
     ///
     /// You most likely don't want to use this, prefer [Sheet::row] or [Sheet::subrow] instead.
@@ -230,7 +228,6 @@ impl Page {
     pub(crate) fn from_exd(exh: &EXH, exd: EXD) -> Self {
         let descriptors = Self::read_descriptors(exh, &exd);
         Self {
-            exd,
             entries: descriptors,
         }
     }
@@ -278,8 +275,10 @@ impl Page {
     pub fn write_to_buffer(&self, exh: &EXH) -> Option<ByteBuffer> {
         let mut cursor = Cursor::new(Vec::new());
 
-        // Write header
-        self.exd.header.write(&mut cursor).ok()?;
+        // The header will be written later.
+        cursor
+            .seek(SeekFrom::Current(EXDHeader::SIZE as i64))
+            .unwrap();
 
         // seek past the data offsets, which we will write later
         let data_offsets_pos = cursor.stream_position().unwrap();
@@ -288,6 +287,7 @@ impl Page {
                 (core::mem::size_of::<ExcelDataOffset>() * self.entries.len()) as i64,
             ))
             .unwrap();
+        let data_start_pos = cursor.stream_position().unwrap();
 
         let mut data_offsets = Vec::with_capacity(self.entries.len());
 
@@ -360,9 +360,23 @@ impl Page {
             cursor.seek(SeekFrom::Start(new_pos)).unwrap();
         }
 
+        let data_end = cursor.stream_position().unwrap();
+        let data_section_size = data_end - data_start_pos;
+
         // now write the data offsets
         cursor.seek(SeekFrom::Start(data_offsets_pos)).unwrap();
         data_offsets.write(&mut cursor).unwrap();
+
+        // and write the header
+        cursor.seek(SeekFrom::Start(0)).unwrap();
+        let new_header = EXDHeader {
+            version: 2,
+            unk1: 0,
+            data_offset_size: data_offsets.len() as u32
+                * core::mem::size_of::<ExcelDataOffset>() as u32,
+            data_section_size: data_section_size as u32,
+        };
+        new_header.write(&mut cursor).ok()?;
 
         Some(cursor.into_inner())
     }
