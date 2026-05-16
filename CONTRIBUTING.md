@@ -23,7 +23,7 @@ We have a sizable test suite to ensure Physis doesn't regress in obvious ways. N
 
 Our standalone tests are run with `cargo test`. These tests are run automatically by the CI, and whoever broke them is expected to fix the failure.
 
-Most of our tests use resources from `resources/tests`. **Test data should be recreatable with Physis, and not simply copied from the retail game**. If possible, you can zero out the irrelevant parts instead. (We do this for some `.mdl` files.)
+Most of our tests use resources from `resources/tests`. When including new test data, **if it is not recreatable with Physis then please do not include it!** Also if it contains very complex and identifiable data (e.g. names, visual models, etc) then consider choosing another file or zeroing out any data you don't need.
 
 ### Retail Testing
 
