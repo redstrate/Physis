@@ -7,14 +7,17 @@
 use std::io::Cursor;
 use std::io::SeekFrom;
 
+use crate::ByteBuffer;
 use crate::ByteSpan;
 use crate::ReadableFile;
+use crate::WritableFile;
 use crate::common::Platform;
 use crate::common_file_operations::read_bool_from;
 use crate::common_file_operations::read_string;
 use crate::common_file_operations::write_bool_as;
 use crate::common_file_operations::write_string;
 use binrw::BinRead;
+use binrw::BinWrite;
 use binrw::binrw;
 
 /// Where inside of the parent this node is aligned.
@@ -320,6 +323,21 @@ impl ReadableFile for Uld {
         Uld::read_options(&mut cursor, platform.endianness(), ()).ok()
     }
 }
+
+impl WritableFile for Uld {
+    fn write_to_buffer(&self, platform: Platform) -> Option<ByteBuffer> {
+        let mut buffer = ByteBuffer::new();
+
+        {
+            let mut cursor = Cursor::new(&mut buffer);
+            self.write_options(&mut cursor, platform.endianness(), ())
+                .ok()?;
+        }
+
+        Some(buffer)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use crate::pass_random_invalid;

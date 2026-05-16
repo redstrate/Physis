@@ -3,7 +3,9 @@
 
 use std::io::{Cursor, Read};
 
-use crate::{ByteSpan, ReadableFile, common::Platform};
+use binrw::BinWrite;
+
+use crate::{ByteBuffer, ByteSpan, ReadableFile, WritableFile, common::Platform};
 
 /// Hardware cursor file, usually with the `.hwc` file extension.
 ///
@@ -22,6 +24,21 @@ impl ReadableFile for Hwc {
         cursor.read_exact(&mut rgba).ok()?;
 
         Some(Self { rgba })
+    }
+}
+
+impl WritableFile for Hwc {
+    fn write_to_buffer(&self, platform: Platform) -> Option<ByteBuffer> {
+        let mut buffer = ByteBuffer::new();
+
+        {
+            let mut cursor = Cursor::new(&mut buffer);
+            self.rgba
+                .write_options(&mut cursor, platform.endianness(), ())
+                .ok()?;
+        }
+
+        Some(buffer)
     }
 }
 

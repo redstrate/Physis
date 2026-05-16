@@ -8,6 +8,7 @@ use std::io::Cursor;
 use crate::ByteBuffer;
 use crate::ByteSpan;
 use crate::ReadableFile;
+use crate::WritableFile;
 use crate::bcn::decode_bc1;
 use crate::bcn::decode_bc3;
 use crate::bcn::decode_bc5;
@@ -135,29 +136,21 @@ impl ReadableFile for Texture {
     }
 }
 
-impl Texture {
-    /// Converts an existing texture from `src_platform` to `dst_platform`.
-    pub fn convert_existing(
-        src_platform: Platform,
-        buffer: ByteSpan,
-        dst_platform: Platform,
-    ) -> ByteBuffer {
-        // TODO: re-check if this works on PS3 since I changed how this was read...
+impl WritableFile for Texture {
+    fn write_to_buffer(&self, platform: Platform) -> Option<ByteBuffer> {
+        let mut buffer = ByteBuffer::new();
 
-        // Read the header from src_platform.
-        let mut src_cursor = Cursor::new(buffer);
-        let src_header =
-            Self::read_options(&mut src_cursor, src_platform.endianness(), ()).unwrap();
+        {
+            let mut cursor = Cursor::new(&mut buffer);
+            self.write_options(&mut cursor, platform.endianness(), ())
+                .ok()?;
+        }
 
-        // Write the new header on top of the old one.
-        let mut dst_cursor = Cursor::new(buffer.to_vec());
-        src_header
-            .write_options(&mut dst_cursor, dst_platform.endianness(), ())
-            .unwrap();
-
-        dst_cursor.into_inner()
+        Some(buffer)
     }
+}
 
+impl Texture {
     fn decode(src: &[u8], width: usize, height: usize, decode_func: DecodeFunction) -> Vec<u8> {
         let mut image: Vec<u32> = vec![0; width * height];
         decode_func(src, width, height, &mut image).unwrap();

@@ -8,8 +8,8 @@ use std::io::{Cursor, SeekFrom};
 
 use crate::common::Platform;
 use crate::common_file_operations::Half3;
-use crate::{ByteSpan, ReadableFile};
-use binrw::{BinRead, BinResult, Endian};
+use crate::{ByteBuffer, ByteSpan, ReadableFile, WritableFile};
+use binrw::{BinRead, BinResult, BinWrite, Endian};
 use binrw::{BinReaderExt, binrw};
 use half::f16;
 
@@ -241,6 +241,20 @@ impl ReadableFile for Stm {
     fn from_existing(platform: Platform, buffer: ByteSpan) -> Option<Self> {
         let mut cursor = Cursor::new(buffer);
         Stm::read_options(&mut cursor, platform.endianness(), ()).ok()
+    }
+}
+
+impl WritableFile for Stm {
+    fn write_to_buffer(&self, platform: Platform) -> Option<ByteBuffer> {
+        let mut buffer = ByteBuffer::new();
+
+        {
+            let mut cursor = Cursor::new(&mut buffer);
+            self.write_options(&mut cursor, platform.endianness(), ())
+                .ok()?;
+        }
+
+        Some(buffer)
     }
 }
 

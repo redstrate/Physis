@@ -4,8 +4,10 @@
 use std::io::Cursor;
 use std::io::SeekFrom;
 
+use crate::ByteBuffer;
 use crate::ByteSpan;
 use crate::ReadableFile;
+use crate::WritableFile;
 use crate::common::Platform;
 use crate::common_file_operations::read_bool_from;
 use crate::common_file_operations::read_short_identifier;
@@ -17,6 +19,7 @@ use crate::string_heap::StringHeap;
 use binrw::BinRead;
 use binrw::BinReaderExt;
 use binrw::BinResult;
+use binrw::BinWrite;
 use binrw::VecArgs;
 use binrw::binrw;
 
@@ -282,6 +285,23 @@ impl ReadableFile for Tmb {
         let mut cursor = Cursor::new(buffer);
         let string_heap = StringHeap::from(0);
         Tmb::read_options(&mut cursor, platform.endianness(), (&string_heap,)).ok()
+    }
+}
+
+impl WritableFile for Tmb {
+    fn write_to_buffer(&self, platform: Platform) -> Option<ByteBuffer> {
+        let mut buffer = ByteBuffer::new();
+
+        {
+            let mut cursor = Cursor::new(&mut buffer);
+            let mut string_heap = StringHeap::from(0);
+            self.write_options(&mut cursor, platform.endianness(), (&mut string_heap,))
+                .ok()?;
+
+            // TODO: write string heap
+        }
+
+        Some(buffer)
     }
 }
 

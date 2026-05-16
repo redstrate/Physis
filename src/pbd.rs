@@ -3,14 +3,17 @@
 
 use std::io::{Cursor, SeekFrom};
 
+use crate::ByteBuffer;
 use crate::ByteSpan;
 use crate::ReadableFile;
+use crate::WritableFile;
 use crate::common::Platform;
 use crate::common_file_operations::strings_parser;
 use binrw::BinRead;
-use binrw::binread;
+use binrw::BinWrite;
+use binrw::binrw;
 
-#[binread]
+#[binrw]
 #[derive(Debug)]
 #[br(import { data_offset: i32 })]
 #[allow(unused)]
@@ -22,10 +25,12 @@ struct RacialDeformer {
 
     #[br(args(data_offset as u64, &bone_name_offsets), parse_with = strings_parser)]
     #[br(restore_position)]
+    #[bw(ignore)]
     bone_names: Vec<String>,
 
     #[br(if((bone_count & 1) != 0))]
     #[br(temp)]
+    #[bw(ignore)]
     _padding: u16,
 
     /// 4x3 matrix
@@ -34,13 +39,14 @@ struct RacialDeformer {
     transform: Vec<[f32; 12]>,
 }
 
-#[binread]
+#[binrw]
 #[derive(Debug)]
 struct PreBoneDeformerItem {
     body_id: u16, // the combined body id like 0101
     link_index: i16,
     #[br(pad_after = 4)]
     #[br(temp)]
+    #[bw(ignore)]
     data_offset: i32,
 
     #[br(args { data_offset: data_offset })]
@@ -49,7 +55,7 @@ struct PreBoneDeformerItem {
     deformer: RacialDeformer,
 }
 
-#[binread]
+#[binrw]
 #[derive(Debug)]
 #[allow(dead_code)]
 struct PreBoneDeformerLink {
@@ -59,7 +65,7 @@ struct PreBoneDeformerLink {
     deformer_index: u16,
 }
 
-#[binread]
+#[binrw]
 #[derive(Debug)]
 #[allow(dead_code)]
 struct PreBoneDeformerHeader {
@@ -75,6 +81,7 @@ struct PreBoneDeformerHeader {
 /// Pre-bone deformer file, usually with the `.pbd` file extension.
 ///
 /// Used to transform or "deform" a base skeleton. For example, various races use pre-bone deformers to create their unique body shapes.
+#[binrw]
 #[derive(Debug)]
 pub struct PreBoneDeformer {
     header: PreBoneDeformerHeader,
@@ -97,10 +104,21 @@ pub struct PreBoneDeformMatrices {
 impl ReadableFile for PreBoneDeformer {
     fn from_existing(platform: Platform, buffer: ByteSpan) -> Option<Self> {
         let mut cursor = Cursor::new(buffer);
-        let header =
-            PreBoneDeformerHeader::read_options(&mut cursor, platform.endianness(), ()).ok()?;
+        PreBoneDeformer::read_options(&mut cursor, platform.endianness(), ()).ok()
+    }
+}
 
-        Some(PreBoneDeformer { header })
+impl WritableFile for PreBoneDeformer {
+    fn write_to_buffer(&self, platform: Platform) -> Option<ByteBuffer> {
+        let mut buffer = ByteBuffer::new();
+
+        {
+            let mut cursor = Cursor::new(&mut buffer);
+            self.write_options(&mut cursor, platform.endianness(), ())
+                .ok()?;
+        }
+
+        Some(buffer)
     }
 }
 

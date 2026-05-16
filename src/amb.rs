@@ -3,12 +3,15 @@
 
 use std::io::Cursor;
 
+use crate::ByteBuffer;
 use crate::ByteSpan;
 use crate::ReadableFile;
+use crate::WritableFile;
 use crate::common::Platform;
 use binrw::BinRead;
 use binrw::BinReaderExt;
 use binrw::BinResult;
+use binrw::BinWrite;
 use binrw::VecArgs;
 use binrw::binrw;
 
@@ -79,6 +82,20 @@ impl ReadableFile for Amb {
         let mut cursor = Cursor::new(buffer);
 
         Amb::read_options(&mut cursor, endianness, ()).ok()
+    }
+}
+
+impl WritableFile for Amb {
+    fn write_to_buffer(&self, platform: Platform) -> Option<ByteBuffer> {
+        let mut buffer = ByteBuffer::new();
+
+        {
+            let mut cursor = Cursor::new(&mut buffer);
+            self.write_options(&mut cursor, platform.endianness(), ())
+                .ok()?;
+        }
+
+        Some(buffer)
     }
 }
 

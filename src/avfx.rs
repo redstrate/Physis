@@ -6,16 +6,17 @@
 use std::io::Cursor;
 
 use crate::common::Platform;
-use crate::common_file_operations::{read_string, read_string_until_null};
-use crate::{ByteSpan, ReadableFile};
-use binrw::{BinRead, BinResult, VecArgs};
-use binrw::{BinReaderExt, binread, binrw};
+use crate::common_file_operations::{read_string, read_string_until_null, write_string};
+use crate::{ByteBuffer, ByteSpan, ReadableFile, WritableFile};
+use binrw::{BinRead, BinResult, BinWrite, VecArgs};
+use binrw::{BinReaderExt, binrw};
 
-#[binread]
-#[derive(Debug)]
-struct AvfxBlock<T: BinRead + std::fmt::Debug>
+#[binrw]
+#[derive(Debug, Clone)]
+struct AvfxBlock<T: BinRead + BinWrite + std::fmt::Debug>
 where
     T: for<'a> BinRead<Args<'a> = ()>,
+    T: for<'a> BinWrite<Args<'a> = ()>,
 {
     #[br(count = 4)]
     #[bw(pad_size_to = 4)]
@@ -31,6 +32,7 @@ where
 fn read_block<T>(magic: &str) -> BinResult<T>
 where
     T: for<'a> BinRead<Args<'a> = ()> + std::fmt::Debug,
+    T: for<'a> BinWrite<Args<'a> = ()> + std::fmt::Debug,
 {
     let block: AvfxBlock<T> = reader.read_type(endian)?;
     if block.name != magic.chars().rev().collect::<String>() {
@@ -44,9 +46,9 @@ where
     Ok(block.data)
 }
 
-#[binread]
+#[binrw]
 #[br(import(magic: &str))]
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct PlaceholderBlock {
     #[br(count = 4)]
     #[bw(pad_size_to = 4)]
@@ -56,7 +58,8 @@ struct PlaceholderBlock {
     name: String,
     #[br(map = |x: u32| x.div_ceil(4) * 4)] // Align to 4 byte boundary
     size: u32,
-    #[brw(pad_size_to = size)]
+    #[br(pad_size_to = size)]
+    #[bw(pad_size_to = *size)]
     #[br(count = size)]
     data: Vec<u8>,
 }
@@ -64,7 +67,7 @@ struct PlaceholderBlock {
 // FIXME: these are flags maybe? VFXEditor has them marked as such
 #[binrw]
 #[brw(repr = u32)]
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum DrawLayer {
     Screen = 0,
     BaseUpper = 1,
@@ -82,7 +85,7 @@ pub enum DrawLayer {
 
 #[binrw]
 #[brw(repr = u32)]
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum DirectionalLightSource {
     None = 0,
     InLocal = 1,
@@ -92,7 +95,7 @@ pub enum DirectionalLightSource {
 
 #[binrw]
 #[brw(repr = u32)]
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum DrawOrder {
     Default = 0,
     Reverse = 1,
@@ -102,7 +105,7 @@ pub enum DrawOrder {
 
 #[binrw]
 #[brw(repr = u32)]
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum PointLightSource {
     Default = 0,
     Reverse = 1,
@@ -110,16 +113,16 @@ pub enum PointLightSource {
     Max = 3,
 }
 
-#[binread]
-#[derive(Debug)]
+#[binrw]
+#[derive(Debug, Clone)]
 pub struct EmitVertex {
     pub position: [f32; 3],
     pub normal: [f32; 3],
     pub color: [u8; 4], // TODO: parse correctly
 }
 
-#[binread]
-#[derive(Debug)]
+#[binrw]
+#[derive(Debug, Clone)]
 pub struct DrawVertex {
     pub position: [u16; 4], // TODO: parse correctly
     pub normal: [u8; 4],
@@ -128,14 +131,14 @@ pub struct DrawVertex {
     pub uv: [u16; 4],
 }
 
-#[binread]
-#[derive(Debug)]
+#[binrw]
+#[derive(Debug, Clone)]
 pub struct DrawTriangle {
     pub indices: [i16; 3],
 }
 
-#[binread]
-#[derive(Debug)]
+#[binrw]
+#[derive(Debug, Clone)]
 pub struct AvfxEmitterModel {
     #[br(parse_with = read_block_sized_array, args("VNum"))]
     pub vertex_numbers: Vec<u16>,
@@ -143,8 +146,8 @@ pub struct AvfxEmitterModel {
     pub vertices: Vec<EmitVertex>,
 }
 
-#[binread]
-#[derive(Debug)]
+#[binrw]
+#[derive(Debug, Clone)]
 pub struct AvfxDrawModel {
     #[br(parse_with = read_block_sized_array, args("VDrw"))]
     pub vertices: Vec<DrawVertex>,
@@ -171,18 +174,19 @@ where
     array_cursor.read_type_args(endian, VecArgs::builder().count(count).finalize())
 }
 
-#[binread]
-#[derive(Debug)]
+#[binrw]
+#[derive(Debug, Clone)]
 pub struct AvfxTexture {
     #[br(parse_with = read_string_until_null)]
+    #[bw(ignore)] // TODO: stub
     path: String,
 }
 
 /// Animated VFX file, usually with the `.avfx` file extension.
 ///
 /// This is used for the animated VFX effects in-game.
-#[binread]
-#[derive(Debug)]
+#[binrw]
+#[derive(Debug, Clone)]
 #[allow(dead_code)]
 pub struct Avfx {
     #[br(parse_with = read_block, args("Ver"))]
@@ -404,6 +408,26 @@ impl ReadableFile for Avfx {
         let header =
             AvfxBlock::<Avfx>::read_options(&mut cursor, platform.endianness(), ()).ok()?;
         Some(header.data)
+    }
+}
+
+impl WritableFile for Avfx {
+    fn write_to_buffer(&self, platform: Platform) -> Option<ByteBuffer> {
+        let mut buffer = ByteBuffer::new();
+
+        {
+            let mut cursor = Cursor::new(&mut buffer);
+            let block = AvfxBlock::<Avfx> {
+                name: String::default(), // TODO: placeholder
+                size: 0,
+                data: self.clone(),
+            };
+            block
+                .write_options(&mut cursor, platform.endianness(), ())
+                .ok()?;
+        }
+
+        Some(buffer)
     }
 }
 

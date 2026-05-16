@@ -6,8 +6,10 @@
 use std::io::Cursor;
 use std::io::SeekFrom;
 
+use crate::ByteBuffer;
 use crate::ByteSpan;
 use crate::ReadableFile;
+use crate::WritableFile;
 use crate::common::Platform;
 use crate::common_file_operations::read_string;
 use crate::common_file_operations::read_string_until_null;
@@ -15,6 +17,7 @@ use crate::common_file_operations::write_string;
 use crate::string_heap::StringHeap;
 use crate::tmb::TimelineNode;
 use binrw::BinRead;
+use binrw::BinWrite;
 use binrw::binrw;
 
 #[binrw]
@@ -160,6 +163,21 @@ impl ReadableFile for Cutscene {
         let mut cursor = Cursor::new(buffer);
         let string_heap = StringHeap::from(0);
         Cutscene::read_options(&mut cursor, platform.endianness(), (&string_heap,)).ok()
+    }
+}
+
+impl WritableFile for Cutscene {
+    fn write_to_buffer(&self, platform: Platform) -> Option<ByteBuffer> {
+        let mut buffer = ByteBuffer::new();
+
+        {
+            let mut cursor = Cursor::new(&mut buffer);
+            let mut string_heap = StringHeap::from(0);
+            self.write_options(&mut cursor, platform.endianness(), (&mut string_heap,))
+                .ok()?;
+        }
+
+        Some(buffer)
     }
 }
 

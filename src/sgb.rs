@@ -6,9 +6,9 @@ use std::io::Cursor;
 use crate::common::Platform;
 use crate::scn::ScnSection;
 use crate::string_heap::StringHeap;
-use crate::{ByteSpan, ReadableFile};
-use binrw::BinRead;
+use crate::{ByteBuffer, ByteSpan, ReadableFile, WritableFile};
 use binrw::binrw;
+use binrw::{BinRead, BinWrite};
 
 /// Shared group binary file, usually with the `.sgb` file extension.
 ///
@@ -34,6 +34,23 @@ impl ReadableFile for Sgb {
         let string_heap = StringHeap::from(cursor.position() as i64);
 
         Sgb::read_options(&mut cursor, endianness, (&string_heap,)).ok()
+    }
+}
+
+impl WritableFile for Sgb {
+    fn write_to_buffer(&self, platform: Platform) -> Option<ByteBuffer> {
+        let mut buffer = ByteBuffer::new();
+
+        {
+            let mut cursor = Cursor::new(&mut buffer);
+            let mut string_heap = StringHeap::from(cursor.position() as i64);
+            self.write_options(&mut cursor, platform.endianness(), (&mut string_heap,))
+                .ok()?;
+
+            // TODO: write string heap
+        }
+
+        Some(buffer)
     }
 }
 

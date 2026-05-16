@@ -4,8 +4,10 @@
 use std::io::Cursor;
 use std::io::SeekFrom;
 
+use crate::ByteBuffer;
 use crate::ByteSpan;
 use crate::ReadableFile;
+use crate::WritableFile;
 use crate::common::Platform;
 use crate::common_file_operations::read_bool_from;
 use crate::common_file_operations::read_string;
@@ -15,6 +17,7 @@ use crate::string_heap::StringHeap;
 use crate::tmb::Tmb;
 use binrw::BinRead;
 use binrw::BinResult;
+use binrw::BinWrite;
 use binrw::binrw;
 
 #[binrw]
@@ -100,6 +103,20 @@ impl ReadableFile for Pap {
     fn from_existing(platform: Platform, buffer: ByteSpan) -> Option<Self> {
         let mut cursor = Cursor::new(buffer);
         Pap::read_options(&mut cursor, platform.endianness(), ()).ok()
+    }
+}
+
+impl WritableFile for Pap {
+    fn write_to_buffer(&self, platform: Platform) -> Option<ByteBuffer> {
+        let mut buffer = ByteBuffer::new();
+
+        {
+            let mut cursor = Cursor::new(&mut buffer);
+            self.write_options(&mut cursor, platform.endianness(), ())
+                .ok()?;
+        }
+
+        Some(buffer)
     }
 }
 

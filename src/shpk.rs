@@ -5,13 +5,14 @@
 
 use std::io::{Cursor, SeekFrom};
 
-use crate::ReadableFile;
 use crate::common::Platform;
+use crate::common_file_operations::write_bool_as;
 use crate::crc::XivCrc32;
+use crate::{ByteBuffer, ReadableFile, WritableFile};
 use crate::{ByteSpan, common_file_operations::read_bool_from};
-use binrw::{BinRead, binread};
+use binrw::{BinRead, BinWrite, binrw};
 
-#[binread]
+#[binrw]
 #[br(import {
     strings_offset: u32
 })]
@@ -21,8 +22,10 @@ pub struct ResourceParameter {
     /// CRC32 of `name`.
     crc32: u32,
     #[br(temp)]
+    #[bw(ignore)]
     local_string_offset: u32,
     #[br(temp)]
+    #[bw(ignore)]
     string_length: u16,
 
     // Seems to only be 0x1 for textures.
@@ -36,10 +39,11 @@ pub struct ResourceParameter {
     #[br(seek_before = SeekFrom::Start(strings_offset as u64 + local_string_offset as u64))]
     #[br(count = string_length, map = | x: Vec<u8> | String::from_utf8(x).unwrap().trim_matches(char::from(0)).to_string())]
     #[br(restore_position)]
+    #[bw(ignore)]
     pub name: String,
 }
 
-#[binread]
+#[binrw]
 #[br(import {
     version: u32,
     shader_data_offset: u32,
@@ -79,7 +83,7 @@ pub struct Shader {
     pub bytecode: Vec<u8>,
 }
 
-#[binread]
+#[binrw]
 #[derive(Debug, Clone, Copy)]
 #[repr(C)]
 #[allow(unused)]
@@ -89,7 +93,7 @@ pub struct MaterialParameter {
     byte_size: u16,
 }
 
-#[binread]
+#[binrw]
 #[derive(Debug, Clone, Copy)]
 #[repr(C)]
 #[allow(unused)]
@@ -100,9 +104,9 @@ pub struct Key {
     pub default_value: u32,
 }
 
-#[binread]
+#[binrw]
 #[repr(C)]
-#[br(import {
+#[brw(import {
     version: u32,
 })]
 #[derive(Debug, Clone, Copy)]
@@ -114,7 +118,7 @@ pub struct Pass {
     pixel_shader: u32,
 }
 
-#[binread]
+#[binrw]
 #[derive(Debug)]
 #[allow(unused)]
 pub struct NodeAlias {
@@ -122,7 +126,7 @@ pub struct NodeAlias {
     node: u32,
 }
 
-#[binread]
+#[binrw]
 #[br(import {
     version: u32,
     system_key_count: u32,
@@ -130,6 +134,7 @@ pub struct NodeAlias {
     material_key_count: u32,
     subview_key_count: u32
 })]
+#[bw(import(version: u32))]
 #[derive(Debug)]
 #[allow(unused)]
 pub struct Node {
@@ -149,13 +154,14 @@ pub struct Node {
     #[br(count = subview_key_count)]
     pub subview_keys: Vec<u32>,
     #[br(args { count: pass_count as usize, inner: PassBinReadArgs { version }})]
+    #[bw(args { version })]
     pub passes: Vec<Pass>,
 }
 
 /// Shader package file, usually with the `.shpk` file extension.
 ///
 /// A collection of shaders which are usually different permutations, probably created from a "mega-shader".
-#[binread]
+#[binrw]
 #[br(magic = b"ShPk")]
 #[derive(Debug)]
 #[allow(dead_code, unused)]
@@ -181,6 +187,7 @@ pub struct ShaderPackage {
     material_parameter_count: u16,
 
     #[br(map = read_bool_from::<u16>)]
+    #[bw(map = write_bool_as::<u16>)]
     has_mat_param_defaults: bool,
     scalar_parameter_count: u32,
     sampler_count: u16,
@@ -255,6 +262,20 @@ impl ReadableFile for ShaderPackage {
         }
 
         Some(package)
+    }
+}
+
+impl WritableFile for ShaderPackage {
+    fn write_to_buffer(&self, platform: Platform) -> Option<ByteBuffer> {
+        let mut buffer = ByteBuffer::new();
+
+        {
+            let mut cursor = Cursor::new(&mut buffer);
+            self.write_options(&mut cursor, platform.endianness(), ())
+                .ok()?;
+        }
+
+        Some(buffer)
     }
 }
 

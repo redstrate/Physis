@@ -4,29 +4,31 @@
 use std::io::Cursor;
 use std::io::SeekFrom;
 
+use crate::ByteBuffer;
 use crate::ByteSpan;
 use crate::ReadableFile;
+use crate::WritableFile;
 use crate::common::Platform;
 use binrw::BinRead;
-use binrw::binread;
+use binrw::BinWrite;
+use binrw::binrw;
 
 /// Graphics pipeline shader stage.
-#[binread]
+#[binrw]
 #[derive(Debug, Clone, Copy)]
 #[repr(C)]
+#[brw(repr = u8)]
 pub enum ShaderStage {
     /// Vertex stage.
-    #[br(magic = 0u8)]
-    Vertex,
+    Vertex = 0,
     /// Pixel/fragment stage.
-    #[br(magic = 1u8)]
-    Pixel,
+    Pixel = 1,
 }
 
 /// Shader file, usually with the `.shcd` file extension.
 ///
 /// Used instead of a shader package for standalone shaders.
-#[binread]
+#[binrw]
 #[derive(Debug)]
 #[brw(magic = b"ShCd")]
 #[allow(dead_code)]
@@ -61,6 +63,20 @@ impl ReadableFile for SHCD {
     fn from_existing(platform: Platform, buffer: ByteSpan) -> Option<Self> {
         let mut cursor = Cursor::new(buffer);
         SHCD::read_options(&mut cursor, platform.endianness(), ()).ok()
+    }
+}
+
+impl WritableFile for SHCD {
+    fn write_to_buffer(&self, platform: Platform) -> Option<ByteBuffer> {
+        let mut buffer = ByteBuffer::new();
+
+        {
+            let mut cursor = Cursor::new(&mut buffer);
+            self.write_options(&mut cursor, platform.endianness(), ())
+                .ok()?;
+        }
+
+        Some(buffer)
     }
 }
 
