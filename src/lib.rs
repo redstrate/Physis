@@ -207,3 +207,6 @@ pub mod fdt;
 
 /// Types for attach offset (`.atch`) files.
 pub mod atch;
+
+/// Types for bind point (`.eid`) files.
+pub mod eid;
