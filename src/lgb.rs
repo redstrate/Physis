@@ -193,7 +193,13 @@ impl WritableFile for Lgb {
             }
 
             // make sure the heaps are at the end of the layer data:
-            let data_offset = cursor.stream_position().ok()? + LgbHeader::SIZE as u64;
+            // TODO: this logic doesn't make much sense...
+            let data_offset = cursor.stream_position().ok()?
+                + (if !layer_offsets.is_empty() {
+                    LgbHeader::SIZE as u64
+                } else {
+                    0
+                });
 
             // second pass: write layers again, we want to get a correct *chunk_string_heap* now that we know of the size of chunk_data_heap
             chunk_data_heap = StringHeap {
@@ -318,7 +324,6 @@ mod tests {
         assert!(Lgb::from_existing(Platform::Win32, &read(d).unwrap()).is_none());
     }
 
-    #[ignore = "This test fails currently because the string pos isn't corrected in a certain way."]
     #[test]
     fn write_empty_planlive() {
         let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
@@ -385,7 +390,7 @@ mod tests {
         );
     }
 
-    #[ignore = "This test fails currently because the string pos isn't corrected in a certain way."]
+    #[ignore = "We most likely do not write the data heap correctly right now."]
     #[test]
     fn write_simple_planevent() {
         let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
