@@ -56,7 +56,9 @@ impl Language {
     }
 }
 
-/// Reads a version file. It intentionally reads whitespace as the game reads those characters too.
+/// Read a version file.
+///
+/// It intentionally reads whitespace as the game reads those characters too.
 // TODO: use version type
 pub fn read_version(p: &Path) -> Option<String> {
     fs::read_to_string(p).ok()
@@ -214,6 +216,7 @@ pub type ByteSpan<'a> = &'a [u8];
 pub type ByteBuffer = Vec<u8>;
 
 /// Names for rows in the Excel sheet of the same name.
+///
 /// See <https://github.com/aers/FFXIVClientStructs/blob/main/FFXIVClientStructs/FFXIV/Client/Enums/TerritoryIntendedUse.cs>.
 #[repr(u8)]
 #[derive(FromRepr, Display, Clone, Copy, PartialEq)]

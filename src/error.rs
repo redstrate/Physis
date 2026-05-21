@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2025 Joshua Goins <josh@redstrate.com>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+/// The error type used throughout this crate.
 #[derive(Debug, Clone)]
 pub enum Error {
     /// The specified path was not found in any resources.
