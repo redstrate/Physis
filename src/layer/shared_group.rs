@@ -51,11 +51,10 @@ pub enum ColourState {
 #[binrw]
 #[derive(Debug, PartialEq)]
 #[br(import(string_heap: &StringHeap, heap_pointer: HeapPointer))]
-#[bw(import(string_heap: &mut StringHeap))]
+#[bw(import(string_heap: &mut StringHeap, heap_pointer: HeapPointer))]
 pub struct SharedGroupInstance {
     /// The path to the `.sgb` file.
-    #[br(args(heap_pointer, string_heap))]
-    #[bw(args(string_heap))]
+    #[brw(args(heap_pointer, string_heap))]
     pub asset_path: HeapString,
     pub initial_door_state: DoorState,
     pub overriden_members: i32,

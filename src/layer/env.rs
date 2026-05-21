@@ -23,10 +23,9 @@ pub enum EnvSetShape {
 #[binrw]
 #[derive(Debug, PartialEq)]
 #[br(import(string_heap: &StringHeap, heap_pointer: HeapPointer))]
-#[bw(import(string_heap: &mut StringHeap))]
+#[bw(import(string_heap: &mut StringHeap, heap_pointer: HeapPointer))]
 pub struct EnvSetInstanceObject {
-    #[br(args(heap_pointer, string_heap))]
-    #[bw(args(string_heap))]
+    #[brw(args(heap_pointer, string_heap))]
     pub asset_path: HeapString,
     pub bound_instance_id: u32,
     pub shape: EnvSetShape,
@@ -39,21 +38,18 @@ pub struct EnvSetInstanceObject {
     pub interpolation_time: i32,
     pub reverb: f32,
     pub filter: f32,
-    #[br(args(heap_pointer, string_heap))]
-    #[bw(args(string_heap))]
+    #[brw(args(heap_pointer, string_heap))]
     pub sound_asset_path: HeapString,
 }
 
 #[binrw]
 #[derive(Debug, PartialEq)]
 #[br(import(string_heap: &StringHeap, heap_pointer: HeapPointer))]
-#[bw(import(string_heap: &mut StringHeap))]
+#[bw(import(string_heap: &mut StringHeap, heap_pointer: HeapPointer))]
 pub struct EnvLocationObject {
-    #[br(args(heap_pointer, string_heap))]
-    #[bw(args(string_heap))]
+    #[brw(args(heap_pointer, string_heap))]
     pub ambient_light_asset_path: HeapString,
-    #[br(args(heap_pointer, string_heap))]
-    #[bw(args(string_heap))]
+    #[brw(args(heap_pointer, string_heap))]
     pub env_map_asset_path: HeapString,
     pub padding: [u8; 24], // TODO: UNKNOWN, MAYBE WRONG
 }

@@ -11,11 +11,10 @@ use crate::{
 
 #[binrw]
 #[br(import(string_heap: &StringHeap, heap_pointer: HeapPointer))]
-#[bw(import(string_heap: &mut StringHeap))]
+#[bw(import(string_heap: &mut StringHeap, heap_pointer: HeapPointer))]
 #[derive(Debug, PartialEq)]
 pub struct VFXInstanceObject {
-    #[br(args(heap_pointer, string_heap))]
-    #[bw(args(string_heap))]
+    #[brw(args(heap_pointer, string_heap))]
     pub asset_path: HeapString,
     #[brw(pad_after = 4)] // padding
     pub soft_particle_fade_range: f32,

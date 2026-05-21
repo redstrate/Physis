@@ -22,13 +22,11 @@ pub enum ModelCollisionType {
 #[binrw]
 #[derive(Debug, PartialEq)]
 #[br(import(string_heap: &StringHeap, heap_pointer: HeapPointer))]
-#[bw(import(string_heap: &mut StringHeap))]
+#[bw(import(string_heap: &mut StringHeap, heap_pointer: HeapPointer))]
 pub struct BGInstanceObject {
-    #[br(args(heap_pointer, string_heap))]
-    #[bw(args(string_heap))]
+    #[brw(args(heap_pointer, string_heap))]
     pub asset_path: HeapString,
-    #[br(args(heap_pointer, string_heap))]
-    #[bw(args(string_heap))]
+    #[brw(args(heap_pointer, string_heap))]
     pub collision_asset_path: HeapString,
     pub collision_type: ModelCollisionType,
     pub attribute_mask: u32,

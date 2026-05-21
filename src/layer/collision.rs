@@ -11,15 +11,14 @@ use crate::{
 #[binrw]
 #[derive(Debug, PartialEq)]
 #[br(import(string_heap: &StringHeap, heap_pointer: HeapPointer))]
-#[bw(import(string_heap: &mut StringHeap))]
+#[bw(import(string_heap: &mut StringHeap, heap_pointer: HeapPointer))]
 pub struct CollisionBoxInstanceObject {
     pub parent_data: TriggerBoxInstanceObject,
     attribute_mask: u32,
     attribute: u32,
     push_player_out: u8,
     padding: [u8; 3],
-    #[br(args(heap_pointer, string_heap))]
-    #[bw(args(string_heap))]
+    #[brw(args(heap_pointer, string_heap))]
     pub collision_asset_path: HeapString,
     padding2: u32,
 }

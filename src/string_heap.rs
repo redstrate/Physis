@@ -17,12 +17,11 @@ use crate::{
 /// Pointer points to where the string offset is relative to, usually the start of a struct.
 #[binrw]
 #[br(import(pointer: HeapPointer, string_heap: &StringHeap), stream = r)]
-#[bw(import(string_heap: &mut StringHeap))]
+#[bw(import(pointer: HeapPointer, string_heap: &mut StringHeap))]
 #[derive(Clone, PartialEq, Default)]
 pub struct HeapString {
     #[br(temp)]
-    // TODO: this cast is stupid
-    #[bw(calc = string_heap.get_free_offset_string(value) as u32)]
+    #[bw(calc = string_heap.get_free_offset_string(value).saturating_sub(pointer.pos as i32) as u32)]
     pub(crate) offset: u32,
     #[br(calc = string_heap.read_string(r, offset.saturating_add(pointer.pos as u32),))]
     #[bw(ignore)]
@@ -41,7 +40,7 @@ impl std::fmt::Debug for HeapString {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct StringHeap {
     pub(crate) pos: i64,
     pub(crate) bytes: Vec<u8>,
@@ -54,6 +53,14 @@ pub struct HeapPointer {
     #[br(parse_with = read_pointer_pos)]
     #[bw(ignore)]
     pub(crate) pos: u64,
+}
+
+impl HeapPointer {
+    pub fn from_stream<T: Seek>(stream: &mut T) -> Self {
+        Self {
+            pos: stream.stream_position().unwrap(),
+        }
+    }
 }
 
 #[binrw::parser(reader)]

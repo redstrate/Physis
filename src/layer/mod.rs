@@ -61,7 +61,7 @@ pub use shared_group::{
 };
 
 mod sound;
-pub use sound::SoundInstanceObject;
+pub use sound::{SoundEffectType, SoundInstanceObject, SoundParameters};
 
 mod transformation;
 pub use transformation::Transformation;
@@ -233,45 +233,29 @@ impl From<&LayerEntryData> for LayerEntryType {
 #[binrw]
 #[derive(Debug, PartialEq)]
 #[br(import(magic: &LayerEntryType, string_heap: &StringHeap, heap_pointer: HeapPointer))]
-#[bw(import(string_heap: &mut StringHeap))]
+#[bw(import(string_heap: &mut StringHeap, heap_pointer: HeapPointer))]
 pub enum LayerEntryData {
     /// Representing nothing.
     #[br(pre_assert(*magic == LayerEntryType::None))]
     None,
     /// Background model.
     #[br(pre_assert(*magic == LayerEntryType::BG))]
-    BG(
-        #[br(args(string_heap, heap_pointer))]
-        #[bw(args(string_heap))]
-        BGInstanceObject,
-    ),
+    BG(#[brw(args(string_heap, heap_pointer))] BGInstanceObject),
     /// Light source.
     #[br(pre_assert(*magic == LayerEntryType::LayLight))]
     LayLight(LightInstanceObject),
     /// Visual effect.
     #[br(pre_assert(*magic == LayerEntryType::Vfx))]
-    Vfx(
-        #[br(args(string_heap, heap_pointer))]
-        #[bw(args(string_heap))]
-        VFXInstanceObject,
-    ),
+    Vfx(#[brw(args(string_heap, heap_pointer))] VFXInstanceObject),
     /// Unknown purpose.
     #[br(pre_assert(*magic == LayerEntryType::PositionMarker))]
     PositionMarker(PositionMarkerInstanceObject),
     /// Instance of a prefab.
     #[br(pre_assert(*magic == LayerEntryType::SharedGroup))]
-    SharedGroup(
-        #[br(args(string_heap, heap_pointer))]
-        #[bw(args(string_heap))]
-        SharedGroupInstance,
-    ),
+    SharedGroup(#[brw(args(string_heap, heap_pointer))] SharedGroupInstance),
     /// Unknown purpose.
     #[br(pre_assert(*magic == LayerEntryType::Sound))]
-    Sound(
-        #[br(args(string_heap, heap_pointer))]
-        #[bw(args(string_heap))]
-        SoundInstanceObject,
-    ),
+    Sound(#[brw(args(string_heap, heap_pointer))] SoundInstanceObject),
     /// Event NPC.
     #[br(pre_assert(*magic == LayerEntryType::EventNPC))]
     EventNPC(ENPCInstanceObject),
@@ -283,11 +267,7 @@ pub enum LayerEntryData {
     Aetheryte(AetheryteInstanceObject),
     /// Unknown purpose.
     #[br(pre_assert(*magic == LayerEntryType::EnvSet))]
-    EnvSet(
-        #[br(args(string_heap, heap_pointer))]
-        #[bw(args(string_heap))]
-        EnvSetInstanceObject,
-    ),
+    EnvSet(#[brw(args(string_heap, heap_pointer))] EnvSetInstanceObject),
     /// Unknown purpose.
     #[br(pre_assert(*magic == LayerEntryType::Gathering))]
     Gathering(GatheringInstanceObject),
@@ -308,11 +288,7 @@ pub enum LayerEntryData {
     EventObject(EventInstanceObject),
     /// Unknown purpose.
     #[br(pre_assert(*magic == LayerEntryType::EnvLocation))]
-    EnvLocation(
-        #[br(args(string_heap, heap_pointer))]
-        #[bw(args(string_heap))]
-        EnvLocationObject,
-    ),
+    EnvLocation(#[brw(args(string_heap, heap_pointer))] EnvLocationObject),
     /// Unknown purpose.
     #[br(pre_assert(*magic == LayerEntryType::EventRange))]
     EventRange(EventRangeInstanceObject),
@@ -321,11 +297,7 @@ pub enum LayerEntryData {
     QuestMarker(QuestMarkerInstanceObject),
     /// Unknown purpose.
     #[br(pre_assert(*magic == LayerEntryType::CollisionBox))]
-    CollisionBox(
-        #[br(args(string_heap, heap_pointer))]
-        #[bw(args(string_heap))]
-        CollisionBoxInstanceObject,
-    ),
+    CollisionBox(#[brw(args(string_heap, heap_pointer))] CollisionBoxInstanceObject),
     /// Unknown purpose.
     #[br(pre_assert(*magic == LayerEntryType::LineVFX))]
     LineVFX(LineVFXInstanceObject),
@@ -386,19 +358,18 @@ pub enum LayerSetReferencedType {
 #[binrw]
 #[derive(Debug, PartialEq)]
 #[br(import(endianness: Endian, data_heap: &StringHeap, string_heap: &StringHeap), stream = r)]
-#[bw(import(data_heap: &mut StringHeap, string_heap: &mut StringHeap))]
+#[bw(import(data_heap: &mut StringHeap, string_heap: &mut StringHeap), stream = w)]
 #[allow(dead_code)] // most of the fields are unused at the moment
 pub struct LayerHeader {
     #[br(temp)]
-    #[bw(ignore)]
+    #[bw(calc = HeapPointer::from_stream(w))]
     heap_pointer: HeapPointer,
 
     /// ID of this layer.
     pub layer_id: u32,
 
     /// The name of this layer.
-    #[br(args(heap_pointer, string_heap))]
-    #[bw(args(string_heap))]
+    #[brw(args(heap_pointer, string_heap))]
     pub name: HeapString,
 
     pub(crate) instance_object_offset: i32,
@@ -424,7 +395,8 @@ pub struct LayerHeader {
     pub ps3_visible: bool,
 
     #[br(temp)]
-    #[bw(calc = data_heap.get_free_offset_args(&layer_set_referenced_list))]
+    #[bw(calc = data_heap.get_free_offset_args(&layer_set_referenced_list).saturating_sub(heap_pointer.pos as i32) - 12)]
+    // lol 12
     pub(crate) layer_set_referenced_list_offset: i32,
 
     /// The layer set referenced list.
@@ -452,7 +424,8 @@ pub struct LayerHeader {
 
     #[brw(pad_before = 4)]
     #[br(temp)]
-    #[bw(calc = data_heap.get_free_vec_offset_args(object_set_referenced, string_heap))]
+    #[bw(calc = data_heap.get_free_vec_offset_args(object_set_referenced, string_heap).saturating_sub(heap_pointer.pos as i32) - 12)]
+    // lol again
     ob_set_referenced_list_offset: i32,
     #[bw(calc = object_set_referenced.len() as i32)]
     #[br(temp)]
@@ -464,7 +437,8 @@ pub struct LayerHeader {
     pub object_set_referenced: Vec<ObjectSetReferenced>,
 
     #[br(temp)]
-    #[bw(calc = data_heap.get_free_vec_offset_args(object_set_enable_referenced, string_heap))]
+    #[bw(calc = data_heap.get_free_vec_offset_args(object_set_enable_referenced, string_heap).saturating_sub(heap_pointer.pos as i32) - 12)]
+    // yea keeps going
     ob_set_enable_referenced_list_offset: i32,
     #[bw(calc = object_set_enable_referenced.len() as i32)]
     #[br(temp)]
@@ -527,11 +501,11 @@ pub struct LayerSetReferencedList {
 
 #[binrw]
 #[br(import(string_heap: &StringHeap), stream = r)]
-#[bw(import(string_heap: &mut StringHeap))]
+#[bw(import(string_heap: &mut StringHeap), stream = w)]
 #[derive(Debug, PartialEq)]
 pub struct ObjectSetReferenced {
     #[br(temp)]
-    #[bw(ignore)]
+    #[bw(calc = HeapPointer::from_stream(w))]
     heap_pointer: HeapPointer,
 
     /// The type of InstanceObject of `instance_id`.
@@ -541,8 +515,7 @@ pub struct ObjectSetReferenced {
     pub instance_id: u32,
 
     /// Path to an `.obsb` file.
-    #[br(args(heap_pointer, string_heap))]
-    #[bw(args(string_heap))]
+    #[brw(args(heap_pointer, string_heap))]
     pub obsb_path: HeapString,
 }
 
@@ -566,11 +539,11 @@ pub struct ObjectSetEnableReferenced {
 #[binrw]
 #[derive(Debug, PartialEq)]
 #[br(import(string_heap: &StringHeap))]
-#[bw(import(string_heap: &mut StringHeap))]
+#[bw(import(string_heap: &mut StringHeap), stream = w)]
 #[allow(dead_code)] // most of the fields are unused at the moment
 pub struct InstanceObject {
     #[br(temp)]
-    #[bw(ignore)]
+    #[bw(calc = HeapPointer::from_stream(w))]
     heap_pointer: HeapPointer,
 
     #[bw(calc = data.into())]
@@ -579,14 +552,13 @@ pub struct InstanceObject {
     /// The unique ID of this object.
     pub instance_id: u32,
     /// The name of this object.
-    #[br(args(heap_pointer, string_heap))]
-    #[bw(args(string_heap))]
+    #[brw(args(heap_pointer, string_heap))]
     pub name: HeapString,
     /// The object's transformation in the world space.
     pub transform: Transformation,
     /// The data associated with this object.
     #[br(args(&asset_type, string_heap, heap_pointer))]
-    #[bw(args(string_heap))]
+    #[bw(args(string_heap, heap_pointer))]
     pub data: LayerEntryData,
 }
 

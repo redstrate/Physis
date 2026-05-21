@@ -114,7 +114,7 @@ pub struct Tmtr {
 /// Unknown purpose.
 #[binrw]
 #[br(import(string_heap: &StringHeap))]
-#[bw(import(string_heap: &mut StringHeap))]
+#[bw(import(string_heap: &mut StringHeap), stream = w)]
 #[derive(Debug, Clone)]
 #[repr(C)]
 pub struct C009 {
@@ -123,12 +123,11 @@ pub struct C009 {
     pub duration: i32,
 
     #[br(temp)]
-    #[bw(ignore)]
+    #[bw(calc = HeapPointer::from_stream(w))]
     heap_pointer: HeapPointer,
 
     unk1: i32,
-    #[br(args(heap_pointer, string_heap))]
-    #[bw(args(string_heap))]
+    #[brw(args(heap_pointer, string_heap))]
     pub path: HeapString,
 }
 

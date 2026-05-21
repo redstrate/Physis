@@ -23,17 +23,16 @@ pub(crate) fn write_scns(scns: &Vec<ScnSection>, string_heap: &mut StringHeap) -
 
 #[binrw]
 #[br(import(string_heap: &StringHeap))]
-#[bw(import(string_heap: &mut StringHeap))]
+#[bw(import(string_heap: &mut StringHeap), stream = w)]
 #[derive(Debug, Default)]
 pub struct ScnLayerGroup {
     #[br(temp)]
-    #[bw(ignore)]
+    #[bw(calc = HeapPointer::from_stream(w))]
     heap_pointer: HeapPointer,
 
     pub layer_group_id: u32,
 
-    #[br(args(heap_pointer, string_heap))]
-    #[bw(args(string_heap))]
+    #[brw(args(heap_pointer, string_heap))]
     pub name: HeapString,
 
     layer_offsets_start: i32,
@@ -146,23 +145,21 @@ impl ScnSection {
 
 #[binrw]
 #[br(import(string_heap: &StringHeap))]
-#[bw(import(string_heap: &mut StringHeap))]
+#[bw(import(string_heap: &mut StringHeap), stream = w)]
 #[derive(Debug)]
 pub struct ScnEnvSpace {
     #[br(temp)]
-    #[bw(ignore)]
+    #[bw(calc = HeapPointer::from_stream(w))]
     heap_pointer: HeapPointer,
 
-    #[br(args(heap_pointer, string_heap))]
-    #[bw(args(string_heap))]
+    #[brw(args(heap_pointer, string_heap))]
     pub envb_path: HeapString,
 
     unk1: i32,
     /// ID to an EnvLocation InstanceObject in this scene.
     pub env_location_instance_id: i32,
 
-    #[br(args(heap_pointer, string_heap))]
-    #[bw(args(string_heap))]
+    #[brw(args(heap_pointer, string_heap))]
     pub essb_path: HeapString,
 
     // TODO: I have no idea, but there's 8 extra bytes unaccounted for here. Probably a mistake elsewhere.
@@ -172,17 +169,16 @@ pub struct ScnEnvSpace {
 
 #[binrw]
 #[br(import(string_heap: &StringHeap))]
-#[bw(import(string_heap: &mut StringHeap))]
+#[bw(import(string_heap: &mut StringHeap), stream = w)]
 #[derive(Debug, Default)]
 pub struct ScnGeneralSection {
     #[br(temp)]
-    #[bw(ignore)]
+    #[bw(calc = HeapPointer::from_stream(w))]
     heap_pointer: HeapPointer,
 
     unk9: i32,
 
-    #[br(args(heap_pointer, string_heap))]
-    #[bw(args(string_heap))]
+    #[brw(args(heap_pointer, string_heap))]
     pub bg_path: HeapString,
 
     offset_env_spaces: i32,
@@ -190,8 +186,7 @@ pub struct ScnGeneralSection {
 
     unk1: i32,
 
-    #[br(args(heap_pointer, string_heap))]
-    #[bw(args(string_heap))]
+    #[brw(args(heap_pointer, string_heap))]
     pub svb_path: HeapString,
 
     unk2: f32,
@@ -202,8 +197,7 @@ pub struct ScnGeneralSection {
     unk7: f32,
     unk8: i32, // points to 4 bytes in the string heap
 
-    #[br(args(heap_pointer, string_heap))]
-    #[bw(args(string_heap))]
+    #[brw(args(heap_pointer, string_heap))]
     pub lcb_path: HeapString,
 
     unk10: i32,
@@ -258,16 +252,15 @@ impl ScnTimelinesSection {
 
 #[binrw]
 #[br(import(string_heap: &StringHeap))]
-#[bw(import(string_heap: &mut StringHeap))]
+#[bw(import(string_heap: &mut StringHeap), stream = w)]
 #[derive(Debug, Default)]
 pub struct ScnTimeline {
     #[br(temp)]
-    #[bw(ignore)]
+    #[bw(calc = HeapPointer::from_stream(w))]
     heap_pointer: HeapPointer,
 
     pub sub_id: u32,
-    #[br(args(heap_pointer, string_heap))]
-    #[bw(args(string_heap))]
+    #[brw(args(heap_pointer, string_heap))]
     pub animation_type: HeapString,
     offset_instances: i32,
     num_instances: i32,
@@ -431,16 +424,15 @@ impl ScnLayerSetsSection {
 
 #[binrw]
 #[br(import(string_heap: &StringHeap))]
-#[bw(import(string_heap: &mut StringHeap))]
+#[bw(import(string_heap: &mut StringHeap), stream = w)]
 #[derive(Debug)]
 pub struct ScnLayerSet {
     #[br(temp)]
-    #[bw(ignore)]
+    #[bw(calc = HeapPointer::from_stream(w))]
     heap_pointer: HeapPointer,
 
     /// Path to the `.nvm` file for this layer set.
-    #[br(args(heap_pointer, string_heap))]
-    #[bw(args(string_heap))]
+    #[brw(args(heap_pointer, string_heap))]
     pub nvm_path: HeapString,
 
     /// The ID of this layer set.
@@ -456,8 +448,7 @@ pub struct ScnLayerSet {
     unk5: i32,
 
     /// Path to the `.nvx` file for this layer set.
-    #[br(args(heap_pointer, string_heap))]
-    #[bw(args(string_heap))]
+    #[brw(args(heap_pointer, string_heap))]
     pub nvx_path: HeapString,
 }
 
