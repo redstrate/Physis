@@ -81,23 +81,34 @@ pub use vfx::{LineStyle, LineVFXInstanceObject, VFXInstanceObject};
 #[repr(i32)]
 #[derive(Debug, PartialEq)]
 pub enum LayerEntryType {
-    None = 0x0,
-    BG = 0x1,
-    Attribute = 0x2,
-    LayLight = 0x3,
-    Vfx = 0x4,
-    PositionMarker = 0x5,
-    SharedGroup = 0x6,
-    Sound = 0x7,
-    EventNPC = 0x8,
-    BattleNPC = 0x9,
-    RoutePath = 0xA,
-    Character = 0xB,
-    Aetheryte = 0xC,
-    EnvSet = 0xD,
-    Gathering = 0xE,
-    HelperObject = 0xF,
-    Treasure = 0x10,
+    /// This represents nothing.
+    None = 0,
+    /// Background model object.
+    BG = 1,
+    Attribute = 2,
+    /// Light object.
+    LayLight = 3,
+    /// Visual effect object.
+    Vfx = 4,
+    PositionMarker = 5,
+    /// Shared group object.
+    SharedGroup = 6,
+    /// Sound object.
+    Sound = 7,
+    /// Event NPC object.
+    EventNPC = 8,
+    /// Battle NPC object. These are stripped out of the released client.
+    BattleNPC = 9,
+    RoutePath = 10,
+    Character = 11,
+    /// Aetheryte object.
+    Aetheryte = 12,
+    EnvSet = 13,
+    /// Gathering point. These are stripped out of the released client.
+    Gathering = 14,
+    HelperObject = 15,
+    /// Treasure object.
+    Treasure = 16,
     Clip = 0x11,
     ClipCtrlPoint = 0x12,
     ClipCamera = 0x13,
@@ -121,17 +132,20 @@ pub enum LayerEntryType {
     Player = 0x25,
     Monster = 0x26,
     Weapon = 0x27,
-    PopRange = 0x28,
+    /// Generic range for characters to spawn in.
+    PopRange = 40,
     /// Zone Transitions (the visible part is probably LineVFX?)
-    ExitRange = 0x29,
-    Lvb = 0x2A,
+    ExitRange = 41,
+    Lvb = 42,
     MapRange = 0x2B,
     NaviMeshRange = 0x2C,
-    EventObject = 0x2D,
+    /// Event object.
+    EventObject = 45,
     DemiHuman = 0x2E,
     EnvLocation = 0x2F,
     ControlPoint = 0x30,
-    EventRange = 0x31,
+    /// Generic ranges for events to use.
+    EventRange = 49,
     RestBonusRange = 0x32,
     QuestMarker = 0x33,
     Timeline = 0x34,
@@ -141,21 +155,25 @@ pub enum LayerEntryType {
     ScenarioText = 0x38,
     CollisionBox = 0x39,
     DoorRange = 0x3A,
+    /// Generic VFX that displays those dotted lines used for zone transitions and boundaries.
     LineVFX = 0x3B,
     SoundEnvSet = 0x3C,
     CutActionTimeline = 0x3D,
     CharaScene = 0x3E,
     CutAction = 0x3F,
     EquipPreset = 0x40,
-    ClientPath = 0x41,
-    ServerPath = 0x42,
-    GimmickRange = 0x43,
-    TargetMarker = 0x44,
-    ChairMarker = 0x45,
-    ClickableRange = 0x46,
-    PrefetchRange = 0x47,
-    FateRange = 0x48,
-    PartyMember = 0x49,
+    /// Path object.
+    ClientPath = 65,
+    /// Path object that (presumably) only exists on the server.
+    ServerPath = 66,
+    GimmickRange = 67,
+    TargetMarker = 68,
+    /// Place for a character to sit.
+    ChairMarker = 69,
+    ClickableRange = 70,
+    PrefetchRange = 71,
+    FateRange = 72,
+    PartyMember = 73,
     KeepRange = 0x4A,
     SphereCastRange = 0x4B,
     IndoorObject = 0x4C,
