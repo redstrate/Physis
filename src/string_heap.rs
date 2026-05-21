@@ -40,6 +40,14 @@ impl std::fmt::Debug for HeapString {
     }
 }
 
+impl From<&str> for HeapString {
+    fn from(value: &str) -> Self {
+        Self {
+            value: value.to_string(),
+        }
+    }
+}
+
 #[derive(Debug, Default)]
 pub struct StringHeap {
     pub(crate) pos: i64,
