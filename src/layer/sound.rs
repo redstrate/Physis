@@ -10,9 +10,10 @@ use crate::{
 
 #[binrw]
 #[brw(repr = i32)]
-#[derive(Debug, PartialEq, Clone, Copy)]
+#[derive(Debug, PartialEq, Clone, Copy, Default)]
 #[repr(C)]
 pub enum SoundEffectType {
+    #[default]
     Point = 0x3,
     PointDir = 0x4,
     Line = 0x5,
@@ -27,7 +28,7 @@ pub enum SoundEffectType {
 }
 
 #[binrw]
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Default)]
 pub struct SoundParameters {
     pub sound_effect_type: SoundEffectType,
     #[br(map = read_bool_from::<u8>)]
@@ -48,7 +49,7 @@ pub struct SoundParameters {
 #[binrw]
 #[br(import(string_heap: &StringHeap, heap_pointer: HeapPointer))]
 #[bw(import(string_heap: &mut StringHeap, heap_pointer: HeapPointer))]
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Default)]
 pub struct SoundInstanceObject {
     // I think it's always 56 so...
     #[bw(calc = 56)]

@@ -13,8 +13,9 @@ use super::read_bool_from;
 
 #[binrw]
 #[brw(repr = i32)]
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Default, Clone, Copy)]
 pub enum DoorState {
+    #[default]
     Auto = 0x1,
     Open = 0x2,
     Closed = 0x3,
@@ -22,17 +23,19 @@ pub enum DoorState {
 
 #[binrw]
 #[brw(repr = i32)]
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Default, Clone, Copy)]
 pub enum RotationState {
     Rounding = 0x1,
+    #[default]
     Stopped = 0x2,
 }
 
 #[binrw]
 #[brw(repr = i32)]
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Default, Clone, Copy)]
 pub enum TransformState {
     Play = 0x0,
+    #[default]
     Stop = 0x1,
     Replay = 0x2,
     Reset = 0x3,
@@ -40,16 +43,17 @@ pub enum TransformState {
 
 #[binrw]
 #[brw(repr = i32)]
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Default, Clone, Copy)]
 pub enum ColourState {
     Play = 0x0,
+    #[default]
     Stop = 0x1,
     Replay = 0x2,
     Reset = 0x3,
 }
 
 #[binrw]
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Default, Clone)]
 #[br(import(string_heap: &StringHeap, heap_pointer: HeapPointer))]
 #[bw(import(string_heap: &mut StringHeap, heap_pointer: HeapPointer))]
 pub struct SharedGroupInstance {
@@ -79,5 +83,4 @@ pub struct SharedGroupInstance {
     pub not_create_navimesh_door: bool,
     pub initial_transform_state: TransformState,
     pub initial_color_state: ColourState,
-    pub unk1: [u8; 60],
 }

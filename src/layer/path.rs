@@ -4,7 +4,7 @@
 use binrw::binrw;
 
 #[binrw]
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Default)]
 pub struct PathControlPoint {
     pub position: [f32; 3],
     pub point_id: u16,
@@ -13,7 +13,7 @@ pub struct PathControlPoint {
 }
 
 #[binrw]
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Default)]
 pub struct PathInstanceObject {
     pub control_points_unk: i32,
     #[br(temp)]
@@ -25,7 +25,7 @@ pub struct PathInstanceObject {
 }
 
 #[binrw]
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Default)]
 pub struct ClientPathInstanceObject {
     pub parent_data: PathInstanceObject,
     pub ring: u8,
@@ -33,5 +33,5 @@ pub struct ClientPathInstanceObject {
 }
 
 #[binrw]
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Default)]
 pub struct ServerPathInstanceObject {}

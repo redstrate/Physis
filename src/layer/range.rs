@@ -10,14 +10,15 @@ use super::TriggerBoxInstanceObject;
 #[binrw]
 #[brw(repr = i32)]
 #[repr(C)]
-#[derive(Debug, PartialEq, Clone, Copy)]
+#[derive(Debug, PartialEq, Clone, Copy, Default)]
 pub enum ExitType {
+    #[default]
     ZoneLine = 0x1,
     Unk = 0x2, // seen in bg/ex5/02_ykt_y6/fld/y6f1/level/planmap.lgb
 }
 
 #[binrw]
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Default)]
 pub struct ExitRangeInstanceObject {
     pub parent_data: TriggerBoxInstanceObject,
     /// What kind of exit range this is.
@@ -33,7 +34,7 @@ pub struct ExitRangeInstanceObject {
 }
 
 #[binrw]
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Default)]
 pub struct MapRangeInstanceObject {
     pub parent_data: TriggerBoxInstanceObject,
     map: u32,
@@ -87,15 +88,16 @@ pub struct MapRangeInstanceObject {
 #[binrw]
 #[brw(repr = i32)]
 #[repr(C)]
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Default)]
 pub enum PopType {
+    #[default]
     PC = 0x1,
     Npc = 0x2,
     Content = 0x3,
 }
 
 #[binrw]
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Default)]
 pub struct PopRangeInstanceObject {
     pub pop_type: PopType,
     pos: i32,
@@ -108,26 +110,26 @@ pub struct PopRangeInstanceObject {
 }
 
 #[binrw]
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Default)]
 pub struct EventRangeInstanceObject {
     pub parent_data: TriggerBoxInstanceObject,
     pub unk_flags: [u8; 12],
 }
 
 #[binrw]
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Default)]
 pub struct FateRangeInstanceObject {}
 
 #[binrw]
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Default)]
 pub struct GimmickRangeInstanceObject {}
 
 #[binrw]
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Default)]
 pub struct ClickableRangeInstanceObject {}
 
 #[binrw]
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Default)]
 pub struct PrefetchRangeInstanceObject {
     pub parent_data: TriggerBoxInstanceObject,
     pub bound_instance_id: u32,
@@ -135,7 +137,7 @@ pub struct PrefetchRangeInstanceObject {
 }
 
 #[binrw]
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct DoorRangeInstanceObject {
     pub parent_data: TriggerBoxInstanceObject,
 }

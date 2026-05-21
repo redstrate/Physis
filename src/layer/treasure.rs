@@ -4,7 +4,7 @@
 use binrw::binrw;
 
 #[binrw]
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Default)]
 pub struct TreasureInstanceObject {
     #[brw(pad_after = 11)] // padding
     /// Index into the Treasure Excel sheet.

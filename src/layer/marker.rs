@@ -7,8 +7,9 @@ use crate::common_file_operations::{read_bool_from, write_bool_as};
 
 #[binrw]
 #[brw(repr = i32)]
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Copy, Default)]
 pub enum PositionMarkerType {
+    #[default]
     DebugZonePop = 0x1,
     DebugJump = 0x2,
     NaviMesh = 0x3,
@@ -16,7 +17,7 @@ pub enum PositionMarkerType {
 }
 
 #[binrw]
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Copy, Default)]
 pub struct PositionMarkerInstanceObject {
     pub position_marker_type: PositionMarkerType,
     pub comment_jp_offset: u32,
@@ -26,14 +27,15 @@ pub struct PositionMarkerInstanceObject {
 #[binrw]
 #[brw(repr = u32)]
 #[repr(u32)]
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Copy, Default)]
 pub enum ChairType {
+    #[default]
     Chair = 0x0,
     Bed = 0x1,
 }
 
 #[binrw]
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Default)]
 pub struct ChairMarkerInstanceObject {
     #[br(map = read_bool_from::<u8>)]
     #[bw(map = write_bool_as::<u8>)]
@@ -49,14 +51,15 @@ pub struct ChairMarkerInstanceObject {
 }
 
 #[binrw]
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Default)]
 pub struct QuestMarkerInstanceObject {}
 
 #[binrw]
 #[brw(repr = i32)]
 #[repr(C)]
-#[derive(Debug, PartialEq, Clone, Copy)]
+#[derive(Debug, PartialEq, Clone, Copy, Default)]
 pub enum TargetMarkerType {
+    #[default]
     UiTarget = 0x0,
     UiNameplate = 0x1,
     LookAt = 0x2,
@@ -65,7 +68,7 @@ pub enum TargetMarkerType {
 }
 
 #[binrw]
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Default)]
 pub struct TargetMarkerInstanceObject {
     pub nameplate_offset_y: f32,
     pub target_marker_type: TargetMarkerType,

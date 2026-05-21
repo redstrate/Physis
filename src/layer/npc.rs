@@ -6,7 +6,7 @@ use binrw::binrw;
 use crate::layer::GameInstanceObject;
 
 #[binrw]
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Default)]
 pub struct NPCInstanceObject {
     pub parent_data: GameInstanceObject,
     pub pop_weather: u32,
@@ -21,7 +21,7 @@ pub struct NPCInstanceObject {
 }
 
 #[binrw]
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Default)]
 pub struct ENPCInstanceObject {
     pub parent_data: NPCInstanceObject,
     #[brw(pad_after = 8)] // padding
@@ -29,7 +29,7 @@ pub struct ENPCInstanceObject {
 }
 
 #[binrw]
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Default)]
 pub struct BNPCInstanceObject {
     pub parent_data: NPCInstanceObject,
     pub name_id: u32,

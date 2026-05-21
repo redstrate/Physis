@@ -4,7 +4,7 @@
 use binrw::binrw;
 
 #[binrw]
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Copy, Default)]
 pub struct Color {
     pub red: u8,
     pub green: u8,
@@ -14,7 +14,7 @@ pub struct Color {
 
 #[binrw]
 #[repr(C)]
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Default)]
 pub struct ColorHDRI {
     pub red: u8,
     pub green: u8,
@@ -24,7 +24,7 @@ pub struct ColorHDRI {
 }
 
 #[binrw]
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Copy, Default)]
 pub struct GameInstanceObject {
     /// For IDs >= 1000000, index into the ENpcBase
     /// For IDs >= 2000000, the row ID reference to EObj/EObjName

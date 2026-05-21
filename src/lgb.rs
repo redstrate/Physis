@@ -233,8 +233,12 @@ impl WritableFile for Lgb {
             // now write the layer data for the final time
             cursor.seek(SeekFrom::Start(layer_data_offset)).unwrap();
             for layer in &self.chunks[0].layers {
-                layer
-                    .header
+                // Write the correct amount of objects and their offsets now
+                let mut new_header = layer.header.clone();
+                new_header.instance_object_count = layer.objects.len() as i32;
+                new_header.instance_object_offset = 52; // TODO: placeholder
+
+                new_header
                     .write_le_args(&mut cursor, (&mut chunk_data_heap, &mut chunk_string_heap))
                     .ok()?;
 

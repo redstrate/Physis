@@ -9,7 +9,7 @@ use crate::{
 };
 
 #[binrw]
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Default)]
 #[br(import(string_heap: &StringHeap, heap_pointer: HeapPointer))]
 #[bw(import(string_heap: &mut StringHeap, heap_pointer: HeapPointer))]
 pub struct CollisionBoxInstanceObject {
@@ -26,8 +26,9 @@ pub struct CollisionBoxInstanceObject {
 #[binrw]
 #[repr(C)]
 #[brw(repr = i32)]
-#[derive(Debug, PartialEq, Clone, Copy)]
+#[derive(Debug, PartialEq, Clone, Copy, Default)]
 pub enum TriggerBoxShape {
+    #[default]
     None = 0x0,
     Box = 0x1,
     Sphere = 0x2,
@@ -38,7 +39,7 @@ pub enum TriggerBoxShape {
 }
 
 #[binrw]
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Default)]
 pub struct TriggerBoxInstanceObject {
     pub trigger_box_shape: TriggerBoxShape,
     pub priority: i16,

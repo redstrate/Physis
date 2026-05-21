@@ -12,15 +12,16 @@ use super::{StringHeap, read_bool_from};
 
 #[binrw]
 #[brw(repr = i32)]
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Copy, Default)]
 pub enum ModelCollisionType {
+    #[default]
     None = 0x0,
     Replace = 0x1,
     Box = 0x2,
 }
 
 #[binrw]
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Default)]
 #[br(import(string_heap: &StringHeap, heap_pointer: HeapPointer))]
 #[bw(import(string_heap: &mut StringHeap, heap_pointer: HeapPointer))]
 pub struct BGInstanceObject {

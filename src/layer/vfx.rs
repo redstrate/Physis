@@ -12,7 +12,7 @@ use crate::{
 #[binrw]
 #[br(import(string_heap: &StringHeap, heap_pointer: HeapPointer))]
 #[bw(import(string_heap: &mut StringHeap, heap_pointer: HeapPointer))]
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Default)]
 pub struct VFXInstanceObject {
     #[brw(args(heap_pointer, string_heap))]
     pub asset_path: HeapString,
@@ -38,14 +38,15 @@ pub struct VFXInstanceObject {
 #[binrw]
 #[brw(repr = i32)]
 #[repr(C)]
-#[derive(Debug, PartialEq, Clone, Copy)]
+#[derive(Debug, PartialEq, Clone, Copy, Default)]
 pub enum LineStyle {
+    #[default]
     Red = 0x1,
     Blue = 0x2,
 }
 
 #[binrw]
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Default)]
 pub struct LineVFXInstanceObject {
     pub line_style: LineStyle,
     padding: [u32; 2],

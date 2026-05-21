@@ -4,7 +4,7 @@
 use binrw::binrw;
 
 #[binrw]
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Default)]
 pub struct GatheringInstanceObject {
     #[brw(pad_after = 4)] // padding
     pub gathering_point_id: u32,

@@ -79,7 +79,7 @@ pub use vfx::{LineStyle, LineVFXInstanceObject, VFXInstanceObject};
 #[binrw]
 #[brw(repr = i32)]
 #[repr(i32)]
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Copy, Clone)]
 pub enum LayerEntryType {
     /// This represents nothing.
     None = 0,
@@ -231,11 +231,12 @@ impl From<&LayerEntryData> for LayerEntryType {
 }
 
 #[binrw]
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Default)]
 #[br(import(magic: &LayerEntryType, string_heap: &StringHeap, heap_pointer: HeapPointer))]
 #[bw(import(string_heap: &mut StringHeap, heap_pointer: HeapPointer))]
 pub enum LayerEntryData {
     /// Representing nothing.
+    #[default]
     #[br(pre_assert(*magic == LayerEntryType::None))]
     None,
     /// Background model.
@@ -346,8 +347,9 @@ pub enum LayerEntryData {
 
 #[binrw]
 #[brw(repr = i32)]
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Default, Copy, Clone)]
 pub enum LayerSetReferencedType {
+    #[default]
     All = 0x0,
     Include = 0x1,
     Exclude = 0x2,
@@ -356,7 +358,7 @@ pub enum LayerSetReferencedType {
 
 /// Metadata information for a [Layer].
 #[binrw]
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 #[br(import(endianness: Endian, data_heap: &StringHeap, string_heap: &StringHeap), stream = r)]
 #[bw(import(data_heap: &mut StringHeap, string_heap: &mut StringHeap), stream = w)]
 #[allow(dead_code)] // most of the fields are unused at the moment
@@ -372,13 +374,16 @@ pub struct LayerHeader {
     #[brw(args(heap_pointer, string_heap))]
     pub name: HeapString,
 
-    pub(crate) instance_object_offset: i32,
-    pub(crate) instance_object_count: i32,
+    // TODO: remove these from public API!!
+    /// This field should be left at it's default. This will be removed in a future version.
+    pub instance_object_offset: i32,
+    /// This field should be left at it's default. This will be removed in a future version.
+    pub instance_object_count: i32,
 
-    /// Whether this layer is only visible in tool mode.
+    /// Whether this layer is visible by default. If false, it does not show up in game.
     #[br(map = read_bool_from::<u8>)]
     #[bw(map = write_bool_as::<u8>)]
-    pub tool_mode_visible: bool,
+    pub visible: bool,
     /// Whether this layer is supposed to be read-only in tool mode.
     #[br(map = read_bool_from::<u8>)]
     #[bw(map = write_bool_as::<u8>)]
@@ -472,8 +477,31 @@ impl LayerHeader {
     }
 }
 
+impl Default for LayerHeader {
+    fn default() -> Self {
+        Self {
+            layer_id: Default::default(),
+            name: Default::default(),
+            instance_object_offset: Default::default(),
+            instance_object_count: Default::default(),
+            visible: true,
+            tool_mode_read_only: Default::default(),
+            is_bush_layer: Default::default(),
+            ps3_visible: Default::default(),
+            layer_set_referenced_list: Default::default(),
+            festival_id: Default::default(),
+            festival_phase_id: Default::default(),
+            is_temporary: Default::default(),
+            is_housing: Default::default(),
+            version_mask: Default::default(),
+            object_set_referenced: Default::default(),
+            object_set_enable_referenced: Default::default(),
+        }
+    }
+}
+
 #[binrw]
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Copy)]
 #[allow(dead_code)] // most of the fields are unused at the moment
 pub struct LayerSetReferenced {
     /// Corresponds to an ID of a [ScnLayerSet](crate::scn::ScnLayerSet).
@@ -483,7 +511,7 @@ pub struct LayerSetReferenced {
 #[binrw]
 #[br(import(data_heap: &StringHeap), stream = r)]
 #[bw(import(data_heap: &mut StringHeap))]
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Default, Clone)]
 pub struct LayerSetReferencedList {
     /// The type of reference.
     pub referenced_type: LayerSetReferencedType,
@@ -502,7 +530,7 @@ pub struct LayerSetReferencedList {
 #[binrw]
 #[br(import(string_heap: &StringHeap), stream = r)]
 #[bw(import(string_heap: &mut StringHeap), stream = w)]
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct ObjectSetReferenced {
     #[br(temp)]
     #[bw(calc = HeapPointer::from_stream(w))]
@@ -522,7 +550,7 @@ pub struct ObjectSetReferenced {
 #[binrw]
 #[br(import(string_heap: &StringHeap), stream = r)]
 #[bw(import(string_heap: &mut StringHeap))]
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct ObjectSetEnableReferenced {
     pub asset_type: LayerEntryType,
     pub instance_id: u32,
@@ -537,7 +565,7 @@ pub struct ObjectSetEnableReferenced {
 
 /// Represents a single object in a [Layer], which could be anything from a light to an aetheryte.
 #[binrw]
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Default)]
 #[br(import(string_heap: &StringHeap))]
 #[bw(import(string_heap: &mut StringHeap), stream = w)]
 #[allow(dead_code)] // most of the fields are unused at the moment

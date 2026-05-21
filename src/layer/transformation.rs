@@ -18,6 +18,16 @@ pub struct Transformation {
     pub scale: [f32; 3],
 }
 
+impl Default for Transformation {
+    fn default() -> Self {
+        Self {
+            translation: Default::default(),
+            rotation: Default::default(),
+            scale: [1.0, 1.0, 1.0],
+        }
+    }
+}
+
 #[cfg(feature = "glam")]
 impl From<Transformation> for glam::Affine3A {
     fn from(t: Transformation) -> Self {

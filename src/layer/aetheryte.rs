@@ -6,7 +6,7 @@ use binrw::binrw;
 use super::GameInstanceObject;
 
 #[binrw]
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Default)]
 pub struct AetheryteInstanceObject {
     pub parent_data: GameInstanceObject,
     #[brw(pad_after = 4)] // padding

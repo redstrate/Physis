@@ -13,15 +13,16 @@ use super::read_bool_from;
 #[binrw]
 #[brw(repr = i32)]
 #[repr(C)]
-#[derive(Debug, PartialEq, Clone, Copy)]
+#[derive(Debug, PartialEq, Clone, Copy, Default)]
 pub enum EnvSetShape {
+    #[default]
     Ellipsoid = 0x1,
     Cuboid = 0x2,
     Cylinder = 0x3,
 }
 
 #[binrw]
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Default)]
 #[br(import(string_heap: &StringHeap, heap_pointer: HeapPointer))]
 #[bw(import(string_heap: &mut StringHeap, heap_pointer: HeapPointer))]
 pub struct EnvSetInstanceObject {
@@ -43,7 +44,7 @@ pub struct EnvSetInstanceObject {
 }
 
 #[binrw]
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Default)]
 #[br(import(string_heap: &StringHeap, heap_pointer: HeapPointer))]
 #[bw(import(string_heap: &mut StringHeap, heap_pointer: HeapPointer))]
 pub struct EnvLocationObject {

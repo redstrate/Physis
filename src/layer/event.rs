@@ -6,7 +6,7 @@ use binrw::binrw;
 use crate::layer::GameInstanceObject;
 
 #[binrw]
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Default)]
 pub struct EventInstanceObject {
     pub parent_data: GameInstanceObject,
     /// A reference to another object, most likely.
