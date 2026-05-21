@@ -32,6 +32,8 @@ pub struct VFXInstanceObject {
     pub fade_far_start: f32,
     pub fade_far_end: f32,
     pub z_correct: f32,
+    pub unk1: u32,
+    pub unk2: u32,
 }
 
 #[binrw]

@@ -169,6 +169,49 @@ pub enum LayerEntryType {
     Unk1 = 0x5A, // Culling related?
 }
 
+impl From<&LayerEntryData> for LayerEntryType {
+    fn from(value: &LayerEntryData) -> Self {
+        match value {
+            LayerEntryData::None => LayerEntryType::None,
+            LayerEntryData::BG(_) => LayerEntryType::BG,
+            LayerEntryData::LayLight(_) => LayerEntryType::LayLight,
+            LayerEntryData::Vfx(_) => LayerEntryType::Vfx,
+            LayerEntryData::PositionMarker(_) => LayerEntryType::PositionMarker,
+            LayerEntryData::SharedGroup(_) => LayerEntryType::SharedGroup,
+            LayerEntryData::Sound(_) => LayerEntryType::Sound,
+            LayerEntryData::EventNPC(_) => LayerEntryType::EventNPC,
+            LayerEntryData::BattleNPC(_) => LayerEntryType::BattleNPC,
+            LayerEntryData::Aetheryte(_) => LayerEntryType::Aetheryte,
+            LayerEntryData::EnvSet(_) => LayerEntryType::EnvSet,
+            LayerEntryData::Gathering(_) => LayerEntryType::Gathering,
+            LayerEntryData::Treasure(_) => LayerEntryType::Treasure,
+            LayerEntryData::PopRange(_) => LayerEntryType::PopRange,
+            LayerEntryData::ExitRange(_) => LayerEntryType::ExitRange,
+            LayerEntryData::MapRange(_) => LayerEntryType::MapRange,
+            LayerEntryData::EventObject(_) => LayerEntryType::EventObject,
+            LayerEntryData::EnvLocation(_) => LayerEntryType::EnvLocation,
+            LayerEntryData::EventRange(_) => LayerEntryType::EventRange,
+            LayerEntryData::QuestMarker(_) => LayerEntryType::QuestMarker,
+            LayerEntryData::CollisionBox(_) => LayerEntryType::CollisionBox,
+            LayerEntryData::LineVFX(_) => LayerEntryType::LineVFX,
+            LayerEntryData::ClientPath(_) => LayerEntryType::ClientPath,
+            LayerEntryData::ServerPath(_) => LayerEntryType::ServerPath,
+            LayerEntryData::GimmickRange(_) => LayerEntryType::GimmickRange,
+            LayerEntryData::TargetMarker(_) => LayerEntryType::TargetMarker,
+            LayerEntryData::ChairMarker(_) => LayerEntryType::ChairMarker,
+            LayerEntryData::ClickableRange(_) => LayerEntryType::ClickableRange,
+            LayerEntryData::PrefetchRange(_) => LayerEntryType::PrefetchRange,
+            LayerEntryData::FateRange(_) => LayerEntryType::FateRange,
+            LayerEntryData::Unk1() => LayerEntryType::Unk1,
+            LayerEntryData::Unk2() => LayerEntryType::Unk2,
+            LayerEntryData::Unk3() => LayerEntryType::Unk3,
+            LayerEntryData::Unk4() => LayerEntryType::Unk4,
+            LayerEntryData::DoorRange(_) => LayerEntryType::DoorRange,
+            LayerEntryData::Unknown() => unreachable!(),
+        }
+    }
+}
+
 #[binrw]
 #[derive(Debug, PartialEq)]
 #[br(import(magic: &LayerEntryType, string_heap: &StringHeap, heap_pointer: HeapPointer))]
@@ -368,7 +411,7 @@ pub struct LayerHeader {
 
     /// The layer set referenced list.
     #[br(calc = data_heap.read_args(r, endianness, heap_pointer, layer_set_referenced_list_offset))]
-    #[bw(ignore)]
+    #[bw(ignore)] // Written above
     pub layer_set_referenced_list: LayerSetReferencedList,
 
     /// Only show this layer if this festival ID is active.
@@ -390,24 +433,34 @@ pub struct LayerHeader {
     pub version_mask: u16,
 
     #[brw(pad_before = 4)]
-    pub(crate) ob_set_referenced_list_offset: i32,
-    pub(crate) ob_set_referenced_list_count: i32,
+    #[br(temp)]
+    #[bw(calc = data_heap.get_free_vec_offset_args(object_set_referenced, string_heap))]
+    ob_set_referenced_list_offset: i32,
+    #[bw(calc = object_set_referenced.len() as i32)]
+    #[br(temp)]
+    ob_set_referenced_list_count: i32,
 
     /// The object set referenced.
     #[br(calc = data_heap.read_vec_args(r, endianness, string_heap, heap_pointer, ob_set_referenced_list_count as usize, ob_set_referenced_list_offset))]
-    #[bw(ignore)]
+    #[bw(ignore)] // Written above
     pub object_set_referenced: Vec<ObjectSetReferenced>,
 
-    pub(crate) ob_set_enable_referenced_list_offset: i32,
-    pub(crate) ob_set_enable_referenced_list_count: i32,
+    #[br(temp)]
+    #[bw(calc = data_heap.get_free_vec_offset_args(object_set_enable_referenced, string_heap))]
+    ob_set_enable_referenced_list_offset: i32,
+    #[bw(calc = object_set_enable_referenced.len() as i32)]
+    #[br(temp)]
+    ob_set_enable_referenced_list_count: i32,
 
     /// The object set enable referenced.
     #[br(calc = data_heap.read_vec_args(r, endianness, string_heap, heap_pointer, ob_set_enable_referenced_list_count as usize, ob_set_enable_referenced_list_offset))]
-    #[bw(ignore)]
+    #[bw(ignore)] // Written above
     pub object_set_enable_referenced: Vec<ObjectSetEnableReferenced>,
 }
 
 impl LayerHeader {
+    pub const SIZE: usize = 0x34;
+
     /// Whether this layer set ID is included or excluded.
     pub fn has_layer_set(&self, id: u32) -> bool {
         match self.layer_set_referenced_list.referenced_type {
@@ -446,10 +499,11 @@ pub struct LayerSetReferencedList {
     #[bw(calc = data_heap.get_free_offset(&layer_sets))]
     layer_set_offset: i32,
     #[bw(calc = layer_sets.len() as i32)]
-    pub layer_set_count: i32,
+    #[br(temp)]
+    layer_set_count: i32,
 
     #[br(count = layer_set_count)]
-    #[bw(ignore)]
+    #[bw(ignore)] // Written above
     pub layer_sets: Vec<LayerSetReferenced>,
 }
 
@@ -501,6 +555,8 @@ pub struct InstanceObject {
     #[bw(ignore)]
     heap_pointer: HeapPointer,
 
+    #[bw(calc = data.into())]
+    #[br(temp)]
     asset_type: LayerEntryType,
     /// The unique ID of this object.
     pub instance_id: u32,
@@ -557,37 +613,20 @@ impl Layer {
                     ))
                     .unwrap();
 
-                let start = cursor.stream_position().unwrap();
-
                 objects
                     .push(InstanceObject::read_options(cursor, endianness, (string_heap,)).ok()?);
-
-                let after_immediate_read = cursor.stream_position().unwrap();
-
-                let next_offset = if i + 1 < header.instance_object_count {
-                    old_pos
-                        + header.instance_object_offset as u64
-                        + instance_offsets[i as usize + 1] as u64
-                } else {
-                    old_pos + header.ob_set_referenced_list_offset as u64
-                };
-
-                let expected_size = next_offset as u64 - start;
-                let actual_size = after_immediate_read - start;
-
-                // TODO: remove this once all the objects are fixed!
-                // TODO: check if we hit unknown/unhandled data types too
-                /*if cfg!(debug_assertions) && expected_size != actual_size {
-                    println!(
-                        "{:#?} doesn't match the expected size! it's supposed to be {} bytes, but we read {} instead",
-                        objects.last(),
-                        expected_size,
-                        actual_size
-                    );
-                }*/
             }
         }
 
         Some(Layer { header, objects })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn test_layerheader_size() {
+        // FIXME: Needs StringHeap
+        // ensure_size::<LayerHeader, { LayerHeader::SIZE }>();
     }
 }

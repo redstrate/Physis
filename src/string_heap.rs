@@ -111,6 +111,25 @@ impl StringHeap {
         old_pos as i32
     }
 
+    pub(crate) fn get_free_vec_offset_args<T>(
+        &mut self,
+        obj: &Vec<T>,
+        string_heap: &mut StringHeap,
+    ) -> i32
+    where
+        T: for<'a> BinWrite<Args<'a> = (&'a mut StringHeap,)> + std::fmt::Debug,
+    {
+        let mut cursor = Cursor::new(Vec::new());
+
+        {
+            for object in obj {
+                object.write_le_args(&mut cursor, (string_heap,)).unwrap();
+            }
+        }
+
+        self.get_free_offset(&cursor.into_inner())
+    }
+
     pub(crate) fn get_free_offset<T>(&mut self, obj: &T) -> i32
     where
         T: for<'a> BinWrite<Args<'a> = ()> + std::fmt::Debug,

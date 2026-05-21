@@ -45,6 +45,7 @@ struct LayerChunkHeader {
     #[br(args(heap_pointer, string_heap))]
     #[bw(args(string_heap))]
     pub name: HeapString,
+
     layer_offset: i32,
     layer_count: i32,
 }
@@ -171,6 +172,7 @@ impl WritableFile for Lgb {
                 .ok()?;
 
             let mut offsets: Vec<i32> = Vec::new();
+            let mut object_offsets: Vec<i32> = Vec::new();
 
             let layer_data_offset = cursor.position();
 
@@ -186,7 +188,16 @@ impl WritableFile for Lgb {
                     .write_le_args(&mut cursor, (&mut chunk_data_heap, &mut chunk_string_heap))
                     .ok()?;
 
+                // Skip offsets that will be written later.
+                cursor
+                    .seek(SeekFrom::Current(
+                        layer.objects.len() as i64 * std::mem::size_of::<u32>() as i64,
+                    ))
+                    .ok()?;
+
                 for obj in &layer.objects {
+                    object_offsets.push(cursor.stream_position().ok()? as i32);
+
                     obj.write_le_args(&mut cursor, (&mut chunk_string_heap,))
                         .ok()?;
                 }
@@ -239,6 +250,8 @@ impl WritableFile for Lgb {
                     .write_le_args(&mut cursor, (&mut chunk_data_heap, &mut chunk_string_heap))
                     .ok()?;
 
+                object_offsets.write_le(&mut cursor).ok()?;
+
                 for obj in &layer.objects {
                     obj.write_le_args(&mut cursor, (&mut chunk_string_heap,))
                         .ok()?;
@@ -283,7 +296,9 @@ mod tests {
 
     use crate::common::ensure_size;
     use crate::layer::{
-        LayerHeader, LayerSetReferenced, LayerSetReferencedList, LayerSetReferencedType,
+        Color, InstanceObject, LayerEntryData, LayerEntryType, LayerHeader, LayerSetReferenced,
+        LayerSetReferencedList, LayerSetReferencedType, ObjectSetReferenced, Transformation,
+        VFXInstanceObject,
     };
     use crate::pass_random_invalid;
     use crate::string_heap::HeapString;
@@ -379,11 +394,7 @@ mod tests {
                     is_temporary: false,
                     is_housing: false,
                     version_mask: 47,
-                    ob_set_referenced_list_offset: 68,
-                    ob_set_referenced_list_count: 0,
                     object_set_referenced: vec![],
-                    ob_set_enable_referenced_list_offset: 68,
-                    ob_set_enable_referenced_list_count: 0,
                     object_set_enable_referenced: vec![],
                 },
                 objects: vec![]
@@ -426,11 +437,7 @@ mod tests {
                         is_temporary: false,
                         is_housing: false,
                         version_mask: 47,
-                        ob_set_referenced_list_offset: 68,
-                        ob_set_referenced_list_count: 0,
                         object_set_referenced: vec![],
-                        ob_set_enable_referenced_list_offset: 68,
-                        ob_set_enable_referenced_list_count: 0,
                         object_set_enable_referenced: vec![],
                     },
                     objects: vec![],
