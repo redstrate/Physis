@@ -159,7 +159,7 @@ impl WritableFile for Lgb {
                 ))
                 .ok()?;
 
-            let mut offsets: Vec<i32> = Vec::new();
+            let mut layer_offsets: Vec<i32> = Vec::new();
             let mut object_offsets: Vec<i32> = Vec::new();
 
             let layer_data_offset = cursor.position();
@@ -168,15 +168,14 @@ impl WritableFile for Lgb {
             for layer in &self.chunks[0].layers {
                 // set offset
                 // this is also used to reference positions inside this layer
-                let layer_offset = cursor.position() as i32;
-                offsets.push(layer_offset);
+                layer_offsets.push(cursor.position() as i32);
 
                 layer
                     .header
                     .write_le_args(&mut cursor, (&mut chunk_data_heap, &mut chunk_string_heap))
                     .ok()?;
 
-                let offset_base = cursor.stream_position().ok()? as i32;
+                let object_offset_base = cursor.stream_position().ok()? as i32;
 
                 // Skip offsets that will be written later.
                 cursor
@@ -186,7 +185,7 @@ impl WritableFile for Lgb {
                     .ok()?;
 
                 for obj in &layer.objects {
-                    object_offsets.push(cursor.stream_position().ok()? as i32 - offset_base);
+                    object_offsets.push(cursor.stream_position().ok()? as i32 - object_offset_base);
 
                     obj.write_le_args(&mut cursor, (&mut chunk_string_heap,))
                         .ok()?;
@@ -194,15 +193,15 @@ impl WritableFile for Lgb {
             }
 
             // make sure the heaps are at the end of the layer data:
-            let data_base = cursor.stream_position().ok()? + LgbHeader::SIZE as u64;
+            let data_offset = cursor.stream_position().ok()? + LgbHeader::SIZE as u64;
 
             // second pass: write layers again, we want to get a correct *chunk_string_heap* now that we know of the size of chunk_data_heap
             chunk_data_heap = StringHeap {
-                free_pos: data_base,
+                free_pos: data_offset,
                 ..Default::default()
             };
             chunk_string_heap = StringHeap {
-                free_pos: data_base + chunk_data_heap.bytes.len() as u64,
+                free_pos: data_offset + chunk_data_heap.bytes.len() as u64,
                 ..Default::default()
             };
 
@@ -246,9 +245,9 @@ impl WritableFile for Lgb {
             chunk_string_heap.write_le(&mut cursor).ok()?;
 
             // write offsets
-            assert_eq!(offsets.len(), self.chunks[0].layers.len());
+            assert_eq!(layer_offsets.len(), self.chunks[0].layers.len());
             cursor.seek(SeekFrom::Start(offset_pos)).ok()?;
-            for offset in offsets {
+            for offset in layer_offsets {
                 // TODO: im probably subtracting from the wrong offset
                 (offset - offset_pos as i32).write_le(&mut cursor).ok()?;
             }
@@ -279,9 +278,9 @@ mod tests {
 
     use crate::common::ensure_size;
     use crate::layer::{
-        InstanceObject, LayerEntryData, LayerHeader, LayerSetReferenced,
-        LayerSetReferencedList, LayerSetReferencedType, SoundEffectType,
-        SoundInstanceObject, SoundParameters, Transformation,
+        InstanceObject, LayerEntryData, LayerHeader, LayerSetReferenced, LayerSetReferencedList,
+        LayerSetReferencedType, SoundEffectType, SoundInstanceObject, SoundParameters,
+        Transformation,
     };
     use crate::pass_random_invalid;
     use crate::string_heap::HeapString;
