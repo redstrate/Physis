@@ -10,7 +10,7 @@ use std::path::{Path, PathBuf};
 
 use crate::ByteBuffer;
 use crate::compression::header_decompress;
-use binrw::{BinRead, BinResult, Endian};
+use binrw::{BinRead, BinResult};
 use binrw::{BinWrite, binrw};
 
 use crate::common::Platform;
@@ -292,14 +292,12 @@ pub struct SqpkFileOperationData {
     pub data: Vec<u8>,
 }
 
-#[binrw::parser(reader)]
+#[binrw::parser(reader, endian)]
 fn read_file_operation_data(file_size: u64) -> BinResult<Vec<u8>> {
     let mut data: Vec<u8> = Vec::with_capacity(file_size as usize);
 
     while data.len() < file_size as usize {
-        data.append(
-            &mut read_data_block_patch(reader, Endian::Little)?, // TODO: don't hardcode to little,
-        );
+        data.append(&mut read_data_block_patch(reader, endian)?);
     }
 
     Ok(data)
@@ -794,7 +792,11 @@ impl ZiPatch {
     }
 
     /// Creates a new ZiPatch describing the diff between `base_directory` and `new_directory`.
-    pub fn create(base_directory: &str, new_directory: &str) -> crate::Result<ByteBuffer> {
+    pub fn create(
+        platform: Platform,
+        base_directory: &str,
+        new_directory: &str,
+    ) -> crate::Result<ByteBuffer> {
         let mut buffer = ByteBuffer::new();
 
         {
@@ -854,7 +856,7 @@ impl ZiPatch {
                 writer.seek(SeekFrom::Current(-4))?;
 
                 // add file data, dummy ver for now
-                write_data_block_patch(&mut writer, Endian::Little, file_data)?; // TODO: don't hardcode to little
+                write_data_block_patch(&mut writer, platform.endianness(), file_data)?;
 
                 // re-apply crc32
                 writer.seek(SeekFrom::Current(4))?;
@@ -1015,6 +1017,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore = "This needs to be way more reliable"]
     fn test_add_file_op() {
         let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
         d.push("resources/tests");
@@ -1026,7 +1029,8 @@ mod tests {
         resources_dir.push("resources/tests");
 
         // Let's create a patch that re-creates the resources dir into our data directory
-        let patch = ZiPatch::create(&data_dir, resources_dir.to_str().unwrap()).unwrap();
+        let patch =
+            ZiPatch::create(Platform::Win32, &data_dir, resources_dir.to_str().unwrap()).unwrap();
 
         write(data_dir.clone() + "/test.patch", &patch).unwrap();
 

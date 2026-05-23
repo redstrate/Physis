@@ -13,10 +13,10 @@ const MAX_BYTE_FLOAT: f32 = u8::MAX as f32;
 impl MDL {
     pub(crate) fn read_byte_float4(cursor: &mut Cursor<ByteSpan>) -> BinResult<[f32; 4]> {
         Ok([
-            (f32::from(cursor.read_le::<u8>()?) / MAX_BYTE_FLOAT),
-            (f32::from(cursor.read_le::<u8>()?) / MAX_BYTE_FLOAT),
-            (f32::from(cursor.read_le::<u8>()?) / MAX_BYTE_FLOAT),
-            (f32::from(cursor.read_le::<u8>()?) / MAX_BYTE_FLOAT),
+            (f32::from(cursor.read_ne::<u8>()?) / MAX_BYTE_FLOAT),
+            (f32::from(cursor.read_ne::<u8>()?) / MAX_BYTE_FLOAT),
+            (f32::from(cursor.read_ne::<u8>()?) / MAX_BYTE_FLOAT),
+            (f32::from(cursor.read_ne::<u8>()?) / MAX_BYTE_FLOAT),
         ])
     }
 
@@ -24,7 +24,7 @@ impl MDL {
         cursor: &mut T,
         vec: &[f32; 4],
     ) -> BinResult<()> {
-        cursor.write_le::<[u8; 4]>(&[
+        cursor.write_ne::<[u8; 4]>(&[
             (vec[0] * MAX_BYTE_FLOAT).round() as u8,
             (vec[1] * MAX_BYTE_FLOAT).round() as u8,
             (vec[2] * MAX_BYTE_FLOAT).round() as u8,
@@ -36,7 +36,7 @@ impl MDL {
         cursor: &mut T,
         vec: &[f32; 4],
     ) -> BinResult<()> {
-        cursor.write_le::<[u8; 4]>(&[
+        cursor.write_ne::<[u8; 4]>(&[
             (vec[0]).round() as u8,
             (vec[1]).round() as u8,
             (vec[2]).round() as u8,
@@ -46,10 +46,10 @@ impl MDL {
 
     pub(crate) fn read_tangent(cursor: &mut Cursor<ByteSpan>) -> BinResult<[f32; 4]> {
         Ok([
-            (f32::from(cursor.read_le::<u8>()?) * 2.0 / MAX_BYTE_FLOAT - 1.0),
-            (f32::from(cursor.read_le::<u8>()?) * 2.0 / MAX_BYTE_FLOAT - 1.0),
-            (f32::from(cursor.read_le::<u8>()?) * 2.0 / MAX_BYTE_FLOAT - 1.0),
-            if (f32::from(cursor.read_le::<u8>()?) * 2.0 / MAX_BYTE_FLOAT - 1.0) == 1.0 {
+            (f32::from(cursor.read_ne::<u8>()?) * 2.0 / MAX_BYTE_FLOAT - 1.0),
+            (f32::from(cursor.read_ne::<u8>()?) * 2.0 / MAX_BYTE_FLOAT - 1.0),
+            (f32::from(cursor.read_ne::<u8>()?) * 2.0 / MAX_BYTE_FLOAT - 1.0),
+            if (f32::from(cursor.read_ne::<u8>()?) * 2.0 / MAX_BYTE_FLOAT - 1.0) == 1.0 {
                 1.0
             } else {
                 -1.0
@@ -58,7 +58,7 @@ impl MDL {
     }
 
     pub(crate) fn write_tangent<T: BinWriterExt>(cursor: &mut T, vec: &[f32; 4]) -> BinResult<()> {
-        cursor.write_le::<[u8; 4]>(&[
+        cursor.write_ne::<[u8; 4]>(&[
             ((vec[0] + 1.0) * (MAX_BYTE_FLOAT / 2.0)).round() as u8,
             ((vec[1] + 1.0) * (MAX_BYTE_FLOAT / 2.0)).round() as u8,
             ((vec[2] + 1.0) * (MAX_BYTE_FLOAT / 2.0)).round() as u8,
@@ -115,11 +115,11 @@ impl MDL {
     }
 
     pub(crate) fn read_byte4(cursor: &mut Cursor<ByteSpan>) -> BinResult<[u8; 4]> {
-        cursor.read_le::<[u8; 4]>()
+        cursor.read_ne::<[u8; 4]>()
     }
 
     pub(crate) fn write_byte4<T: BinWriterExt>(cursor: &mut T, vec: &[u8; 4]) -> BinResult<()> {
-        cursor.write_le::<[u8; 4]>(vec)
+        cursor.write_ne::<[u8; 4]>(vec)
     }
 
     pub(crate) fn read_single3(

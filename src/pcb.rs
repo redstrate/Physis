@@ -23,7 +23,7 @@ struct PcbResourceHeader {
     total_polygons: u32,
 }
 
-#[binrw::parser(reader)]
+#[binrw::parser(reader, endian)]
 fn parse_resource_node_children(
     child1_offset: u32,
     child2_offset: u32,
@@ -34,12 +34,12 @@ fn parse_resource_node_children(
     let mut children = Vec::new();
     if child1_offset != 0 {
         reader.seek(SeekFrom::Start(struct_start + child1_offset as u64))?;
-        children.push(ResourceNode::read_le(reader)?);
+        children.push(ResourceNode::read_options(reader, endian, ())?);
     }
 
     if child2_offset != 0 {
         reader.seek(SeekFrom::Start(struct_start + child2_offset as u64))?;
-        children.push(ResourceNode::read_le(reader)?);
+        children.push(ResourceNode::read_options(reader, endian, ())?);
     }
 
     Ok(children)

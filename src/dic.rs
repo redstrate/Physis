@@ -79,6 +79,8 @@ impl ReadableFile for Dictionary {
         let map_start = 0x8750u32;
         let map_size = 0x200u32;
 
+        let endian = platform.endianness();
+
         // fix up offsets
         for offset in &mut dict.block_offsets {
             *offset = *offset + map_start + map_size;
@@ -87,31 +89,31 @@ impl ReadableFile for Dictionary {
         for i in 0..dict.block_lengths[0] / 2 {
             let offset = dict.block_offsets[0] + i * 2;
             cursor.seek(SeekFrom::Start(offset as u64))?;
-            dict.begin_node.push(cursor.read_le::<u16>()?);
+            dict.begin_node.push(cursor.read_type::<u16>(endian)?);
         }
 
         for i in 0..dict.block_lengths[1] / 2 {
             let offset = dict.block_offsets[1] + i * 2;
             cursor.seek(SeekFrom::Start(offset as u64))?;
-            dict.inner_node.push(cursor.read_le::<u16>()?);
+            dict.inner_node.push(cursor.read_type::<u16>(endian)?);
         }
 
         for i in 0..dict.block_lengths[2] / 2 {
             let offset = dict.block_offsets[2] + i * 2;
             cursor.seek(SeekFrom::Start(offset as u64))?;
-            dict.chara.push(cursor.read_le::<u16>()?);
+            dict.chara.push(cursor.read_type::<u16>(endian)?);
         }
 
         for i in 0..dict.block_lengths[3] / 2 {
             let offset = dict.block_offsets[3] + i * 2;
             cursor.seek(SeekFrom::Start(offset as u64))?;
-            dict.word.push(cursor.read_le::<u16>()?);
+            dict.word.push(cursor.read_type::<u16>(endian)?);
         }
 
         for i in 0..dict.block_lengths[4] / 16 {
             let offset = dict.block_offsets[4] + i * 16;
             cursor.seek(SeekFrom::Start(offset as u64))?;
-            dict.entries.push(cursor.read_le::<EntryItem>()?);
+            dict.entries.push(cursor.read_type::<EntryItem>(endian)?);
         }
 
         let mut dict = Dictionary {

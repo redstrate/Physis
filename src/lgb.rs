@@ -128,8 +128,9 @@ impl ReadableFile for Lgb {
 }
 
 impl WritableFile for Lgb {
-    fn write_to_buffer(&self, _platform: Platform) -> crate::Result<ByteBuffer> {
+    fn write_to_buffer(&self, platform: Platform) -> crate::Result<ByteBuffer> {
         let mut buffer = ByteBuffer::new();
+        let endian = platform.endianness();
 
         {
             let mut cursor = Cursor::new(&mut buffer);
@@ -162,9 +163,11 @@ impl WritableFile for Lgb {
                 // this is also used to reference positions inside this layer
                 layer_offsets.push(cursor.position() as i32);
 
-                layer
-                    .header
-                    .write_le_args(&mut cursor, (&mut chunk_data_heap, &mut chunk_string_heap))?;
+                layer.header.write_options(
+                    &mut cursor,
+                    endian,
+                    (&mut chunk_data_heap, &mut chunk_string_heap),
+                )?;
 
                 let object_offset_base = cursor.stream_position()? as i32;
 
@@ -176,7 +179,7 @@ impl WritableFile for Lgb {
                 for obj in &layer.objects {
                     object_offsets.push(cursor.stream_position()? as i32 - object_offset_base);
 
-                    obj.write_le_args(&mut cursor, (&mut chunk_string_heap,))?;
+                    obj.write_options(&mut cursor, endian, (&mut chunk_string_heap,))?;
                 }
             }
 
@@ -212,7 +215,7 @@ impl WritableFile for Lgb {
                 layer_offset: 16, // lol
                 layer_count: self.chunks[0].layers.len() as i32,
             };
-            layer_chunk.write_le_args(&mut cursor, (&mut chunk_string_heap,))?;
+            layer_chunk.write_options(&mut cursor, endian, (&mut chunk_string_heap,))?;
 
             // now write the layer data for the final time
             cursor.seek(SeekFrom::Start(layer_data_offset))?;
@@ -222,26 +225,29 @@ impl WritableFile for Lgb {
                 new_header.instance_object_count = layer.objects.len() as i32;
                 new_header.instance_object_offset = 52; // TODO: placeholder
 
-                new_header
-                    .write_le_args(&mut cursor, (&mut chunk_data_heap, &mut chunk_string_heap))?;
+                new_header.write_options(
+                    &mut cursor,
+                    endian,
+                    (&mut chunk_data_heap, &mut chunk_string_heap),
+                )?;
 
-                object_offsets.write_le(&mut cursor)?;
+                object_offsets.write_options(&mut cursor, endian, ())?;
 
                 for obj in &layer.objects {
-                    obj.write_le_args(&mut cursor, (&mut chunk_string_heap,))?;
+                    obj.write_options(&mut cursor, endian, (&mut chunk_string_heap,))?;
                 }
             }
 
             // write the heaps
-            chunk_data_heap.write_le(&mut cursor)?;
-            chunk_string_heap.write_le(&mut cursor)?;
+            chunk_data_heap.write_options(&mut cursor, endian, ())?;
+            chunk_string_heap.write_options(&mut cursor, endian, ())?;
 
             // write offsets
             assert_eq!(layer_offsets.len(), self.chunks[0].layers.len());
             cursor.seek(SeekFrom::Start(offset_pos))?;
             for offset in layer_offsets {
                 // TODO: im probably subtracting from the wrong offset
-                (offset - offset_pos as i32).write_le(&mut cursor)?;
+                (offset - offset_pos as i32).write_options(&mut cursor, endian, ())?;
             }
         }
 
@@ -256,7 +262,7 @@ impl WritableFile for Lgb {
                 file_size,
                 total_chunk_count: self.chunks.len() as i32,
             };
-            lgb_header.write_le(&mut cursor)?;
+            lgb_header.write_options(&mut cursor, endian, ())?;
         }
 
         Ok(buffer)

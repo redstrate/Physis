@@ -328,7 +328,7 @@ impl Page {
                             bytes.write(&mut cursor).unwrap();
 
                             // nul terminator
-                            0u8.write_le(&mut cursor).unwrap();
+                            0u8.write_ne(&mut cursor).unwrap();
                         }
                     }
                 };
@@ -342,7 +342,7 @@ impl Page {
             let boundary_pos = cursor.stream_position().unwrap();
             let remainder = boundary_pos.div_ceil(4) * 4;
             for _ in 0..remainder - boundary_pos {
-                0u8.write_le(&mut cursor).unwrap();
+                0u8.write_ne(&mut cursor).unwrap();
             }
 
             let new_pos = cursor.stream_position().unwrap();

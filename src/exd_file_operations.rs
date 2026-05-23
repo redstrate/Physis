@@ -93,7 +93,7 @@ pub(crate) fn write_row<T: Write + Seek>(writer: &mut T, exh: &EXH, row: &Row) {
         if expected_offset > current_offset {
             let missing = expected_offset - current_offset;
             for _ in 0..missing {
-                0u8.write_le(writer).unwrap();
+                0u8.write_ne(writer).unwrap();
                 current_offset += 1;
             }
         }
@@ -116,7 +116,7 @@ pub(crate) fn write_row<T: Write + Seek>(writer: &mut T, exh: &EXH, row: &Row) {
         // Add any needed padding at the end
         if definition.offset == largest_offset {
             for _ in 0..(padding as u64).saturating_sub(written_length) {
-                0u8.write_le(writer).unwrap();
+                0u8.write_ne(writer).unwrap();
             }
         }
     }
@@ -208,7 +208,7 @@ impl EXD {
                 | ColumnDataType::PackedBool6
                 | ColumnDataType::PackedBool7 => {
                     if let Some(byte) = packed_bools.get(&column_definition.offset) {
-                        byte.write_le(cursor).unwrap();
+                        byte.write_ne(cursor).unwrap();
 
                         // then remove it so the next packed bool column doesn't write it again
                         packed_bools.remove(&column_definition.offset);

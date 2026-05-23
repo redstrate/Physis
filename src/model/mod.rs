@@ -1133,7 +1133,7 @@ impl ReadableFile for MDL {
                         ))?;
 
                         for _ in 0..stride {
-                            vertex_data.push(cursor.read_le::<u8>()?);
+                            vertex_data.push(cursor.read_ne::<u8>()?);
                         }
                     }
 
@@ -1372,7 +1372,7 @@ impl WritableFile for MDL {
                                 * size_of::<u16>() as u32)) as u64,
                     ))?;
 
-                    cursor.write_le(&part.indices)?;
+                    cursor.write_type(&part.indices, endianness)?;
                 }
             }
         }
