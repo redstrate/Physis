@@ -53,12 +53,10 @@ pub(crate) fn read_timeline_list_2(struct_offset: i64) -> BinResult<Vec<TmfcData
         reader.read_type_args(endian, VecArgs::builder().count(count as usize).finalize())?;
 
     for data in &mut list {
-        data.rows = reader
-            .read_type_args(
-                endian,
-                VecArgs::builder().count(data.row_count as usize).finalize(),
-            )
-            .unwrap();
+        data.rows = reader.read_type_args(
+            endian,
+            VecArgs::builder().count(data.row_count as usize).finalize(),
+        )?;
     }
 
     reader.seek(SeekFrom::Start(pos))?;
@@ -280,27 +278,30 @@ pub struct Tmb {
 }
 
 impl ReadableFile for Tmb {
-    fn from_existing(platform: Platform, buffer: ByteSpan) -> Option<Self> {
+    fn from_existing(platform: Platform, buffer: ByteSpan) -> crate::Result<Self> {
         let mut cursor = Cursor::new(buffer);
         let string_heap = StringHeap::from(0);
-        Tmb::read_options(&mut cursor, platform.endianness(), (&string_heap,)).ok()
+        Ok(Tmb::read_options(
+            &mut cursor,
+            platform.endianness(),
+            (&string_heap,),
+        )?)
     }
 }
 
 impl WritableFile for Tmb {
-    fn write_to_buffer(&self, platform: Platform) -> Option<ByteBuffer> {
+    fn write_to_buffer(&self, platform: Platform) -> crate::Result<ByteBuffer> {
         let mut buffer = ByteBuffer::new();
 
         {
             let mut cursor = Cursor::new(&mut buffer);
             let mut string_heap = StringHeap::from(0);
-            self.write_options(&mut cursor, platform.endianness(), (&mut string_heap,))
-                .ok()?;
+            self.write_options(&mut cursor, platform.endianness(), (&mut string_heap,))?;
 
             // TODO: write string heap
         }
 
-        Some(buffer)
+        Ok(buffer)
     }
 }
 

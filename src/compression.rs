@@ -6,7 +6,7 @@ use std::ptr::null_mut;
 use libz_rs_sys::*;
 
 /// Decompress ZLib data that has no header.
-pub fn no_header_decompress(in_data: &mut [u8], out_data: &mut [u8]) -> bool {
+pub fn no_header_decompress(in_data: &mut [u8], out_data: &mut [u8]) -> crate::Result<()> {
     unsafe {
         let mut strm = z_stream {
             next_in: null_mut(),
@@ -32,7 +32,7 @@ pub fn no_header_decompress(in_data: &mut [u8], out_data: &mut [u8]) -> bool {
             core::mem::size_of::<z_stream>() as i32,
         );
         if ret != Z_OK {
-            return false;
+            return Err(crate::Error::Zlib(ret));
         }
 
         strm.next_in = in_data.as_mut_ptr();
@@ -41,17 +41,17 @@ pub fn no_header_decompress(in_data: &mut [u8], out_data: &mut [u8]) -> bool {
 
         let ret = inflate(&mut strm, Z_NO_FLUSH);
         if ret != Z_STREAM_END {
-            return false;
+            return Err(crate::Error::Zlib(ret));
         }
 
         inflateEnd(&mut strm);
 
-        true
+        Ok(())
     }
 }
 
 /// Decompress zlib data that has a header.
-pub fn header_decompress(in_data: &mut [u8], out_data: &mut [u8]) -> Option<usize> {
+pub fn header_decompress(in_data: &mut [u8], out_data: &mut [u8]) -> crate::Result<usize> {
     unsafe {
         let mut strm = z_stream {
             next_in: null_mut(),
@@ -76,7 +76,7 @@ pub fn header_decompress(in_data: &mut [u8], out_data: &mut [u8]) -> Option<usiz
             core::mem::size_of::<z_stream>() as i32,
         );
         if ret != Z_OK {
-            return None;
+            return Err(crate::Error::Zlib(ret));
         }
 
         strm.next_in = in_data.as_mut_ptr();
@@ -85,11 +85,11 @@ pub fn header_decompress(in_data: &mut [u8], out_data: &mut [u8]) -> Option<usiz
 
         let ret = inflate(&mut strm, Z_NO_FLUSH);
         if ret != Z_STREAM_END && ret != Z_OK {
-            return None;
+            return Err(crate::Error::Zlib(ret));
         }
 
         inflateEnd(&mut strm);
 
-        Some(out_data.len() - strm.avail_out as usize)
+        Ok(out_data.len() - strm.avail_out as usize)
     }
 }

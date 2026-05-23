@@ -34,17 +34,21 @@ pub struct Essb {
 }
 
 impl ReadableFile for Essb {
-    fn from_existing(platform: Platform, buffer: ByteSpan) -> Option<Self> {
+    fn from_existing(platform: Platform, buffer: ByteSpan) -> crate::Result<Self> {
         let endianness = platform.endianness();
         let mut cursor = Cursor::new(buffer);
         let string_heap = StringHeap::from(cursor.position() as i64);
 
-        Essb::read_options(&mut cursor, endianness, (&string_heap,)).ok()
+        Ok(Essb::read_options(
+            &mut cursor,
+            endianness,
+            (&string_heap,),
+        )?)
     }
 }
 
 impl WritableFile for Essb {
-    fn write_to_buffer(&self, platform: Platform) -> Option<crate::ByteBuffer> {
+    fn write_to_buffer(&self, platform: Platform) -> crate::Result<ByteBuffer> {
         let mut buffer = ByteBuffer::new();
 
         {
@@ -53,18 +57,15 @@ impl WritableFile for Essb {
             // TODO: need dual pass
 
             let mut cursor = Cursor::new(&mut buffer);
-            self.write_options(&mut cursor, platform.endianness(), (&mut string_heap,))
-                .ok()?;
+            self.write_options(&mut cursor, platform.endianness(), (&mut string_heap,))?;
 
-            string_heap
-                .write_options(&mut cursor, platform.endianness(), ())
-                .ok()?;
+            string_heap.write_options(&mut cursor, platform.endianness(), ())?;
 
             let unk_ending = &[0x0; 8];
-            cursor.write_all(unk_ending).ok()?;
+            cursor.write_all(unk_ending)?;
         }
 
-        Some(buffer)
+        Ok(buffer)
     }
 }
 

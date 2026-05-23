@@ -479,7 +479,7 @@ fn layers_from_offsets(offsets: &Vec<i32>, string_heap: &StringHeap) -> BinResul
 
         reader.seek(SeekFrom::Start(base_offset + layer_offset))?;
         // TODO: need separate data heap eventually
-        layers.push(Layer::read(endian, reader, string_heap, string_heap).unwrap());
+        layers.push(Layer::read(endian, reader, string_heap, string_heap)?);
     }
 
     Ok(layers)

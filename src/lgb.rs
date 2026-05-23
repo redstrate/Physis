@@ -72,46 +72,44 @@ pub struct Lgb {
 }
 
 impl ReadableFile for Lgb {
-    fn from_existing(platform: Platform, buffer: ByteSpan) -> Option<Self> {
+    fn from_existing(platform: Platform, buffer: ByteSpan) -> crate::Result<Self> {
         let mut cursor = Cursor::new(buffer);
         let endianness = platform.endianness();
 
         let string_heap = StringHeap::from(cursor.position() as i64);
         let data_heap = StringHeap::from(cursor.position() as i64);
 
-        let file_header = LgbHeader::read_options(&mut cursor, endianness, ()).ok()?;
+        let file_header = LgbHeader::read_options(&mut cursor, endianness, ())?;
         if file_header.file_size <= 0 || file_header.total_chunk_count <= 0 {
-            return None;
+            return Err(crate::Error::InvalidFile);
         }
 
         // This actually matches client behavior, because of course they have padding here.
         loop {
-            let magic = <[u8; 4]>::read_options(&mut cursor, endianness, ()).ok()?;
+            let magic = <[u8; 4]>::read_options(&mut cursor, endianness, ())?;
             if &magic == b"LGP1" {
-                cursor.seek(SeekFrom::Current(-4)).ok()?;
+                cursor.seek(SeekFrom::Current(-4))?;
                 break;
             }
         }
 
         let chunk_header =
-            LayerChunkHeader::read_options(&mut cursor, endianness, (&string_heap,)).unwrap();
+            LayerChunkHeader::read_options(&mut cursor, endianness, (&string_heap,))?;
         if chunk_header.chunk_size <= 0 {
-            return Some(Lgb { chunks: Vec::new() });
+            return Ok(Lgb { chunks: Vec::new() });
         }
 
         let old_pos = cursor.position();
 
         let mut layer_offsets = vec![0i32; chunk_header.layer_count as usize];
         for i in 0..chunk_header.layer_count {
-            layer_offsets[i as usize] = cursor.read_type_args::<i32>(endianness, ()).ok()?;
+            layer_offsets[i as usize] = cursor.read_type_args::<i32>(endianness, ())?;
         }
 
         let mut layers = Vec::new();
 
         for i in 0..chunk_header.layer_count {
-            cursor
-                .seek(SeekFrom::Start(old_pos + layer_offsets[i as usize] as u64))
-                .unwrap();
+            cursor.seek(SeekFrom::Start(old_pos + layer_offsets[i as usize] as u64))?;
 
             let layer = Layer::read(endianness, &mut cursor, &data_heap, &string_heap)?;
             layers.push(layer);
@@ -123,41 +121,35 @@ impl ReadableFile for Lgb {
             layers,
         };
 
-        Some(Lgb {
+        Ok(Lgb {
             chunks: vec![layer_chunk],
         })
     }
 }
 
 impl WritableFile for Lgb {
-    fn write_to_buffer(&self, _platform: Platform) -> Option<ByteBuffer> {
+    fn write_to_buffer(&self, _platform: Platform) -> crate::Result<ByteBuffer> {
         let mut buffer = ByteBuffer::new();
 
         {
             let mut cursor = Cursor::new(&mut buffer);
 
             // skip header, will be writing it later
-            cursor
-                .seek(SeekFrom::Start(LgbHeader::SIZE as u64))
-                .unwrap();
+            cursor.seek(SeekFrom::Start(LgbHeader::SIZE as u64))?;
 
             // we don't store the positions for this pass, so the defaults are fine.
             let mut chunk_data_heap = StringHeap::default();
             let mut chunk_string_heap = StringHeap::default();
 
             // we will write this later, when we have a working string heap
-            let layer_chunk_header_pos = cursor.stream_position().unwrap();
-            cursor
-                .seek(SeekFrom::Current(LayerChunkHeader::SIZE as i64))
-                .unwrap();
+            let layer_chunk_header_pos = cursor.stream_position()?;
+            cursor.seek(SeekFrom::Current(LayerChunkHeader::SIZE as i64))?;
 
             // skip offsets for now, they will be written later
             let offset_pos = cursor.position();
-            cursor
-                .seek(SeekFrom::Current(
-                    (std::mem::size_of::<i32>() * self.chunks[0].layers.len()) as i64,
-                ))
-                .ok()?;
+            cursor.seek(SeekFrom::Current(
+                (std::mem::size_of::<i32>() * self.chunks[0].layers.len()) as i64,
+            ))?;
 
             let mut layer_offsets: Vec<i32> = Vec::new();
             let mut object_offsets: Vec<i32> = Vec::new();
@@ -172,29 +164,25 @@ impl WritableFile for Lgb {
 
                 layer
                     .header
-                    .write_le_args(&mut cursor, (&mut chunk_data_heap, &mut chunk_string_heap))
-                    .ok()?;
+                    .write_le_args(&mut cursor, (&mut chunk_data_heap, &mut chunk_string_heap))?;
 
-                let object_offset_base = cursor.stream_position().ok()? as i32;
+                let object_offset_base = cursor.stream_position()? as i32;
 
                 // Skip offsets that will be written later.
-                cursor
-                    .seek(SeekFrom::Current(
-                        layer.objects.len() as i64 * std::mem::size_of::<u32>() as i64,
-                    ))
-                    .ok()?;
+                cursor.seek(SeekFrom::Current(
+                    layer.objects.len() as i64 * std::mem::size_of::<u32>() as i64,
+                ))?;
 
                 for obj in &layer.objects {
-                    object_offsets.push(cursor.stream_position().ok()? as i32 - object_offset_base);
+                    object_offsets.push(cursor.stream_position()? as i32 - object_offset_base);
 
-                    obj.write_le_args(&mut cursor, (&mut chunk_string_heap,))
-                        .ok()?;
+                    obj.write_le_args(&mut cursor, (&mut chunk_string_heap,))?;
                 }
             }
 
             // make sure the heaps are at the end of the layer data:
             // TODO: this logic doesn't make much sense...
-            let data_offset = cursor.stream_position().ok()?
+            let data_offset = cursor.stream_position()?
                 + (if !layer_offsets.is_empty() {
                     LgbHeader::SIZE as u64
                 } else {
@@ -212,9 +200,7 @@ impl WritableFile for Lgb {
             };
 
             // write header now, because it has a string
-            cursor
-                .seek(SeekFrom::Start(layer_chunk_header_pos))
-                .unwrap();
+            cursor.seek(SeekFrom::Start(layer_chunk_header_pos))?;
 
             // TODO: support multiple layer chunks
             let layer_chunk = LayerChunkHeader {
@@ -226,12 +212,10 @@ impl WritableFile for Lgb {
                 layer_offset: 16, // lol
                 layer_count: self.chunks[0].layers.len() as i32,
             };
-            layer_chunk
-                .write_le_args(&mut cursor, (&mut chunk_string_heap,))
-                .ok()?;
+            layer_chunk.write_le_args(&mut cursor, (&mut chunk_string_heap,))?;
 
             // now write the layer data for the final time
-            cursor.seek(SeekFrom::Start(layer_data_offset)).unwrap();
+            cursor.seek(SeekFrom::Start(layer_data_offset))?;
             for layer in &self.chunks[0].layers {
                 // Write the correct amount of objects and their offsets now
                 let mut new_header = layer.header.clone();
@@ -239,27 +223,25 @@ impl WritableFile for Lgb {
                 new_header.instance_object_offset = 52; // TODO: placeholder
 
                 new_header
-                    .write_le_args(&mut cursor, (&mut chunk_data_heap, &mut chunk_string_heap))
-                    .ok()?;
+                    .write_le_args(&mut cursor, (&mut chunk_data_heap, &mut chunk_string_heap))?;
 
-                object_offsets.write_le(&mut cursor).ok()?;
+                object_offsets.write_le(&mut cursor)?;
 
                 for obj in &layer.objects {
-                    obj.write_le_args(&mut cursor, (&mut chunk_string_heap,))
-                        .ok()?;
+                    obj.write_le_args(&mut cursor, (&mut chunk_string_heap,))?;
                 }
             }
 
             // write the heaps
-            chunk_data_heap.write_le(&mut cursor).ok()?;
-            chunk_string_heap.write_le(&mut cursor).ok()?;
+            chunk_data_heap.write_le(&mut cursor)?;
+            chunk_string_heap.write_le(&mut cursor)?;
 
             // write offsets
             assert_eq!(layer_offsets.len(), self.chunks[0].layers.len());
-            cursor.seek(SeekFrom::Start(offset_pos)).ok()?;
+            cursor.seek(SeekFrom::Start(offset_pos))?;
             for offset in layer_offsets {
                 // TODO: im probably subtracting from the wrong offset
-                (offset - offset_pos as i32).write_le(&mut cursor).ok()?;
+                (offset - offset_pos as i32).write_le(&mut cursor)?;
             }
         }
 
@@ -269,15 +251,15 @@ impl WritableFile for Lgb {
             let mut cursor = Cursor::new(&mut buffer);
 
             // write the header, now that we now the file size
-            cursor.seek(SeekFrom::Start(0)).ok()?;
+            cursor.seek(SeekFrom::Start(0))?;
             let lgb_header = LgbHeader {
                 file_size,
                 total_chunk_count: self.chunks.len() as i32,
             };
-            lgb_header.write_le(&mut cursor).ok()?;
+            lgb_header.write_le(&mut cursor)?;
         }
 
-        Some(buffer)
+        Ok(buffer)
     }
 }
 
@@ -325,7 +307,7 @@ mod tests {
 
         // NOTE: It would be nice to read these eventually, but I'm pretty sure all cases are empty and useless.
         // So the best we could do right now is not panic while reading them.
-        assert!(Lgb::from_existing(Platform::Win32, &read(d).unwrap()).is_none());
+        assert!(Lgb::from_existing(Platform::Win32, &read(d).unwrap()).is_err());
     }
 
     #[test]

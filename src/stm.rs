@@ -225,7 +225,7 @@ fn read_entries<T: From<StainingTemplateEntry>>(
 ) -> BinResult<HashMap<u32, T>> {
     let mut entries = HashMap::with_capacity(keys.len());
 
-    let start_position = reader.stream_position().unwrap();
+    let start_position = reader.stream_position()?;
 
     for (key, offset) in keys.iter().zip(offsets) {
         reader.seek(SeekFrom::Start(start_position + *offset as u64 * 2))?;
@@ -238,23 +238,22 @@ fn read_entries<T: From<StainingTemplateEntry>>(
 }
 
 impl ReadableFile for Stm {
-    fn from_existing(platform: Platform, buffer: ByteSpan) -> Option<Self> {
+    fn from_existing(platform: Platform, buffer: ByteSpan) -> crate::Result<Self> {
         let mut cursor = Cursor::new(buffer);
-        Stm::read_options(&mut cursor, platform.endianness(), ()).ok()
+        Ok(Stm::read_options(&mut cursor, platform.endianness(), ())?)
     }
 }
 
 impl WritableFile for Stm {
-    fn write_to_buffer(&self, platform: Platform) -> Option<ByteBuffer> {
+    fn write_to_buffer(&self, platform: Platform) -> crate::Result<ByteBuffer> {
         let mut buffer = ByteBuffer::new();
 
         {
             let mut cursor = Cursor::new(&mut buffer);
-            self.write_options(&mut cursor, platform.endianness(), ())
-                .ok()?;
+            self.write_options(&mut cursor, platform.endianness(), ())?;
         }
 
-        Some(buffer)
+        Ok(buffer)
     }
 }
 

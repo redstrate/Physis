@@ -25,11 +25,11 @@ impl UnpackedResource {
 }
 
 impl Resource for UnpackedResource {
-    fn read(&mut self, path: &str) -> Option<ByteBuffer> {
+    fn read(&mut self, path: &str) -> crate::Result<ByteBuffer> {
         let mut new_path = PathBuf::from(&self.base_directory);
         new_path.push(path.to_lowercase());
 
-        std::fs::read(new_path).ok()
+        Ok(std::fs::read(new_path)?)
     }
 
     fn exists(&mut self, path: &str) -> bool {
@@ -55,8 +55,8 @@ mod tests {
     fn read_files() {
         let mut data = common_setup_data();
 
-        assert!(data.read("empty_planlive.lgb").is_some());
-        assert!(data.read("non_existent.lgb").is_none());
+        assert!(data.read("empty_planlive.lgb").is_ok());
+        assert!(data.read("non_existent.lgb").is_err());
     }
 
     #[test]

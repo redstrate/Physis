@@ -175,6 +175,9 @@ mod bcn;
 mod error;
 pub use error::Error;
 
+/// A type alias for `Result<T, physis::Error>`.
+pub type Result<T> = std::result::Result<T, Error>;
+
 /// Find existing installation directories
 pub mod existing_dirs;
 

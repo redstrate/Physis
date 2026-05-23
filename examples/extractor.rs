@@ -23,7 +23,7 @@ fn main() {
     let mut game_data = SqPackResource::from_existing(game_dir);
 
     // Extract said file:
-    let Some(game_file) = game_data.read(file_path) else {
+    let Ok(game_file) = game_data.read(file_path) else {
         println!("File {} not found!", file_path);
         return;
     };

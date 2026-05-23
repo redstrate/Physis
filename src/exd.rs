@@ -113,8 +113,8 @@ impl EXD {
 }
 
 impl ReadableFile for EXD {
-    fn from_existing(_platform: Platform, buffer: ByteSpan) -> Option<EXD> {
-        EXD::read_args(&mut Cursor::new(&buffer), ()).ok()
+    fn from_existing(_platform: Platform, buffer: ByteSpan) -> crate::Result<EXD> {
+        Ok(EXD::read_args(&mut Cursor::new(&buffer), ())?)
     }
 }
 

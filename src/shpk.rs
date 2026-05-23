@@ -249,10 +249,9 @@ pub struct ShaderPackage {
 const SELECTOR_MULTIPLER: u32 = 31;
 
 impl ReadableFile for ShaderPackage {
-    fn from_existing(platform: Platform, buffer: ByteSpan) -> Option<ShaderPackage> {
+    fn from_existing(platform: Platform, buffer: ByteSpan) -> crate::Result<ShaderPackage> {
         let mut cursor = Cursor::new(buffer);
-        let mut package =
-            ShaderPackage::read_options(&mut cursor, platform.endianness(), ()).ok()?;
+        let mut package = ShaderPackage::read_options(&mut cursor, platform.endianness(), ())?;
 
         for (i, node) in package.nodes.iter().enumerate() {
             package.node_selectors.push((node.selector, i as u32));
@@ -261,21 +260,20 @@ impl ReadableFile for ShaderPackage {
             package.node_selectors.push((alias.selector, alias.node));
         }
 
-        Some(package)
+        Ok(package)
     }
 }
 
 impl WritableFile for ShaderPackage {
-    fn write_to_buffer(&self, platform: Platform) -> Option<ByteBuffer> {
+    fn write_to_buffer(&self, platform: Platform) -> crate::Result<ByteBuffer> {
         let mut buffer = ByteBuffer::new();
 
         {
             let mut cursor = Cursor::new(&mut buffer);
-            self.write_options(&mut cursor, platform.endianness(), ())
-                .ok()?;
+            self.write_options(&mut cursor, platform.endianness(), ())?;
         }
 
-        Some(buffer)
+        Ok(buffer)
     }
 }
 

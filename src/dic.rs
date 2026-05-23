@@ -72,10 +72,9 @@ pub struct Dictionary {
 }
 
 impl ReadableFile for Dictionary {
-    fn from_existing(platform: Platform, buffer: ByteSpan) -> Option<Self> {
+    fn from_existing(platform: Platform, buffer: ByteSpan) -> crate::Result<Self> {
         let mut cursor = Cursor::new(buffer);
-        let mut dict =
-            DictionaryHeader::read_options(&mut cursor, platform.endianness(), ()).unwrap();
+        let mut dict = DictionaryHeader::read_options(&mut cursor, platform.endianness(), ())?;
 
         let map_start = 0x8750u32;
         let map_size = 0x200u32;
@@ -87,32 +86,32 @@ impl ReadableFile for Dictionary {
 
         for i in 0..dict.block_lengths[0] / 2 {
             let offset = dict.block_offsets[0] + i * 2;
-            cursor.seek(SeekFrom::Start(offset as u64)).ok()?;
-            dict.begin_node.push(cursor.read_le::<u16>().ok()?);
+            cursor.seek(SeekFrom::Start(offset as u64))?;
+            dict.begin_node.push(cursor.read_le::<u16>()?);
         }
 
         for i in 0..dict.block_lengths[1] / 2 {
             let offset = dict.block_offsets[1] + i * 2;
-            cursor.seek(SeekFrom::Start(offset as u64)).ok()?;
-            dict.inner_node.push(cursor.read_le::<u16>().ok()?);
+            cursor.seek(SeekFrom::Start(offset as u64))?;
+            dict.inner_node.push(cursor.read_le::<u16>()?);
         }
 
         for i in 0..dict.block_lengths[2] / 2 {
             let offset = dict.block_offsets[2] + i * 2;
-            cursor.seek(SeekFrom::Start(offset as u64)).ok()?;
-            dict.chara.push(cursor.read_le::<u16>().ok()?);
+            cursor.seek(SeekFrom::Start(offset as u64))?;
+            dict.chara.push(cursor.read_le::<u16>()?);
         }
 
         for i in 0..dict.block_lengths[3] / 2 {
             let offset = dict.block_offsets[3] + i * 2;
-            cursor.seek(SeekFrom::Start(offset as u64)).ok()?;
-            dict.word.push(cursor.read_le::<u16>().ok()?);
+            cursor.seek(SeekFrom::Start(offset as u64))?;
+            dict.word.push(cursor.read_le::<u16>()?);
         }
 
         for i in 0..dict.block_lengths[4] / 16 {
             let offset = dict.block_offsets[4] + i * 16;
-            cursor.seek(SeekFrom::Start(offset as u64)).ok()?;
-            dict.entries.push(cursor.read_le::<EntryItem>().ok()?);
+            cursor.seek(SeekFrom::Start(offset as u64))?;
+            dict.entries.push(cursor.read_le::<EntryItem>()?);
         }
 
         let mut dict = Dictionary {
@@ -121,14 +120,14 @@ impl ReadableFile for Dictionary {
         };
 
         // TODO: lol
-        dict.words = dict.list_words()?;
+        dict.words = dict.list_words();
 
-        Some(dict)
+        Ok(dict)
     }
 }
 
 impl Dictionary {
-    fn list_words(&self) -> Option<Vec<String>> {
+    fn list_words(&self) -> Vec<String> {
         let mut result = Vec::new();
         let lut = self.generate_index_rune_lookup_table();
         for (id, v) in self.header.begin_node.iter().enumerate() {
@@ -142,7 +141,7 @@ impl Dictionary {
             }
         }
 
-        Some(result)
+        result
     }
 
     fn generate_index_rune_lookup_table(&self) -> HashMap<u16, u16> {

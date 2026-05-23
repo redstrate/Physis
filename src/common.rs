@@ -168,7 +168,7 @@ impl Ord for Version<'_> {
 /// This should be implemented for all types readable from SqPack.
 pub trait ReadableFile: Sized {
     /// Read an existing file.
-    fn from_existing(platform: Platform, buffer: ByteSpan) -> Option<Self>;
+    fn from_existing(platform: Platform, buffer: ByteSpan) -> crate::Result<Self>;
 }
 
 /// A file that can be written back to its serialized byte form.
@@ -176,7 +176,7 @@ pub trait ReadableFile: Sized {
 /// This should be implemented for all types readable from SqPack, on a best-effort basis.
 pub trait WritableFile: Sized {
     /// Writes data back to a buffer.
-    fn write_to_buffer(&self, platform: Platform) -> Option<ByteBuffer>;
+    fn write_to_buffer(&self, platform: Platform) -> crate::Result<ByteBuffer>;
 }
 
 /// Used for basic sanity checking tests in other modules.
@@ -188,7 +188,7 @@ pub fn pass_random_invalid<T: ReadableFile>() {
 
     // Feeding it invalid data should not panic
     // Note that we don't check the Option currently, because some types like Hwc return Some regardless.
-    T::from_existing(
+    let _ = T::from_existing(
         Platform::Win32,
         &std::fs::read(d).expect("Could not read random test file"),
     );

@@ -34,7 +34,7 @@
 //! }
 //!
 //! impl Resource for SqPackResourceSpy {
-//!     fn read(&mut self, path: &str) -> Option<physis::ByteBuffer> {
+//!     fn read(&mut self, path: &str) -> physis::Result<physis::ByteBuffer> {
 //!         todo!()
 //!     }
 //!
@@ -56,7 +56,7 @@ mod unpacked;
 pub use unpacked::UnpackedResource;
 
 use crate::{
-    ByteBuffer, Error, ReadableFile,
+    ByteBuffer, ReadableFile,
     common::{Language, Platform},
     excel::{Page, Sheet},
     exd::EXD,
@@ -111,7 +111,7 @@ pub trait Resource: Send + Sync + ClonableResource + 'static {
     /// let mut file = std::fs::File::create("root.exl").unwrap();
     /// file.write(data.as_slice()).unwrap();
     /// ```
-    fn read(&mut self, path: &str) -> Option<ByteBuffer>;
+    fn read(&mut self, path: &str) -> crate::Result<ByteBuffer>;
 
     /// Checks if a file exists.
     ///
@@ -144,23 +144,16 @@ pub trait Resource: Send + Sync + ClonableResource + 'static {
 pub fn generic_parsed<R: Resource + ?Sized, F: ReadableFile>(
     resource: &mut R,
     path: &str,
-) -> Result<F, Error> {
-    if let Some(bytes) = resource.read(path) {
-        return F::from_existing(resource.platform(), &bytes).ok_or(Error::FileParsingFailed {
-            path: path.to_string(),
-        });
-    }
-
-    Err(Error::FileNotFound {
-        path: path.to_string(),
-    })
+) -> crate::Result<F> {
+    let bytes = resource.read(path)?;
+    F::from_existing(resource.platform(), &bytes)
 }
 
 /// Read an excel sheet header by name (e.g. "Achievement"). You most likely want to use the method in `ResourceResolver.`
 pub fn generic_read_excel_sheet_header<R: Resource + ?Sized>(
     resource: &mut R,
     name: &str,
-) -> Result<EXH, Error> {
+) -> crate::Result<EXH> {
     let new_filename = name.to_lowercase();
 
     let path = format!("exd/{new_filename}.exh");
@@ -174,7 +167,7 @@ pub fn generic_read_excel_sheet<R: Resource + ?Sized>(
     exh: &EXH,
     name: &str,
     language: Language,
-) -> Result<Sheet, Error> {
+) -> crate::Result<Sheet> {
     let mut pages = Vec::with_capacity(exh.header.page_count as usize);
     for page in 0..exh.header.page_count {
         let exd = generic_read_excel_exd(resource, name, exh, language, page as usize)?;
@@ -190,7 +183,7 @@ pub fn generic_read_excel_sheet<R: Resource + ?Sized>(
 /// Returns all known sheet names listed in the root list. You most likely want to use the method in `ResourceResolver.`
 pub fn generic_get_all_sheet_names<R: Resource + ?Sized>(
     resource: &mut R,
-) -> Result<Vec<String>, Error> {
+) -> crate::Result<Vec<String>> {
     let root_exl = generic_parsed::<R, EXL>(resource, "exd/root.exl")?;
     Ok(root_exl
         .entries
@@ -205,7 +198,7 @@ fn generic_read_excel_exd<R: Resource + ?Sized>(
     exh: &EXH,
     language: Language,
     page: usize,
-) -> Result<EXD, Error> {
+) -> crate::Result<EXD> {
     let exd_path = format!(
         "exd/{}",
         EXD::calculate_filename(name, language, &exh.pages[page])

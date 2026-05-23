@@ -47,14 +47,16 @@ impl ResourceResolver {
     }
 
     // TODO: add documentation
-    pub fn read(&mut self, path: &str) -> Option<ByteBuffer> {
+    pub fn read(&mut self, path: &str) -> crate::Result<ByteBuffer> {
         for resolver in &mut self.resources {
-            if let Some(bytes) = resolver.read(path) {
-                return Some(bytes);
+            if let Ok(bytes) = resolver.read(path) {
+                return Ok(bytes);
             }
         }
 
-        None
+        Err(crate::Error::FileNotFound {
+            path: path.to_string(),
+        })
     }
 
     /// Reads and parses the file located at `path`. This avoids having to call both `read` and `from_existing`.
@@ -71,7 +73,7 @@ impl ResourceResolver {
     ///
     /// let exl = resolver.parsed::<EXL>("exd/root.exl").unwrap();
     /// ```
-    pub fn parsed<F: ReadableFile>(&mut self, path: &str) -> Result<F, Error> {
+    pub fn parsed<F: ReadableFile>(&mut self, path: &str) -> crate::Result<F> {
         self.execute_first_found(
             |resource| generic_parsed(resource, path),
             Error::FileNotFound {
@@ -81,10 +83,10 @@ impl ResourceResolver {
     }
 
     /// Read an excel sheet header by name (e.g. "Achievement").
-    pub fn read_excel_sheet_header(&mut self, name: &str) -> Result<EXH, Error> {
+    pub fn read_excel_sheet_header(&mut self, name: &str) -> crate::Result<EXH> {
         self.execute_first_found(
             |resource| generic_read_excel_sheet_header(resource, name),
-            Error::Unknown,
+            Error::ResolverFailed,
         )
     }
 
@@ -94,16 +96,16 @@ impl ResourceResolver {
         exh: &EXH,
         name: &str,
         language: Language,
-    ) -> Result<Sheet, Error> {
+    ) -> crate::Result<Sheet> {
         self.execute_first_found(
             |resource| generic_read_excel_sheet(resource, exh, name, language),
-            Error::Unknown,
+            Error::ResolverFailed,
         )
     }
 
     /// Returns all known sheet names listed in the root list.
-    pub fn get_all_sheet_names(&mut self) -> Result<Vec<String>, Error> {
-        self.execute_first_found(generic_get_all_sheet_names, Error::Unknown)
+    pub fn get_all_sheet_names(&mut self) -> crate::Result<Vec<String>> {
+        self.execute_first_found(generic_get_all_sheet_names, Error::ResolverFailed)
     }
 
     // TODO: add documentation
@@ -118,9 +120,9 @@ impl ResourceResolver {
     }
 
     /// Executes the given function `f`, continuing past "FileNotFound" errors and ultimately returns `error` if everything failed.
-    fn execute_first_found<T, F>(&mut self, f: F, error: Error) -> Result<T, Error>
+    fn execute_first_found<T, F>(&mut self, f: F, error: Error) -> crate::Result<T>
     where
-        F: Fn(&mut dyn Resource) -> Result<T, Error>,
+        F: Fn(&mut dyn Resource) -> crate::Result<T>,
     {
         for resource in &mut self.resources {
             let result = f(resource.as_mut());
