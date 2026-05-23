@@ -6,17 +6,17 @@ Physis is a [Rust](https://www.rust-lang.org/learn/get-started) library for read
 
 ```rust,no_run
 use physis::{
-    Error,
+    Result,
     resource::{SqPackResource, Resource},
     model::MDL,
 };
 
-fn main() -> Result<(), Error> {
+fn main() -> Result<()> {
     // Construct a resource to read from SqPack:
     let mut resource = SqPackResource::from_existing("game");
 
     // Read the raw data of this file, our resource takes care of decompressing it:
-    let bytes = resource.read(".mdl").ok_or(Error::Unknown)?;
+    let bytes = resource.read(".mdl")?;
 
     // Or read and parse it:
     let mdl = resource.parsed::<MDL>("test.mdl")?;

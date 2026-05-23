@@ -57,25 +57,24 @@ pub struct Eid {
 }
 
 impl ReadableFile for Eid {
-    fn from_existing(platform: Platform, buffer: ByteSpan) -> Option<Self> {
+    fn from_existing(platform: Platform, buffer: ByteSpan) -> crate::Result<Self> {
         let endianness = platform.endianness();
         let mut cursor = Cursor::new(buffer);
 
-        Self::read_options(&mut cursor, endianness, ()).ok()
+        Ok(Self::read_options(&mut cursor, endianness, ())?)
     }
 }
 
 impl WritableFile for Eid {
-    fn write_to_buffer(&self, platform: Platform) -> Option<ByteBuffer> {
+    fn write_to_buffer(&self, platform: Platform) -> crate::Result<ByteBuffer> {
         let mut buffer = ByteBuffer::new();
 
         {
             let mut cursor = Cursor::new(&mut buffer);
-            self.write_options(&mut cursor, platform.endianness(), ())
-                .ok()?;
+            self.write_options(&mut cursor, platform.endianness(), ())?;
         }
 
-        Some(buffer)
+        Ok(buffer)
     }
 }
 

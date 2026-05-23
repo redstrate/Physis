@@ -73,7 +73,7 @@ impl HeapPointer {
 
 #[binrw::parser(reader)]
 pub(crate) fn read_pointer_pos() -> BinResult<u64> {
-    Ok(reader.stream_position().unwrap())
+    Ok(reader.stream_position()?)
 }
 
 impl StringHeap {

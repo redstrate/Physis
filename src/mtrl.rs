@@ -473,15 +473,15 @@ pub struct Material {
 }
 
 impl ReadableFile for Material {
-    fn from_existing(platform: Platform, buffer: ByteSpan) -> Option<Material> {
+    fn from_existing(platform: Platform, buffer: ByteSpan) -> crate::Result<Material> {
         let mut cursor = Cursor::new(buffer);
-        let mat_data = MaterialData::read_options(&mut cursor, platform.endianness(), ()).ok()?;
+        let mat_data = MaterialData::read_options(&mut cursor, platform.endianness(), ())?;
 
         let mut texture_paths = vec![];
 
         // Right now lets consider an empty string buffer to be an indicator for an invalid MTRL file.
         if mat_data.strings.is_empty() {
-            return None;
+            return Err(crate::Error::InvalidFile);
         }
 
         let mut offset = 0;
@@ -523,7 +523,7 @@ impl ReadableFile for Material {
         let color_table = mat_data.color_table.clone();
         let color_dye_table = mat_data.color_dye_table.clone();
 
-        Some(Material {
+        Ok(Material {
             mat_data,
             shader_package_name,
             texture_paths,
@@ -537,17 +537,16 @@ impl ReadableFile for Material {
 }
 
 impl WritableFile for Material {
-    fn write_to_buffer(&self, platform: Platform) -> Option<ByteBuffer> {
+    fn write_to_buffer(&self, platform: Platform) -> crate::Result<ByteBuffer> {
         let mut buffer = ByteBuffer::new();
 
         {
             let mut cursor = Cursor::new(&mut buffer);
             self.mat_data
-                .write_options(&mut cursor, platform.endianness(), ())
-                .ok()?;
+                .write_options(&mut cursor, platform.endianness(), ())?;
         }
 
-        Some(buffer)
+        Ok(buffer)
     }
 }
 

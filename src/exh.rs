@@ -160,23 +160,23 @@ impl Default for EXH {
 }
 
 impl ReadableFile for EXH {
-    fn from_existing(_platform: Platform, buffer: ByteSpan) -> Option<Self> {
-        Self::read(&mut Cursor::new(&buffer)).ok()
+    fn from_existing(_platform: Platform, buffer: ByteSpan) -> crate::Result<Self> {
+        Ok(Self::read(&mut Cursor::new(&buffer))?)
     }
 }
 
 impl WritableFile for EXH {
-    fn write_to_buffer(&self, _platform: Platform) -> Option<ByteBuffer> {
+    fn write_to_buffer(&self, _platform: Platform) -> crate::Result<ByteBuffer> {
         let mut buffer = ByteBuffer::new();
 
         {
             let cursor = Cursor::new(&mut buffer);
             let mut writer = BufWriter::new(cursor);
 
-            self.write_args(&mut writer, ()).unwrap();
+            self.write_args(&mut writer, ())?;
         }
 
-        Some(buffer)
+        Ok(buffer)
     }
 }
 

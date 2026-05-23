@@ -59,10 +59,10 @@ pub struct CMP {
 }
 
 impl ReadableFile for CMP {
-    fn from_existing(platform: Platform, buffer: ByteSpan) -> Option<Self> {
+    fn from_existing(platform: Platform, buffer: ByteSpan) -> crate::Result<Self> {
         let mut cursor = Cursor::new(buffer);
 
-        cursor.seek(SeekFrom::Start(0x2a800)).ok()?;
+        cursor.seek(SeekFrom::Start(0x2a800))?;
 
         let rem = buffer.len() - cursor.position() as usize;
         let entries = rem / std::mem::size_of::<RacialScalingParameters>();
@@ -70,13 +70,14 @@ impl ReadableFile for CMP {
         let mut parameters = vec![];
 
         for _ in 0..entries {
-            parameters.push(
-                RacialScalingParameters::read_options(&mut cursor, platform.endianness(), ())
-                    .ok()?,
-            );
+            parameters.push(RacialScalingParameters::read_options(
+                &mut cursor,
+                platform.endianness(),
+                (),
+            )?);
         }
 
-        Some(CMP { parameters })
+        Ok(CMP { parameters })
     }
 }
 

@@ -159,25 +159,28 @@ pub struct CTTLNode {
 }
 
 impl ReadableFile for Cutscene {
-    fn from_existing(platform: Platform, buffer: ByteSpan) -> Option<Cutscene> {
+    fn from_existing(platform: Platform, buffer: ByteSpan) -> crate::Result<Cutscene> {
         let mut cursor = Cursor::new(buffer);
         let string_heap = StringHeap::from(0);
-        Cutscene::read_options(&mut cursor, platform.endianness(), (&string_heap,)).ok()
+        Ok(Cutscene::read_options(
+            &mut cursor,
+            platform.endianness(),
+            (&string_heap,),
+        )?)
     }
 }
 
 impl WritableFile for Cutscene {
-    fn write_to_buffer(&self, platform: Platform) -> Option<ByteBuffer> {
+    fn write_to_buffer(&self, platform: Platform) -> crate::Result<ByteBuffer> {
         let mut buffer = ByteBuffer::new();
 
         {
             let mut cursor = Cursor::new(&mut buffer);
             let mut string_heap = StringHeap::from(0);
-            self.write_options(&mut cursor, platform.endianness(), (&mut string_heap,))
-                .ok()?;
+            self.write_options(&mut cursor, platform.endianness(), (&mut string_heap,))?;
         }
 
-        Some(buffer)
+        Ok(buffer)
     }
 }
 

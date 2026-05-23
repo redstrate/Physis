@@ -411,23 +411,22 @@ pub struct Phyb {
 }
 
 impl ReadableFile for Phyb {
-    fn from_existing(platform: Platform, buffer: ByteSpan) -> Option<Self> {
+    fn from_existing(platform: Platform, buffer: ByteSpan) -> crate::Result<Self> {
         let mut cursor = Cursor::new(buffer);
-        Phyb::read_options(&mut cursor, platform.endianness(), ()).ok()
+        Ok(Phyb::read_options(&mut cursor, platform.endianness(), ())?)
     }
 }
 
 impl WritableFile for Phyb {
-    fn write_to_buffer(&self, platform: Platform) -> Option<ByteBuffer> {
+    fn write_to_buffer(&self, platform: Platform) -> crate::Result<ByteBuffer> {
         let mut buffer = ByteBuffer::new();
 
         {
             let mut cursor = Cursor::new(&mut buffer);
-            self.write_options(&mut cursor, platform.endianness(), ())
-                .ok()?;
+            self.write_options(&mut cursor, platform.endianness(), ())?;
         }
 
-        Some(buffer)
+        Ok(buffer)
     }
 }
 

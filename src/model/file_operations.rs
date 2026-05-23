@@ -11,12 +11,12 @@ use std::io::Cursor;
 const MAX_BYTE_FLOAT: f32 = u8::MAX as f32;
 
 impl MDL {
-    pub(crate) fn read_byte_float4(cursor: &mut Cursor<ByteSpan>) -> Option<[f32; 4]> {
-        Some([
-            (f32::from(cursor.read_le::<u8>().ok()?) / MAX_BYTE_FLOAT),
-            (f32::from(cursor.read_le::<u8>().ok()?) / MAX_BYTE_FLOAT),
-            (f32::from(cursor.read_le::<u8>().ok()?) / MAX_BYTE_FLOAT),
-            (f32::from(cursor.read_le::<u8>().ok()?) / MAX_BYTE_FLOAT),
+    pub(crate) fn read_byte_float4(cursor: &mut Cursor<ByteSpan>) -> BinResult<[f32; 4]> {
+        Ok([
+            (f32::from(cursor.read_le::<u8>()?) / MAX_BYTE_FLOAT),
+            (f32::from(cursor.read_le::<u8>()?) / MAX_BYTE_FLOAT),
+            (f32::from(cursor.read_le::<u8>()?) / MAX_BYTE_FLOAT),
+            (f32::from(cursor.read_le::<u8>()?) / MAX_BYTE_FLOAT),
         ])
     }
 
@@ -44,12 +44,12 @@ impl MDL {
         ])
     }
 
-    pub(crate) fn read_tangent(cursor: &mut Cursor<ByteSpan>) -> Option<[f32; 4]> {
-        Some([
-            (f32::from(cursor.read_le::<u8>().ok()?) * 2.0 / MAX_BYTE_FLOAT - 1.0),
-            (f32::from(cursor.read_le::<u8>().ok()?) * 2.0 / MAX_BYTE_FLOAT - 1.0),
-            (f32::from(cursor.read_le::<u8>().ok()?) * 2.0 / MAX_BYTE_FLOAT - 1.0),
-            if (f32::from(cursor.read_le::<u8>().ok()?) * 2.0 / MAX_BYTE_FLOAT - 1.0) == 1.0 {
+    pub(crate) fn read_tangent(cursor: &mut Cursor<ByteSpan>) -> BinResult<[f32; 4]> {
+        Ok([
+            (f32::from(cursor.read_le::<u8>()?) * 2.0 / MAX_BYTE_FLOAT - 1.0),
+            (f32::from(cursor.read_le::<u8>()?) * 2.0 / MAX_BYTE_FLOAT - 1.0),
+            (f32::from(cursor.read_le::<u8>()?) * 2.0 / MAX_BYTE_FLOAT - 1.0),
+            if (f32::from(cursor.read_le::<u8>()?) * 2.0 / MAX_BYTE_FLOAT - 1.0) == 1.0 {
                 1.0
             } else {
                 -1.0
@@ -66,12 +66,12 @@ impl MDL {
         ]) // SqEx uses 0 as -1, not 1
     }
 
-    pub(crate) fn read_half4(cursor: &mut Cursor<ByteSpan>, endian: Endian) -> Option<[f32; 4]> {
-        Some([
-            f16::from_bits(cursor.read_type_args::<u16>(endian, ()).ok()?).to_f32(),
-            f16::from_bits(cursor.read_type_args::<u16>(endian, ()).ok()?).to_f32(),
-            f16::from_bits(cursor.read_type_args::<u16>(endian, ()).ok()?).to_f32(),
-            f16::from_bits(cursor.read_type_args::<u16>(endian, ()).ok()?).to_f32(),
+    pub(crate) fn read_half4(cursor: &mut Cursor<ByteSpan>, endian: Endian) -> BinResult<[f32; 4]> {
+        Ok([
+            f16::from_bits(cursor.read_type_args::<u16>(endian, ())?).to_f32(),
+            f16::from_bits(cursor.read_type_args::<u16>(endian, ())?).to_f32(),
+            f16::from_bits(cursor.read_type_args::<u16>(endian, ())?).to_f32(),
+            f16::from_bits(cursor.read_type_args::<u16>(endian, ())?).to_f32(),
         ])
     }
 
@@ -92,10 +92,10 @@ impl MDL {
         )
     }
 
-    pub(crate) fn read_half2(cursor: &mut Cursor<ByteSpan>, endian: Endian) -> Option<[f32; 2]> {
-        Some([
-            f16::from_bits(cursor.read_type_args::<u16>(endian, ()).ok()?).to_f32(),
-            f16::from_bits(cursor.read_type_args::<u16>(endian, ()).ok()?).to_f32(),
+    pub(crate) fn read_half2(cursor: &mut Cursor<ByteSpan>, endian: Endian) -> BinResult<[f32; 2]> {
+        Ok([
+            f16::from_bits(cursor.read_type_args::<u16>(endian, ())?).to_f32(),
+            f16::from_bits(cursor.read_type_args::<u16>(endian, ())?).to_f32(),
         ])
     }
 

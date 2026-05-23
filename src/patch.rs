@@ -298,8 +298,7 @@ fn read_file_operation_data(file_size: u64) -> BinResult<Vec<u8>> {
 
     while data.len() < file_size as usize {
         data.append(
-            &mut read_data_block_patch(reader, Endian::Little) // TODO: don't hardcode to little
-                .unwrap(),
+            &mut read_data_block_patch(reader, Endian::Little)?, // TODO: don't hardcode to little,
         );
     }
 
@@ -424,7 +423,7 @@ pub struct EntryChunk {
 
 static WIPE_BUFFER: [u8; 1 << 16] = [0; 1 << 16];
 
-fn wipe(mut file: &File, length: usize) -> Result<(), PatchError> {
+fn wipe(mut file: &File, length: usize) -> crate::Result<()> {
     let mut length: usize = length;
     while length > 0 {
         let num_bytes = min(WIPE_BUFFER.len(), length);
@@ -435,16 +434,12 @@ fn wipe(mut file: &File, length: usize) -> Result<(), PatchError> {
     Ok(())
 }
 
-fn wipe_from_offset(mut file: &File, length: usize, offset: u64) -> Result<(), PatchError> {
+fn wipe_from_offset(mut file: &File, length: usize, offset: u64) -> crate::Result<()> {
     file.seek(SeekFrom::Start(offset))?;
     wipe(file, length)
 }
 
-fn write_empty_file_block_at(
-    mut file: &File,
-    offset: u64,
-    block_number: u64,
-) -> Result<(), PatchError> {
+fn write_empty_file_block_at(mut file: &File, offset: u64, block_number: u64) -> crate::Result<()> {
     wipe_from_offset(file, (block_number << 7) as usize, offset)?;
 
     file.seek(SeekFrom::Start(offset))?;
@@ -458,10 +453,7 @@ fn write_empty_file_block_at(
     let file_size: i32 = 0;
     file.write_all(file_size.to_le_bytes().as_slice())?;
 
-    let num_blocks: i32 = (block_number - 1)
-        .try_into()
-        .ok()
-        .ok_or(PatchError::ParseError)?;
+    let num_blocks: i32 = (block_number - 1).try_into().unwrap_or_default();
     file.write_all(num_blocks.to_le_bytes().as_slice())?;
 
     let used_blocks: i32 = 0;
@@ -480,28 +472,6 @@ fn get_expansion_folder(id: u16) -> String {
     match id {
         0 => "ffxiv".to_string(),
         n => format!("ex{}", n),
-    }
-}
-
-#[derive(Debug)]
-/// Errors emitted in the patching process
-pub enum PatchError {
-    /// Failed to read parts of the file
-    InvalidPatchFile,
-    /// Failed to parse the patch format
-    ParseError,
-}
-
-impl From<std::io::Error> for PatchError {
-    // TODO: implement specific PatchErrors for stuff like out of storage space. invalidpatchfile is a bad name for this
-    fn from(_io: std::io::Error) -> Self {
-        PatchError::InvalidPatchFile
-    }
-}
-
-impl From<binrw::Error> for PatchError {
-    fn from(_: binrw::Error) -> Self {
-        PatchError::ParseError
     }
 }
 
@@ -533,7 +503,7 @@ pub struct ZiPatch {
 
 impl ZiPatch {
     /// Applies a boot or a game patch to the specified _data_dir_.
-    pub fn apply(data_dir: &str, patch_path: &str) -> Result<(), PatchError> {
+    pub fn apply(data_dir: &str, patch_path: &str) -> crate::Result<()> {
         let mut file = File::open(patch_path)?;
 
         let file_length = file.metadata()?.len();
@@ -557,7 +527,9 @@ impl ZiPatch {
                             let filename: PathBuf = [
                                 PathBuf::from(data_dir),
                                 Self::dat_path(
-                                    target_info.as_ref().ok_or(PatchError::ParseError)?,
+                                    target_info
+                                        .as_ref()
+                                        .ok_or(crate::Error::TargetInfoMissing)?, // TODO: give more information for this error
                                     add.main_id,
                                     add.sub_id,
                                     add.file_id,
@@ -566,7 +538,11 @@ impl ZiPatch {
                             .iter()
                             .collect();
 
-                            fs::create_dir_all(filename.parent().ok_or(PatchError::ParseError)?)?;
+                            fs::create_dir_all(filename.parent().ok_or(
+                                crate::Error::InvalidFilename {
+                                    path: filename.clone(),
+                                },
+                            )?)?;
 
                             let mut new_file = OpenOptions::new()
                                 .write(true)
@@ -584,7 +560,9 @@ impl ZiPatch {
                             let filename: PathBuf = [
                                 PathBuf::from(data_dir),
                                 Self::dat_path(
-                                    target_info.as_ref().ok_or(PatchError::ParseError)?,
+                                    target_info
+                                        .as_ref()
+                                        .ok_or(crate::Error::TargetInfoMissing)?,
                                     delete.main_id,
                                     delete.sub_id,
                                     delete.file_id,
@@ -609,7 +587,9 @@ impl ZiPatch {
                             let filename: PathBuf = [
                                 PathBuf::from(data_dir),
                                 Self::dat_path(
-                                    target_info.as_ref().ok_or(PatchError::ParseError)?,
+                                    target_info
+                                        .as_ref()
+                                        .ok_or(crate::Error::TargetInfoMissing)?,
                                     expand.main_id,
                                     expand.sub_id,
                                     expand.file_id,
@@ -618,7 +598,11 @@ impl ZiPatch {
                             .iter()
                             .collect();
 
-                            fs::create_dir_all(filename.parent().ok_or(PatchError::ParseError)?)?;
+                            fs::create_dir_all(filename.parent().ok_or(
+                                crate::Error::InvalidFilename {
+                                    path: filename.clone(),
+                                },
+                            )?)?;
 
                             let new_file = OpenOptions::new()
                                 .write(true)
@@ -637,13 +621,17 @@ impl ZiPatch {
                                 PathBuf::from(data_dir),
                                 match header.file_kind {
                                     TargetFileKind::Dat => Self::dat_path(
-                                        target_info.as_ref().ok_or(PatchError::ParseError)?,
+                                        target_info
+                                            .as_ref()
+                                            .ok_or(crate::Error::TargetInfoMissing)?,
                                         header.main_id,
                                         header.sub_id,
                                         header.file_id,
                                     ),
                                     TargetFileKind::Index => Self::index_path(
-                                        target_info.as_ref().ok_or(PatchError::ParseError)?,
+                                        target_info
+                                            .as_ref()
+                                            .ok_or(crate::Error::TargetInfoMissing)?,
                                         header.main_id,
                                         header.sub_id,
                                         header.file_id,
@@ -653,7 +641,11 @@ impl ZiPatch {
                             .iter()
                             .collect();
 
-                            fs::create_dir_all(file_path.parent().ok_or(PatchError::ParseError)?)?;
+                            fs::create_dir_all(file_path.parent().ok_or(
+                                crate::Error::InvalidFilename {
+                                    path: file_path.clone(),
+                                },
+                            )?)?;
 
                             let mut new_file = OpenOptions::new()
                                 .write(true)
@@ -671,7 +663,9 @@ impl ZiPatch {
                             let file_path: PathBuf = [data_dir, &fop.path].iter().collect();
 
                             let parent_directory =
-                                file_path.parent().ok_or(PatchError::ParseError)?;
+                                file_path.parent().ok_or(crate::Error::InvalidFilename {
+                                    path: file_path.clone(),
+                                })?;
 
                             match fop.operation {
                                 SqpkFileOperation::AddFile => {
@@ -766,8 +760,7 @@ impl ZiPatch {
                                             let len = header_decompress(
                                                 &mut compressed_data,
                                                 &mut decompressed_data,
-                                            )
-                                            .ok_or(PatchError::ParseError)?;
+                                            )?;
                                             decompressed_data[..len as usize].to_vec()
                                         }
                                     };
@@ -780,7 +773,11 @@ impl ZiPatch {
                     let filename: PathBuf = [data_dir, &entry.path].iter().collect();
 
                     // Sometimes, the patch asks for a directory it didn't make yet.
-                    fs::create_dir_all(filename.parent().ok_or(PatchError::ParseError)?)?;
+                    fs::create_dir_all(filename.parent().ok_or(
+                        crate::Error::InvalidFilename {
+                            path: filename.clone(),
+                        },
+                    )?)?;
 
                     std::fs::write(filename, data)?;
                 }
@@ -797,7 +794,7 @@ impl ZiPatch {
     }
 
     /// Creates a new ZiPatch describing the diff between `base_directory` and `new_directory`.
-    pub fn create(base_directory: &str, new_directory: &str) -> Option<ByteBuffer> {
+    pub fn create(base_directory: &str, new_directory: &str) -> crate::Result<ByteBuffer> {
         let mut buffer = ByteBuffer::new();
 
         {
@@ -805,7 +802,7 @@ impl ZiPatch {
             let mut writer = BufWriter::new(cursor);
 
             let header = PatchHeader {};
-            header.write(&mut writer).ok()?;
+            header.write(&mut writer)?;
 
             let base_files = crate::patch::recurse(base_directory);
             let new_files = crate::patch::recurse(new_directory);
@@ -851,16 +848,16 @@ impl ZiPatch {
                     crc32: 0,
                 };
 
-                add_file_chunk.write(&mut writer).ok()?;
+                add_file_chunk.write(&mut writer)?;
 
                 // reverse reading crc32
-                writer.seek(SeekFrom::Current(-4)).ok()?;
+                writer.seek(SeekFrom::Current(-4))?;
 
                 // add file data, dummy ver for now
-                write_data_block_patch(&mut writer, Endian::Little, file_data); // TODO: don't hardcode to little
+                write_data_block_patch(&mut writer, Endian::Little, file_data)?; // TODO: don't hardcode to little
 
                 // re-apply crc32
-                writer.seek(SeekFrom::Current(4)).ok()?;
+                writer.seek(SeekFrom::Current(4))?;
             }
 
             // Process deleted files
@@ -888,7 +885,7 @@ impl ZiPatch {
                     crc32: 0,
                 };
 
-                remove_file_chunk.write(&mut writer).ok()?;
+                remove_file_chunk.write(&mut writer)?;
             }
 
             let eof_chunk = PatchChunk {
@@ -896,14 +893,14 @@ impl ZiPatch {
                 chunk_type: ChunkType::EndOfFile,
                 crc32: 0,
             };
-            eof_chunk.write(&mut writer).ok()?;
+            eof_chunk.write(&mut writer)?;
         }
 
-        Some(buffer)
+        Ok(buffer)
     }
 
     /// List all patch chunks (or "operations") in this ZiPatch file.
-    pub fn list_operations(patch_path: &str) -> Result<Self, PatchError> {
+    pub fn list_operations(patch_path: &str) -> crate::Result<Self> {
         let mut file = File::open(patch_path)?;
 
         let file_length = file.metadata()?.len();
@@ -1010,7 +1007,7 @@ mod tests {
         write(data_dir.clone() + "/test.patch", read(d).unwrap()).unwrap();
 
         // Feeding it invalid data should not panic
-        let Err(PatchError::ParseError) =
+        let Err(crate::Error::Binrw(binrw::Error::AssertFail { .. })) =
             ZiPatch::apply(&data_dir.clone(), &(data_dir + "/test.patch"))
         else {
             panic!("Expecting a parse error!");

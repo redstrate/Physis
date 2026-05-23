@@ -28,21 +28,17 @@ fn parse_resource_node_children(
     child1_offset: u32,
     child2_offset: u32,
 ) -> BinResult<Vec<ResourceNode>> {
-    let initial_position = reader.stream_position().unwrap();
+    let initial_position = reader.stream_position()?;
     let struct_start = initial_position - ResourceNode::HEADER_SIZE as u64;
 
     let mut children = Vec::new();
     if child1_offset != 0 {
-        reader
-            .seek(SeekFrom::Start(struct_start + child1_offset as u64))
-            .unwrap();
+        reader.seek(SeekFrom::Start(struct_start + child1_offset as u64))?;
         children.push(ResourceNode::read_le(reader)?);
     }
 
     if child2_offset != 0 {
-        reader
-            .seek(SeekFrom::Start(struct_start + child2_offset as u64))
-            .unwrap();
+        reader.seek(SeekFrom::Start(struct_start + child2_offset as u64))?;
         children.push(ResourceNode::read_le(reader)?);
     }
 
@@ -138,23 +134,22 @@ pub struct Pcb {
 }
 
 impl ReadableFile for Pcb {
-    fn from_existing(platform: Platform, buffer: ByteSpan) -> Option<Self> {
+    fn from_existing(platform: Platform, buffer: ByteSpan) -> crate::Result<Self> {
         let mut cursor = Cursor::new(buffer);
-        Pcb::read_options(&mut cursor, platform.endianness(), ()).ok()
+        Ok(Pcb::read_options(&mut cursor, platform.endianness(), ())?)
     }
 }
 
 impl WritableFile for Pcb {
-    fn write_to_buffer(&self, platform: Platform) -> Option<ByteBuffer> {
+    fn write_to_buffer(&self, platform: Platform) -> crate::Result<ByteBuffer> {
         let mut buffer = ByteBuffer::new();
 
         {
             let mut cursor = Cursor::new(&mut buffer);
-            self.write_options(&mut cursor, platform.endianness(), ())
-                .ok()?;
+            self.write_options(&mut cursor, platform.endianness(), ())?;
         }
 
-        Some(buffer)
+        Ok(buffer)
     }
 }
 

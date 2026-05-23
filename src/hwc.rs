@@ -17,28 +17,27 @@ pub struct Hwc {
 }
 
 impl ReadableFile for Hwc {
-    fn from_existing(_platform: Platform, buffer: ByteSpan) -> Option<Self> {
+    fn from_existing(_platform: Platform, buffer: ByteSpan) -> crate::Result<Self> {
         let mut cursor = Cursor::new(buffer);
 
         let mut rgba = vec![0; Self::WIDTH * Self::HEIGHT * 4];
-        cursor.read_exact(&mut rgba).ok()?;
+        cursor.read_exact(&mut rgba)?;
 
-        Some(Self { rgba })
+        Ok(Self { rgba })
     }
 }
 
 impl WritableFile for Hwc {
-    fn write_to_buffer(&self, platform: Platform) -> Option<ByteBuffer> {
+    fn write_to_buffer(&self, platform: Platform) -> crate::Result<ByteBuffer> {
         let mut buffer = ByteBuffer::new();
 
         {
             let mut cursor = Cursor::new(&mut buffer);
             self.rgba
-                .write_options(&mut cursor, platform.endianness(), ())
-                .ok()?;
+                .write_options(&mut cursor, platform.endianness(), ())?;
         }
 
-        Some(buffer)
+        Ok(buffer)
     }
 }
 

@@ -191,7 +191,7 @@ impl SqPackResource {
         self.repositories.sort();
     }
 
-    fn get_dat_file(&self, index_path: &str, data_file_id: u32) -> Option<SqPackData> {
+    fn get_dat_file(&self, index_path: &str, data_file_id: u32) -> crate::Result<SqPackData> {
         // Remove the index or index2 from the last bit of the path
         let dat_path = index_path.replace(".index2", "");
         let dat_path = dat_path.replace(".index", "");
@@ -429,9 +429,13 @@ impl SqPackResource {
     }
 
     /// Reads a file based on an index hash and the index file you want to read from.
-    pub fn read_from_hash(&mut self, index_path: &Path, hash: Hash) -> Option<ByteBuffer> {
+    pub fn read_from_hash(&mut self, index_path: &Path, hash: Hash) -> crate::Result<ByteBuffer> {
         self.cache_index_file(index_path);
-        let index_file = self.get_index_file(index_path)?;
+        let index_file = self
+            .get_index_file(index_path)
+            .ok_or(crate::Error::FileNotFound {
+                path: index_path.display().to_string(),
+            })?;
 
         let slice = index_file.find_entry_from_hash(hash);
         match slice {
@@ -440,7 +444,7 @@ impl SqPackResource {
                     self.get_dat_file(&index_path.to_string_lossy(), entry.data_file_id.into())?;
                 dat_file.read_from_offset(entry.offset)
             }
-            None => None,
+            None => Err(crate::Error::HashNotFound { hash }),
         }
     }
 
@@ -471,7 +475,7 @@ impl SqPackResource {
 }
 
 impl Resource for SqPackResource {
-    fn read(&mut self, path: &str) -> Option<ByteBuffer> {
+    fn read(&mut self, path: &str) -> crate::Result<ByteBuffer> {
         let slice = self.find_entry(path);
         match slice {
             Some((entry, index_path)) => {
@@ -480,7 +484,9 @@ impl Resource for SqPackResource {
 
                 dat_file.read_from_offset(entry.offset)
             }
-            None => None,
+            None => Err(Error::FileNotFound {
+                path: path.to_string(),
+            }),
         }
     }
 

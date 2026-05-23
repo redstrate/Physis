@@ -41,16 +41,20 @@ pub struct Lvb {
 }
 
 impl ReadableFile for Lvb {
-    fn from_existing(platform: Platform, buffer: ByteSpan) -> Option<Self> {
+    fn from_existing(platform: Platform, buffer: ByteSpan) -> crate::Result<Self> {
         let mut cursor = Cursor::new(buffer);
         let string_heap = StringHeap::from(cursor.position() as i64);
 
-        Lvb::read_options(&mut cursor, platform.endianness(), (&string_heap,)).ok()
+        Ok(Lvb::read_options(
+            &mut cursor,
+            platform.endianness(),
+            (&string_heap,),
+        )?)
     }
 }
 
 impl WritableFile for Lvb {
-    fn write_to_buffer(&self, platform: Platform) -> Option<ByteBuffer> {
+    fn write_to_buffer(&self, platform: Platform) -> crate::Result<ByteBuffer> {
         let mut buffer = ByteBuffer::new();
 
         {
@@ -59,15 +63,12 @@ impl WritableFile for Lvb {
             // TODO: need dual pass
 
             let mut cursor = Cursor::new(&mut buffer);
-            self.write_options(&mut cursor, platform.endianness(), (&mut string_heap,))
-                .ok()?;
+            self.write_options(&mut cursor, platform.endianness(), (&mut string_heap,))?;
 
-            string_heap
-                .write_options(&mut cursor, platform.endianness(), ())
-                .ok()?;
+            string_heap.write_options(&mut cursor, platform.endianness(), ())?;
         }
 
-        Some(buffer)
+        Ok(buffer)
     }
 }
 

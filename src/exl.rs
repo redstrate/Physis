@@ -17,7 +17,7 @@ pub struct EXL {
 }
 
 impl ReadableFile for EXL {
-    fn from_existing(_platform: Platform, buffer: ByteSpan) -> Option<Self> {
+    fn from_existing(_platform: Platform, buffer: ByteSpan) -> crate::Result<Self> {
         let mut exl = Self {
             version: 0,
             entries: Vec::new(),
@@ -39,28 +39,26 @@ impl ReadableFile for EXL {
             }
         }
 
-        Some(exl)
+        Ok(exl)
     }
 }
 
 impl WritableFile for EXL {
-    fn write_to_buffer(&self, _platform: Platform) -> Option<ByteBuffer> {
+    fn write_to_buffer(&self, _platform: Platform) -> crate::Result<ByteBuffer> {
         let mut buffer = ByteBuffer::new();
 
         {
             let cursor = Cursor::new(&mut buffer);
             let mut writer = BufWriter::new(cursor);
 
-            writer
-                .write_all(format!("EXLT,{}", self.version).as_ref())
-                .ok()?;
+            writer.write_all(format!("EXLT,{}", self.version).as_ref())?;
 
             for (key, value) in &self.entries {
-                writer.write_all(format!("\n{key},{value}").as_ref()).ok()?;
+                writer.write_all(format!("\n{key},{value}").as_ref())?;
             }
         }
 
-        Some(buffer)
+        Ok(buffer)
     }
 }
 

@@ -7,7 +7,7 @@ use std::io::{Read, Seek, SeekFrom};
 
 use crate::common_file_operations::{read_bool_from, write_bool_as};
 use crate::string_heap::{HeapPointer, HeapString, StringHeap};
-use binrw::{BinRead, BinReaderExt};
+use binrw::{BinRead, BinReaderExt, BinResult};
 use binrw::{Endian, binrw};
 
 mod aetheryte;
@@ -606,37 +606,36 @@ impl Layer {
         cursor: &mut T,
         data_heap: &StringHeap,
         string_heap: &StringHeap,
-    ) -> Option<Layer> {
-        let old_pos = cursor.stream_position().unwrap();
+    ) -> BinResult<Layer> {
+        let old_pos = cursor.stream_position()?;
 
         let header =
-            LayerHeader::read_options(cursor, endianness, (endianness, data_heap, string_heap))
-                .unwrap();
+            LayerHeader::read_options(cursor, endianness, (endianness, data_heap, string_heap))?;
 
         let mut objects = Vec::new();
         // read instance objects
         {
             let mut instance_offsets = vec![0i32; header.instance_object_count as usize];
             for i in 0..header.instance_object_count {
-                instance_offsets[i as usize] =
-                    cursor.read_type_args::<i32>(endianness, ()).unwrap();
+                instance_offsets[i as usize] = cursor.read_type_args::<i32>(endianness, ())?;
             }
 
             for i in 0..header.instance_object_count {
-                cursor
-                    .seek(SeekFrom::Start(
-                        old_pos
-                            + header.instance_object_offset as u64
-                            + instance_offsets[i as usize] as u64,
-                    ))
-                    .unwrap();
+                cursor.seek(SeekFrom::Start(
+                    old_pos
+                        + header.instance_object_offset as u64
+                        + instance_offsets[i as usize] as u64,
+                ))?;
 
-                objects
-                    .push(InstanceObject::read_options(cursor, endianness, (string_heap,)).ok()?);
+                objects.push(InstanceObject::read_options(
+                    cursor,
+                    endianness,
+                    (string_heap,),
+                )?);
             }
         }
 
-        Some(Layer { header, objects })
+        Ok(Layer { header, objects })
     }
 }
 

@@ -403,16 +403,15 @@ where
 }
 
 impl ReadableFile for Avfx {
-    fn from_existing(platform: Platform, buffer: ByteSpan) -> Option<Self> {
+    fn from_existing(platform: Platform, buffer: ByteSpan) -> crate::Result<Self> {
         let mut cursor = Cursor::new(buffer);
-        let header =
-            AvfxBlock::<Avfx>::read_options(&mut cursor, platform.endianness(), ()).ok()?;
-        Some(header.data)
+        let header = AvfxBlock::<Avfx>::read_options(&mut cursor, platform.endianness(), ())?;
+        Ok(header.data)
     }
 }
 
 impl WritableFile for Avfx {
-    fn write_to_buffer(&self, platform: Platform) -> Option<ByteBuffer> {
+    fn write_to_buffer(&self, platform: Platform) -> crate::Result<ByteBuffer> {
         let mut buffer = ByteBuffer::new();
 
         {
@@ -422,12 +421,10 @@ impl WritableFile for Avfx {
                 size: 0,
                 data: self.clone(),
             };
-            block
-                .write_options(&mut cursor, platform.endianness(), ())
-                .ok()?;
+            block.write_options(&mut cursor, platform.endianness(), ())?;
         }
 
-        Some(buffer)
+        Ok(buffer)
     }
 }
 
