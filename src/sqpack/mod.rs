@@ -107,12 +107,12 @@ pub(crate) fn read_data_block_patch<T: Read + Seek>(
             buf.read_exact(&mut compressed_data)?;
 
             let mut decompressed_data: Vec<u8> = vec![0; decompressed_length as usize];
-            if let Err(err) = no_header_decompress(&mut compressed_data, &mut decompressed_data) {
-                return Err(binrw::Error::Custom {
+            no_header_decompress(&mut compressed_data, &mut decompressed_data).map_err(|err| {
+                binrw::Error::Custom {
                     pos: 0,
                     err: Box::new(err),
-                });
-            }
+                }
+            })?;
 
             Ok(decompressed_data)
         }
