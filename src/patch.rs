@@ -10,7 +10,7 @@ use std::path::{Path, PathBuf};
 
 use crate::ByteBuffer;
 use crate::compression::header_decompress;
-use binrw::{BinRead, BinResult};
+use binrw::{BinRead, BinResult, Endian};
 use binrw::{BinWrite, binrw};
 
 use crate::common::Platform;
@@ -292,12 +292,13 @@ pub struct SqpkFileOperationData {
     pub data: Vec<u8>,
 }
 
-#[binrw::parser(reader, endian)]
+#[binrw::parser(reader)]
 fn read_file_operation_data(file_size: u64) -> BinResult<Vec<u8>> {
     let mut data: Vec<u8> = Vec::with_capacity(file_size as usize);
 
     while data.len() < file_size as usize {
-        data.append(&mut read_data_block_patch(reader, endian)?);
+        // NOTE: The data is always in little endian
+        data.append(&mut read_data_block_patch(reader, Endian::Little)?);
     }
 
     Ok(data)
@@ -1017,7 +1018,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore = "This needs to be way more reliable"]
     fn test_add_file_op() {
         let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
         d.push("resources/tests");
