@@ -42,6 +42,7 @@ impl Language {
     ///
     /// For example, English becomes "en".
     pub fn shortname(&self) -> &'static str {
+        // NOTE: Keep in sync with `from_shortname`.
         match self {
             Language::None => "",
             Language::Japanese => "ja",
@@ -52,6 +53,22 @@ impl Language {
             Language::ChineseTraditional => "cht",
             Language::Korean => "ko",
             Language::TraditionalChinese => "tc",
+        }
+    }
+
+    /// Returns the language for a given shorthand, if valid.
+    pub fn from_shortname(shortname: &str) -> Self {
+        // NOTE: Keep in sync with `shortname`.
+        match shortname {
+            "ja" => Language::Japanese,
+            "en" => Language::English,
+            "de" => Language::German,
+            "fr" => Language::French,
+            "chs" => Language::ChineseSimplified,
+            "cht" => Language::ChineseTraditional,
+            "ko" => Language::Korean,
+            "tc" => Language::TraditionalChinese,
+            _ => Language::None,
         }
     }
 }
