@@ -37,15 +37,17 @@ pub struct ExitRangeInstanceObject {
 #[derive(Debug, PartialEq, Clone, Default)]
 pub struct MapRangeInstanceObject {
     pub parent_data: TriggerBoxInstanceObject,
-    map: u32,
+    pub map: u32,
     /// Name for the general location. Index into the PlaceName Sxcel sheet.
     pub place_name_block: u32,
     /// Name for the specific spot. Index into the PlaceName Sxcel sheet.
     pub place_name_spot: u32,
-    weather: u32,
-    bgm: u32,
-    padding: [u8; 10],
-    housing_block_id: u8,
+    pub weather: u32,
+    #[brw(pad_after = 8)] // Not read by the client
+    pub bgm: u32,
+    pub unk1: u8,
+    pub unk2: u8,
+    pub housing_block_id: u8,
     /// Most likely affects whether the EXP bonus affects this area.
     #[br(map = read_bool_from::<u8>)]
     #[bw(map = write_bool_as::<u8>)]
@@ -54,7 +56,7 @@ pub struct MapRangeInstanceObject {
     pub discovery_id: u8,
     #[br(map = read_bool_from::<u8>)]
     #[bw(map = write_bool_as::<u8>)]
-    map_enabled: bool,
+    pub map_enabled: bool,
     /// Probably to enable indication in the little place name UI element.
     #[br(map = read_bool_from::<u8>)]
     #[bw(map = write_bool_as::<u8>)]
@@ -65,24 +67,35 @@ pub struct MapRangeInstanceObject {
     pub discovery_enabled: bool,
     #[br(map = read_bool_from::<u8>)]
     #[bw(map = write_bool_as::<u8>)]
-    bgm_enabled: bool,
+    pub bgm_enabled: bool,
     #[br(map = read_bool_from::<u8>)]
     #[bw(map = write_bool_as::<u8>)]
-    weather_enabled: bool,
+    pub weather_enabled: bool,
     /// Whether this area is marked as a sanctuary.
     #[br(map = read_bool_from::<u8>)]
     #[bw(map = write_bool_as::<u8>)]
     pub rest_bonus_enabled: bool,
     #[br(map = read_bool_from::<u8>)]
     #[bw(map = write_bool_as::<u8>)]
-    bgm_play_zone_in_only: bool,
+    pub bgm_play_zone_in_only: bool,
     #[br(map = read_bool_from::<u8>)]
     #[bw(map = write_bool_as::<u8>)]
-    lift_enabled: bool,
+    pub lift_enabled: bool,
     #[br(map = read_bool_from::<u8>)]
     #[bw(map = write_bool_as::<u8>)]
-    housing_enabled: bool,
-    padding2: [u8; 2],
+    pub housing_enabled: bool,
+    #[br(map = read_bool_from::<u8>)]
+    #[bw(map = write_bool_as::<u8>)]
+    pub unk3: bool,
+    #[br(map = read_bool_from::<u8>)]
+    #[bw(map = write_bool_as::<u8>)]
+    pub unk4: bool,
+    #[br(map = read_bool_from::<u8>)]
+    #[bw(map = write_bool_as::<u8>)]
+    pub mounts_and_ornaments_disabled: bool,
+    #[br(map = read_bool_from::<u8>)]
+    #[bw(map = write_bool_as::<u8>)]
+    pub lalafells_only: bool,
 }
 
 #[binrw]
@@ -113,7 +126,6 @@ pub struct PopRangeInstanceObject {
 #[derive(Debug, PartialEq, Clone, Default)]
 pub struct EventRangeInstanceObject {
     pub parent_data: TriggerBoxInstanceObject,
-    pub unk_flags: [u8; 12],
 }
 
 #[binrw]
