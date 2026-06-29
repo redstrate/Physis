@@ -128,7 +128,7 @@ pub struct ModelHeader {
 
     flags2: ModelFlags2,
 
-    model_clip_out_of_distance: f32,
+    pub model_clip_out_of_distance: f32,
     shadow_clip_out_of_distance: f32,
 
     furniture_part_bounding_box_count: u16,
@@ -537,6 +537,7 @@ pub enum PartType {
 #[derive(Debug, Clone)]
 pub struct Lod {
     pub parts: Vec<Part>,
+    pub model_lod_range: f32,
 }
 
 /// Model file, usually with the `.mdl` file extension.
@@ -1155,7 +1156,10 @@ impl ReadableFile for MDL {
                 });
             }
 
-            lods.push(Lod { parts });
+            lods.push(Lod {
+                parts,
+                model_lod_range: model.lods[i as usize].model_lod_range,
+            });
         }
 
         Ok(MDL {
