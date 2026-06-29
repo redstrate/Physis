@@ -197,6 +197,7 @@ pub struct ScnGeneralSection {
     unk7: f32,
     unk8: i32, // points to 4 bytes in the string heap
 
+    /// Path to the `.lcb` file.
     #[brw(args(heap_pointer, string_heap))]
     pub lcb_path: HeapString,
 

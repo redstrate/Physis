@@ -146,7 +146,7 @@ pub mod patchlist;
 /// Types for uwb (`.uwb`) files.
 pub mod uwb;
 
-/// Types for level collision binary (`.lcb`) files.
+/// Types for light culling binary (`.lcb`) files.
 pub mod lcb;
 
 /// Types for level variable binary (`.lvb`) files.

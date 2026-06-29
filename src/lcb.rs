@@ -12,7 +12,7 @@ use binrw::BinRead;
 use binrw::BinWrite;
 use binrw::binrw;
 
-/// Level collision binary file, usually with the `.lcb` file extension.
+/// Light culling binary file, usually with the `.lcb` file extension.
 #[binrw]
 #[derive(Debug)]
 #[brw(magic = b"LCB1")]
@@ -52,13 +52,16 @@ impl Lcc {
 }
 
 #[binrw]
-#[derive(Debug)]
+#[repr(C)]
+#[derive(Debug, Clone)]
 pub struct LccEntry {
-    /// Points to a GameObject in this territory.
+    /// Points to a Light or SharedGroup in this zone.
     pub instance_id: u32,
-    // TODO: figure out what this is
-    pub unk1: u32,
+    /// If `instance_id` is pointing to a SharedGroup, this is the Light ID inside of the SGB it's referring to.
+    pub sub_id: u32,
+    /// Minimum bounds.
     pub min: [f32; 3],
+    /// Maximum bounds.
     pub max: [f32; 3],
 }
 
