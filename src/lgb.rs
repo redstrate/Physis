@@ -276,7 +276,7 @@ mod tests {
 
     use crate::common::ensure_size;
     use crate::layer::{
-        InstanceObject, LayerEntryData, LayerHeader, LayerSetReferenced, LayerSetReferencedList,
+        InstanceObject, LayerEntryData, LayerHeader, LayerSetReferencedList,
         LayerSetReferencedType, SoundEffectType, SoundInstanceObject, SoundParameters,
         Transformation,
     };
@@ -365,9 +365,7 @@ mod tests {
                     ps3_visible: true,
                     layer_set_referenced_list: LayerSetReferencedList {
                         referenced_type: LayerSetReferencedType::Include,
-                        layer_sets: vec![LayerSetReferenced {
-                            layer_set_id: 132261
-                        }]
+                        layer_set_ids: vec![132261]
                     },
                     festival_id: 0,
                     festival_phase_id: 0,
@@ -409,9 +407,7 @@ mod tests {
                         ps3_visible: true,
                         layer_set_referenced_list: LayerSetReferencedList {
                             referenced_type: LayerSetReferencedType::Include,
-                            layer_sets: vec![LayerSetReferenced {
-                                layer_set_id: 132261,
-                            }],
+                            layer_set_ids: vec![132261],
                         },
                         festival_id: 0,
                         festival_phase_id: 0,
@@ -468,7 +464,7 @@ mod tests {
                         ps3_visible: true,
                         layer_set_referenced_list: LayerSetReferencedList {
                             referenced_type: LayerSetReferencedType::All,
-                            layer_sets: vec![],
+                            layer_set_ids: vec![],
                         },
                         festival_id: 0,
                         festival_phase_id: 0,

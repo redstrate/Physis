@@ -346,6 +346,7 @@ pub enum LayerEntryData {
 }
 
 #[binrw]
+#[repr(u32)]
 #[brw(repr = i32)]
 #[derive(Debug, PartialEq, Default, Copy, Clone)]
 pub enum LayerSetReferencedType {
@@ -461,16 +462,12 @@ impl LayerHeader {
     /// Whether this layer set ID is included or excluded.
     pub fn has_layer_set(&self, id: u32) -> bool {
         match self.layer_set_referenced_list.referenced_type {
-            LayerSetReferencedType::Include => self
-                .layer_set_referenced_list
-                .layer_sets
-                .iter()
-                .any(|x| x.layer_set_id == id),
-            LayerSetReferencedType::Exclude => !self
-                .layer_set_referenced_list
-                .layer_sets
-                .iter()
-                .any(|x| x.layer_set_id == id),
+            LayerSetReferencedType::Include => {
+                self.layer_set_referenced_list.layer_set_ids.contains(&id)
+            }
+            LayerSetReferencedType::Exclude => {
+                !self.layer_set_referenced_list.layer_set_ids.contains(&id)
+            }
             LayerSetReferencedType::All => true, // NOTE: This is based on the assumption seen in The Lavender Beds (340)'s pop range in LVD_Zone_01.
             _ => false,                          // Unsure how the other ones should be handled yet
         }
@@ -501,14 +498,6 @@ impl Default for LayerHeader {
 }
 
 #[binrw]
-#[derive(Debug, PartialEq, Clone, Copy)]
-#[allow(dead_code)] // most of the fields are unused at the moment
-pub struct LayerSetReferenced {
-    /// Corresponds to an ID of a [ScnLayerSet](crate::scn::ScnLayerSet).
-    pub layer_set_id: u32,
-}
-
-#[binrw]
 #[br(import(data_heap: &StringHeap), stream = r)]
 #[bw(import(data_heap: &mut StringHeap))]
 #[derive(Debug, PartialEq, Default, Clone)]
@@ -516,15 +505,16 @@ pub struct LayerSetReferencedList {
     /// The type of reference.
     pub referenced_type: LayerSetReferencedType,
     #[br(temp)]
-    #[bw(calc = data_heap.get_free_offset(&layer_sets))]
+    #[bw(calc = data_heap.get_free_offset(&layer_set_ids))]
     layer_set_offset: i32,
-    #[bw(calc = layer_sets.len() as i32)]
+    #[bw(calc = layer_set_ids.len() as i32)]
     #[br(temp)]
     layer_set_count: i32,
 
+    /// Corresponds to IDs of a [ScnLayerSet](crate::scn::ScnLayerSet).
     #[br(count = layer_set_count)]
     #[bw(ignore)] // Written above
-    pub layer_sets: Vec<LayerSetReferenced>,
+    pub layer_set_ids: Vec<u32>,
 }
 
 #[binrw]
