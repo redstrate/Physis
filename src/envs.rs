@@ -6,7 +6,10 @@ use std::io::SeekFrom;
 
 use binrw::{BinRead, BinResult, BinWrite, binrw};
 
-use crate::string_heap::{HeapPointer, HeapString, StringHeap};
+use crate::{
+    common_file_operations::{read_bool_from, write_bool_as},
+    string_heap::{HeapPointer, HeapString, StringHeap},
+};
 
 pub(crate) const DAWNTRAIL_MARKER: &[u8; 4] = b"007V";
 
@@ -19,7 +22,7 @@ pub(crate) fn write_dawntrail_marker(x: &bool) -> [u8; 4] {
 }
 
 #[binrw::writer(writer, endian)]
-pub(crate) fn write_envs(envs: &Vec<EnvsHeader>, string_heap: &mut StringHeap) -> BinResult<()> {
+pub(crate) fn write_envs(envs: &Vec<Envs>, string_heap: &mut StringHeap) -> BinResult<()> {
     for env in envs {
         env.write_options(writer, endian, (string_heap,))?;
     }
@@ -33,22 +36,29 @@ pub(crate) fn write_envs(envs: &Vec<EnvsHeader>, string_heap: &mut StringHeap) -
 #[br(import(string_heap: &StringHeap))]
 #[bw(import(string_heap: &mut StringHeap))]
 #[derive(Debug, Default)]
-pub struct EnvsHeader {
+pub struct Envs {
     /// Size of this header, in bytes. Should be the same as [EnvsHeader::SIZE].
     size: u32,
     /// The client doesn't load anything but version 6.
     pub version: u32,
     /// Offset to the sections array.
+    #[br(temp)]
+    #[bw(calc = 16)]
     offset_to_sections: u32,
     /// Number of sections.
+    #[br(temp)]
+    #[bw(calc = sections.len() as u32)]
     section_count: u32,
     /// Seems to indicate the remaining amount of bytes in this file, including this u32.
     remaining_size: u32,
-    unk1: u32,
+    /// Equal to `section_count` * `EnvChildSection::SIZE`.
+    #[br(temp)]
+    #[bw(calc = section_count * EnvChildSection::SIZE as u32)]
+    section_size: u32,
 
     /// List of children sections.
     #[br(count = section_count, args { inner: (string_heap,) })]
-    #[br(seek_before = SeekFrom::Current(offset_to_sections as i64 - EnvsHeader::SIZE as i64 + 4))] // Read starting from version
+    #[br(seek_before = SeekFrom::Current(offset_to_sections as i64 - Envs::SIZE as i64 + 4))] // Read starting from version
     #[br(restore_position)]
     #[bw(write_with = write_child_sections, args(&mut string_heap,))]
     pub sections: Vec<EnvChildSection>,
@@ -66,7 +76,7 @@ pub(crate) fn write_child_sections(
     Ok(())
 }
 
-impl EnvsHeader {
+impl Envs {
     pub(crate) const SIZE: usize = 0x18;
 }
 
@@ -75,18 +85,24 @@ impl EnvsHeader {
 #[bw(import(string_heap: &mut StringHeap))]
 #[derive(Debug, Default)]
 pub struct EnvChildSection {
+    #[br(temp)]
+    #[bw(calc = 0)] // TODO
     offset: u32,
 
+    #[br(temp)]
+    #[bw(calc = 0)] // TODO
     count: u32,
-    /// Which weather this appleis in. Index into the Weather Excel sheet.
+    /// Which weather this applied in. Index into the Weather Excel sheet.
     pub weather_id: u32,
+    #[br(temp)]
+    #[bw(calc = 0)] // TODO
     offset_to_floats: u32,
 
     #[br(count = count, args { inner: (string_heap,) })]
     #[br(seek_before = SeekFrom::Current(offset as i64 - EnvChildSection::SIZE as i64))]
     #[br(restore_position)]
     #[bw(ignore)] // TODO: support writing
-    pub unknown1: Vec<EnvUnknown1>,
+    pub timelines: Vec<EnvTimeline>,
 
     #[br(seek_before = SeekFrom::Current(offset_to_floats as i64 - EnvChildSection::SIZE as i64))]
     #[br(restore_position)]
@@ -128,136 +144,136 @@ where
 #[br(import(index: u32, offset: u32, unknown2_offsets: &[i32], string_heap: &StringHeap))]
 #[bw(import(string_heap: &mut StringHeap))]
 #[derive(Debug, Default)]
-pub enum EnvUnknownElement {
+pub enum EnvTimelineElement {
     #[br(pre_assert(index == 0))]
     Element0(
-        #[br(parse_with = unknown2_from_offsets, args(EnvUnknown1::SIZE as u32, offset, unknown2_offsets, string_heap))]
+        #[br(parse_with = unknown2_from_offsets, args(EnvTimeline::SIZE as u32, offset, unknown2_offsets, string_heap))]
         #[br(restore_position)]
         #[bw(ignore)] // TODO: support writing
         Vec<Element0>,
     ),
     #[br(pre_assert(index == 1))]
     Element1(
-        #[br(parse_with = unknown2_from_offsets, args(EnvUnknown1::SIZE as u32, offset, unknown2_offsets, string_heap))]
+        #[br(parse_with = unknown2_from_offsets, args(EnvTimeline::SIZE as u32, offset, unknown2_offsets, string_heap))]
         #[br(restore_position)]
         #[bw(ignore)] // TODO: support writing
         Vec<Element1>,
     ),
     #[br(pre_assert(index == 2))]
     Element2(
-        #[br(parse_with = unknown2_from_offsets, args(EnvUnknown1::SIZE as u32, offset, unknown2_offsets, string_heap))]
+        #[br(parse_with = unknown2_from_offsets, args(EnvTimeline::SIZE as u32, offset, unknown2_offsets, string_heap))]
         #[br(restore_position)]
         #[bw(ignore)] // TODO: support writing
         Vec<Element2>,
     ),
     #[br(pre_assert(index == 3))]
     Element3(
-        #[br(parse_with = unknown2_from_offsets, args(EnvUnknown1::SIZE as u32, offset, unknown2_offsets, string_heap))]
+        #[br(parse_with = unknown2_from_offsets, args(EnvTimeline::SIZE as u32, offset, unknown2_offsets, string_heap))]
         #[br(restore_position)]
         #[bw(ignore)] // TODO: support writing
         Vec<Element3>,
     ),
     #[br(pre_assert(index == 4))]
     Element4(
-        #[br(parse_with = unknown2_from_offsets, args(EnvUnknown1::SIZE as u32, offset, unknown2_offsets, string_heap))]
+        #[br(parse_with = unknown2_from_offsets, args(EnvTimeline::SIZE as u32, offset, unknown2_offsets, string_heap))]
         #[br(restore_position)]
         #[bw(ignore)] // TODO: support writing
         Vec<Element4>,
     ),
     #[br(pre_assert(index == 6))]
     Element6(
-        #[br(parse_with = unknown2_from_offsets, args(EnvUnknown1::SIZE as u32, offset, unknown2_offsets, string_heap))]
+        #[br(parse_with = unknown2_from_offsets, args(EnvTimeline::SIZE as u32, offset, unknown2_offsets, string_heap))]
         #[br(restore_position)]
         #[bw(ignore)] // TODO: support writing
         Vec<Element6>,
     ),
     #[br(pre_assert(index == 7))]
     Element7(
-        #[br(parse_with = unknown2_from_offsets, args(EnvUnknown1::SIZE as u32, offset, unknown2_offsets, string_heap))]
+        #[br(parse_with = unknown2_from_offsets, args(EnvTimeline::SIZE as u32, offset, unknown2_offsets, string_heap))]
         #[br(restore_position)]
         #[bw(ignore)] // TODO: support writing
         Vec<Element7>,
     ),
     #[br(pre_assert(index == 8))]
     Element8(
-        #[br(parse_with = unknown2_from_offsets, args(EnvUnknown1::SIZE as u32, offset, unknown2_offsets, string_heap))]
+        #[br(parse_with = unknown2_from_offsets, args(EnvTimeline::SIZE as u32, offset, unknown2_offsets, string_heap))]
         #[br(restore_position)]
         #[bw(ignore)] // TODO: support writing
         Vec<Element8>,
     ),
     #[br(pre_assert(index == 9))]
     Element9(
-        #[br(parse_with = unknown2_from_offsets, args(EnvUnknown1::SIZE as u32, offset, unknown2_offsets, string_heap))]
+        #[br(parse_with = unknown2_from_offsets, args(EnvTimeline::SIZE as u32, offset, unknown2_offsets, string_heap))]
         #[br(restore_position)]
         #[bw(ignore)] // TODO: support writing
         Vec<Element9>,
     ),
     #[br(pre_assert(index == 10))]
     Element10(
-        #[br(parse_with = unknown2_from_offsets, args(EnvUnknown1::SIZE as u32, offset, unknown2_offsets, string_heap))]
+        #[br(parse_with = unknown2_from_offsets, args(EnvTimeline::SIZE as u32, offset, unknown2_offsets, string_heap))]
         #[br(restore_position)]
         #[bw(ignore)] // TODO: support writing
         Vec<Element10>,
     ),
     #[br(pre_assert(index == 11))]
     Element11(
-        #[br(parse_with = unknown2_from_offsets, args(EnvUnknown1::SIZE as u32, offset, unknown2_offsets, string_heap))]
+        #[br(parse_with = unknown2_from_offsets, args(EnvTimeline::SIZE as u32, offset, unknown2_offsets, string_heap))]
         #[br(restore_position)]
         #[bw(ignore)] // TODO: support writing
         Vec<Element11>,
     ),
     #[br(pre_assert(index == 12))]
     Element12(
-        #[br(parse_with = unknown2_from_offsets, args(EnvUnknown1::SIZE as u32, offset, unknown2_offsets, string_heap))]
+        #[br(parse_with = unknown2_from_offsets, args(EnvTimeline::SIZE as u32, offset, unknown2_offsets, string_heap))]
         #[br(restore_position)]
         #[bw(ignore)] // TODO: support writing
         Vec<Element12>,
     ),
     #[br(pre_assert(index == 13))]
     Element13(
-        #[br(parse_with = unknown2_from_offsets, args(EnvUnknown1::SIZE as u32, offset, unknown2_offsets, string_heap))]
+        #[br(parse_with = unknown2_from_offsets, args(EnvTimeline::SIZE as u32, offset, unknown2_offsets, string_heap))]
         #[br(restore_position)]
         #[bw(ignore)] // TODO: support writing
         Vec<Element13>,
     ),
     #[br(pre_assert(index == 20))]
     Element20(
-        #[br(parse_with = unknown2_from_offsets, args(EnvUnknown1::SIZE as u32, offset, unknown2_offsets, string_heap))]
+        #[br(parse_with = unknown2_from_offsets, args(EnvTimeline::SIZE as u32, offset, unknown2_offsets, string_heap))]
         #[br(restore_position)]
         #[bw(ignore)] // TODO: support writing
         Vec<Element20>,
     ),
     #[br(pre_assert(index == 29))]
-    Element29(
-        #[br(parse_with = unknown2_from_offsets, args(EnvUnknown1::SIZE as u32, offset, unknown2_offsets, string_heap))]
+    ChangeVisibility(
+        #[br(parse_with = unknown2_from_offsets, args(EnvTimeline::SIZE as u32, offset, unknown2_offsets, string_heap))]
         #[br(restore_position)]
         #[bw(ignore)] // TODO: support writing
-        Vec<Element29>,
+        Vec<ChangeVisibility>,
     ),
     #[br(pre_assert(index == 31))]
     Element31(
-        #[br(parse_with = unknown2_from_offsets, args(EnvUnknown1::SIZE as u32, offset, unknown2_offsets, string_heap))]
+        #[br(parse_with = unknown2_from_offsets, args(EnvTimeline::SIZE as u32, offset, unknown2_offsets, string_heap))]
         #[br(restore_position)]
         #[bw(ignore)] // TODO: support writing
         Vec<Element31>,
     ),
     #[br(pre_assert(index == 33))]
     Element33(
-        #[br(parse_with = unknown2_from_offsets, args(EnvUnknown1::SIZE as u32, offset, unknown2_offsets, string_heap))]
+        #[br(parse_with = unknown2_from_offsets, args(EnvTimeline::SIZE as u32, offset, unknown2_offsets, string_heap))]
         #[br(restore_position)]
         #[bw(ignore)] // TODO: support writing
         Vec<Element33>,
     ),
     #[br(pre_assert(index == 34))]
     Element34(
-        #[br(parse_with = unknown2_from_offsets, args(EnvUnknown1::SIZE as u32, offset, unknown2_offsets, string_heap))]
+        #[br(parse_with = unknown2_from_offsets, args(EnvTimeline::SIZE as u32, offset, unknown2_offsets, string_heap))]
         #[br(restore_position)]
         #[bw(ignore)] // TODO: support writing
         Vec<Element34>,
     ),
     #[br(pre_assert(index == 35))]
     Element35(
-        #[br(parse_with = unknown2_from_offsets, args(EnvUnknown1::SIZE as u32, offset, unknown2_offsets, string_heap))]
+        #[br(parse_with = unknown2_from_offsets, args(EnvTimeline::SIZE as u32, offset, unknown2_offsets, string_heap))]
         #[br(restore_position)]
         #[bw(ignore)] // TODO: support writing
         Vec<Element35>,
@@ -270,25 +286,30 @@ pub enum EnvUnknownElement {
 #[br(import(string_heap: &StringHeap))]
 #[bw(import(string_heap: &mut StringHeap))]
 #[derive(Debug, Default)]
-pub struct EnvUnknown1 {
+pub struct EnvTimeline {
+    #[br(temp)]
+    #[bw(ignore)]
     offset: u32,
+    #[br(temp)]
+    #[bw(ignore)]
     count: u32,
     index: u32,
 
     // NOTE: The size of array elements *must* match the distance between offsets!
     // If there's a discrepancy, that means our struct size is wrong.
     #[br(count = count)]
-    #[br(seek_before = SeekFrom::Current(offset as i64 - EnvUnknown1::SIZE as i64))]
+    #[br(seek_before = SeekFrom::Current(offset as i64 - EnvTimeline::SIZE as i64))]
     #[br(restore_position)]
     #[bw(ignore)] // TODO: support writing
+    #[br(temp)]
     offsets: Vec<i32>,
 
     #[br(args(index, offset, &offsets, string_heap))]
     #[bw(args(string_heap))]
-    pub data: EnvUnknownElement,
+    pub data: EnvTimelineElement,
 }
 
-impl EnvUnknown1 {
+impl EnvTimeline {
     pub(crate) const SIZE: usize = 0xc;
 }
 
@@ -297,7 +318,8 @@ impl EnvUnknown1 {
 #[br(import(string_heap: &StringHeap))]
 #[bw(import(string_heap: &mut StringHeap))]
 pub struct Element0 {
-    unk1: f32,
+    /// Between 0 and 86400 seconds (one day.)
+    pub time: f32,
     unk2: u32,
     unk3: f32,
     unk4: f32,
@@ -319,7 +341,8 @@ pub struct Element0 {
 #[br(import(string_heap: &StringHeap))]
 #[bw(import(string_heap: &mut StringHeap))]
 pub struct Element1 {
-    unk1: f32,
+    /// Between 0 and 86400 seconds (one day.)
+    pub time: f32,
     unk2: u32,
     unk3: u32,
     unk4: u32,
@@ -340,7 +363,8 @@ pub struct Element1 {
 #[br(import(string_heap: &StringHeap))]
 #[bw(import(string_heap: &mut StringHeap))]
 pub struct Element2 {
-    unk1: f32,
+    /// Between 0 and 86400 seconds (one day.)
+    pub time: f32,
     unk2: u32,
     unk3: u32,
     unk4: u32,
@@ -354,7 +378,8 @@ pub struct Element2 {
 #[br(import(string_heap: &StringHeap))]
 #[bw(import(string_heap: &mut StringHeap))]
 pub struct Element3 {
-    unk1: f32,
+    /// Between 0 and 86400 seconds (one day.)
+    pub time: f32,
     unk2: u32,
     unk3: u32,
     unk4: u32,
@@ -375,7 +400,8 @@ pub struct Element3 {
 #[br(import(string_heap: &StringHeap))]
 #[bw(import(string_heap: &mut StringHeap))]
 pub struct Element4 {
-    unk1: f32,
+    /// Between 0 and 86400 seconds (one day.)
+    pub time: f32,
     unk2: u32,
     unk3: u32,
     unk4: u32,
@@ -396,7 +422,8 @@ pub struct Element4 {
 #[br(import(string_heap: &StringHeap))]
 #[bw(import(string_heap: &mut StringHeap))]
 pub struct Element6 {
-    unk1: f32,
+    /// Between 0 and 86400 seconds (one day.)
+    pub time: f32,
     unk2: u32,
     unk3: u32,
     unk4: f32,
@@ -416,7 +443,8 @@ pub struct Element6 {
 #[br(import(string_heap: &StringHeap))]
 #[bw(import(string_heap: &mut StringHeap))]
 pub struct Element7 {
-    unk1: f32,
+    /// Between 0 and 86400 seconds (one day.)
+    pub time: f32,
     unk2: u32,
     unk3: u32,
     unk4: u32,
@@ -437,7 +465,8 @@ pub struct Element7 {
 #[br(import(string_heap: &StringHeap))]
 #[bw(import(string_heap: &mut StringHeap))]
 pub struct Element8 {
-    unk1: f32,
+    /// Between 0 and 86400 seconds (one day.)
+    pub time: f32,
     unk2: f32,
     unk3: f32,
     unk4: f32,
@@ -449,7 +478,8 @@ pub struct Element8 {
 #[br(import(string_heap: &StringHeap))]
 #[bw(import(string_heap: &mut StringHeap))]
 pub struct Element9 {
-    unk1: f32,
+    /// Between 0 and 86400 seconds (one day.)
+    pub time: f32,
     unk2: f32,
     unk3: f32,
     unk4: f32,
@@ -463,7 +493,8 @@ pub struct Element9 {
 #[br(import(string_heap: &StringHeap))]
 #[bw(import(string_heap: &mut StringHeap))]
 pub struct Element10 {
-    unk1: f32,
+    /// Between 0 and 86400 seconds (one day.)
+    pub time: f32,
     unk2: u32,
     unk3: f32,
     unk4: u32,
@@ -495,7 +526,8 @@ pub struct Element10 {
 #[br(import(string_heap: &StringHeap))]
 #[bw(import(string_heap: &mut StringHeap))]
 pub struct Element11 {
-    unk0: f32,
+    /// Between 0 and 86400 seconds (one day.)
+    pub time: f32,
     offset: u32,
     count: u32,
     unk1: u32,
@@ -540,7 +572,8 @@ impl Element11 {
 #[br(import(string_heap: &StringHeap))]
 #[bw(import(string_heap: &mut StringHeap))]
 pub struct Element12 {
-    unk1: f32,
+    /// Between 0 and 86400 seconds (one day.)
+    pub time: f32,
     unk2: u32,
     unk3: u32,
     unk4: u32,
@@ -555,7 +588,8 @@ pub struct Element12 {
 #[br(import(string_heap: &StringHeap))]
 #[bw(import(string_heap: &mut StringHeap))]
 pub struct Element13 {
-    unk1: f32,
+    /// Between 0 and 86400 seconds (one day.)
+    pub time: f32,
     unk2: u32,
     unk3: f32,
     unk4: f32,
@@ -590,7 +624,8 @@ pub struct Element20 {
     #[bw(ignore)]
     heap_pointer: HeapPointer,
 
-    unk1: f32,
+    /// Between 0 and 86400 seconds (one day.)
+    pub time: f32,
     offset: u32,
     count: u32,
     unk4: u32,
@@ -620,9 +655,15 @@ impl Element20 {
 #[derive(Debug)]
 #[br(import(string_heap: &StringHeap))]
 #[bw(import(string_heap: &mut StringHeap))]
-pub struct Element29 {
-    unk1: f32,
-    unk2: u32,
+pub struct ChangeVisibility {
+    /// Between 0 and 86400 seconds (one day.)
+    pub time: f32,
+    // Always seems to be 200?
+    unk2: u16,
+    /// Whether this game object should be visible.
+    #[br(map = read_bool_from::<u16>)]
+    #[bw(map = write_bool_as::<u16>)]
+    pub visible: bool,
 }
 
 #[binrw]
@@ -630,7 +671,8 @@ pub struct Element29 {
 #[br(import(string_heap: &StringHeap))]
 #[bw(import(string_heap: &mut StringHeap))]
 pub struct Element31 {
-    unk1: f32,
+    /// Between 0 and 86400 seconds (one day.)
+    pub time: f32,
     unk2: f32,
     unk3: f32,
 }
@@ -640,7 +682,8 @@ pub struct Element31 {
 #[br(import(string_heap: &StringHeap))]
 #[bw(import(string_heap: &mut StringHeap))]
 pub struct Element33 {
-    unk1: f32,
+    /// Between 0 and 86400 seconds (one day.)
+    pub time: f32,
     unk2: u32,
     unk3: u32,
     unk4: f32,
@@ -651,7 +694,8 @@ pub struct Element33 {
 #[br(import(string_heap: &StringHeap))]
 #[bw(import(string_heap: &mut StringHeap))]
 pub struct Element34 {
-    unk1: f32,
+    /// Between 0 and 86400 seconds (one day.)
+    pub time: f32,
     unk2: u32,
     unk3: u32,
     unk4: f32,
@@ -665,7 +709,8 @@ pub struct Element34 {
 #[br(import(string_heap: &StringHeap))]
 #[bw(import(string_heap: &mut StringHeap))]
 pub struct Element35 {
-    unk1: f32,
+    /// Between 0 and 86400 seconds (one day.)
+    pub time: f32,
     unk2: u32,
     unk3: u32,
     unk4: f32,

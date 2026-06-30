@@ -10,7 +10,7 @@ use crate::ByteSpan;
 use crate::ReadableFile;
 use crate::WritableFile;
 use crate::common::Platform;
-use crate::envs::EnvsHeader;
+use crate::envs::Envs;
 use crate::envs::write_envs;
 use crate::string_heap::StringHeap;
 use binrw::BinRead;
@@ -30,7 +30,7 @@ pub struct Envb {
 
     #[br(count = envs_count, args { inner: (string_heap,) })]
     #[bw(write_with = write_envs, args(&mut string_heap,))]
-    pub envs: Vec<EnvsHeader>,
+    pub envs: Vec<Envs>,
 }
 
 impl ReadableFile for Envb {
