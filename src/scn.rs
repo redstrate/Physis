@@ -129,9 +129,9 @@ pub struct ScnSection {
     pub action_descriptors: ScnSGActionDescriptors,
 
     /// Housing information.
-    #[br(seek_before = SeekFrom::Current(offset_housing as i64 - ScnSection::SIZE as i64))]
+    #[br(if(offset_housing > 0), seek_before = SeekFrom::Current(offset_housing as i64 - ScnSection::SIZE as i64))]
     #[br(restore_position)]
-    pub housing: ScnHousingSettings,
+    pub housing: Option<ScnHousingSettings>,
 }
 
 impl ScnSection {
