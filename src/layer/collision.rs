@@ -5,7 +5,7 @@ use binrw::binrw;
 
 use crate::{
     common_file_operations::{read_bool_from, write_bool_as},
-    string_heap::{HeapPointer, HeapString, StringHeap},
+    string_heap::{HeapPointer, StringHeap},
 };
 
 #[binrw]
@@ -18,8 +18,7 @@ pub struct CollisionBoxInstanceObject {
     attribute: u32,
     push_player_out: u8,
     padding: [u8; 3],
-    #[brw(args(heap_pointer, string_heap))]
-    pub collision_asset_path: HeapString,
+    pub collision_asset_path_crc: u32,
     padding2: u32,
 }
 
