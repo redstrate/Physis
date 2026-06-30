@@ -117,8 +117,9 @@ pub struct Texture {
     pub height: u16,
     /// Depth of the texture in pixels.
     pub depth: u16,
-    pub mip_levels: u16,
-
+    #[br(map = |x: u8| x & 127)] // last bit is unknown
+    pub mip_levels: u8,
+    array_size: u8,
     lod_offsets: [u32; 3],
     offset_to_surface: [u32; 13],
 
