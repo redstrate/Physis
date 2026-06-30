@@ -6,7 +6,9 @@
 use std::io::Cursor;
 
 use crate::common::Platform;
-use crate::common_file_operations::{read_string, read_string_until_null, write_string};
+use crate::common_file_operations::{
+    read_bool_from, read_string, read_string_until_null, write_string,
+};
 use crate::{ByteBuffer, ByteSpan, ReadableFile, WritableFile};
 use binrw::{BinRead, BinResult, BinWrite, VecArgs};
 use binrw::{BinReaderExt, binrw};
@@ -44,6 +46,11 @@ where
     // TODO: check size
 
     Ok(block.data)
+}
+
+#[binrw::parser(reader, endian)]
+fn read_bool_block(magic: &str) -> BinResult<bool> {
+    Ok(read_block::<u32, __BinrwGeneratedStreamT>(reader, endian, (magic,))? == 1)
 }
 
 #[binrw]
@@ -200,8 +207,9 @@ pub struct Avfx {
     is_transform_skip: u32,
     #[br(parse_with = read_block, args("bASH"))]
     is_all_stop_on_hide: u32,
-    #[br(parse_with = read_block, args("bCBC"))]
-    can_be_clipped_out: u32,
+    #[br(parse_with = read_bool_block, args("bCBC"))]
+    #[bw(ignore)] // TODO
+    can_be_clipped_out: bool,
 
     #[br(parse_with = read_block, args("bCul"))]
     clip_box_enabled: u32,
@@ -227,8 +235,19 @@ pub struct Avfx {
     is_camera_space: u32,
     #[br(parse_with = read_block, args("bFEL"))]
     is_full_env_light: u32,
-    #[br(parse_with = read_block, args("bOSt"))]
-    clip_own_setting: u32,
+    #[br(parse_with = read_bool_block, args("bOSt"))]
+    #[bw(ignore)]
+    clip_own_setting: bool,
+
+    #[br(if(clip_own_setting), parse_with = read_block, args("NCB"))]
+    near_clip_begin: f32,
+    #[br(if(clip_own_setting), parse_with = read_block, args("NCE"))]
+    near_clip_end: f32,
+    #[br(if(clip_own_setting), parse_with = read_block, args("FCB"))]
+    far_clip_begin: f32,
+    #[br(if(clip_own_setting), parse_with = read_block, args("FCE"))]
+    far_clip_end: f32,
+
     #[br(parse_with = read_block, args("SPFR"))]
     soft_particle_fade_range: f32,
     #[br(parse_with = read_block, args("SKO"))]
@@ -240,6 +259,7 @@ pub struct Avfx {
     draw_order: DrawOrder,
 
     #[br(parse_with = read_block, args("DLST"))]
+    #[br(dbg)]
     directional_light_source: DirectionalLightSource,
     #[br(parse_with = read_block, args("PL1S"))]
     point_light1: DirectionalLightSource,
@@ -297,9 +317,34 @@ pub struct Avfx {
     #[br(parse_with = read_block, args("GFIM"))]
     global_fog_influence: f32,
 
-    #[br(parse_with = read_block, args("bLTS"), if(directional_light_source == DirectionalLightSource::InLocal))]
-    lts_enabled: u32,
+    #[br(parse_with = read_bool_block, args("bLTS"))]
+    #[bw(ignore)]
+    lts_enabled: bool,
+    #[br(parse_with = read_block, args("bAGS"))]
+    ags_enabled: u32,
+    // #[br(parse_with = read_block, args("bOSE"))]
+    // ose: u32,
 
+    // Dawntrail-specific?
+    #[br(parse_with = read_block, args("APri"))]
+    apri: u32,
+    #[br(parse_with = read_block, args("DPri"))]
+    dpri: u32,
+    // #[br(parse_with = read_bool_block, args("bSAB"))]
+    // #[bw(ignore)]
+    // sab_enabled: bool,
+    // #[br(parse_with = read_bool_block, args("bSBV"))]
+    // #[bw(ignore)]
+    // sbv_enabled: bool,
+    // #[br(parse_with = read_block, args("SBVa"))]
+    // sbva: f32,
+    // #[br(parse_with = read_bool_block, args("bSSV"))]
+    // #[bw(ignore)]
+    // ssv_enabled: bool,
+    // #[br(parse_with = read_block, args("SSVa"))]
+    // ssva: f32,
+    // #[br(parse_with = read_block, args("SPHP"))]
+    // sshp: u32,
     #[br(parse_with = read_block, args("ScCn"))]
     scheduler_count: u32,
     #[br(parse_with = read_block, args("TlCn"))]
@@ -331,19 +376,6 @@ pub struct Avfx {
     pub textures: Vec<AvfxTexture>,
     #[br(parse_with = read_block_pair_array, args("Modl", model_count))]
     pub models: Vec<(AvfxEmitterModel, AvfxDrawModel)>,
-    // TODO: selectively enabled, but with what?
-    // #[br(parse_with = read_block, args("bAGS"))]
-    // ags_enabled: u32,
-    // #[br(parse_with = read_block, args("bOSE"))]
-    // ose: u32,
-    // #[br(parse_with = read_block, args("NCB"))]
-    // near_clip_begin: f32,
-    // #[br(parse_with = read_block, args("NCE"))]
-    // near_clip_end: f32,
-    // #[br(parse_with = read_block, args("FCB"))]
-    // far_clip_begin: f32,
-    // #[br(parse_with = read_block, args("FCE"))]
-    // far_clip_end: f32,
 }
 
 #[binrw::parser(reader, endian)]
