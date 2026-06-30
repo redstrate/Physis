@@ -203,10 +203,7 @@ pub struct ScnGeneralSection {
     unk14: f32,
     unk15: i32,
     unk16: f32,
-
-    #[br(map = read_bool_from::<i32>)]
-    #[bw(map = write_bool_as::<i32>)]
-    have_lcbuw: bool,
+    unk17: f32,
 
     #[br(count = num_env_spaces)]
     #[br(seek_before = SeekFrom::Current(offset_env_spaces as i64 - ScnGeneralSection::SIZE as i64))]

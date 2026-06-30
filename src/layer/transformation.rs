@@ -12,7 +12,7 @@ use binrw::binrw;
 pub struct Transformation {
     /// X, Y, Z of the location in world space.
     pub translation: [f32; 3],
-    /// Yaw, pitch and roll of the rotation in world space.
+    /// Yaw, pitch and roll of the rotation in world space. In radians.
     pub rotation: [f32; 3],
     /// Width, height and depth of the scale in world space.
     pub scale: [f32; 3],

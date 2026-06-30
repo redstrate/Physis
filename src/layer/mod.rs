@@ -84,10 +84,10 @@ pub enum LayerEntryType {
     /// This represents nothing.
     None = 0,
     /// Background model object.
-    BG = 1,
+    BgPart = 1,
     Attribute = 2,
     /// Light object.
-    LayLight = 3,
+    Light = 3,
     /// Visual effect object.
     Vfx = 4,
     PositionMarker = 5,
@@ -103,65 +103,65 @@ pub enum LayerEntryType {
     Character = 11,
     /// Aetheryte object.
     Aetheryte = 12,
-    EnvSet = 13,
+    EnvSpace = 13,
     /// Gathering point. These are stripped out of the released client.
     Gathering = 14,
     HelperObject = 15,
     /// Treasure object.
     Treasure = 16,
-    Clip = 0x11,
-    ClipCtrlPoint = 0x12,
-    ClipCamera = 0x13,
-    ClipLight = 0x14,
-    ClipReserve00 = 0x15,
-    ClipReserve01 = 0x16,
-    ClipReserve02 = 0x17,
-    ClipReserve03 = 0x18,
-    ClipReserve04 = 0x19,
-    ClipReserve05 = 0x1A,
-    ClipReserve06 = 0x1B,
-    ClipReserve07 = 0x1C,
-    ClipReserve08 = 0x1D,
-    ClipReserve09 = 0x1E,
-    ClipReserve10 = 0x1F,
-    ClipReserve11 = 0x20,
-    ClipReserve12 = 0x21,
-    ClipReserve13 = 0x22,
-    ClipReserve14 = 0x23,
-    CutAssetOnlySelectable = 0x24,
-    Player = 0x25,
-    Monster = 0x26,
-    Weapon = 0x27,
+    Clip = 17,
+    ClipCtrlPoint = 18,
+    ClipCamera = 19,
+    ClipLight = 20,
+    ClipReserve00 = 21,
+    ClipReserve01 = 22,
+    ClipReserve02 = 23,
+    ClipReserve03 = 24,
+    ClipReserve04 = 25,
+    ClipReserve05 = 26,
+    ClipReserve06 = 27,
+    ClipReserve07 = 28,
+    ClipReserve08 = 29,
+    ClipReserve09 = 30,
+    ClipReserve10 = 31,
+    ClipReserve11 = 32,
+    ClipReserve12 = 33,
+    ClipReserve13 = 34,
+    ClipReserve14 = 35,
+    CutAssetOnlySelectable = 36,
+    Player = 37,
+    Monster = 38,
+    Weapon = 39,
     /// Generic range for characters to spawn in.
     PopRange = 40,
     /// Zone Transitions (the visible part is probably LineVFX?)
     ExitRange = 41,
     Lvb = 42,
-    MapRange = 0x2B,
-    NaviMeshRange = 0x2C,
+    MapRange = 43,
+    NaviMeshRange = 44,
     /// Event object.
     EventObject = 45,
-    DemiHuman = 0x2E,
-    EnvLocation = 0x2F,
-    ControlPoint = 0x30,
+    DemiHuman = 46,
+    EnvLocation = 47,
+    ControlPoint = 48,
     /// Generic ranges for events to use.
     EventRange = 49,
-    RestBonusRange = 0x32,
-    QuestMarker = 0x33,
-    Timeline = 0x34,
-    ObjectBehaviorSet = 0x35,
-    Movie = 0x36,
-    ScenarioExd = 0x37,
-    ScenarioText = 0x38,
-    CollisionBox = 0x39,
-    DoorRange = 0x3A,
+    RestBonusRange = 50,
+    QuestMarker = 51,
+    Timeline = 52,
+    ObjectBehaviorSet = 53,
+    Movie = 54,
+    ScenarioExd = 55,
+    ScenarioText = 56,
+    CollisionBox = 57,
+    DoorRange = 58,
     /// Generic VFX that displays those dotted lines used for zone transitions and boundaries.
-    LineVFX = 0x3B,
-    SoundEnvSet = 0x3C,
-    CutActionTimeline = 0x3D,
-    CharaScene = 0x3E,
-    CutAction = 0x3F,
-    EquipPreset = 0x40,
+    LineVFX = 59,
+    SoundEnvSet = 60,
+    CutActionTimeline = 61,
+    CharaScene = 62,
+    CutAction = 63,
+    EquipPreset = 64,
     /// Path object.
     ClientPath = 65,
     /// Path object that (presumably) only exists on the server.
@@ -174,28 +174,32 @@ pub enum LayerEntryType {
     PrefetchRange = 71,
     FateRange = 72,
     PartyMember = 73,
-    KeepRange = 0x4A,
-    SphereCastRange = 0x4B,
-    IndoorObject = 0x4C,
-    OutdoorObject = 0x4D,
-    EditGroup = 0x4E,
-    StableChocobo = 0x4F,
-    Unk4 = 0x53, // seen in bg/ex5/01_xkt_x6/twn/x6t1/level/bg.lgb
-    Unk2 = 0x56, // seen in bg/ex5/02_ykt_y6/fld/y6f1/level/bg.lgb
-    Unk5 = 0x57, // seen in bg/ex2/05_zon_z3/rad/z3r3/level/planmap.lgb
-    Unk3 = 0x59, // seen in bg/ffxiv/sea_s1/fld/s1f3/level/planevent.lgb
-    Unk1 = 0x5A, // Culling related?
-    Unk6 = 0x5B, // Seen in disassembly
-    Unk7 = 0x5C, // Ditto
-    Unk8 = 0x5D, // Ditto x2
+    KeepRange = 74,
+    SphereCastRange = 75,
+    IndoorObject = 76,
+    OutdoorObject = 77,
+    EditGroup = 78,
+    StableChocobo = 79,
+    Unk80 = 80,
+    Unk81 = 81,
+    Unk82 = 82,
+    Unk83 = 83,          // seen in bg/ex5/01_xkt_x6/twn/x6t1/level/bg.lgb
+    ColliderLayer7 = 86, // seen in bg/ex5/02_ykt_y6/fld/y6f1/level/bg.lgb
+    ColliderLayer8 = 87, // seen in bg/ex2/05_zon_z3/rad/z3r3/level/planmap.lgb
+    ColliderLayer9 = 88,
+    ColliderLayer10 = 89, // seen in bg/ffxiv/sea_s1/fld/s1f3/level/planevent.lgb
+    CullingBox = 90,
+    Unk91 = 91, // Seen in disassembly
+    Unk92 = 92, // Ditto
+    Unk93 = 93, // Ditto x2
 }
 
 impl From<&LayerEntryData> for LayerEntryType {
     fn from(value: &LayerEntryData) -> Self {
         match value {
             LayerEntryData::None => LayerEntryType::None,
-            LayerEntryData::BG(_) => LayerEntryType::BG,
-            LayerEntryData::LayLight(_) => LayerEntryType::LayLight,
+            LayerEntryData::BgPart(_) => LayerEntryType::BgPart,
+            LayerEntryData::Light(_) => LayerEntryType::Light,
             LayerEntryData::Vfx(_) => LayerEntryType::Vfx,
             LayerEntryData::PositionMarker(_) => LayerEntryType::PositionMarker,
             LayerEntryData::SharedGroup(_) => LayerEntryType::SharedGroup,
@@ -203,7 +207,7 @@ impl From<&LayerEntryData> for LayerEntryType {
             LayerEntryData::EventNPC(_) => LayerEntryType::EventNPC,
             LayerEntryData::BattleNPC(_) => LayerEntryType::BattleNPC,
             LayerEntryData::Aetheryte(_) => LayerEntryType::Aetheryte,
-            LayerEntryData::EnvSet(_) => LayerEntryType::EnvSet,
+            LayerEntryData::EnvSpace(_) => LayerEntryType::EnvSpace,
             LayerEntryData::Gathering(_) => LayerEntryType::Gathering,
             LayerEntryData::Treasure(_) => LayerEntryType::Treasure,
             LayerEntryData::PopRange(_) => LayerEntryType::PopRange,
@@ -223,16 +227,67 @@ impl From<&LayerEntryData> for LayerEntryType {
             LayerEntryData::ClickableRange(_) => LayerEntryType::ClickableRange,
             LayerEntryData::PrefetchRange(_) => LayerEntryType::PrefetchRange,
             LayerEntryData::FateRange(_) => LayerEntryType::FateRange,
-            LayerEntryData::Unk1() => LayerEntryType::Unk1,
-            LayerEntryData::Unk2() => LayerEntryType::Unk2,
-            LayerEntryData::Unk3() => LayerEntryType::Unk3,
-            LayerEntryData::Unk4() => LayerEntryType::Unk4,
-            LayerEntryData::Unk5() => LayerEntryType::Unk5,
-            LayerEntryData::Unk6() => LayerEntryType::Unk6,
-            LayerEntryData::Unk7() => LayerEntryType::Unk7,
-            LayerEntryData::Unk8() => LayerEntryType::Unk8,
             LayerEntryData::DoorRange(_) => LayerEntryType::DoorRange,
-            LayerEntryData::Unknown() => unreachable!(),
+            LayerEntryData::RoutePath() => LayerEntryType::RoutePath,
+            LayerEntryData::Character() => LayerEntryType::Character,
+            LayerEntryData::HelperObject() => LayerEntryType::HelperObject,
+            LayerEntryData::Clip => LayerEntryType::Clip,
+            LayerEntryData::ClipCtrlPoint() => LayerEntryType::ClipCtrlPoint,
+            LayerEntryData::ClipCamera() => LayerEntryType::ClipCamera,
+            LayerEntryData::ClipLight() => LayerEntryType::ClipLight,
+            LayerEntryData::ClipReserve00() => LayerEntryType::ClipReserve00,
+            LayerEntryData::ClipReserve01() => LayerEntryType::ClipReserve01,
+            LayerEntryData::ClipReserve02() => LayerEntryType::ClipReserve02,
+            LayerEntryData::ClipReserve03() => LayerEntryType::ClipReserve03,
+            LayerEntryData::ClipReserve04() => LayerEntryType::ClipReserve04,
+            LayerEntryData::ClipReserve05() => LayerEntryType::ClipReserve05,
+            LayerEntryData::ClipReserve06() => LayerEntryType::ClipReserve06,
+            LayerEntryData::ClipReserve07() => LayerEntryType::ClipReserve07,
+            LayerEntryData::ClipReserve08() => LayerEntryType::ClipReserve08,
+            LayerEntryData::ClipReserve09() => LayerEntryType::ClipReserve09,
+            LayerEntryData::ClipReserve10() => LayerEntryType::ClipReserve10,
+            LayerEntryData::ClipReserve11() => LayerEntryType::ClipReserve11,
+            LayerEntryData::ClipReserve12() => LayerEntryType::ClipReserve12,
+            LayerEntryData::ClipReserve13() => LayerEntryType::ClipReserve13,
+            LayerEntryData::ClipReserve14() => LayerEntryType::ClipReserve14,
+            LayerEntryData::CutAssetOnlySelectable() => LayerEntryType::CutAssetOnlySelectable,
+            LayerEntryData::Player() => LayerEntryType::Player,
+            LayerEntryData::Monster() => LayerEntryType::Monster,
+            LayerEntryData::Weapon() => LayerEntryType::Weapon,
+            LayerEntryData::Lvb() => LayerEntryType::Lvb,
+            LayerEntryData::NaviMeshRange() => LayerEntryType::NaviMeshRange,
+            LayerEntryData::DemiHuman() => LayerEntryType::DemiHuman,
+            LayerEntryData::ControlPoint() => LayerEntryType::ControlPoint,
+            LayerEntryData::RestBonusRange() => LayerEntryType::RestBonusRange,
+            LayerEntryData::Timeline() => LayerEntryType::Timeline,
+            LayerEntryData::ObjectBehaviorSet() => LayerEntryType::ObjectBehaviorSet,
+            LayerEntryData::Movie() => LayerEntryType::Movie,
+            LayerEntryData::ScenarioExd() => LayerEntryType::ScenarioExd,
+            LayerEntryData::ScenarioText() => LayerEntryType::ScenarioText,
+            LayerEntryData::SoundEnvSet() => LayerEntryType::SoundEnvSet,
+            LayerEntryData::CutActionTimeline() => LayerEntryType::CutActionTimeline,
+            LayerEntryData::CharaScene() => LayerEntryType::CharaScene,
+            LayerEntryData::CutAction() => LayerEntryType::CutAction,
+            LayerEntryData::EquipPreset() => LayerEntryType::EquipPreset,
+            LayerEntryData::PartyMember() => LayerEntryType::PartyMember,
+            LayerEntryData::KeepRange() => LayerEntryType::KeepRange,
+            LayerEntryData::SphereCastRange() => LayerEntryType::SphereCastRange,
+            LayerEntryData::IndoorObject() => LayerEntryType::IndoorObject,
+            LayerEntryData::OutdoorObject() => LayerEntryType::OutdoorObject,
+            LayerEntryData::EditGroup() => LayerEntryType::EditGroup,
+            LayerEntryData::StableChocobo() => LayerEntryType::StableChocobo,
+            LayerEntryData::Unk80() => LayerEntryType::Unk80,
+            LayerEntryData::Unk81() => LayerEntryType::Unk81,
+            LayerEntryData::Unk82() => LayerEntryType::Unk82,
+            LayerEntryData::Unk83() => LayerEntryType::Unk83,
+            LayerEntryData::ColliderLayer7() => LayerEntryType::ColliderLayer7,
+            LayerEntryData::ColliderLayer8() => LayerEntryType::ColliderLayer8,
+            LayerEntryData::ColliderLayer9() => LayerEntryType::ColliderLayer9,
+            LayerEntryData::ColliderLayer10() => LayerEntryType::ColliderLayer10,
+            LayerEntryData::CullingBox() => LayerEntryType::CullingBox,
+            LayerEntryData::Unk91() => LayerEntryType::Unk91,
+            LayerEntryData::Unk92() => LayerEntryType::Unk92,
+            LayerEntryData::Unk93() => LayerEntryType::Unk93,
         }
     }
 }
@@ -247,11 +302,11 @@ pub enum LayerEntryData {
     #[br(pre_assert(*magic == LayerEntryType::None))]
     None,
     /// Background model.
-    #[br(pre_assert(*magic == LayerEntryType::BG))]
-    BG(#[brw(args(string_heap, heap_pointer))] BGInstanceObject),
+    #[br(pre_assert(*magic == LayerEntryType::BgPart))]
+    BgPart(#[brw(args(string_heap, heap_pointer))] BGInstanceObject),
     /// Light source.
-    #[br(pre_assert(*magic == LayerEntryType::LayLight))]
-    LayLight(LightInstanceObject),
+    #[br(pre_assert(*magic == LayerEntryType::Light))]
+    Light(LightInstanceObject),
     /// Visual effect.
     #[br(pre_assert(*magic == LayerEntryType::Vfx))]
     Vfx(#[brw(args(string_heap, heap_pointer))] VFXInstanceObject),
@@ -270,45 +325,130 @@ pub enum LayerEntryData {
     /// Battle NPC.
     #[br(pre_assert(*magic == LayerEntryType::BattleNPC))]
     BattleNPC(BNPCInstanceObject),
+    #[br(pre_assert(*magic == LayerEntryType::RoutePath))]
+    RoutePath(),
+    #[br(pre_assert(*magic == LayerEntryType::Character))]
+    Character(),
     /// Aetheryte.
     #[br(pre_assert(*magic == LayerEntryType::Aetheryte))]
     Aetheryte(AetheryteInstanceObject),
     /// Unknown purpose.
-    #[br(pre_assert(*magic == LayerEntryType::EnvSet))]
-    EnvSet(#[brw(args(string_heap, heap_pointer))] EnvSetInstanceObject),
+    #[br(pre_assert(*magic == LayerEntryType::EnvSpace))]
+    EnvSpace(#[brw(args(string_heap, heap_pointer))] EnvSetInstanceObject),
     /// Unknown purpose.
     #[br(pre_assert(*magic == LayerEntryType::Gathering))]
     Gathering(GatheringInstanceObject),
+    #[br(pre_assert(*magic == LayerEntryType::HelperObject))]
+    HelperObject(),
     /// Unknown purpose.
     #[br(pre_assert(*magic == LayerEntryType::Treasure))]
     Treasure(TreasureInstanceObject),
     /// Used for a variety of things, including teleport locations.
+    #[br(pre_assert(*magic == LayerEntryType::Clip))]
+    Clip,
+    #[br(pre_assert(*magic == LayerEntryType::ClipCtrlPoint))]
+    ClipCtrlPoint(),
+    #[br(pre_assert(*magic == LayerEntryType::ClipCamera))]
+    ClipCamera(),
+    #[br(pre_assert(*magic == LayerEntryType::ClipLight))]
+    ClipLight(),
+    #[br(pre_assert(*magic == LayerEntryType::ClipReserve00))]
+    ClipReserve00(),
+    #[br(pre_assert(*magic == LayerEntryType::ClipReserve01))]
+    ClipReserve01(),
+    #[br(pre_assert(*magic == LayerEntryType::ClipReserve02))]
+    ClipReserve02(),
+    #[br(pre_assert(*magic == LayerEntryType::ClipReserve03))]
+    ClipReserve03(),
+    #[br(pre_assert(*magic == LayerEntryType::ClipReserve04))]
+    ClipReserve04(),
+    #[br(pre_assert(*magic == LayerEntryType::ClipReserve05))]
+    ClipReserve05(),
+    #[br(pre_assert(*magic == LayerEntryType::ClipReserve06))]
+    ClipReserve06(),
+    #[br(pre_assert(*magic == LayerEntryType::ClipReserve07))]
+    ClipReserve07(),
+    #[br(pre_assert(*magic == LayerEntryType::ClipReserve08))]
+    ClipReserve08(),
+    #[br(pre_assert(*magic == LayerEntryType::ClipReserve09))]
+    ClipReserve09(),
+    #[br(pre_assert(*magic == LayerEntryType::ClipReserve10))]
+    ClipReserve10(),
+    #[br(pre_assert(*magic == LayerEntryType::ClipReserve11))]
+    ClipReserve11(),
+    #[br(pre_assert(*magic == LayerEntryType::ClipReserve12))]
+    ClipReserve12(),
+    #[br(pre_assert(*magic == LayerEntryType::ClipReserve13))]
+    ClipReserve13(),
+    #[br(pre_assert(*magic == LayerEntryType::ClipReserve14))]
+    ClipReserve14(),
+    #[br(pre_assert(*magic == LayerEntryType::CutAssetOnlySelectable))]
+    CutAssetOnlySelectable(),
+    #[br(pre_assert(*magic == LayerEntryType::Player))]
+    Player(),
+    #[br(pre_assert(*magic == LayerEntryType::Monster))]
+    Monster(),
+    #[br(pre_assert(*magic == LayerEntryType::Weapon))]
+    Weapon(),
     #[br(pre_assert(*magic == LayerEntryType::PopRange))]
     PopRange(PopRangeInstanceObject),
     /// Walkable transitions between zones.
     #[br(pre_assert(*magic == LayerEntryType::ExitRange))]
     ExitRange(ExitRangeInstanceObject),
+    #[br(pre_assert(*magic == LayerEntryType::Lvb))]
+    Lvb(),
     /// Locations on the map, such as sanctuaries.
     #[br(pre_assert(*magic == LayerEntryType::MapRange))]
     MapRange(MapRangeInstanceObject),
+    #[br(pre_assert(*magic == LayerEntryType::NaviMeshRange))]
+    NaviMeshRange(),
     /// Event object.
     #[br(pre_assert(*magic == LayerEntryType::EventObject))]
     EventObject(EventInstanceObject),
+    #[br(pre_assert(*magic == LayerEntryType::DemiHuman))]
+    DemiHuman(),
     /// Unknown purpose.
     #[br(pre_assert(*magic == LayerEntryType::EnvLocation))]
     EnvLocation(#[brw(args(string_heap, heap_pointer))] EnvLocationObject),
+    #[br(pre_assert(*magic == LayerEntryType::ControlPoint))]
+    ControlPoint(),
     /// Unknown purpose.
     #[br(pre_assert(*magic == LayerEntryType::EventRange))]
     EventRange(EventRangeInstanceObject),
-    /// Unknown purpose.
+    #[br(pre_assert(*magic == LayerEntryType::RestBonusRange))]
+    RestBonusRange(),
     #[br(pre_assert(*magic == LayerEntryType::QuestMarker))]
     QuestMarker(QuestMarkerInstanceObject),
+    /// Unknown purpose.
+    #[br(pre_assert(*magic == LayerEntryType::Timeline))]
+    Timeline(),
+    #[br(pre_assert(*magic == LayerEntryType::ObjectBehaviorSet))]
+    ObjectBehaviorSet(),
+    #[br(pre_assert(*magic == LayerEntryType::Movie))]
+    Movie(),
+    #[br(pre_assert(*magic == LayerEntryType::ScenarioExd))]
+    ScenarioExd(),
+    #[br(pre_assert(*magic == LayerEntryType::ScenarioText))]
+    ScenarioText(),
     /// Unknown purpose.
     #[br(pre_assert(*magic == LayerEntryType::CollisionBox))]
     CollisionBox(#[brw(args(string_heap, heap_pointer))] CollisionBoxInstanceObject),
     /// Unknown purpose.
+    #[br(pre_assert(*magic == LayerEntryType::DoorRange))]
+    DoorRange(DoorRangeInstanceObject),
+    /// Unknown purpose.
     #[br(pre_assert(*magic == LayerEntryType::LineVFX))]
     LineVFX(LineVFXInstanceObject),
+    #[br(pre_assert(*magic == LayerEntryType::SoundEnvSet))]
+    SoundEnvSet(),
+    #[br(pre_assert(*magic == LayerEntryType::CutActionTimeline))]
+    CutActionTimeline(),
+    #[br(pre_assert(*magic == LayerEntryType::CharaScene))]
+    CharaScene(),
+    #[br(pre_assert(*magic == LayerEntryType::CutAction))]
+    CutAction(),
+    #[br(pre_assert(*magic == LayerEntryType::EquipPreset))]
+    EquipPreset(),
     /// Unknown purpose.
     #[br(pre_assert(*magic == LayerEntryType::ClientPath))]
     ClientPath(ClientPathInstanceObject),
@@ -334,34 +474,62 @@ pub enum LayerEntryData {
     #[br(pre_assert(*magic == LayerEntryType::FateRange))]
     FateRange(FateRangeInstanceObject),
     /// Unknown purpose.
-    #[br(pre_assert(*magic == LayerEntryType::Unk1))]
-    Unk1(),
+    #[br(pre_assert(*magic == LayerEntryType::PartyMember))]
+    PartyMember(),
     /// Unknown purpose.
-    #[br(pre_assert(*magic == LayerEntryType::Unk2))]
-    Unk2(),
+    #[br(pre_assert(*magic == LayerEntryType::KeepRange))]
+    KeepRange(),
     /// Unknown purpose.
-    #[br(pre_assert(*magic == LayerEntryType::Unk3))]
-    Unk3(),
+    #[br(pre_assert(*magic == LayerEntryType::SphereCastRange))]
+    SphereCastRange(),
     /// Unknown purpose.
-    #[br(pre_assert(*magic == LayerEntryType::Unk4))]
-    Unk4(),
+    #[br(pre_assert(*magic == LayerEntryType::IndoorObject))]
+    IndoorObject(),
     /// Unknown purpose.
-    #[br(pre_assert(*magic == LayerEntryType::Unk5))]
-    Unk5(),
+    #[br(pre_assert(*magic == LayerEntryType::OutdoorObject))]
+    OutdoorObject(),
     /// Unknown purpose.
-    #[br(pre_assert(*magic == LayerEntryType::Unk6))]
-    Unk6(),
+    #[br(pre_assert(*magic == LayerEntryType::EditGroup))]
+    EditGroup(),
     /// Unknown purpose.
-    #[br(pre_assert(*magic == LayerEntryType::Unk7))]
-    Unk7(),
+    #[br(pre_assert(*magic == LayerEntryType::StableChocobo))]
+    StableChocobo(),
     /// Unknown purpose.
-    #[br(pre_assert(*magic == LayerEntryType::Unk8))]
-    Unk8(),
+    #[br(pre_assert(*magic == LayerEntryType::Unk80))]
+    Unk80(),
     /// Unknown purpose.
-    #[br(pre_assert(*magic == LayerEntryType::DoorRange))]
-    DoorRange(DoorRangeInstanceObject),
-    /// Unhandled or unknown type.
-    Unknown(),
+    #[br(pre_assert(*magic == LayerEntryType::Unk81))]
+    Unk81(),
+    /// Unknown purpose.
+    #[br(pre_assert(*magic == LayerEntryType::Unk82))]
+    Unk82(),
+    /// Unknown purpose.
+    #[br(pre_assert(*magic == LayerEntryType::Unk83))]
+    Unk83(),
+    /// Unknown purpose.
+    #[br(pre_assert(*magic == LayerEntryType::ColliderLayer7))]
+    ColliderLayer7(),
+    /// Unknown purpose.
+    #[br(pre_assert(*magic == LayerEntryType::ColliderLayer8))]
+    ColliderLayer8(),
+    /// Unknown purpose.
+    #[br(pre_assert(*magic == LayerEntryType::ColliderLayer9))]
+    ColliderLayer9(),
+    /// Unknown purpose.
+    #[br(pre_assert(*magic == LayerEntryType::ColliderLayer10))]
+    ColliderLayer10(),
+    /// Unknown purpose.
+    #[br(pre_assert(*magic == LayerEntryType::CullingBox))]
+    CullingBox(),
+    /// Unknown purpose.
+    #[br(pre_assert(*magic == LayerEntryType::Unk91))]
+    Unk91(),
+    /// Unknown purpose.
+    #[br(pre_assert(*magic == LayerEntryType::Unk92))]
+    Unk92(),
+    /// Unknown purpose.
+    #[br(pre_assert(*magic == LayerEntryType::Unk93))]
+    Unk93(),
 }
 
 #[binrw]

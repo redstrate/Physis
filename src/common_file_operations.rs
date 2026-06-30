@@ -4,9 +4,16 @@
 use binrw::{BinReaderExt, BinResult, binread};
 use half::f16;
 use std::ffi::CString;
+use std::fmt::Debug;
 use std::io::{Read, SeekFrom};
 
-pub(crate) fn read_bool_from<T: std::convert::From<u8> + std::cmp::PartialEq>(x: T) -> bool {
+pub(crate) fn read_bool_from<T: std::convert::From<u8> + std::cmp::PartialEq + Debug>(
+    x: T,
+) -> bool {
+    assert!(
+        x == T::from(0) || x == T::from(1),
+        "Expected boolean, found {x:#?}!"
+    );
     x == T::from(1u8)
 }
 

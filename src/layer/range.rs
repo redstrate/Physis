@@ -113,11 +113,16 @@ pub enum PopType {
 #[derive(Debug, PartialEq, Clone, Default)]
 pub struct PopRangeInstanceObject {
     pub pop_type: PopType,
+    // #[br(temp)]
+    // #[br(assert(pos == 24))]
+    // #[bw(calc = 24)]
     pos: i32,
+    #[br(temp)]
+    #[bw(calc = positions.len() as i32)]
     pos_count: i32,
-    pub inner_radius_ratio: f32,
-    #[brw(pad_after = 7)] // not sure what this is, but it's not empty
-    pub index: u8,
+    pub inner_radius_ratio: f32, // 16
+    pub index: u8,               // 20
+    unk1: [u8; 7],
     #[br(count = pos_count)] // NOTE: This is assuming pos is always 24!
     pub positions: Vec<[f32; 3]>,
 }
