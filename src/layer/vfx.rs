@@ -41,8 +41,9 @@ pub struct VFXInstanceObject {
 #[derive(Debug, PartialEq, Clone, Copy, Default)]
 pub enum LineStyle {
     #[default]
-    Red = 0x1,
-    Blue = 0x2,
+    Red = 1,
+    Blue = 2,
+    RedFar = 3,
 }
 
 #[binrw]

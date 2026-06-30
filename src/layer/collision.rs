@@ -29,13 +29,13 @@ pub struct CollisionBoxInstanceObject {
 #[derive(Debug, PartialEq, Clone, Copy, Default)]
 pub enum TriggerBoxShape {
     #[default]
-    None = 0x0,
-    Box = 0x1,
-    Sphere = 0x2,
-    Cylinder = 0x3,
-    Plane = 0x4,
-    Mesh = 0x5,
-    PlaneTwoSided = 0x6,
+    None,
+    Box,
+    Sphere,
+    Cylinder,
+    Plane,
+    Mesh,
+    PlaneTwoSided,
 }
 
 #[binrw]
