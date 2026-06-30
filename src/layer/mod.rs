@@ -185,6 +185,9 @@ pub enum LayerEntryType {
     Unk5 = 0x57, // seen in bg/ex2/05_zon_z3/rad/z3r3/level/planmap.lgb
     Unk3 = 0x59, // seen in bg/ffxiv/sea_s1/fld/s1f3/level/planevent.lgb
     Unk1 = 0x5A, // Culling related?
+    Unk6 = 0x5B, // Seen in disassembly
+    Unk7 = 0x5C, // Ditto
+    Unk8 = 0x5D, // Ditto x2
 }
 
 impl From<&LayerEntryData> for LayerEntryType {
@@ -224,6 +227,10 @@ impl From<&LayerEntryData> for LayerEntryType {
             LayerEntryData::Unk2() => LayerEntryType::Unk2,
             LayerEntryData::Unk3() => LayerEntryType::Unk3,
             LayerEntryData::Unk4() => LayerEntryType::Unk4,
+            LayerEntryData::Unk5() => LayerEntryType::Unk5,
+            LayerEntryData::Unk6() => LayerEntryType::Unk6,
+            LayerEntryData::Unk7() => LayerEntryType::Unk7,
+            LayerEntryData::Unk8() => LayerEntryType::Unk8,
             LayerEntryData::DoorRange(_) => LayerEntryType::DoorRange,
             LayerEntryData::Unknown() => unreachable!(),
         }
@@ -339,6 +346,18 @@ pub enum LayerEntryData {
     #[br(pre_assert(*magic == LayerEntryType::Unk4))]
     Unk4(),
     /// Unknown purpose.
+    #[br(pre_assert(*magic == LayerEntryType::Unk5))]
+    Unk5(),
+    /// Unknown purpose.
+    #[br(pre_assert(*magic == LayerEntryType::Unk6))]
+    Unk6(),
+    /// Unknown purpose.
+    #[br(pre_assert(*magic == LayerEntryType::Unk7))]
+    Unk7(),
+    /// Unknown purpose.
+    #[br(pre_assert(*magic == LayerEntryType::Unk8))]
+    Unk8(),
+    /// Unknown purpose.
     #[br(pre_assert(*magic == LayerEntryType::DoorRange))]
     DoorRange(DoorRangeInstanceObject),
     /// Unhandled or unknown type.
@@ -385,6 +404,7 @@ pub struct LayerHeader {
     #[br(map = read_bool_from::<u8>)]
     #[bw(map = write_bool_as::<u8>)]
     pub visible: bool,
+
     /// Whether this layer is supposed to be read-only in tool mode.
     #[br(map = read_bool_from::<u8>)]
     #[bw(map = write_bool_as::<u8>)]

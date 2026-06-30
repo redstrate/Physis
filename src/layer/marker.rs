@@ -65,6 +65,8 @@ pub enum TargetMarkerType {
     LookAt = 0x2,
     BodyDyn = 0x3,
     Root = 0x4,
+    Unk1 = 0x5, // Seen in bg/ex5/02_ykt_y6/twn/y6t1/level/planevent.lgb
+    Unk2 = 0x6, // Seen in bg/ex5/02_ykt_y6/twn/y6t1/level/planevent.lgb
 }
 
 #[binrw]

@@ -86,7 +86,7 @@ pub struct MapRangeInstanceObject {
     pub housing_enabled: bool,
     #[br(map = read_bool_from::<u8>)]
     #[bw(map = write_bool_as::<u8>)]
-    pub unk3: bool,
+    pub log_flying_height_max_err: bool,
     #[br(map = read_bool_from::<u8>)]
     #[bw(map = write_bool_as::<u8>)]
     pub unk4: bool,

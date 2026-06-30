@@ -84,8 +84,6 @@ pub struct ScnSection {
     unk8: i32,
     unk9: i32,
     unk10: i32,
-    offset_unk2: i32, // Points to 39 bytes of data
-    offset_unk3: i32, // Points to 64 bytes of data
 
     /// List of embedded layer groups.
     #[br(count = num_layer_groups, args { inner: (string_heap,) })]
@@ -129,10 +127,7 @@ pub struct ScnSection {
     #[br(seek_before = SeekFrom::Current(offset_action_descriptors as i64 - ScnSection::SIZE as i64))]
     #[br(restore_position)]
     pub action_descriptors: ScnSGActionDescriptors,
-    // TODO: re-enable once this is readable
-    // #[br(seek_before = SeekFrom::Current(offset_unk3 as i64 - ScnSection::SIZE as i64))]
-    // #[br(restore_position)]
-    // unk3: ScnUnknown3Section,
+
     /// Housing information.
     #[br(seek_before = SeekFrom::Current(offset_housing as i64 - ScnSection::SIZE as i64))]
     #[br(restore_position)]
@@ -140,7 +135,7 @@ pub struct ScnSection {
 }
 
 impl ScnSection {
-    pub(crate) const SIZE: usize = 0x48;
+    pub(crate) const SIZE: usize = 0x40;
 }
 
 #[binrw]
@@ -387,13 +382,6 @@ pub struct ScnRotationActionDescription {
     #[br(map = read_bool_from::<u8>)]
     #[bw(map = write_bool_as::<u8>)]
     pub vfx_has_child2: bool,
-}
-
-// TODO: definitely not correct
-#[binrw]
-#[derive(Debug)]
-pub struct ScnUnknown3Section {
-    unk: [u8; 64],
 }
 
 #[binrw]
