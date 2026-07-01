@@ -11,7 +11,7 @@ pub(crate) fn read_bool_from<T: std::convert::From<u8> + std::cmp::PartialEq + D
     x: T,
 ) -> bool {
     #[cfg(debug_assertions)]
-    if x == T::from(0) || x == T::from(1) {
+    if x != T::from(0) && x != T::from(1) {
         println!("Expected boolean, found {x:#?}!");
     }
     x == T::from(1u8)

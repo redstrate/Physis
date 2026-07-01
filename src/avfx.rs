@@ -3,15 +3,17 @@
 
 #![allow(unused)]
 
-use std::io::Cursor;
+use std::default;
+use std::io::{Cursor, SeekFrom};
 
 use crate::common::Platform;
 use crate::common_file_operations::{
-    read_bool_from, read_string, read_string_until_null, write_string,
+    Half3, read_bool_from, read_string, read_string_until_null, write_string,
 };
 use crate::{ByteBuffer, ByteSpan, ReadableFile, WritableFile};
 use binrw::{BinRead, BinResult, BinWrite, VecArgs};
 use binrw::{BinReaderExt, binrw};
+use half::f16;
 
 #[binrw]
 #[derive(Debug, Clone)]
@@ -33,15 +35,15 @@ where
 #[binrw::parser(reader, endian)]
 fn read_block<T>(magic: &str) -> BinResult<T>
 where
-    T: for<'a> BinRead<Args<'a> = ()> + std::fmt::Debug,
+    T: for<'a> BinRead<Args<'a> = ()> + std::fmt::Debug + Default,
     T: for<'a> BinWrite<Args<'a> = ()> + std::fmt::Debug,
 {
+    let old_position = reader.stream_position()?;
     let block: AvfxBlock<T> = reader.read_type(endian)?;
     if block.name != magic.chars().rev().collect::<String>() {
-        return Err(binrw::Error::BadMagic {
-            pos: reader.stream_position()?,
-            found: Box::new(block.name),
-        });
+        // Skip silently so optional blocks can be passed
+        reader.seek(SeekFrom::Start(old_position))?;
+        return Ok(Default::default());
     }
     // TODO: check size
 
@@ -61,7 +63,6 @@ struct PlaceholderBlock {
     #[bw(pad_size_to = 4)]
     #[bw(map = write_string)]
     #[br(map = read_string)]
-    #[br(assert(name == magic.chars().rev().collect::<String>()), err_context("expected {}", magic))]
     name: String,
     #[br(map = |x: u32| x.div_ceil(4) * 4)] // Align to 4 byte boundary
     size: u32,
@@ -74,8 +75,9 @@ struct PlaceholderBlock {
 // FIXME: these are flags maybe? VFXEditor has them marked as such
 #[binrw]
 #[brw(repr = u32)]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub enum DrawLayer {
+    #[default]
     Screen = 0,
     BaseUpper = 1,
     Base = 2,
@@ -92,8 +94,9 @@ pub enum DrawLayer {
 
 #[binrw]
 #[brw(repr = u32)]
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Default)]
 pub enum DirectionalLightSource {
+    #[default]
     None = 0,
     InLocal = 1,
     InGame = 2,
@@ -102,8 +105,9 @@ pub enum DirectionalLightSource {
 
 #[binrw]
 #[brw(repr = u32)]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub enum DrawOrder {
+    #[default]
     Default = 0,
     Reverse = 1,
     Depth = 2,
@@ -121,7 +125,7 @@ pub enum PointLightSource {
 }
 
 #[binrw]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct EmitVertex {
     pub position: [f32; 3],
     pub normal: [f32; 3],
@@ -129,54 +133,83 @@ pub struct EmitVertex {
 }
 
 #[binrw]
-#[derive(Debug, Clone)]
+#[repr(C)]
+#[derive(Debug, Clone, Default)]
 pub struct DrawVertex {
-    pub position: [u16; 4], // TODO: parse correctly
-    pub normal: [u8; 4],
-    pub tangent: [u8; 4],
+    #[br(map = read_half4)]
+    pub position: [f32; 4],
+    #[br(map = |x: [u8; 4]| [x[0] as f32 - 128.0, x[1] as f32 - 128.0, x[2] as f32 - 128.0, x[3] as f32 - 128.0])]
+    pub normal: [f32; 4],
+    #[br(map = |x: [u8; 4]| [x[0] as f32 - 128.0, x[1] as f32 - 128.0, x[2] as f32 - 128.0, x[3] as f32 - 128.0])]
+    pub tangent: [f32; 4],
     pub color: [u8; 4],
-    pub uv: [u16; 4],
+    #[br(map = read_half2)]
+    pub uv1: [f32; 2],
+    #[br(map = read_half2)]
+    pub uv2: [f32; 2],
+    #[br(map = read_half2)]
+    pub uv3: [f32; 2],
+    #[br(map = read_half2)]
+    pub uv4: [f32; 2],
+}
+
+impl DrawVertex {
+    pub const SIZE: usize = 36; // Serialized size
+}
+
+fn read_half4(data: [u16; 4]) -> [f32; 4] {
+    [
+        f16::from_bits(data[0]).to_f32(),
+        f16::from_bits(data[1]).to_f32(),
+        f16::from_bits(data[2]).to_f32(),
+        f16::from_bits(data[3]).to_f32(),
+    ]
+}
+
+fn read_half2(data: [u16; 2]) -> [f32; 2] {
+    [
+        f16::from_bits(data[0]).to_f32(),
+        f16::from_bits(data[1]).to_f32(),
+    ]
 }
 
 #[binrw]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct DrawTriangle {
-    pub indices: [i16; 3],
-}
-
-#[binrw]
-#[derive(Debug, Clone)]
-pub struct AvfxEmitterModel {
-    #[br(parse_with = read_block_sized_array, args("VNum"))]
-    pub vertex_numbers: Vec<u16>,
-    #[br(parse_with = read_block_sized_array, args("VEmt"))]
-    pub vertices: Vec<EmitVertex>,
+    pub indices: [u16; 3],
 }
 
 #[binrw]
 #[derive(Debug, Clone)]
 pub struct AvfxDrawModel {
-    #[br(parse_with = read_block_sized_array, args("VDrw"))]
+    #[br(parse_with = read_block_sized_array, args("VNum", std::mem::size_of::<u16>()))]
+    pub vertex_numbers: Vec<u16>,
+    #[br(parse_with = read_block_sized_array, args("VEmt", std::mem::size_of::<EmitVertex>()))]
+    pub emit_vertices: Vec<EmitVertex>,
+    #[br(parse_with = read_block_sized_array, args("VDrw", DrawVertex::SIZE))]
     pub vertices: Vec<DrawVertex>,
-    #[br(parse_with = read_block_sized_array, args("VIdx"))]
+    #[br(parse_with = read_block_sized_array, args("VIdx", std::mem::size_of::<DrawTriangle>()))]
     pub triangles: Vec<DrawTriangle>,
 }
 
 #[binrw::parser(reader, endian)]
-fn read_block_sized_array<T>(magic: &str) -> BinResult<Vec<T>>
+fn read_block_sized_array<T>(magic: &str, size: usize) -> BinResult<Vec<T>>
 where
     T: for<'a> BinRead<Args<'a> = ()> + std::fmt::Debug + 'static,
 {
-    let block: PlaceholderBlock = reader.read_type_args(endian, (magic,))?;
+    let old_position = reader.stream_position()?;
+    let Ok(block): BinResult<PlaceholderBlock> = reader.read_type_args(endian, (magic,)) else {
+        // We want to be fallible here *on purpose* because we could be expecting a block here but actually hit EOF.
+        return Ok(Default::default());
+    };
     if block.name != magic.chars().rev().collect::<String>() {
-        return Err(binrw::Error::BadMagic {
-            pos: reader.stream_position()?,
-            found: Box::new(block.name),
-        });
+        // Skip silently so optional blocks can be passed
+        reader.seek(SeekFrom::Start(old_position))?;
+        return Ok(Default::default());
     }
     // TODO: check size
 
-    let count = block.data.len() / std::mem::size_of::<T>();
+    let count = block.data.len() / size;
     let mut array_cursor = Cursor::new(block.data);
     array_cursor.read_type_args(endian, VecArgs::builder().count(count).finalize())
 }
@@ -186,7 +219,7 @@ where
 pub struct AvfxTexture {
     #[br(parse_with = read_string_until_null)]
     #[bw(ignore)] // TODO: stub
-    path: String,
+    pub path: String,
 }
 
 /// Animated VFX file, usually with the `.avfx` file extension.
@@ -199,20 +232,25 @@ pub struct Avfx {
     #[br(parse_with = read_block, args("Ver"))]
     version: u32,
 
-    #[br(parse_with = read_block, args("bDFP"))]
-    is_delay_fast_particle: u32,
-    #[br(parse_with = read_block, args("bFG"))]
-    is_fit_ground: u32,
-    #[br(parse_with = read_block, args("bTS"))]
-    is_transform_skip: u32,
-    #[br(parse_with = read_block, args("bASH"))]
-    is_all_stop_on_hide: u32,
+    #[br(parse_with = read_bool_block, args("bDFP"))]
+    #[bw(ignore)] // TODO
+    is_delay_fast_particle: bool,
+    #[br(parse_with = read_bool_block, args("bFG"))]
+    #[bw(ignore)] // TODO
+    is_fit_ground: bool,
+    #[br(parse_with = read_bool_block, args("bTS"))]
+    #[bw(ignore)] // TODO
+    is_transform_skip: bool,
+    #[br(parse_with = read_bool_block, args("bASH"))]
+    #[bw(ignore)] // TODO
+    is_all_stop_on_hide: bool,
     #[br(parse_with = read_bool_block, args("bCBC"))]
     #[bw(ignore)] // TODO
     can_be_clipped_out: bool,
 
-    #[br(parse_with = read_block, args("bCul"))]
-    clip_box_enabled: u32,
+    #[br(parse_with = read_bool_block, args("bCul"))]
+    #[bw(ignore)] // TODO
+    clip_box_enabled: bool,
     #[br(parse_with = read_block, args("CBPx"))]
     clip_box_x: f32,
     #[br(parse_with = read_block, args("CBPy"))]
@@ -231,10 +269,12 @@ pub struct Avfx {
     #[br(parse_with = read_block, args("ZBMd"))]
     bias_z_max_distance: f32,
 
-    #[br(parse_with = read_block, args("bCmS"))]
-    is_camera_space: u32,
-    #[br(parse_with = read_block, args("bFEL"))]
-    is_full_env_light: u32,
+    #[br(parse_with = read_bool_block, args("bCmS"))]
+    #[bw(ignore)] // TODO
+    is_camera_space: bool,
+    #[bw(ignore)]
+    #[br(parse_with = read_bool_block, args("bFEL"))]
+    is_full_env_light: bool,
     #[br(parse_with = read_bool_block, args("bOSt"))]
     #[bw(ignore)]
     clip_own_setting: bool,
@@ -259,7 +299,6 @@ pub struct Avfx {
     draw_order: DrawOrder,
 
     #[br(parse_with = read_block, args("DLST"))]
-    #[br(dbg)]
     directional_light_source: DirectionalLightSource,
     #[br(parse_with = read_block, args("PL1S"))]
     point_light1: DirectionalLightSource,
@@ -291,29 +330,33 @@ pub struct Avfx {
     #[br(parse_with = read_block, args("RvB"))]
     revised_values_blue: f32,
 
-    #[br(parse_with = read_block, args("AFXe"))]
-    fade_enabled_x: u32,
+    #[br(parse_with = read_bool_block, args("AFXe"))]
+    #[bw(ignore)] // TODO
+    fade_enabled_x: bool,
     #[br(parse_with = read_block, args("AFXi"))]
     fade_inner_x: f32,
     #[br(parse_with = read_block, args("AFXo"))]
     fade_outer_x: f32,
 
-    #[br(parse_with = read_block, args("AFYe"))]
-    fade_enabled_y: u32,
+    #[br(parse_with = read_bool_block, args("AFYe"))]
+    #[bw(ignore)] // TODO
+    fade_enabled_y: bool,
     #[br(parse_with = read_block, args("AFYi"))]
     fade_inner_y: f32,
     #[br(parse_with = read_block, args("AFYo"))]
     fade_outer_y: f32,
 
-    #[br(parse_with = read_block, args("AFZe"))]
-    fade_enabled_z: u32,
+    #[br(parse_with = read_bool_block, args("AFZe"))]
+    #[bw(ignore)] // TODO
+    fade_enabled_z: bool,
     #[br(parse_with = read_block, args("AFZi"))]
     fade_inner_z: f32,
     #[br(parse_with = read_block, args("AFZo"))]
     fade_outer_z: f32,
 
-    #[br(parse_with = read_block, args("bGFE"))]
-    global_fog_enabled: u32,
+    #[br(parse_with = read_bool_block, args("bGFE"))]
+    #[bw(ignore)] // TODO
+    global_fog_enabled: bool,
     #[br(parse_with = read_block, args("GFIM"))]
     global_fog_influence: f32,
 
@@ -374,8 +417,8 @@ pub struct Avfx {
     binders: Vec<PlaceholderBlock>,
     #[br(parse_with = read_block_array, args("Tex", texture_count))]
     pub textures: Vec<AvfxTexture>,
-    #[br(parse_with = read_block_pair_array, args("Modl", model_count))]
-    pub models: Vec<(AvfxEmitterModel, AvfxDrawModel)>,
+    #[br(parse_with = read_block_array, args("Modl", model_count))]
+    pub models: Vec<AvfxDrawModel>,
 }
 
 #[binrw::parser(reader, endian)]
