@@ -275,6 +275,9 @@ pub struct Avfx {
     #[bw(ignore)]
     #[br(parse_with = read_bool_block, args("bFEL"))]
     is_full_env_light: bool,
+    #[br(parse_with = read_bool_block, args("bOSE"))]
+    #[bw(ignore)]
+    ose: bool,
     #[br(parse_with = read_bool_block, args("bOSt"))]
     #[bw(ignore)]
     clip_own_setting: bool,
@@ -363,10 +366,9 @@ pub struct Avfx {
     #[br(parse_with = read_bool_block, args("bLTS"))]
     #[bw(ignore)]
     lts_enabled: bool,
-    #[br(parse_with = read_block, args("bAGS"))]
-    ags_enabled: u32,
-    // #[br(parse_with = read_block, args("bOSE"))]
-    // ose: u32,
+    #[br(parse_with = read_bool_block, args("bAGS"))]
+    #[bw(ignore)]
+    ags_enabled: bool,
 
     // Dawntrail-specific?
     #[br(parse_with = read_block, args("APri"))]
