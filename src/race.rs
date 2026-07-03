@@ -21,6 +21,7 @@ pub enum Gender {
 #[derive(PartialEq, Eq, Clone, Copy, Debug, FromRepr)]
 #[repr(u8)]
 pub enum Tribe {
+    Unknown = 0,
     Midlander = 1,
     Highlander = 2,
     Wildwood = 3,
@@ -45,6 +46,7 @@ pub enum Tribe {
 #[derive(PartialEq, Eq, Clone, Copy, Debug, FromRepr)]
 #[repr(u8)]
 pub enum Race {
+    Unknown = 0,
     Hyur = 1,
     Elezen = 2,
     Lalafell = 3,
@@ -102,6 +104,7 @@ pub fn get_race_id(race: Race, tribe: Tribe, gender: Gender) -> Option<i32> {
             Gender::Male => Some(1701),
             Gender::Female => Some(1801),
         },
+        _ => None,
     }
 }
 
@@ -124,6 +127,7 @@ pub fn get_supported_tribes(race: Race) -> [Tribe; 2] {
         Race::AuRa => [Tribe::Raen, Tribe::Xaela],
         Race::Hrothgar => [Tribe::Hellion, Tribe::Lost],
         Race::Viera => [Tribe::Raen, Tribe::Veena],
+        _ => [Tribe::Unknown, Tribe::Unknown],
     }
 }
 
