@@ -7,6 +7,7 @@ use std::path::Path;
 #[cfg(test)]
 use binrw::BinWrite;
 use binrw::{Endian, binrw};
+use strum::EnumIter;
 use strum_macros::{Display, FromRepr};
 
 #[binrw]
@@ -84,7 +85,7 @@ pub fn read_version(p: &Path) -> Option<String> {
 /// Platform used for game data.
 #[binrw]
 #[brw(repr = u8)]
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, EnumIter)]
 #[repr(C)]
 pub enum Platform {
     /// Windows and macOS.
@@ -98,15 +99,6 @@ pub enum Platform {
     /// Xbox One.
     Xbox = 0x4,
 }
-
-/// Used internally for automatic SqPack detection. Please update when adding new platforms!
-pub(crate) const PLATFORM_LIST: [Platform; 5] = [
-    Platform::Win32,
-    Platform::PS3,
-    Platform::PS4,
-    Platform::PS5,
-    Platform::Xbox,
-];
 
 impl Platform {
     /// Returns the short-hand codename for this platform.

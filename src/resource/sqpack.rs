@@ -7,9 +7,11 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use strum::IntoEnumIterator;
+
 use crate::{
     ByteBuffer, Error, ReadableFile,
-    common::{Language, PLATFORM_LIST, Platform, read_version},
+    common::{Language, Platform, read_version},
     excel::Sheet,
     exh::EXH,
     repository::{Category, Repository, RepositoryType, string_to_category},
@@ -138,7 +140,7 @@ impl SqPackResource {
             {
                 let filename = file.file_name().to_str().unwrap_or_default().to_string();
 
-                for platform in PLATFORM_LIST {
+                for platform in Platform::iter() {
                     if filename.contains(platform.shortname()) {
                         // Then determine if this is a debug SqPack or not
                         if filename.contains(".d") {
