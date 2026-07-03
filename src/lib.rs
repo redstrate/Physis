@@ -36,7 +36,7 @@ mod common;
 #[cfg(test)]
 pub(crate) use common::pass_random_invalid;
 pub use common::{
-    ByteBuffer, ByteSpan, Language, Platform, ReadableFile, TerritoryIntendedUse, Version,
+    ByteBuffer, ByteSpan, Color, Language, Platform, ReadableFile, TerritoryIntendedUse, Version,
     WritableFile, read_version,
 };
 

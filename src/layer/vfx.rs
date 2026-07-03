@@ -4,8 +4,8 @@
 use binrw::binrw;
 
 use crate::{
+    Color,
     common_file_operations::{read_bool_from, write_bool_as},
-    layer::Color,
     string_heap::{HeapPointer, HeapString, StringHeap},
 };
 

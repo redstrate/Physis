@@ -5,10 +5,10 @@ use std::io::Cursor;
 
 use crate::ByteBuffer;
 use crate::ByteSpan;
+use crate::Color;
 use crate::ReadableFile;
 use crate::WritableFile;
 use crate::common::Platform;
-use crate::layer::Color;
 use binrw::BinRead;
 use binrw::BinWrite;
 use binrw::binrw;

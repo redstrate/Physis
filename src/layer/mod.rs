@@ -20,7 +20,7 @@ mod collision;
 pub use collision::{CollisionBoxInstanceObject, TriggerBoxInstanceObject, TriggerBoxShape};
 
 mod common;
-pub use common::{Color, ColorHDRI, GameInstanceObject};
+pub use common::{ColorHDRI, GameInstanceObject};
 
 mod env;
 pub use env::{EnvLocationObject, EnvSetInstanceObject, EnvSetShape};
