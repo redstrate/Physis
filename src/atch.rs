@@ -2,37 +2,48 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 use std::io::Cursor;
+use std::io::SeekFrom;
 
 use crate::ByteBuffer;
 use crate::ByteSpan;
 use crate::ReadableFile;
 use crate::WritableFile;
 use crate::common::Platform;
+use crate::common_file_operations::read_string_until_null;
 use binrw::binrw;
 use binrw::{BinRead, BinWrite};
 
 #[binrw]
 #[derive(Debug)]
 pub struct AtchEntryState {
-    string_pos: u32, // TODO: read string
-    scale: f32,
-    offset: [f32; 3],
-    rotation: [f32; 3],
+    #[br(temp)]
+    #[bw(ignore)]
+    string_pos: u32,
+    #[br(restore_position, seek_before = SeekFrom::Start(string_pos as u64), parse_with = read_string_until_null)]
+    #[bw(ignore)]
+    pub name: String,
+    pub scale: f32,
+    pub offset: [f32; 3],
+    pub rotation: [f32; 3],
 }
 
 /// Attach offset file, usually with the `.atch` file extension.
 #[binrw]
 #[derive(Debug)]
 pub struct Atch {
+    #[br(temp)]
+    #[bw(calc = entry_names.len() as u16)]
     num_entries: u16,
+    #[br(temp)]
+    #[bw(calc = states.len() as u16)]
     num_states: u16,
     #[br(count = num_entries)]
     #[bw(ignore)] // TODO: stub
-    entry_names: Vec<[u8; 4]>, // TODO: use string type
+    pub entry_names: Vec<[u8; 4]>, // TODO: use string type
     bitfield: [u64; Self::BITFIELD_SIZE / 8],
     #[br(count = num_entries.saturating_mul(num_states))] // TODO: aggregate by entry
     #[bw(ignore)] // TODO: stub
-    states: Vec<AtchEntryState>,
+    pub states: Vec<AtchEntryState>,
 }
 
 impl Atch {
