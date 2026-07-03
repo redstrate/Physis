@@ -6,7 +6,7 @@
 use std::io::{BufWriter, Cursor};
 
 use crate::common_file_operations::{read_bool_from, read_string, write_bool_as, write_string};
-use crate::{ByteBuffer, ByteSpan};
+use crate::{ByteBuffer, ByteSpan, Platform, ReadableFile, WritableFile};
 use binrw::binrw;
 use binrw::{BinRead, BinWrite};
 
@@ -168,28 +168,30 @@ pub struct CharacterData {
     pub comment: String,
 }
 
-impl CharacterData {
-    /// Read an existing file.
-    pub fn from_existing(buffer: ByteSpan) -> Option<CharacterData> {
+impl ReadableFile for CharacterData {
+    fn from_existing(platform: Platform, buffer: ByteSpan) -> crate::Result<Self> {
         let mut cursor = Cursor::new(buffer);
 
-        CharacterData::read(&mut cursor).ok()
+        Ok(CharacterData::read(&mut cursor)?)
     }
+}
 
-    /// Writes data back to a buffer.
-    pub fn write_to_buffer(&self) -> Option<ByteBuffer> {
+impl WritableFile for CharacterData {
+    fn write_to_buffer(&self, platform: Platform) -> crate::Result<ByteBuffer> {
         let mut buffer = ByteBuffer::new();
 
         {
             let cursor = Cursor::new(&mut buffer);
             let mut writer = BufWriter::new(cursor);
 
-            self.write_le(&mut writer).ok()?;
+            self.write_le(&mut writer)?;
         }
 
-        Some(buffer)
+        Ok(buffer)
     }
+}
 
+impl CharacterData {
     fn calc_checksum(&self) -> u32 {
         let mut buffer = ByteBuffer::new();
 
@@ -231,7 +233,7 @@ mod tests {
         d.push("random");
 
         // Feeding it invalid data should not panic
-        CharacterData::from_existing(&read(d).unwrap());
+        let _ = CharacterData::from_existing(Platform::Win32, &read(d).unwrap());
     }
 
     fn common_setup(name: &str) -> CharacterData {
@@ -239,7 +241,7 @@ mod tests {
         d.push("resources/tests/chardat");
         d.push(name);
 
-        CharacterData::from_existing(&read(d).unwrap()).unwrap()
+        CharacterData::from_existing(Platform::Win32, &read(d).unwrap()).unwrap()
     }
 
     #[test]
@@ -389,7 +391,10 @@ mod tests {
         d.push("shadowbringers.dat");
 
         let chardat_bytes = &read(d).unwrap();
-        let chardat = CharacterData::from_existing(chardat_bytes).unwrap();
-        assert_eq!(*chardat_bytes, chardat.write_to_buffer().unwrap());
+        let chardat = CharacterData::from_existing(Platform::Win32, chardat_bytes).unwrap();
+        assert_eq!(
+            *chardat_bytes,
+            chardat.write_to_buffer(Platform::Win32).unwrap()
+        );
     }
 }
