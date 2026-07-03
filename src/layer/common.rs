@@ -3,7 +3,9 @@
 
 use binrw::binrw;
 
+// TODO: use as a common struct
 #[binrw]
+#[repr(C)]
 #[derive(Debug, PartialEq, Clone, Copy, Default)]
 pub struct Color {
     pub red: u8,
