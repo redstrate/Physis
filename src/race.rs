@@ -7,7 +7,7 @@ use strum_macros::FromRepr;
 /// The playable genders in the game.
 #[binrw]
 #[brw(repr = u8)]
-#[derive(PartialEq, Eq, Clone, Debug, FromRepr)]
+#[derive(PartialEq, Eq, Clone, Copy, Debug, FromRepr)]
 #[repr(u8)]
 pub enum Gender {
     Male = 0,
