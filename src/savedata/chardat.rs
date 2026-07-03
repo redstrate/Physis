@@ -98,9 +98,6 @@ pub struct CustomizeData {
     /// The color of the face paint.
     /// If the character has selected "Light" then it adds 128 to this.
     pub face_paint_color: u8,
-
-    /// The character's chosen voice.
-    pub voice: u8,
 }
 
 impl Default for CustomizeData {
@@ -132,7 +129,6 @@ impl Default for CustomizeData {
             bust: 0,
             face_paint: 0,
             face_paint_color: 1,
-            voice: 1,
         }
     }
 }
@@ -157,9 +153,11 @@ pub struct CharacterData {
 
     pub customize: CustomizeData,
 
+    /// The character's chosen voice.
+    pub voice: u16,
+
     /// The timestamp when the preset was created.
     /// This is a UTC time in seconds since the Unix epoch.
-    #[brw(pad_before = 1)]
     pub timestamp: u32,
 
     // TODO: this is terrible, just read until string nul terminator
@@ -200,10 +198,10 @@ impl CharacterData {
             let mut writer = BufWriter::new(cursor);
 
             self.customize.write_le(&mut writer).unwrap();
+            self.voice.write_le(&mut writer).unwrap();
         }
 
         // The checksum also considers the timestamp and the comment
-        buffer.push(0x00);
         buffer.extend_from_slice(&self.timestamp.to_le_bytes());
 
         let mut comment = write_string(&self.comment);
@@ -275,7 +273,7 @@ mod tests {
         assert_eq!(chardat.customize.bust, 0);
         assert_eq!(chardat.customize.face_paint_color, 36);
         assert_eq!(chardat.customize.face_paint, 0);
-        assert_eq!(chardat.customize.voice, 1);
+        assert_eq!(chardat.voice, 1);
         assert_eq!(chardat.comment, "Custom Comment Text");
     }
 
@@ -310,7 +308,7 @@ mod tests {
         assert_eq!(chardat.customize.bust, 25);
         assert_eq!(chardat.customize.face_paint_color, 0);
         assert_eq!(chardat.customize.face_paint, 0);
-        assert_eq!(chardat.customize.voice, 112);
+        assert_eq!(chardat.voice, 112);
         assert_eq!(chardat.comment, "Heavensward Comment Text");
     }
 
@@ -345,7 +343,7 @@ mod tests {
         assert_eq!(chardat.customize.bust, 0);
         assert_eq!(chardat.customize.face_paint_color, 36);
         assert_eq!(chardat.customize.face_paint, 0);
-        assert_eq!(chardat.customize.voice, 19);
+        assert_eq!(chardat.voice, 19);
         assert_eq!(chardat.comment, "Stormblood Comment Text");
     }
 
@@ -380,7 +378,7 @@ mod tests {
         assert_eq!(chardat.customize.bust, 100);
         assert_eq!(chardat.customize.face_paint_color, 131);
         assert_eq!(chardat.customize.face_paint, 3);
-        assert_eq!(chardat.customize.voice, 160);
+        assert_eq!(chardat.voice, 160);
         assert_eq!(chardat.comment, "Shadowbringers Comment Text");
     }
 
