@@ -16,9 +16,9 @@ use binrw::{BinRead, BinWrite};
 #[binrw]
 #[derive(Debug)]
 pub struct EidBindPointOld {
-    id: i32,
-    position: [f32; 3],
-    rotation: [f32; 3],
+    pub id: i32,
+    pub position: [f32; 3],
+    pub rotation: [f32; 3],
     #[brw(pad_size_to = 12)]
     #[bw(map = write_string)]
     #[br(parse_with = read_string_until_null)]
@@ -33,9 +33,9 @@ pub struct EidBindPointNew {
     #[bw(map = write_string)]
     #[br(parse_with = read_string_until_null)]
     pub name: String,
-    id: i32,
-    position: [f32; 3],
-    rotation: [f32; 3],
+    pub id: i32,
+    pub position: [f32; 3],
+    pub rotation: [f32; 3],
     padding_probably: i32,
 }
 
@@ -50,10 +50,10 @@ pub struct Eid {
     unk1: u32,
 
     #[br(if(version1 != 0x3132), count = count)]
-    old_bind_points: Vec<EidBindPointOld>,
+    pub old_bind_points: Vec<EidBindPointOld>,
 
     #[br(if(version1 == 0x3132), count = count)]
-    new_bind_points: Vec<EidBindPointNew>,
+    pub new_bind_points: Vec<EidBindPointNew>,
 }
 
 impl ReadableFile for Eid {
