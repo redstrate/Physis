@@ -4,6 +4,7 @@
 use std::io::{Cursor, Seek, SeekFrom};
 
 use crate::ByteSpan;
+use crate::ReadableFile;
 use binrw::BinRead;
 use binrw::binrw;
 
@@ -111,15 +112,14 @@ pub struct ChatLog {
     pub entries: Vec<ChatLogEntry>,
 }
 
-impl ChatLog {
-    /// Read an existing file.
-    pub fn from_existing(buffer: ByteSpan) -> Option<ChatLog> {
+impl ReadableFile for ChatLog {
+    fn from_existing(_platform: crate::Platform, buffer: ByteSpan) -> crate::Result<Self> {
         let mut cursor = Cursor::new(buffer);
 
-        let header = ChatLogHeader::read(&mut cursor).expect("Cannot parse header.");
+        let header = ChatLogHeader::read(&mut cursor)?;
         // Dumb check for obviously wrong values
         if header.content_size as usize > buffer.len() || header.file_size as usize > buffer.len() {
-            return None;
+            return Err(crate::Error::InvalidFile);
         }
 
         let content_offset = (8 + header.file_size * 4) as u64;
@@ -132,7 +132,7 @@ impl ChatLog {
         for (i, offset) in header.offset_entries.iter().enumerate() {
             let new_last_offset = content_offset + *offset as u64;
 
-            cursor.seek(SeekFrom::Start(new_last_offset)).ok()?;
+            cursor.seek(SeekFrom::Start(new_last_offset))?;
 
             let mut entry = ChatLogEntry::read(&mut cursor).expect("Unable to parse log message.");
 
@@ -150,7 +150,7 @@ impl ChatLog {
             entries.push(entry);
         }
 
-        Some(ChatLog { entries })
+        Ok(ChatLog { entries })
     }
 }
 
@@ -158,6 +158,8 @@ impl ChatLog {
 mod tests {
     use std::fs::read;
     use std::path::PathBuf;
+
+    use crate::Platform;
 
     use super::*;
 
@@ -168,6 +170,6 @@ mod tests {
         d.push("random");
 
         // Feeding it invalid data should not panic
-        ChatLog::from_existing(&read(d).unwrap());
+        let _ = ChatLog::from_existing(Platform::Win32, &read(d).unwrap());
     }
 }

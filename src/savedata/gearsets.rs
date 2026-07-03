@@ -5,6 +5,8 @@
 
 use crate::ByteBuffer;
 use crate::ByteSpan;
+use crate::ReadableFile;
+use crate::WritableFile;
 use crate::equipment::EquipSlot;
 use crate::savedata::dat::DatHeader;
 use binrw::NullString;
@@ -145,24 +147,24 @@ pub struct GearSets {
 
 const GEARSET_KEY: u8 = 0x73;
 
-impl GearSets {
-    /// Read an existing file.
-    pub fn from_existing(buffer: ByteSpan) -> Option<GearSets> {
+impl ReadableFile for GearSets {
+    fn from_existing(_platform: crate::Platform, buffer: ByteSpan) -> crate::Result<Self> {
         let mut cursor = Cursor::new(buffer);
 
-        let header = DatHeader::read(&mut cursor).ok()?;
+        let header = DatHeader::read(&mut cursor)?;
 
         let mut buffer = vec![0; header.content_size as usize - 1];
-        cursor.read_exact(&mut buffer).ok()?;
+        cursor.read_exact(&mut buffer)?;
 
         let decoded = buffer.iter().map(|x| *x ^ GEARSET_KEY).collect::<Vec<_>>();
         let mut cursor = Cursor::new(decoded);
 
-        GearSets::read(&mut cursor).ok()
+        Ok(GearSets::read(&mut cursor)?)
     }
+}
 
-    /// Writes data back to a buffer.
-    pub fn write_to_buffer(&self) -> Option<ByteBuffer> {
+impl WritableFile for GearSets {
+    fn write_to_buffer(&self, _platform: crate::Platform) -> crate::Result<ByteBuffer> {
         let mut buffer = ByteBuffer::new();
 
         // header
@@ -175,13 +177,13 @@ impl GearSets {
                 max_size: 45205,
                 content_size: 45205,
             };
-            header.write_le(&mut cursor).ok()?
+            header.write_le(&mut cursor)?
         }
 
         // buffer contents encoded
         {
             let mut cursor = Cursor::new(ByteBuffer::new());
-            self.write_le(&mut cursor).ok()?;
+            self.write_le(&mut cursor)?;
 
             buffer.extend_from_slice(
                 &cursor
@@ -192,7 +194,7 @@ impl GearSets {
             );
         }
 
-        Some(buffer)
+        Ok(buffer)
     }
 }
 
@@ -200,6 +202,8 @@ impl GearSets {
 mod tests {
     use std::fs::read;
     use std::path::PathBuf;
+
+    use crate::Platform;
 
     use super::*;
 
@@ -210,7 +214,7 @@ mod tests {
         d.push("random");
 
         // Feeding it invalid data should not panic
-        GearSets::from_existing(&read(d).unwrap());
+        let _ = GearSets::from_existing(Platform::Win32, &read(d).unwrap());
     }
 
     fn common_setup(name: &str) -> GearSets {
@@ -218,7 +222,7 @@ mod tests {
         d.push("resources/tests/gearsets");
         d.push(name);
 
-        GearSets::from_existing(&read(&d).unwrap()).unwrap()
+        GearSets::from_existing(Platform::Win32, &read(&d).unwrap()).unwrap()
     }
 
     #[test]
@@ -250,7 +254,10 @@ mod tests {
         d.push("simple.dat");
 
         let gearset_bytes = &read(d).unwrap();
-        let gearset = GearSets::from_existing(gearset_bytes).unwrap();
-        assert_eq!(*gearset_bytes, gearset.write_to_buffer().unwrap());
+        let gearset = GearSets::from_existing(Platform::Win32, gearset_bytes).unwrap();
+        assert_eq!(
+            *gearset_bytes,
+            gearset.write_to_buffer(Platform::Win32).unwrap()
+        );
     }
 }
