@@ -54,6 +54,10 @@ pub(crate) struct DataSectionHeader {
     pub(crate) row_count: u16,
 }
 
+impl DataSectionHeader {
+    pub const SIZE: usize = 6;
+}
+
 #[binrw]
 #[brw(big)]
 #[allow(dead_code)]

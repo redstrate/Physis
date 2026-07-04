@@ -238,15 +238,23 @@ impl Page {
         let mut rows = Vec::with_capacity(exh.header.row_count as usize); // FIXME: This over-estimates for subrow sheets
 
         for offset in &exd.data_offsets {
+            // Skip over reading DataSectionHeader if we don't need it.
+            let header_size = if exh.header.row_kind == SheetRowKind::SubRows {
+                0
+            } else {
+                DataSectionHeader::SIZE as u64
+            };
             cursor
-                .seek(SeekFrom::Start(offset.offset as u64 - header_offset))
+                .seek(SeekFrom::Start(
+                    offset.offset as u64 - header_offset + header_size,
+                ))
                 .unwrap();
-
-            let row_header = DataSectionHeader::read(&mut cursor).unwrap();
 
             let data_offset = cursor.stream_position().unwrap();
 
             let subrows = if exh.header.row_kind == SheetRowKind::SubRows {
+                let row_header = DataSectionHeader::read(&mut cursor).unwrap();
+
                 let mut rows = Vec::with_capacity(row_header.row_count as usize);
                 for i in 0..row_header.row_count {
                     let subrow_offset = data_offset + i as u64 * (2 + exh.header.row_size as u64);

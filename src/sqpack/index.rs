@@ -75,7 +75,7 @@ pub struct SqPackIndexHeader {
 }
 
 #[binrw]
-#[br(import(index_type: &IndexType))]
+#[br(import(index_type: &IndexType), return_unexpected_error)]
 #[derive(PartialEq, Debug, Clone, Copy)]
 #[repr(C)]
 pub enum Hash {

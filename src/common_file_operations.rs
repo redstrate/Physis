@@ -1,11 +1,11 @@
 // SPDX-FileCopyrightText: 2024 Joshua Goins <josh@redstrate.com>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-use binrw::{BinReaderExt, BinResult, binread};
+use binrw::{BinRead, BinReaderExt, BinResult, binread};
 use half::f16;
 use std::ffi::CString;
 use std::fmt::Debug;
-use std::io::{Read, SeekFrom};
+use std::io::{Read, Seek, SeekFrom};
 
 pub(crate) fn read_bool_from<T: std::convert::From<u8> + std::cmp::PartialEq + Debug>(
     x: T,
@@ -22,11 +22,12 @@ pub(crate) fn write_bool_as<T: std::convert::From<u8>>(x: &bool) -> T {
 }
 
 /// Read a null-terminated UTF-8 string from a reader at its current position.
-pub(crate) fn read_null_terminated_utf8<R: Read>(reader: &mut R) -> String {
+pub(crate) fn read_null_terminated_utf8<R: Read + Seek>(reader: &mut R) -> String {
     let mut bytes = Vec::new();
-    let mut buf = [0u8; 1];
-    while reader.read_exact(&mut buf).is_ok() && buf[0] != 0 {
-        bytes.push(buf[0]);
+    while let Ok(byte) = u8::read_ne(reader)
+        && byte != 0
+    {
+        bytes.push(byte);
     }
     String::from_utf8(bytes).unwrap_or_default()
 }
