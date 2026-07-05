@@ -417,6 +417,8 @@ pub struct Avfx {
     particles: Vec<PlaceholderBlock>,
     #[br(args { inner: ("Bind",) }, count = binder_count)]
     binders: Vec<PlaceholderBlock>,
+    #[br(args { inner: ("Efct",) }, count = effector_count)]
+    effectors: Vec<PlaceholderBlock>,
     #[br(parse_with = read_block_array, args("Tex", texture_count))]
     pub textures: Vec<AvfxTexture>,
     #[br(parse_with = read_block_array, args("Modl", model_count))]
