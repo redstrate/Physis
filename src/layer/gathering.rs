@@ -3,9 +3,10 @@
 
 use binrw::binrw;
 
+use crate::layer::GameObjectInstanceObject;
+
 #[binrw]
 #[derive(Debug, PartialEq, Clone, Default)]
 pub struct GatheringInstanceObject {
-    #[brw(pad_after = 4)] // padding
-    pub gathering_point_id: u32,
+    pub parent_data: GameObjectInstanceObject,
 }

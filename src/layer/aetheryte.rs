@@ -3,12 +3,12 @@
 
 use binrw::binrw;
 
-use super::GameInstanceObject;
+use super::GameObjectInstanceObject;
 
 #[binrw]
 #[derive(Debug, PartialEq, Clone, Default)]
 pub struct AetheryteInstanceObject {
-    pub parent_data: GameInstanceObject,
-    #[brw(pad_after = 4)] // padding
+    pub parent_data: GameObjectInstanceObject,
     pub bound_instance_id: u32,
+    unk1: u32,
 }

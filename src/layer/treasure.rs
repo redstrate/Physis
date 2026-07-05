@@ -3,10 +3,10 @@
 
 use binrw::binrw;
 
+use crate::layer::GameObjectInstanceObject;
+
 #[binrw]
 #[derive(Debug, PartialEq, Clone, Default)]
 pub struct TreasureInstanceObject {
-    #[brw(pad_after = 11)] // padding
-    /// Index into the Treasure Excel sheet.
-    pub base_id: u8,
+    pub parent_data: GameObjectInstanceObject,
 }

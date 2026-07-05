@@ -52,5 +52,5 @@ pub struct EnvLocationObject {
     pub ambient_light_asset_path: HeapString,
     #[brw(args(heap_pointer, string_heap))]
     pub env_map_asset_path: HeapString,
-    pub padding: [u8; 24], // TODO: UNKNOWN, MAYBE WRONG
+    padding: [u8; 24], // TODO: UNKNOWN, MAYBE WRONG
 }

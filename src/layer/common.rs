@@ -16,7 +16,7 @@ pub struct ColorHDRI {
 
 #[binrw]
 #[derive(Debug, PartialEq, Clone, Copy, Default)]
-pub struct GameInstanceObject {
+pub struct GameObjectInstanceObject {
     /// For IDs >= 1000000, index into the ENpcBase
     /// For IDs >= 2000000, the row ID reference to EObj/EObjName
     pub base_id: u32,

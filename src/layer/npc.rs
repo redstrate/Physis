@@ -3,35 +3,25 @@
 
 use binrw::binrw;
 
-use crate::layer::GameInstanceObject;
+use crate::layer::GameObjectInstanceObject;
 
 #[binrw]
 #[derive(Debug, PartialEq, Clone, Default)]
-pub struct NPCInstanceObject {
-    pub parent_data: GameInstanceObject,
-    pub pop_weather: u32,
-    pub pop_time_start: u8,
-    #[brw(pad_after = 2)] // padding
-    pub pop_time_end: u8,
-    pub move_ai: u32,
-    pub wandering_range: u8,
-    pub route: u8,
-    #[brw(pad_after = 8)] // padding
-    pub event_group: u16,
+pub struct CharacterInstanceObject {
+    pub parent_data: GameObjectInstanceObject,
+    unk1: u32,
 }
 
 #[binrw]
 #[derive(Debug, PartialEq, Clone, Default)]
-pub struct ENPCInstanceObject {
-    pub parent_data: NPCInstanceObject,
-    #[brw(pad_after = 8)] // padding
-    pub behavior: u32,
+pub struct EventNpcInstanceObject {
+    pub parent_data: CharacterInstanceObject,
 }
 
 #[binrw]
 #[derive(Debug, PartialEq, Clone, Default)]
-pub struct BNPCInstanceObject {
-    pub parent_data: NPCInstanceObject,
+pub struct BattleNpcInstanceObject {
+    pub parent_data: CharacterInstanceObject,
     pub name_id: u32,
     pub drop_item: u32,
     pub sense_range_rate: f32,

@@ -14,19 +14,21 @@ mod aetheryte;
 pub use aetheryte::AetheryteInstanceObject;
 
 mod bg;
-pub use bg::{BGInstanceObject, ModelCollisionType};
+pub use bg::{BgPartInstanceObject, ModelCollisionType};
 
 mod collision;
-pub use collision::{CollisionBoxInstanceObject, TriggerBoxInstanceObject, TriggerBoxShape};
+pub use collision::{
+    CollisionBoxInstanceObject, CullingBoxInstanceObject, TriggerBoxInstanceObject, TriggerBoxShape,
+};
 
 mod common;
-pub use common::{ColorHDRI, GameInstanceObject};
+pub use common::{ColorHDRI, GameObjectInstanceObject};
 
 mod env;
 pub use env::{EnvLocationObject, EnvSetInstanceObject, EnvSetShape};
 
 mod event;
-pub use event::EventInstanceObject;
+pub use event::EventObjectInstanceObject;
 
 mod gathering;
 pub use gathering::GatheringInstanceObject;
@@ -41,7 +43,7 @@ pub use marker::{
 };
 
 mod npc;
-pub use npc::{BNPCInstanceObject, ENPCInstanceObject, NPCInstanceObject};
+pub use npc::{BattleNpcInstanceObject, CharacterInstanceObject, EventNpcInstanceObject};
 
 mod path;
 pub use path::{
@@ -229,9 +231,9 @@ impl From<&LayerEntryData> for LayerEntryType {
             LayerEntryData::FateRange(_) => LayerEntryType::FateRange,
             LayerEntryData::DoorRange(_) => LayerEntryType::DoorRange,
             LayerEntryData::RoutePath() => LayerEntryType::RoutePath,
-            LayerEntryData::Character() => LayerEntryType::Character,
+            LayerEntryData::Character(_) => LayerEntryType::Character,
             LayerEntryData::HelperObject() => LayerEntryType::HelperObject,
-            LayerEntryData::Clip => LayerEntryType::Clip,
+            LayerEntryData::Clip() => LayerEntryType::Clip,
             LayerEntryData::ClipCtrlPoint() => LayerEntryType::ClipCtrlPoint,
             LayerEntryData::ClipCamera() => LayerEntryType::ClipCamera,
             LayerEntryData::ClipLight() => LayerEntryType::ClipLight,
@@ -284,7 +286,7 @@ impl From<&LayerEntryData> for LayerEntryType {
             LayerEntryData::ColliderLayer8() => LayerEntryType::ColliderLayer8,
             LayerEntryData::ColliderLayer9() => LayerEntryType::ColliderLayer9,
             LayerEntryData::ColliderLayer10() => LayerEntryType::ColliderLayer10,
-            LayerEntryData::CullingBox() => LayerEntryType::CullingBox,
+            LayerEntryData::CullingBox(_) => LayerEntryType::CullingBox,
             LayerEntryData::Unk91() => LayerEntryType::Unk91,
             LayerEntryData::Unk92() => LayerEntryType::Unk92,
             LayerEntryData::Unk93() => LayerEntryType::Unk93,
@@ -303,7 +305,7 @@ pub enum LayerEntryData {
     None,
     /// Background model.
     #[br(pre_assert(*magic == LayerEntryType::BgPart))]
-    BgPart(#[brw(args(string_heap, heap_pointer))] BGInstanceObject),
+    BgPart(#[brw(args(string_heap, heap_pointer))] BgPartInstanceObject),
     /// Light source.
     #[br(pre_assert(*magic == LayerEntryType::Light))]
     Light(LightInstanceObject),
@@ -321,14 +323,14 @@ pub enum LayerEntryData {
     Sound(#[brw(args(string_heap, heap_pointer))] SoundInstanceObject),
     /// Event NPC.
     #[br(pre_assert(*magic == LayerEntryType::EventNPC))]
-    EventNPC(ENPCInstanceObject),
+    EventNPC(EventNpcInstanceObject),
     /// Battle NPC.
     #[br(pre_assert(*magic == LayerEntryType::BattleNPC))]
-    BattleNPC(BNPCInstanceObject),
+    BattleNPC(BattleNpcInstanceObject),
     #[br(pre_assert(*magic == LayerEntryType::RoutePath))]
     RoutePath(),
     #[br(pre_assert(*magic == LayerEntryType::Character))]
-    Character(),
+    Character(CharacterInstanceObject),
     /// Aetheryte.
     #[br(pre_assert(*magic == LayerEntryType::Aetheryte))]
     Aetheryte(AetheryteInstanceObject),
@@ -345,7 +347,7 @@ pub enum LayerEntryData {
     Treasure(TreasureInstanceObject),
     /// Used for a variety of things, including teleport locations.
     #[br(pre_assert(*magic == LayerEntryType::Clip))]
-    Clip,
+    Clip(),
     #[br(pre_assert(*magic == LayerEntryType::ClipCtrlPoint))]
     ClipCtrlPoint(),
     #[br(pre_assert(*magic == LayerEntryType::ClipCamera))]
@@ -404,7 +406,7 @@ pub enum LayerEntryData {
     NaviMeshRange(),
     /// Event object.
     #[br(pre_assert(*magic == LayerEntryType::EventObject))]
-    EventObject(EventInstanceObject),
+    EventObject(EventObjectInstanceObject),
     #[br(pre_assert(*magic == LayerEntryType::DemiHuman))]
     DemiHuman(),
     /// Unknown purpose.
@@ -520,7 +522,7 @@ pub enum LayerEntryData {
     ColliderLayer10(),
     /// Unknown purpose.
     #[br(pre_assert(*magic == LayerEntryType::CullingBox))]
-    CullingBox(),
+    CullingBox(CullingBoxInstanceObject),
     /// Unknown purpose.
     #[br(pre_assert(*magic == LayerEntryType::Unk91))]
     Unk91(),

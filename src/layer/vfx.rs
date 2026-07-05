@@ -14,9 +14,10 @@ use crate::{
 #[bw(import(string_heap: &mut StringHeap, heap_pointer: HeapPointer))]
 #[derive(Debug, PartialEq, Clone, Default)]
 pub struct VFXInstanceObject {
+    /// Path to an `.avfx` file.
     #[brw(args(heap_pointer, string_heap))]
     pub asset_path: HeapString,
-    #[brw(pad_after = 4)] // padding
+    #[brw(pad_after = 4)] // padding, not read
     pub soft_particle_fade_range: f32,
     pub color: Color,
     #[br(map = read_bool_from::<u8>)]
@@ -24,15 +25,29 @@ pub struct VFXInstanceObject {
     pub auto_play: bool,
     #[br(map = read_bool_from::<u8>)]
     #[bw(map = write_bool_as::<u8>)]
-    #[brw(pad_after = 2)] // padding
     pub no_far_clip: bool,
+    #[br(map = read_bool_from::<u8>)]
+    #[bw(map = write_bool_as::<u8>)]
+    pub unk1: bool,
+    #[br(map = read_bool_from::<u8>)]
+    #[bw(map = write_bool_as::<u8>)]
+    pub unk2: bool,
+    #[br(map = read_bool_from::<u8>)]
+    #[bw(map = write_bool_as::<u8>)]
+    pub unk3: bool,
+    #[br(map = read_bool_from::<u8>)]
+    #[bw(map = write_bool_as::<u8>)]
+    pub unk4: bool,
+    #[br(map = read_bool_from::<u8>)]
+    #[bw(map = write_bool_as::<u8>)]
+    #[brw(pad_after = 1)] // padding, not read
+    pub unk5: bool,
     pub fade_near_start: f32,
     pub fade_near_end: f32,
     pub fade_far_start: f32,
     pub fade_far_end: f32,
     pub z_correct: f32,
-    pub unk1: u32,
-    pub unk2: u32,
+    pub unk6: u32,
 }
 
 #[binrw]
@@ -50,5 +65,4 @@ pub enum LineStyle {
 #[derive(Debug, PartialEq, Clone, Default)]
 pub struct LineVFXInstanceObject {
     pub line_style: LineStyle,
-    padding: [u32; 2],
 }

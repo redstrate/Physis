@@ -39,20 +39,23 @@ pub enum ChairType {
 pub struct ChairMarkerInstanceObject {
     #[br(map = read_bool_from::<u8>)]
     #[bw(map = write_bool_as::<u8>)]
-    left_enable: bool,
+    pub left_enable: bool,
     #[br(map = read_bool_from::<u8>)]
     #[bw(map = write_bool_as::<u8>)]
-    right_enable: bool,
+    pub right_enable: bool,
     #[br(map = read_bool_from::<u8>)]
     #[bw(map = write_bool_as::<u8>)]
-    back_enable: bool,
-    padding: u8,
-    chair_type: ChairType,
+    #[brw(pad_after = 1)] // padding, not read
+    pub back_enable: bool,
+    pub chair_type: ChairType,
 }
 
 #[binrw]
 #[derive(Debug, PartialEq, Clone, Default)]
-pub struct QuestMarkerInstanceObject {}
+pub struct QuestMarkerInstanceObject {
+    unk1: u32,
+    unk2: u32,
+}
 
 #[binrw]
 #[brw(repr = i32)]
