@@ -11,7 +11,7 @@ use super::TriggerBoxInstanceObject;
 
 #[binrw]
 #[brw(repr = i32)]
-#[repr(C)]
+#[repr(i32)]
 #[derive(Debug, PartialEq, Clone, Copy, Default)]
 pub enum ExitType {
     #[default]
@@ -104,13 +104,13 @@ pub struct MapRangeInstanceObject {
 
 #[binrw]
 #[brw(repr = i32)]
-#[repr(C)]
+#[repr(i32)]
 #[derive(Debug, Clone, Copy, PartialEq, Default)]
 pub enum PopType {
     #[default]
-    PC = 0x1,
-    Npc = 0x2,
-    Content = 0x3,
+    PC = 1,
+    Npc = 2,
+    Content = 3,
 }
 
 #[binrw]

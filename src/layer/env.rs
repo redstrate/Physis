@@ -12,13 +12,13 @@ use super::read_bool_from;
 
 #[binrw]
 #[brw(repr = i32)]
-#[repr(C)]
+#[repr(i32)]
 #[derive(Debug, PartialEq, Clone, Copy, Default)]
 pub enum EnvSetShape {
     #[default]
-    Ellipsoid = 0x1,
-    Cuboid = 0x2,
-    Cylinder = 0x3,
+    Ellipsoid = 1,
+    Cuboid = 2,
+    Cylinder = 3,
 }
 
 #[binrw]

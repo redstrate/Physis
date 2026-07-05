@@ -12,7 +12,10 @@ pub(crate) fn read_bool_from<T: std::convert::From<u8> + std::cmp::PartialEq + D
 ) -> bool {
     #[cfg(debug_assertions)]
     if x != T::from(0) && x != T::from(1) {
-        println!("Expected boolean, found {x:#?}!");
+        println!(
+            "Expected boolean, found {x:#?} at {:?}",
+            std::backtrace::Backtrace::force_capture()
+        );
     }
     x == T::from(1u8)
 }

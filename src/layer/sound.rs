@@ -11,20 +11,20 @@ use crate::{
 #[binrw]
 #[brw(repr = i32)]
 #[derive(Debug, PartialEq, Clone, Copy, Default)]
-#[repr(C)]
+#[repr(i32)]
 pub enum SoundEffectType {
     #[default]
-    Point = 0x3,
-    PointDir = 0x4,
-    Line = 0x5,
-    PolyLine = 0x6,
-    Surface = 0x7,
-    BoardObstruction = 0x8,
-    BoxObstruction = 0x9,
-    PolyLineObstruction = 0xB,
-    PolygonObstruction = 0xC,
-    LineExtController = 0xD,
-    Polygon = 0xE,
+    Point = 3,
+    PointDir = 4,
+    Line = 5,
+    PolyLine = 6,
+    Surface = 7,
+    BoardObstruction = 8,
+    BoxObstruction = 9,
+    PolyLineObstruction = 11,
+    PolygonObstruction = 12,
+    LineExtController = 13,
+    Polygon = 14,
 }
 
 #[binrw]

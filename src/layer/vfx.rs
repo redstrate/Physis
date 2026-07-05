@@ -52,7 +52,7 @@ pub struct VFXInstanceObject {
 
 #[binrw]
 #[brw(repr = i32)]
-#[repr(C)]
+#[repr(i32)]
 #[derive(Debug, PartialEq, Clone, Copy, Default)]
 pub enum LineStyle {
     #[default]

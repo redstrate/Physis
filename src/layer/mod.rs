@@ -14,7 +14,7 @@ mod aetheryte;
 pub use aetheryte::AetheryteInstanceObject;
 
 mod bg;
-pub use bg::{BgPartInstanceObject, ModelCollisionType};
+pub use bg::{BgPartInstanceObject, ModelCollisionType, ShadowMode};
 
 mod collision;
 pub use collision::{
@@ -34,7 +34,7 @@ mod gathering;
 pub use gathering::GatheringInstanceObject;
 
 mod light;
-pub use light::{LightInstanceObject, LightType, PointLightType};
+pub use light::{LightInstanceObject, LightShape, PointLightType};
 
 mod marker;
 pub use marker::{
@@ -308,7 +308,7 @@ pub enum LayerEntryData {
     BgPart(#[brw(args(string_heap, heap_pointer))] BgPartInstanceObject),
     /// Light source.
     #[br(pre_assert(*magic == LayerEntryType::Light))]
-    Light(LightInstanceObject),
+    Light(#[brw(args(string_heap, heap_pointer))] LightInstanceObject),
     /// Visual effect.
     #[br(pre_assert(*magic == LayerEntryType::Vfx))]
     Vfx(#[brw(args(string_heap, heap_pointer))] VFXInstanceObject),

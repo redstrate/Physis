@@ -14,64 +14,70 @@ use crate::{
 use super::read_bool_from;
 
 #[binrw]
+#[repr(i32)]
 #[brw(repr = i32)]
 #[derive(Debug, PartialEq, Default, Clone, Copy)]
 pub enum DoorState {
     #[default]
-    Auto = 0x1,
-    Open = 0x2,
-    Closed = 0x3,
+    Auto = 1,
+    Open = 2,
+    Closed = 3,
 }
 
 #[binrw]
+#[repr(i32)]
 #[brw(repr = i32)]
 #[derive(Debug, PartialEq, Default, Clone, Copy)]
 pub enum RotationState {
     #[default]
-    Rounding = 0x1,
-    Stopped = 0x2,
+    Rounding = 1,
+    Stopped = 2,
 }
 
 #[binrw]
+#[repr(i32)]
 #[brw(repr = i32)]
 #[derive(Debug, PartialEq, Default, Clone, Copy)]
 pub enum TransformState {
     #[default]
-    Play = 0x0,
-    Stop = 0x1,
-    Replay = 0x2,
-    Reset = 0x3,
+    Play = 0,
+    Stop = 1,
+    Replay = 2,
+    Reset = 3,
 }
 
 #[binrw]
+#[repr(i32)]
 #[brw(repr = i32)]
 #[derive(Debug, PartialEq, Default, Clone, Copy)]
 pub enum ColourState {
     #[default]
-    Play = 0x0,
-    Stop = 0x1,
-    Replay = 0x2,
-    Reset = 0x3,
+    Play = 0,
+    Stop = 1,
+    Replay = 2,
+    Reset = 3,
 }
 
 #[binrw]
+#[repr(i32)]
 #[brw(repr = i32)]
 #[derive(Debug, PartialEq, Default, Clone, Copy)]
 pub enum MovePathMode {
     #[default]
-    None = 0x0,
-    SharedGroupAction = 0x1,
-    Timeline = 0x2,
+    None = 0,
+    SharedGroupAction = 1,
+    Timeline = 2,
 }
 
 #[binrw]
+#[repr(i32)]
 #[brw(repr = i32)]
 #[derive(Debug, PartialEq, Default, Clone, Copy)]
 pub enum RotationType {
     #[default]
-    NoRotate = 0x0,
-    AllAxis = 0x1,
-    YAxisOnly = 0x2,
+    NoRotate = 0,
+    AllAxis = 1,
+    YAxisOnly = 2,
 }
 
 #[binrw]
@@ -116,7 +122,9 @@ pub struct SharedGroupInstance {
     #[bw(calc = SharedGroupInstance::SIZE as i32)]
     #[br(temp)]
     overriden_members_offset: i32,
-    pub overriden_members_count: i32,
+    #[br(temp)]
+    #[bw(calc = 0)] // TODO
+    overriden_members_count: i32,
     pub initial_rotation_state: RotationState,
     #[br(map = read_bool_from::<u8>)]
     #[bw(map = write_bool_as::<u8>)]
@@ -131,10 +139,10 @@ pub struct SharedGroupInstance {
     #[bw(map = write_bool_as::<u8>)]
     pub unk_bool: bool,
     pub bound_client_path_instance_id: u32,
-    #[brw(pad_after = 4)] // padding, not read
     #[bw(calc = SharedGroupInstance::SIZE as i32)]
     #[br(temp)]
     move_path_settings_offset: i32,
+    #[brw(pad_before = 4)] // empty, not read
     pub initial_transform_state: TransformState,
     pub initial_color_state: ColourState,
     #[br(restore_position, seek_before = SeekFrom::Current(move_path_settings_offset as i64 - SharedGroupInstance::SIZE as i64))]

@@ -14,10 +14,24 @@ use crate::{
 #[bw(import(string_heap: &mut StringHeap, heap_pointer: HeapPointer))]
 pub struct CollisionBoxInstanceObject {
     pub parent_data: TriggerBoxInstanceObject,
-    material_mask_low: u32,
-    material_id_low: u32,
-    material_mask_high: u32,
-    material_id_high: u32,
+    #[br(temp)]
+    #[bw(calc = 0)] // TODO
+    collision_material_mask_low: u32,
+    #[br(temp)]
+    #[bw(calc = 0)] // TODO
+    collision_material_id_low: u32,
+    #[br(temp)]
+    #[bw(calc = 0)] // TODO
+    collision_material_mask_high: u32,
+    #[br(temp)]
+    #[bw(calc = 0)] // TODO
+    collision_material_id_high: u32,
+    #[br(calc = ((collision_material_id_high as u64) << 32) | collision_material_id_low as u64)]
+    #[bw(ignore)] // written above
+    pub collision_material_id: u64,
+    #[br(calc = ((collision_material_mask_high as u64) << 32) | collision_material_mask_low as u64)]
+    #[bw(ignore)] // written above
+    pub collision_material_mask: u64,
     #[brw(pad_after = 3)] // Padding, not read
     layer_mask_is_43h: u8,
 
@@ -27,7 +41,7 @@ pub struct CollisionBoxInstanceObject {
 }
 
 #[binrw]
-#[repr(C)]
+#[repr(u32)]
 #[brw(repr = u32)]
 #[derive(Debug, PartialEq, Clone, Copy, Default)]
 pub enum TriggerBoxShape {

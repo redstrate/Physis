@@ -6,14 +6,15 @@ use binrw::binrw;
 use crate::common_file_operations::{read_bool_from, write_bool_as};
 
 #[binrw]
+#[repr(i32)]
 #[brw(repr = i32)]
 #[derive(Debug, PartialEq, Clone, Copy, Default)]
 pub enum PositionMarkerType {
     #[default]
-    DebugZonePop = 0x1,
-    DebugJump = 0x2,
-    NaviMesh = 0x3,
-    LQEvent = 0x4,
+    DebugZonePop = 1,
+    DebugJump = 2,
+    NaviMesh = 3,
+    LQEvent = 4,
 }
 
 #[binrw]
@@ -30,8 +31,8 @@ pub struct PositionMarkerInstanceObject {
 #[derive(Debug, PartialEq, Clone, Copy, Default)]
 pub enum ChairType {
     #[default]
-    Chair = 0x0,
-    Bed = 0x1,
+    Chair = 0,
+    Bed = 1,
 }
 
 #[binrw]
@@ -59,17 +60,17 @@ pub struct QuestMarkerInstanceObject {
 
 #[binrw]
 #[brw(repr = i32)]
-#[repr(C)]
+#[repr(i32)]
 #[derive(Debug, PartialEq, Clone, Copy, Default)]
 pub enum TargetMarkerType {
     #[default]
-    UiTarget = 0x0,
-    UiNameplate = 0x1,
-    LookAt = 0x2,
-    BodyDyn = 0x3,
-    Root = 0x4,
-    Unk1 = 0x5, // Seen in bg/ex5/02_ykt_y6/twn/y6t1/level/planevent.lgb
-    Unk2 = 0x6, // Seen in bg/ex5/02_ykt_y6/twn/y6t1/level/planevent.lgb
+    UiTarget = 0,
+    UiNameplate = 1,
+    LookAt = 2,
+    BodyDyn = 3,
+    Root = 4,
+    Unk1 = 5, // Seen in bg/ex5/02_ykt_y6/twn/y6t1/level/planevent.lgb
+    Unk2 = 6, // Seen in bg/ex5/02_ykt_y6/twn/y6t1/level/planevent.lgb
 }
 
 #[binrw]
