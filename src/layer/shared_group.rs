@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: 2025 Joshua Goins <josh@redstrate.com>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+use std::io::SeekFrom;
+
 use binrw::binrw;
 
 use crate::{
@@ -25,8 +27,8 @@ pub enum DoorState {
 #[brw(repr = i32)]
 #[derive(Debug, PartialEq, Default, Clone, Copy)]
 pub enum RotationState {
-    Rounding = 0x1,
     #[default]
+    Rounding = 0x1,
     Stopped = 0x2,
 }
 
@@ -34,8 +36,8 @@ pub enum RotationState {
 #[brw(repr = i32)]
 #[derive(Debug, PartialEq, Default, Clone, Copy)]
 pub enum TransformState {
-    Play = 0x0,
     #[default]
+    Play = 0x0,
     Stop = 0x1,
     Replay = 0x2,
     Reset = 0x3,
@@ -45,11 +47,61 @@ pub enum TransformState {
 #[brw(repr = i32)]
 #[derive(Debug, PartialEq, Default, Clone, Copy)]
 pub enum ColourState {
-    Play = 0x0,
     #[default]
+    Play = 0x0,
     Stop = 0x1,
     Replay = 0x2,
     Reset = 0x3,
+}
+
+#[binrw]
+#[brw(repr = i32)]
+#[derive(Debug, PartialEq, Default, Clone, Copy)]
+pub enum MovePathMode {
+    #[default]
+    None = 0x0,
+    SharedGroupAction = 0x1,
+    Timeline = 0x2,
+}
+
+#[binrw]
+#[brw(repr = i32)]
+#[derive(Debug, PartialEq, Default, Clone, Copy)]
+pub enum RotationType {
+    #[default]
+    NoRotate = 0x0,
+    AllAxis = 0x1,
+    YAxisOnly = 0x2,
+}
+
+#[binrw]
+#[derive(Debug, PartialEq, Default, Clone)]
+pub struct MovePathSettings {
+    pub mode: MovePathMode,
+    #[brw(pad_after = 1)] // padding, not read
+    #[br(map = read_bool_from::<u8>)]
+    #[bw(map = write_bool_as::<u8>)]
+    pub auto_play: bool,
+    pub time: u16,
+    #[br(map = read_bool_from::<u8>)]
+    #[bw(map = write_bool_as::<u8>)]
+    pub loop_animation: bool,
+    #[brw(pad_after = 2)] // padding, not read
+    #[br(map = read_bool_from::<u8>)]
+    #[bw(map = write_bool_as::<u8>)]
+    pub reverse: bool,
+    pub rotation: RotationType,
+    pub accelerate_time: u16,
+    pub decelerate_time: u16,
+    pub vertical_swing_range: [f32; 2],
+    pub horizontal_swing_range: [f32; 2],
+    pub swing_move_speed_range: [f32; 2],
+    pub swing_rotation: [f32; 2],
+    pub swing_rotation_speed_range: [f32; 2],
+}
+
+impl MovePathSettings {
+    pub const SIZE: usize = 60;
 }
 
 #[binrw]
@@ -61,7 +113,9 @@ pub struct SharedGroupInstance {
     #[brw(args(heap_pointer, string_heap))]
     pub asset_path: HeapString,
     pub initial_door_state: DoorState,
-    pub overriden_members: i32,
+    #[bw(calc = SharedGroupInstance::SIZE as i32)]
+    #[br(temp)]
+    overriden_members_offset: i32,
     pub overriden_members_count: i32,
     pub initial_rotation_state: RotationState,
     #[br(map = read_bool_from::<u8>)]
@@ -72,15 +126,32 @@ pub struct SharedGroupInstance {
     pub random_timeline_loop_playback: bool,
     #[br(map = read_bool_from::<u8>)]
     #[bw(map = write_bool_as::<u8>)]
-    #[brw(pad_after = 1)] // padding
     pub collision_controllable_without_eobj: bool,
-    pub bound_client_path_instance_id: u32,
-    // TODO: read move path settings from this offset
-    pub move_path_settings: i32,
     #[br(map = read_bool_from::<u8>)]
     #[bw(map = write_bool_as::<u8>)]
-    #[brw(pad_after = 3)] // padding
-    pub not_create_navimesh_door: bool,
+    pub unk_bool: bool,
+    pub bound_client_path_instance_id: u32,
+    #[brw(pad_after = 4)] // padding, not read
+    #[bw(calc = SharedGroupInstance::SIZE as i32)]
+    #[br(temp)]
+    move_path_settings_offset: i32,
     pub initial_transform_state: TransformState,
     pub initial_color_state: ColourState,
+    #[br(restore_position, seek_before = SeekFrom::Current(move_path_settings_offset as i64 - SharedGroupInstance::SIZE as i64))]
+    pub move_path_settings: MovePathSettings,
+}
+
+impl SharedGroupInstance {
+    pub const SIZE: usize = 92;
+}
+
+#[cfg(test)]
+mod tests {
+    use super::MovePathSettings;
+    use crate::common::ensure_size;
+
+    #[test]
+    fn test_movepathsettings_size() {
+        ensure_size::<MovePathSettings, { MovePathSettings::SIZE }>();
+    }
 }

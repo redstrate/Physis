@@ -456,8 +456,6 @@ mod tests {
                         name: HeapString {
                             value: "Spot".to_string(),
                         },
-                        instance_object_offset: 52,
-                        instance_object_count: 1,
                         visible: true,
                         tool_mode_read_only: false,
                         is_bush_layer: false,
@@ -473,6 +471,7 @@ mod tests {
                         version_mask: 0,
                         object_set_referenced: vec![],
                         object_set_enable_referenced: vec![],
+                        ..Default::default()
                     },
                     objects: vec![InstanceObject {
                         instance_id: 8338105,
