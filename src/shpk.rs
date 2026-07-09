@@ -127,6 +127,29 @@ pub struct NodeAlias {
 }
 
 #[binrw]
+#[derive(Debug)]
+#[allow(unused)]
+pub struct NodeAliasCluster {
+    subview1: u32,
+    subview2: u32,
+    count: u32,
+    unk: u32,
+    #[br(count = count)]
+    sub_clusters: Vec<NodeAliasSubCluster>,
+}
+
+#[binrw]
+#[derive(Debug)]
+#[allow(unused)]
+pub struct NodeAliasSubCluster {
+    index: u16,
+    alias_count: u16,
+    #[br(count = alias_count)]
+    #[brw(pad_size_to = 97 * 4)]
+    aliases: Vec<NodeAlias>,
+}
+
+#[binrw]
 #[br(import {
     version: u32,
     system_key_count: u32,
@@ -200,14 +223,27 @@ pub struct ShaderPackage {
     node_count: u32,
     node_alias_count: u32,
 
-    #[br(count = if version >= 0x0D01 { 12 } else { 0 } )]
-    unk_data: Vec<u8>,
+    #[br(if(version >= 0x0D01))]
+    hull_count: u32,
+    #[br(if(version >= 0x0D01))]
+    domain_count: u32,
+    #[br(if(version >= 0x0D01))]
+    geo_count: u32,
+
+    #[br(if(version >= 0x0E01))]
+    node_alias_cluster_count: u32,
 
     // TODO: dx9 needs 4 bytes of padding, dx11 is 8 (correct)
     #[br(args { count: vertex_shader_count as usize, inner : ShaderBinReadArgs { version, is_vertex: true, shader_data_offset, strings_offset }})]
     pub vertex_shaders: Vec<Shader>,
     #[br(args { count: pixel_shader_count as usize, inner: ShaderBinReadArgs { version, is_vertex: false, shader_data_offset, strings_offset } })]
     pub pixel_shaders: Vec<Shader>,
+    #[br(args { count: hull_count as usize, inner: ShaderBinReadArgs { version, is_vertex: false, shader_data_offset, strings_offset } })]
+    pub hull_shaders: Vec<Shader>,
+    #[br(args { count: domain_count as usize, inner: ShaderBinReadArgs { version, is_vertex: false, shader_data_offset, strings_offset } })]
+    pub domain_shaders: Vec<Shader>,
+    #[br(args { count: geo_count as usize, inner: ShaderBinReadArgs { version, is_vertex: false, shader_data_offset, strings_offset } })]
+    pub geometry_shaders: Vec<Shader>,
 
     #[br(count = material_parameter_count)]
     pub material_parameters: Vec<MaterialParameter>,
@@ -244,6 +280,9 @@ pub struct ShaderPackage {
 
     #[br(count = node_alias_count)]
     node_aliases: Vec<NodeAlias>,
+
+    #[br(count = node_alias_cluster_count)]
+    node_alias_clusters: Vec<NodeAliasCluster>,
 }
 
 const SELECTOR_MULTIPLER: u32 = 31;
