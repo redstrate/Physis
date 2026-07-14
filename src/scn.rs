@@ -302,6 +302,7 @@ pub enum SGStateMode {
     #[default]
     Unk0 = 0,
     Unk1 = 1,
+    Unk2 = 2, // This isn't used by the client?
     OnOff = 3,
     Unk4 = 4,
 }
