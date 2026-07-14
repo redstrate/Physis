@@ -12,5 +12,6 @@ pub struct EventObjectInstanceObject {
     /// A reference to another object, most likely.
     #[brw(pad_after = 4)] // padding, not read
     pub bound_instance_id: u32,
+    #[brw(pad_after = 7)] // don't think is read but needed to correct to the right size
     pub unk1: u8, // boolean I think
 }
