@@ -79,7 +79,7 @@ pub struct ScnSection {
     offset_action_descriptors: i32,
     unk4: i32,
     unk5: i32,
-    offset_housing: i32,
+    offset_stain_info: i32,
     unk7: i32,
     unk8: i32,
     unk9: i32,
@@ -128,10 +128,10 @@ pub struct ScnSection {
     #[br(restore_position)]
     pub action_descriptors: ScnSGActionDescriptors,
 
-    /// Housing information.
-    #[br(if(offset_housing > 0), seek_before = SeekFrom::Current(offset_housing as i64 - ScnSection::SIZE as i64))]
+    /// Stain information, mainly used for housing items.
+    #[br(if(offset_stain_info > 0), seek_before = SeekFrom::Current(offset_stain_info as i64 - ScnSection::SIZE as i64))]
     #[br(restore_position)]
-    pub housing: Option<ScnHousingSettings>,
+    pub stain_info: Option<ScnStainInformation>,
 }
 
 impl ScnSection {
@@ -294,15 +294,40 @@ pub struct ScnTimelineInstance {
     pub instance_id: i32,
 }
 
-// TODO: header is definitely not correct
+#[binrw]
+#[repr(i32)]
+#[brw(repr = i32)]
+#[derive(Debug, Clone, Copy, Default)]
+pub enum SGStateMode {
+    #[default]
+    Unk0 = 0,
+    Unk1 = 1,
+    OnOff = 3,
+    Unk4 = 4,
+}
+
 #[binrw]
 #[derive(Debug, Default)]
 pub struct ScnSGActionDescriptors {
-    unk: [u8; 16],
-    timeline_offset: i32,
-    unk2: [u8; 20],
-    count: i32, // TODO: unsure
-    unk3: [u8; 4],
+    unk1: u8,
+    /// Sub ID of the timeline for the "on" state. Only read when using `SGStateMode::OnOff`.
+    pub on_sub_id: u8, // read when unk7 is 3
+    /// Sub ID of the timeline for the "off" state. Only read when using `SGStateMode::OnOff`.
+    pub off_sub_id: u8,
+    unk4: [u8; 2],
+    pub timeline_indices: [u8; 16],
+    unk5: [u8; 2],
+    unk6_bool: u8, // initializes something
+    pub state_mode: SGStateMode,
+    /// Only read when using `SGStateMode::Unk4`.
+    unk8: u16,
+    /// Only read when using `SGStateMode::Unk4`.
+    unk9: u16,
+    unk10: [u8; 32],
+    #[br(temp)]
+    #[bw(calc = descriptors.len() as i32)]
+    count: i32,
+    unk11: [u8; 4],
     #[br(count = count)]
     pub descriptors: Vec<ScnSGActionControllerDescriptor>,
 }
@@ -315,6 +340,10 @@ pub enum ScnSGActionControllerDescriptor {
     Door(ScnDoorActionDescription),
     #[brw(magic = 2i32)]
     Rotation(ScnRotationActionDescription),
+    // TODO: 3 = TransformAction
+    // TODO: 4 = ClockAction
+    // TODO: 5 = TransformAction again(?)
+    // TODO: 6 = TransformAction again(?!)
     Unknown(i32),
 }
 
@@ -473,8 +502,8 @@ fn layers_from_offsets(offsets: &Vec<i32>, string_heap: &StringHeap) -> BinResul
 
 #[binrw]
 #[derive(Debug, Default)]
-pub struct ScnHousingSettings {
-    default_color_id: u16,
+pub struct ScnStainInformation {
+    pub default_stain_index: u16,
     unk1: u8,
     unk2: u8,
     unk3: u32,
