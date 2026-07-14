@@ -316,6 +316,7 @@ pub struct ScnSGActionDescriptors {
     /// Sub ID of the timeline for the "off" state. Only read when using `SGStateMode::OnOff`.
     pub off_sub_id: u8,
     unk4: [u8; 2],
+    /// List of timeline sub IDs which can be played and stopped in-game.
     pub timeline_indices: [u8; 16],
     unk5: [u8; 2],
     unk6_bool: u8, // initializes something
