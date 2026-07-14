@@ -128,12 +128,10 @@ impl ResourceResolver {
             let result = f(resource.as_mut());
             match result {
                 Ok(t) => return Ok(t),
-                Err(err) => {
-                    if let Error::FileNotFound { .. } = err {
-                        continue; // continue even if the file wasn't found in *this* resolver
-                    } else {
-                        return Err(err);
-                    }
+                Err(_) => {
+                    // Maybe be more specific about which errors we allow? Not sure yet.
+                    // We previously checked for FileIsNotFound but this doesn't work for all resolvers (e.g. unpacked) which uses Io errors.
+                    continue;
                 }
             }
         }
