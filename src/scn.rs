@@ -7,6 +7,7 @@ use binrw::{BinResult, BinWrite, binrw};
 
 use crate::{
     common_file_operations::{read_bool_from, read_null_terminated_utf8, write_bool_as},
+    envs::{read_dawntrail_marker, write_dawntrail_marker},
     layer::Layer,
     string_heap::{HeapPointer, HeapString, StringHeap},
     tmb::Tmb,
@@ -211,10 +212,11 @@ pub struct ScnGeneralSection {
     unk14: f32,
     flags3: [u8; 4],
     unk16: f32,
-    /// Only read if unk18 == that special value.
+    /// Only read if `is_dawntrail` is true.
     unk17: f32,
-    /// If this is 0x56373030, do something special... Most likely this is a Dawntrail marker (since light object)
-    unk18: i32,
+    #[br(map = read_dawntrail_marker)]
+    #[bw(map = write_dawntrail_marker)]
+    pub is_dawntrail: bool,
 
     #[br(count = num_env_spaces)]
     #[br(seek_before = SeekFrom::Current(offset_env_spaces as i64 - ScnGeneralSection::SIZE as i64))]

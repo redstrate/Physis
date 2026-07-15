@@ -346,6 +346,9 @@ pub struct Color {
     pub alpha: u8,
 }
 
+/// Used by the game's formats to denote something as needing Dawntrail+ behavior.
+pub(crate) const DAWNTRAIL_MARKER: &[u8; 4] = b"007V";
+
 #[cfg(test)]
 mod tests {
     use super::*;

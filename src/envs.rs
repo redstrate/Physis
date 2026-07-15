@@ -7,11 +7,10 @@ use std::io::SeekFrom;
 use binrw::{BinRead, BinResult, BinWrite, binrw};
 
 use crate::{
+    common::DAWNTRAIL_MARKER,
     common_file_operations::{read_bool_from, write_bool_as},
     string_heap::{HeapPointer, HeapString, StringHeap},
 };
-
-pub(crate) const DAWNTRAIL_MARKER: &[u8; 4] = b"007V";
 
 pub(crate) fn read_dawntrail_marker(x: [u8; 4]) -> bool {
     &x == DAWNTRAIL_MARKER

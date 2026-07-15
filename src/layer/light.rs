@@ -5,6 +5,7 @@ use binrw::binrw;
 
 use crate::{
     common_file_operations::write_bool_as,
+    envs::{read_dawntrail_marker, write_dawntrail_marker},
     string_heap::{HeapPointer, HeapString, StringHeap},
 };
 
@@ -81,30 +82,31 @@ pub struct LightInstanceObject {
     pub shadow_plane_near: f32,
     /// Only set for Flat lights. In radians.
     pub flat_light_skew_angle: [f32; 2],
-    /// Only used if `merge_group_id` is 0x56373030.
+    /// Only used if `is_dawntrail` is true.
     pub unk1: f32,
-    /// Only used if `merge_group_id` is 0x56373030.
+    /// Only used if `is_dawntrail` is true.
     pub unk2: f32,
-    /// Only used if `merge_group_id` is 0x56373030.
+    /// Only used if `is_dawntrail` is true.
     pub unk3: f32,
-    /// Only used if `merge_group_id` is 0x56373030.
+    /// Only used if `is_dawntrail` is true.
     pub unk4: f32,
-    /// Only used if `merge_group_id` is 0x56373030.
+    /// Only used if `is_dawntrail` is true.
     pub unk5: f32,
-    /// Only used if `merge_group_id` is 0x56373030.
+    /// Only used if `is_dawntrail` is true.
     pub unk6: f32,
     /// Must be kept at zero, otherwise the light fails to show up?
-    /// Only used if `merge_group_id` is 0x56373030.
+    /// Only used if `is_dawntrail` is true.
     pub unk7: i32,
-    /// Only used if `merge_group_id` is 0x56373030.
+    /// Only used if `is_dawntrail` is true.
     pub unk8: f32,
-    /// Only used if `merge_group_id` is 0x56373030.
+    /// Only used if `is_dawntrail` is true.
     #[br(map = read_bool_from::<u8>)]
     #[bw(map = write_bool_as::<u8>)]
     #[brw(pad_after = 3)] // padding, not read
     pub unk9: bool,
-    /// Usually 0x56373030, unsure the significance of this value.
-    pub unk10: i32,
+    #[br(map = read_dawntrail_marker)]
+    #[bw(map = write_dawntrail_marker)]
+    pub is_dawntrail: bool,
 }
 
 impl Default for LightInstanceObject {
@@ -134,7 +136,7 @@ impl Default for LightInstanceObject {
             unk7: 0,
             unk8: 0.0,
             unk9: false,
-            unk10: 1446457392,
+            is_dawntrail: true,
         }
     }
 }
