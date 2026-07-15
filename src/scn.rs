@@ -171,12 +171,14 @@ pub struct ScnGeneralSection {
     #[bw(calc = HeapPointer::from_stream(w))]
     heap_pointer: HeapPointer,
 
-    unk9: i32,
+    flags1: [u8; 4], // middle two seems unused
 
     #[brw(args(heap_pointer, string_heap))]
     pub bg_path: HeapString,
 
     offset_env_spaces: i32,
+    #[br(temp)]
+    #[bw(calc = env_spaces.len() as i32)]
     num_env_spaces: i32,
 
     unk1: i32,
@@ -190,18 +192,18 @@ pub struct ScnGeneralSection {
     unk5: f32,
     unk6: f32,
     unk7: f32,
-    unk8: i32, // points to 4 bytes in the string heap
+    unk8: i32,
 
     /// Path to the `.lcb` file.
     #[brw(args(heap_pointer, string_heap))]
     pub lcb_path: HeapString,
 
-    unk10: i32,
+    flags2: [u8; 4], // only the last one is used?
     unk11: f32,
     unk12: i32,
     unk13: i32,
     unk14: f32,
-    unk15: i32,
+    flags3: [u8; 4], // only the first one is used?
     unk16: f32,
     unk17: f32,
 
