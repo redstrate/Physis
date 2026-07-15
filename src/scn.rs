@@ -147,19 +147,22 @@ pub struct ScnEnvSpace {
     #[bw(calc = HeapPointer::from_stream(w))]
     heap_pointer: HeapPointer,
 
+    /// Path to an `.envb` file.
     #[brw(args(heap_pointer, string_heap))]
     pub envb_path: HeapString,
 
-    unk1: i32,
+    /// Index into EnvScene.EnvSpaces.
+    pub index: i32,
+
     /// ID to an EnvLocation InstanceObject in this scene.
     pub env_location_instance_id: i32,
 
+    /// Path to a `.essb` file.
     #[brw(args(heap_pointer, string_heap))]
     pub essb_path: HeapString,
 
-    // TODO: I have no idea, but there's 8 extra bytes unaccounted for here. Probably a mistake elsewhere.
-    #[br(restore_position)]
-    unk: u64,
+    unk1: f32,
+    unk2: f32,
 }
 
 #[binrw]
@@ -171,7 +174,7 @@ pub struct ScnGeneralSection {
     #[bw(calc = HeapPointer::from_stream(w))]
     heap_pointer: HeapPointer,
 
-    flags1: [u8; 4], // middle two seems unused
+    flags1: [u8; 4],
 
     #[brw(args(heap_pointer, string_heap))]
     pub bg_path: HeapString,
@@ -181,31 +184,37 @@ pub struct ScnGeneralSection {
     #[bw(calc = env_spaces.len() as i32)]
     num_env_spaces: i32,
 
+    /// Int casted to float. Used by LayoutEnvironment.
     unk1: i32,
 
+    /// Path to the `.svb` file.
     #[brw(args(heap_pointer, string_heap))]
     pub svb_path: HeapString,
 
+    // All these floats are also environmental data!
     unk2: f32,
     unk3: f32,
     unk4: f32,
     unk5: f32,
     unk6: f32,
     unk7: f32,
-    unk8: i32,
+    unk8_offset: i32,
 
     /// Path to the `.lcb` file.
     #[brw(args(heap_pointer, string_heap))]
     pub lcb_path: HeapString,
 
-    flags2: [u8; 4], // only the last one is used?
+    flags2: [u8; 4],
     unk11: f32,
-    unk12: i32,
-    unk13: i32,
+    weather_ids_offset: i32,
+    unk13: f32,
     unk14: f32,
-    flags3: [u8; 4], // only the first one is used?
+    flags3: [u8; 4],
     unk16: f32,
+    /// Only read if unk18 == that special value.
     unk17: f32,
+    /// If this is 0x56373030, do something special... Most likely this is a Dawntrail marker (since light object)
+    unk18: i32,
 
     #[br(count = num_env_spaces)]
     #[br(seek_before = SeekFrom::Current(offset_env_spaces as i64 - ScnGeneralSection::SIZE as i64))]
@@ -213,6 +222,18 @@ pub struct ScnGeneralSection {
     #[br(args { inner: (string_heap,) })]
     #[bw(write_with = write_env_spaces, args(string_heap))]
     pub env_spaces: Vec<ScnEnvSpace>,
+
+    #[br(count = 32)]
+    #[br(seek_before = SeekFrom::Current(weather_ids_offset as i64 - ScnGeneralSection::SIZE as i64 + 4))]
+    #[br(restore_position)]
+    #[bw(ignore)] // TODO
+    pub weather_ids: Vec<u8>,
+
+    /// I think these are all casted to float by dividing by 255.0?
+    #[br(seek_before = SeekFrom::Current(unk8_offset as i64 - ScnGeneralSection::SIZE as i64 + 4))]
+    #[br(restore_position)]
+    #[bw(ignore)] // TODO
+    unk8a: [u8; 3],
 }
 
 #[binrw::writer(writer, endian)]
@@ -225,7 +246,7 @@ pub fn write_env_spaces(scns: &Vec<ScnEnvSpace>, string_heap: &mut StringHeap) -
 }
 
 impl ScnGeneralSection {
-    pub(crate) const SIZE: usize = 0x58;
+    pub(crate) const SIZE: usize = 0x5C;
 }
 
 #[binrw]
