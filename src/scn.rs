@@ -233,7 +233,7 @@ pub struct ScnGeneralSection {
 
     /// I think these are all casted to float by dividing by 255.0?
     #[br(seek_before = SeekFrom::Current(unk8_offset as i64 - ScnGeneralSection::SIZE as i64 + 4))]
-    #[br(restore_position)]
+    #[br(try, restore_position)] // TODO: if try isn't here, SGBs like bg/ffxiv/sea_s1/shared/for_bg/sgbg_s1d1_m1_sec1.sgb fail?
     #[bw(ignore)] // TODO
     unk8a: [u8; 3],
 }
