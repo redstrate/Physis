@@ -355,7 +355,8 @@ pub struct ScnSGActionDescriptors {
     #[bw(calc = descriptors.len() as i32)]
     count: i32,
     unk11: [u8; 4],
-    #[br(count = count, try)] // TODO: Remove the try once we know why count for bg/ffxiv/sea_s1/shared/for_bg/sgbg_s1d1_m1_dorb1.sgb is wrong.
+    #[br(count = count, try)]
+    // TODO: Remove the try once we know why count for bg/ffxiv/sea_s1/shared/for_bg/sgbg_s1d1_m1_dorb1.sgb is wrong.
     pub descriptors: Vec<ScnSGActionControllerDescriptor>,
 }
 

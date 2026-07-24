@@ -250,10 +250,9 @@ impl Page {
                 ))
                 .unwrap();
 
-            let data_offset = cursor.stream_position().unwrap();
-
             let subrows = if exh.header.row_kind == SheetRowKind::SubRows {
                 let row_header = DataSectionHeader::read(&mut cursor).unwrap();
+                let data_offset = cursor.stream_position().unwrap();
 
                 let mut rows = Vec::with_capacity(row_header.row_count as usize);
                 for i in 0..row_header.row_count {
@@ -268,6 +267,8 @@ impl Page {
                 }
                 rows
             } else {
+                let data_offset = cursor.stream_position().unwrap();
+
                 vec![(0, read_row(&mut cursor, exh, data_offset).unwrap())]
             };
             rows.push(Entry {
