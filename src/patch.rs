@@ -288,7 +288,7 @@ pub struct SqpkFileOperationData {
     #[bw(map = write_string)]
     pub path: String,
 
-    #[br(parse_with = read_file_operation_data, args(file_size,))]
+    #[br(if(operation == SqpkFileOperation::AddFile), parse_with = read_file_operation_data, args(file_size,))]
     pub data: Vec<u8>,
 }
 
