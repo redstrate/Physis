@@ -229,14 +229,14 @@ pub type ByteBuffer = Vec<u8>;
 
 /// Names for rows in the Excel sheet of the same name.
 ///
-/// See <https://github.com/aers/FFXIVClientStructs/blob/main/FFXIVClientStructs/FFXIV/Client/Enums/TerritoryIntendedUse.cs>.
+/// Based off of <https://github.com/aers/FFXIVClientStructs/blob/main/FFXIVClientStructs/FFXIV/Client/Enums/TerritoryIntendedUse.cs>.
 #[repr(u8)]
 #[derive(FromRepr, Display, Clone, Copy, PartialEq)]
 pub enum TerritoryIntendedUse {
     /// Towns such as Limsa Lominsa.
     Town = 0,
     /// Open world zones such as everything out of towns.
-    OpenWorld = 1,
+    Overworld = 1,
     /// Inn rooms.
     Inn = 2,
     /// Dungeon zones and other misc duties like Air Force One.
@@ -244,36 +244,47 @@ pub enum TerritoryIntendedUse {
     /// Variant dungeons like The Sil'dihn Subterrane.
     VariantDungeon = 4,
     /// Jail zones like Mordion Gaol.
-    Jail = 5,
+    MordionGaol = 5,
     /// Copies of Towns that are only during the opening.
     OpeningArea = 6,
     /// Rarely seen "lobby zones", such as the Phantom Village for Occult Crescent.
-    LobbyArea = 7,
+    BeforeTrialDung = 7,
     /// Zones used in Alliance Raids.
     AllianceRaid = 8,
     /// Used for (pre-Endwalker?) quest battles.
-    OpenWorldInstanceBattle = 9,
+    PreEwOverworldQuestBattle = 9,
     /// Trial battles.
     Trial = 10,
-    Unk100 = 11,
-    Unk110 = 12,
+    /// Currently unused.
+    Unknown11 = 11,
+    /// ???
+    WaitingRoom = 12,
+    /// ???
     HousingOutdoor = 13,
+    /// ???
     HousingIndoor = 14,
-    SoloOverworldInstance = 15,
+    /// ???
+    SoloOverworldInstances = 15,
     /// Fighting arenas for raids like.
     Raid1 = 16,
     /// Seen in at least AAC Heavyweight M1 (Savage)
     Raid2 = 17,
     /// Zones used for Frontline PvP.
     Frontline = 18,
-    Unk120 = 19,
+    /// Now unused.
+    ChocoboSquareOld = 19,
+    /// ???
     ChocoboRacing = 20,
     /// Used for the only Ishgard Restoration zone, the Firamament.
-    IshgardRestoration = 21,
+    Firmament = 21,
     /// The Sanctum of the Twelve zone used for weddings.
-    Wedding = 22,
+    SanctumOfTheTwelve = 22,
     /// Gold Saucer zones.
     GoldSaucer = 23,
+    /// Now unused.
+    OriginalStepsOfFaith = 24,
+    /// ???
+    LordOfVerminion = 25,
     /// ???
     ExploratoryMissions = 26,
     /// Used for the Hall of Novice tutorials.
@@ -283,13 +294,13 @@ pub enum TerritoryIntendedUse {
     /// Used for events like Solo Duties.
     SoloDuty = 29,
     /// The barracks zones of grand companies.
-    FreeCompanyGarrison = 30,
+    GrandCompanyBarracks = 30,
     /// Zones used for Deep Dugeons, e.g. Palace of the Dead.
     DeepDungeon = 31,
     /// Used for zones only accessible seasonally, like Starlight Halls.
     Seasonal = 32,
     /// Treasure dungeons like Vault Oneiron.
-    TreasureDungeon = 33,
+    TreasureMapInstance = 33,
     /// ???
     SeasonalInstancedArea = 34,
     /// ???
@@ -298,45 +309,62 @@ pub enum TerritoryIntendedUse {
     ChaoticRaid = 36,
     /// ???
     CrystallineConflictCustomMatch = 37,
+    /// Diadem
+    HuntingGrounds = 38,
     /// Used in Rival Wings content.
     RivalWings = 39,
-    /// Also used for Starlight Halls(?)
-    PrivateEventArea = 40,
+    /// Mordion Gaol (The Rising 2017), Frondale's Home for Friendless Foundlings, Starlight Stalls.
+    Seasonal2 = 40,
     /// Eureka zones.
     Eureka = 41,
-    Unk2 = 42,
-    Unk3 = 43,
+    /// ???
+    Unknown42 = 42,
+    /// ???
+    TheCalamityRetold = 43,
     /// Leap of Faith zones.
     LeapOfFaith = 44,
     /// ???
     MaskedCarnival = 45,
     /// Zones used for Ocean Fishing.
     OceanFishing = 46,
-    Unk7 = 47,
-    Unk8 = 48,
+    /// ???
+    Diadem = 47,
+    /// ???
+    Bozja = 48,
     /// Island Sanctuary zones.
     IslandSanctuary = 49,
-    Unk10 = 50,
+    /// ???
+    TripleTriadOpenTournament = 50,
     /// Used in the Triple Triad Invitational Parlor duty.
     TripleTriadInvitationalParlor = 51,
-    Unk12 = 52,
-    Unk13 = 53,
-    Unk14 = 54,
-    Unk15 = 55,
+    /// ???
+    DelubrumReginae = 52,
+    /// ???
+    DelubrumReginaeSavage = 53,
+    /// Propylaion and Ultima Thule
+    EndwalkerMsqSoloOverworld = 54,
+    /// Currently unused.
+    Unknown55 = 55,
+    /// ???
     Elysion = 56,
-    /// Criterion Dungeons zones.
+    /// Criterion Dungeon zones.
     CriterionDungeon = 57,
-    /// Savage Criterion Dungeons zones.
-    SavageCriterionDungeon = 58,
+    /// Savage Criterion Dungeon zones.
+    CriterionDungeonSavage = 58,
     /// Bean containment zones.
     Blunderville = 59,
     /// Cosmic Exploration zones.
     CosmicExploration = 60,
     /// Occult Crescent zones.
     OccultCrescent = 61,
-    Unk22 = 62,
-    SprigCleaning = 63, // Lilyswim (Hatching-tide 2026)
-    Unknown64 = 64,
+    /// ???
+    Unknown62 = 62,
+    /// Lilyswim (Hatching-tide 2026)
+    Seasonal3 = 63,
+    /// ???
+    AirForceOne = 64,
+    /// ???
+    KeyboundBrawler = 65,
 }
 
 #[binrw]
