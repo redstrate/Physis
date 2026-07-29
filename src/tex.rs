@@ -22,7 +22,7 @@ use bitflags::bitflags;
 
 #[binrw]
 #[repr(C)]
-#[derive(Debug, Clone, Copy)]
+#[derive(Clone, Copy)]
 pub struct TextureAttribute(u32);
 
 // Attributes and Format are adapted from Lumina (https://github.com/NotAdam/Lumina/blob/master/src/Lumina/Data/Files/TexFile.cs)
@@ -53,6 +53,12 @@ bitflags! {
         const TEXTURE_SWIZZLE = 0x4000000;
         const TEXTURE_NO_TILED = 0x8000000;
         const TEXTURE_NO_SWIZZLE = 0x80000000;
+    }
+}
+
+impl std::fmt::Debug for TextureAttribute {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        bitflags::parser::to_writer(self, f)
     }
 }
 

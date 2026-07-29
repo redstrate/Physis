@@ -55,7 +55,7 @@ pub struct ModelFileHeader {
 }
 
 #[binrw]
-#[derive(Debug, PartialEq, Clone, Copy)]
+#[derive(PartialEq, Clone, Copy)]
 struct ModelFlags1(u8);
 
 bitflags! {
@@ -71,8 +71,14 @@ bitflags! {
     }
 }
 
+impl std::fmt::Debug for ModelFlags1 {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        bitflags::parser::to_writer(self, f)
+    }
+}
+
 #[binrw]
-#[derive(Debug, PartialEq, Clone, Copy)]
+#[derive(PartialEq, Clone, Copy)]
 struct ModelFlags2(u8);
 
 bitflags! {
@@ -86,6 +92,12 @@ bitflags! {
         const EnableForceNonResident = 0x20;
         const BgUvScrollEnabled = 0x40;
         const Unknown2 = 0x80;
+    }
+}
+
+impl std::fmt::Debug for ModelFlags2 {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        bitflags::parser::to_writer(self, f)
     }
 }
 

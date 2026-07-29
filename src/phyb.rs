@@ -154,7 +154,7 @@ pub struct PhybCollision {
 
 #[binrw]
 #[repr(C)]
-#[derive(Debug, Clone, Copy)]
+#[derive(Clone, Copy)]
 pub struct SimulatorFlags(u8);
 
 bitflags! {
@@ -164,6 +164,12 @@ bitflags! {
         const CONTINUOUS_COLLISIONS = 0x04;
         const USING_GROUND_PLANE = 0x08;
         const FIXED_LENGTH = 0x10;
+    }
+}
+
+impl std::fmt::Debug for SimulatorFlags {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        bitflags::parser::to_writer(self, f)
     }
 }
 

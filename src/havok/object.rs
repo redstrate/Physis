@@ -10,7 +10,7 @@ use std::sync::Arc;
 
 use bitflags::bitflags;
 
-#[derive(PartialEq, Eq, Clone, Copy, Debug)]
+#[derive(PartialEq, Eq, Clone, Copy)]
 pub struct HavokValueType(u32);
 
 bitflags! {
@@ -50,6 +50,12 @@ bitflags! {
         const TUPLEOBJECT = Self::TUPLE.bits() | Self::OBJECT.bits();
         const TUPLESTRUCT = Self::TUPLE.bits() | Self::STRUCT.bits();
         const TUPLESTRING = Self::TUPLE.bits() | Self::STRING.bits();
+    }
+}
+
+impl std::fmt::Debug for HavokValueType {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        bitflags::parser::to_writer(self, f)
     }
 }
 
