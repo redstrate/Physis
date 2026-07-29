@@ -77,7 +77,6 @@ pub use vfx::{LineStyle, LineVFXInstanceObject, VFXInstanceObject};
 // From https://github.com/NotAdam/Lumina/tree/40dab50183eb7ddc28344378baccc2d63ae71d35/src/Lumina/Data/Parsing/Layer
 // Also see https://github.com/aers/FFXIVClientStructs/blob/6b62122cae38bfbc016bf697bef75f80f37abac1/FFXIVClientStructs/FFXIV/Client/LayoutEngine/ILayoutInstance.cs
 
-// TODO: convert these all to magic
 #[binrw]
 #[brw(repr = i32)]
 #[repr(i32)]
@@ -185,7 +184,7 @@ pub enum LayerEntryType {
     Unk80 = 80,
     Unk81 = 81,
     Unk82 = 82,
-    Unk83 = 83,          // seen in bg/ex5/01_xkt_x6/twn/x6t1/level/bg.lgb
+    Decal = 83,
     ColliderLayer7 = 86, // seen in bg/ex5/02_ykt_y6/fld/y6f1/level/bg.lgb
     ColliderLayer8 = 87, // seen in bg/ex2/05_zon_z3/rad/z3r3/level/planmap.lgb
     ColliderLayer9 = 88,
@@ -281,7 +280,7 @@ impl From<&LayerEntryData> for LayerEntryType {
             LayerEntryData::Unk80() => LayerEntryType::Unk80,
             LayerEntryData::Unk81() => LayerEntryType::Unk81,
             LayerEntryData::Unk82() => LayerEntryType::Unk82,
-            LayerEntryData::Unk83() => LayerEntryType::Unk83,
+            LayerEntryData::Decal() => LayerEntryType::Decal,
             LayerEntryData::ColliderLayer7() => LayerEntryType::ColliderLayer7,
             LayerEntryData::ColliderLayer8() => LayerEntryType::ColliderLayer8,
             LayerEntryData::ColliderLayer9() => LayerEntryType::ColliderLayer9,
@@ -506,8 +505,8 @@ pub enum LayerEntryData {
     #[br(pre_assert(*magic == LayerEntryType::Unk82))]
     Unk82(),
     /// Unknown purpose.
-    #[br(pre_assert(*magic == LayerEntryType::Unk83))]
-    Unk83(),
+    #[br(pre_assert(*magic == LayerEntryType::Decal))]
+    Decal(),
     /// Unknown purpose.
     #[br(pre_assert(*magic == LayerEntryType::ColliderLayer7))]
     ColliderLayer7(),
