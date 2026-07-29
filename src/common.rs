@@ -98,6 +98,8 @@ pub enum Platform {
     PS5 = 0x3,
     /// Xbox One.
     Xbox = 0x4,
+    /// Nintendo Switch 2.
+    NS2 = 0x5,
 }
 
 impl Platform {
@@ -111,6 +113,7 @@ impl Platform {
             Platform::PS4 => "ps4",
             Platform::PS5 => "ps5",
             Platform::Xbox => "lys",
+            Platform::NS2 => "obe",
         }
     }
 
