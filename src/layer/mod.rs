@@ -192,7 +192,7 @@ pub enum LayerEntryType {
     CullingBox = 90,
     Unk91 = 91, // Seen in disassembly
     Unk92 = 92, // Ditto
-    Unk93 = 93, // Ditto x2
+    VolumetricCloud = 93,
 }
 
 impl From<&LayerEntryData> for LayerEntryType {
@@ -288,7 +288,7 @@ impl From<&LayerEntryData> for LayerEntryType {
             LayerEntryData::CullingBox(_) => LayerEntryType::CullingBox,
             LayerEntryData::Unk91() => LayerEntryType::Unk91,
             LayerEntryData::Unk92() => LayerEntryType::Unk92,
-            LayerEntryData::Unk93() => LayerEntryType::Unk93,
+            LayerEntryData::VolumetricCloud() => LayerEntryType::VolumetricCloud,
         }
     }
 }
@@ -529,8 +529,8 @@ pub enum LayerEntryData {
     #[br(pre_assert(*magic == LayerEntryType::Unk92))]
     Unk92(),
     /// Unknown purpose.
-    #[br(pre_assert(*magic == LayerEntryType::Unk93))]
-    Unk93(),
+    #[br(pre_assert(*magic == LayerEntryType::VolumetricCloud))]
+    VolumetricCloud(),
 }
 
 #[binrw]
