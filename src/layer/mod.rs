@@ -76,17 +76,17 @@ pub use vfx::{LineStyle, LineVFXInstanceObject, VFXInstanceObject};
 
 // From https://github.com/NotAdam/Lumina/tree/40dab50183eb7ddc28344378baccc2d63ae71d35/src/Lumina/Data/Parsing/Layer
 // Also see https://github.com/aers/FFXIVClientStructs/blob/6b62122cae38bfbc016bf697bef75f80f37abac1/FFXIVClientStructs/FFXIV/Client/LayoutEngine/ILayoutInstance.cs
-
+// Note that this doesn't include *everything*, only the things actually read by the client from an LGB file. FFXIVClientStructs also covers stuff that only exists in-memory during gameplay.
 #[binrw]
 #[brw(repr = i32)]
 #[repr(i32)]
-#[derive(Debug, PartialEq, Copy, Clone)]
+#[derive(Debug, PartialEq, Copy, Clone, Default)]
 pub enum LayerEntryType {
-    /// This represents nothing.
-    None = 0,
+    /// This represents nothing. It's also used as a temporary fallback for any unknown objects.
+    #[default]
+    Unknown = 0,
     /// Background model object.
     BgPart = 1,
-    Attribute = 2,
     /// Light object.
     Light = 3,
     /// Visual effect object.
@@ -100,8 +100,6 @@ pub enum LayerEntryType {
     EventNPC = 8,
     /// Battle NPC object. These are stripped out of the released client.
     BattleNPC = 9,
-    RoutePath = 10,
-    Character = 11,
     /// Aetheryte object.
     Aetheryte = 12,
     EnvSpace = 13,
@@ -110,59 +108,23 @@ pub enum LayerEntryType {
     HelperObject = 15,
     /// Treasure object.
     Treasure = 16,
-    Clip = 17,
-    ClipCtrlPoint = 18,
-    ClipCamera = 19,
-    ClipLight = 20,
-    ClipReserve00 = 21,
-    ClipReserve01 = 22,
-    ClipReserve02 = 23,
-    ClipReserve03 = 24,
-    ClipReserve04 = 25,
-    ClipReserve05 = 26,
-    ClipReserve06 = 27,
-    ClipReserve07 = 28,
-    ClipReserve08 = 29,
-    ClipReserve09 = 30,
-    ClipReserve10 = 31,
-    ClipReserve11 = 32,
-    ClipReserve12 = 33,
-    ClipReserve13 = 34,
-    ClipReserve14 = 35,
-    CutAssetOnlySelectable = 36,
-    Player = 37,
-    Monster = 38,
     Weapon = 39,
     /// Generic range for characters to spawn in.
     PopRange = 40,
     /// Zone Transitions (the visible part is probably LineVFX?)
     ExitRange = 41,
-    Lvb = 42,
     MapRange = 43,
     NaviMeshRange = 44,
     /// Event object.
     EventObject = 45,
-    DemiHuman = 46,
     EnvLocation = 47,
-    ControlPoint = 48,
     /// Generic ranges for events to use.
     EventRange = 49,
-    RestBonusRange = 50,
     QuestMarker = 51,
-    Timeline = 52,
-    ObjectBehaviorSet = 53,
-    Movie = 54,
-    ScenarioExd = 55,
-    ScenarioText = 56,
     CollisionBox = 57,
     DoorRange = 58,
     /// Generic VFX that displays those dotted lines used for zone transitions and boundaries.
     LineVFX = 59,
-    SoundEnvSet = 60,
-    CutActionTimeline = 61,
-    CharaScene = 62,
-    CutAction = 63,
-    EquipPreset = 64,
     /// Path object.
     ClientPath = 65,
     /// Path object that (presumably) only exists on the server.
@@ -174,31 +136,24 @@ pub enum LayerEntryType {
     ClickableRange = 70,
     PrefetchRange = 71,
     FateRange = 72,
-    PartyMember = 73,
-    KeepRange = 74,
     SphereCastRange = 75,
     IndoorObject = 76,
     OutdoorObject = 77,
-    EditGroup = 78,
-    StableChocobo = 79,
-    Unk80 = 80,
-    Unk81 = 81,
-    Unk82 = 82,
     Decal = 83,
-    ColliderLayer7 = 86, // seen in bg/ex5/02_ykt_y6/fld/y6f1/level/bg.lgb
-    ColliderLayer8 = 87, // seen in bg/ex2/05_zon_z3/rad/z3r3/level/planmap.lgb
+    ColliderLayer7 = 86,
+    ColliderLayer8 = 87,
     ColliderLayer9 = 88,
-    ColliderLayer10 = 89, // seen in bg/ffxiv/sea_s1/fld/s1f3/level/planevent.lgb
+    ColliderLayer10 = 89,
     CullingBox = 90,
-    Unk91 = 91, // Seen in disassembly
-    Unk92 = 92, // Ditto
+    Unk91 = 91,
+    Unk92 = 92,
     VolumetricCloud = 93,
 }
 
 impl From<&LayerEntryData> for LayerEntryType {
     fn from(value: &LayerEntryData) -> Self {
         match value {
-            LayerEntryData::None => LayerEntryType::None,
+            LayerEntryData::Unknown => LayerEntryType::Unknown,
             LayerEntryData::BgPart(_) => LayerEntryType::BgPart,
             LayerEntryData::Light(_) => LayerEntryType::Light,
             LayerEntryData::Vfx(_) => LayerEntryType::Vfx,
@@ -229,57 +184,12 @@ impl From<&LayerEntryData> for LayerEntryType {
             LayerEntryData::PrefetchRange(_) => LayerEntryType::PrefetchRange,
             LayerEntryData::FateRange(_) => LayerEntryType::FateRange,
             LayerEntryData::DoorRange(_) => LayerEntryType::DoorRange,
-            LayerEntryData::RoutePath() => LayerEntryType::RoutePath,
-            LayerEntryData::Character(_) => LayerEntryType::Character,
             LayerEntryData::HelperObject() => LayerEntryType::HelperObject,
-            LayerEntryData::Clip() => LayerEntryType::Clip,
-            LayerEntryData::ClipCtrlPoint() => LayerEntryType::ClipCtrlPoint,
-            LayerEntryData::ClipCamera() => LayerEntryType::ClipCamera,
-            LayerEntryData::ClipLight() => LayerEntryType::ClipLight,
-            LayerEntryData::ClipReserve00() => LayerEntryType::ClipReserve00,
-            LayerEntryData::ClipReserve01() => LayerEntryType::ClipReserve01,
-            LayerEntryData::ClipReserve02() => LayerEntryType::ClipReserve02,
-            LayerEntryData::ClipReserve03() => LayerEntryType::ClipReserve03,
-            LayerEntryData::ClipReserve04() => LayerEntryType::ClipReserve04,
-            LayerEntryData::ClipReserve05() => LayerEntryType::ClipReserve05,
-            LayerEntryData::ClipReserve06() => LayerEntryType::ClipReserve06,
-            LayerEntryData::ClipReserve07() => LayerEntryType::ClipReserve07,
-            LayerEntryData::ClipReserve08() => LayerEntryType::ClipReserve08,
-            LayerEntryData::ClipReserve09() => LayerEntryType::ClipReserve09,
-            LayerEntryData::ClipReserve10() => LayerEntryType::ClipReserve10,
-            LayerEntryData::ClipReserve11() => LayerEntryType::ClipReserve11,
-            LayerEntryData::ClipReserve12() => LayerEntryType::ClipReserve12,
-            LayerEntryData::ClipReserve13() => LayerEntryType::ClipReserve13,
-            LayerEntryData::ClipReserve14() => LayerEntryType::ClipReserve14,
-            LayerEntryData::CutAssetOnlySelectable() => LayerEntryType::CutAssetOnlySelectable,
-            LayerEntryData::Player() => LayerEntryType::Player,
-            LayerEntryData::Monster() => LayerEntryType::Monster,
             LayerEntryData::Weapon() => LayerEntryType::Weapon,
-            LayerEntryData::Lvb() => LayerEntryType::Lvb,
             LayerEntryData::NaviMeshRange() => LayerEntryType::NaviMeshRange,
-            LayerEntryData::DemiHuman() => LayerEntryType::DemiHuman,
-            LayerEntryData::ControlPoint() => LayerEntryType::ControlPoint,
-            LayerEntryData::RestBonusRange() => LayerEntryType::RestBonusRange,
-            LayerEntryData::Timeline() => LayerEntryType::Timeline,
-            LayerEntryData::ObjectBehaviorSet() => LayerEntryType::ObjectBehaviorSet,
-            LayerEntryData::Movie() => LayerEntryType::Movie,
-            LayerEntryData::ScenarioExd() => LayerEntryType::ScenarioExd,
-            LayerEntryData::ScenarioText() => LayerEntryType::ScenarioText,
-            LayerEntryData::SoundEnvSet() => LayerEntryType::SoundEnvSet,
-            LayerEntryData::CutActionTimeline() => LayerEntryType::CutActionTimeline,
-            LayerEntryData::CharaScene() => LayerEntryType::CharaScene,
-            LayerEntryData::CutAction() => LayerEntryType::CutAction,
-            LayerEntryData::EquipPreset() => LayerEntryType::EquipPreset,
-            LayerEntryData::PartyMember() => LayerEntryType::PartyMember,
-            LayerEntryData::KeepRange() => LayerEntryType::KeepRange,
             LayerEntryData::SphereCastRange() => LayerEntryType::SphereCastRange,
             LayerEntryData::IndoorObject() => LayerEntryType::IndoorObject,
             LayerEntryData::OutdoorObject() => LayerEntryType::OutdoorObject,
-            LayerEntryData::EditGroup() => LayerEntryType::EditGroup,
-            LayerEntryData::StableChocobo() => LayerEntryType::StableChocobo,
-            LayerEntryData::Unk80() => LayerEntryType::Unk80,
-            LayerEntryData::Unk81() => LayerEntryType::Unk81,
-            LayerEntryData::Unk82() => LayerEntryType::Unk82,
             LayerEntryData::Decal() => LayerEntryType::Decal,
             LayerEntryData::ColliderLayer7() => LayerEntryType::ColliderLayer7,
             LayerEntryData::ColliderLayer8() => LayerEntryType::ColliderLayer8,
@@ -300,8 +210,8 @@ impl From<&LayerEntryData> for LayerEntryType {
 pub enum LayerEntryData {
     /// Representing nothing.
     #[default]
-    #[br(pre_assert(*magic == LayerEntryType::None))]
-    None,
+    #[br(pre_assert(*magic == LayerEntryType::Unknown))]
+    Unknown,
     /// Background model.
     #[br(pre_assert(*magic == LayerEntryType::BgPart))]
     BgPart(#[brw(args(string_heap, heap_pointer))] BgPartInstanceObject),
@@ -326,10 +236,6 @@ pub enum LayerEntryData {
     /// Battle NPC.
     #[br(pre_assert(*magic == LayerEntryType::BattleNPC))]
     BattleNPC(BattleNpcInstanceObject),
-    #[br(pre_assert(*magic == LayerEntryType::RoutePath))]
-    RoutePath(),
-    #[br(pre_assert(*magic == LayerEntryType::Character))]
-    Character(CharacterInstanceObject),
     /// Aetheryte.
     #[br(pre_assert(*magic == LayerEntryType::Aetheryte))]
     Aetheryte(AetheryteInstanceObject),
@@ -344,51 +250,6 @@ pub enum LayerEntryData {
     /// Unknown purpose.
     #[br(pre_assert(*magic == LayerEntryType::Treasure))]
     Treasure(TreasureInstanceObject),
-    /// Used for a variety of things, including teleport locations.
-    #[br(pre_assert(*magic == LayerEntryType::Clip))]
-    Clip(),
-    #[br(pre_assert(*magic == LayerEntryType::ClipCtrlPoint))]
-    ClipCtrlPoint(),
-    #[br(pre_assert(*magic == LayerEntryType::ClipCamera))]
-    ClipCamera(),
-    #[br(pre_assert(*magic == LayerEntryType::ClipLight))]
-    ClipLight(),
-    #[br(pre_assert(*magic == LayerEntryType::ClipReserve00))]
-    ClipReserve00(),
-    #[br(pre_assert(*magic == LayerEntryType::ClipReserve01))]
-    ClipReserve01(),
-    #[br(pre_assert(*magic == LayerEntryType::ClipReserve02))]
-    ClipReserve02(),
-    #[br(pre_assert(*magic == LayerEntryType::ClipReserve03))]
-    ClipReserve03(),
-    #[br(pre_assert(*magic == LayerEntryType::ClipReserve04))]
-    ClipReserve04(),
-    #[br(pre_assert(*magic == LayerEntryType::ClipReserve05))]
-    ClipReserve05(),
-    #[br(pre_assert(*magic == LayerEntryType::ClipReserve06))]
-    ClipReserve06(),
-    #[br(pre_assert(*magic == LayerEntryType::ClipReserve07))]
-    ClipReserve07(),
-    #[br(pre_assert(*magic == LayerEntryType::ClipReserve08))]
-    ClipReserve08(),
-    #[br(pre_assert(*magic == LayerEntryType::ClipReserve09))]
-    ClipReserve09(),
-    #[br(pre_assert(*magic == LayerEntryType::ClipReserve10))]
-    ClipReserve10(),
-    #[br(pre_assert(*magic == LayerEntryType::ClipReserve11))]
-    ClipReserve11(),
-    #[br(pre_assert(*magic == LayerEntryType::ClipReserve12))]
-    ClipReserve12(),
-    #[br(pre_assert(*magic == LayerEntryType::ClipReserve13))]
-    ClipReserve13(),
-    #[br(pre_assert(*magic == LayerEntryType::ClipReserve14))]
-    ClipReserve14(),
-    #[br(pre_assert(*magic == LayerEntryType::CutAssetOnlySelectable))]
-    CutAssetOnlySelectable(),
-    #[br(pre_assert(*magic == LayerEntryType::Player))]
-    Player(),
-    #[br(pre_assert(*magic == LayerEntryType::Monster))]
-    Monster(),
     #[br(pre_assert(*magic == LayerEntryType::Weapon))]
     Weapon(),
     #[br(pre_assert(*magic == LayerEntryType::PopRange))]
@@ -396,8 +257,6 @@ pub enum LayerEntryData {
     /// Walkable transitions between zones.
     #[br(pre_assert(*magic == LayerEntryType::ExitRange))]
     ExitRange(ExitRangeInstanceObject),
-    #[br(pre_assert(*magic == LayerEntryType::Lvb))]
-    Lvb(),
     /// Locations on the map, such as sanctuaries.
     #[br(pre_assert(*magic == LayerEntryType::MapRange))]
     MapRange(MapRangeInstanceObject),
@@ -406,31 +265,14 @@ pub enum LayerEntryData {
     /// Event object.
     #[br(pre_assert(*magic == LayerEntryType::EventObject))]
     EventObject(EventObjectInstanceObject),
-    #[br(pre_assert(*magic == LayerEntryType::DemiHuman))]
-    DemiHuman(),
     /// Unknown purpose.
     #[br(pre_assert(*magic == LayerEntryType::EnvLocation))]
     EnvLocation(#[brw(args(string_heap, heap_pointer))] EnvLocationObject),
-    #[br(pre_assert(*magic == LayerEntryType::ControlPoint))]
-    ControlPoint(),
     /// Unknown purpose.
     #[br(pre_assert(*magic == LayerEntryType::EventRange))]
     EventRange(EventRangeInstanceObject),
-    #[br(pre_assert(*magic == LayerEntryType::RestBonusRange))]
-    RestBonusRange(),
     #[br(pre_assert(*magic == LayerEntryType::QuestMarker))]
     QuestMarker(QuestMarkerInstanceObject),
-    /// Unknown purpose.
-    #[br(pre_assert(*magic == LayerEntryType::Timeline))]
-    Timeline(),
-    #[br(pre_assert(*magic == LayerEntryType::ObjectBehaviorSet))]
-    ObjectBehaviorSet(),
-    #[br(pre_assert(*magic == LayerEntryType::Movie))]
-    Movie(),
-    #[br(pre_assert(*magic == LayerEntryType::ScenarioExd))]
-    ScenarioExd(),
-    #[br(pre_assert(*magic == LayerEntryType::ScenarioText))]
-    ScenarioText(),
     /// Unknown purpose.
     #[br(pre_assert(*magic == LayerEntryType::CollisionBox))]
     CollisionBox(#[brw(args(string_heap, heap_pointer))] CollisionBoxInstanceObject),
@@ -440,16 +282,6 @@ pub enum LayerEntryData {
     /// Unknown purpose.
     #[br(pre_assert(*magic == LayerEntryType::LineVFX))]
     LineVFX(LineVFXInstanceObject),
-    #[br(pre_assert(*magic == LayerEntryType::SoundEnvSet))]
-    SoundEnvSet(),
-    #[br(pre_assert(*magic == LayerEntryType::CutActionTimeline))]
-    CutActionTimeline(),
-    #[br(pre_assert(*magic == LayerEntryType::CharaScene))]
-    CharaScene(),
-    #[br(pre_assert(*magic == LayerEntryType::CutAction))]
-    CutAction(),
-    #[br(pre_assert(*magic == LayerEntryType::EquipPreset))]
-    EquipPreset(),
     /// Unknown purpose.
     #[br(pre_assert(*magic == LayerEntryType::ClientPath))]
     ClientPath(ClientPathInstanceObject),
@@ -475,12 +307,6 @@ pub enum LayerEntryData {
     #[br(pre_assert(*magic == LayerEntryType::FateRange))]
     FateRange(FateRangeInstanceObject),
     /// Unknown purpose.
-    #[br(pre_assert(*magic == LayerEntryType::PartyMember))]
-    PartyMember(),
-    /// Unknown purpose.
-    #[br(pre_assert(*magic == LayerEntryType::KeepRange))]
-    KeepRange(),
-    /// Unknown purpose.
     #[br(pre_assert(*magic == LayerEntryType::SphereCastRange))]
     SphereCastRange(),
     /// Unknown purpose.
@@ -489,21 +315,6 @@ pub enum LayerEntryData {
     /// Unknown purpose.
     #[br(pre_assert(*magic == LayerEntryType::OutdoorObject))]
     OutdoorObject(),
-    /// Unknown purpose.
-    #[br(pre_assert(*magic == LayerEntryType::EditGroup))]
-    EditGroup(),
-    /// Unknown purpose.
-    #[br(pre_assert(*magic == LayerEntryType::StableChocobo))]
-    StableChocobo(),
-    /// Unknown purpose.
-    #[br(pre_assert(*magic == LayerEntryType::Unk80))]
-    Unk80(),
-    /// Unknown purpose.
-    #[br(pre_assert(*magic == LayerEntryType::Unk81))]
-    Unk81(),
-    /// Unknown purpose.
-    #[br(pre_assert(*magic == LayerEntryType::Unk82))]
-    Unk82(),
     /// Unknown purpose.
     #[br(pre_assert(*magic == LayerEntryType::Decal))]
     Decal(),
@@ -754,7 +565,7 @@ pub struct InstanceObject {
     heap_pointer: HeapPointer,
 
     #[bw(calc = data.into())]
-    #[br(temp)]
+    #[br(try, temp)]
     asset_type: LayerEntryType,
     /// The unique ID of this object.
     pub instance_id: u32,
