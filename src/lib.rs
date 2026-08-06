@@ -213,3 +213,6 @@ pub mod atch;
 
 /// Types for bind point (`.eid`) files.
 pub mod eid;
+
+/// Types for shader parameter map (`.spm`) files.
+pub mod spm;
