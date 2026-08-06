@@ -16,10 +16,10 @@ fn main() -> Result<()> {
     let mut resource = SqPackResource::from_existing("game");
 
     // Read the raw data of this file, our resource takes care of decompressing it:
-    let bytes = resource.read(".mdl")?;
+    let bytes = resource.read("bgcommon/nature/earth/bgparts/earth01.mdl")?;
 
     // Or read and parse it:
-    let mdl = resource.parsed::<MDL>("test.mdl")?;
+    let mdl = resource.parsed::<MDL>("bgcommon/nature/earth/bgparts/earth01.mdl")?;
     
     Ok(())
 }
