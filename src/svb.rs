@@ -60,9 +60,8 @@ impl Svc {
 pub struct SvcEntry {
     /// Points to a GameObject in this territory.
     pub instance_id: u32,
-    // TODO: figure out what this is
-    pub unk2: u32,
-    pub unk3: f32,
+    pub members: [u8; 4],
+    pub visibility: f32,
 }
 
 impl ReadableFile for Svb {
