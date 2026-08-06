@@ -216,3 +216,6 @@ pub mod eid;
 
 /// Types for shader parameter map (`.spm`) files.
 pub mod spm;
+
+/// Types for grass zone data (`.gzd`) files.
+pub mod gzd;
