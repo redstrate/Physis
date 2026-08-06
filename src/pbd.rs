@@ -17,8 +17,8 @@ use binrw::binrw;
 #[derive(Debug)]
 #[br(import { data_offset: i32 })]
 #[allow(unused)]
-struct RacialDeformer {
-    bone_count: i32,
+pub struct RacialDeformer {
+    bone_count: u32,
 
     #[br(count = bone_count)]
     bone_name_offsets: Vec<u16>,
@@ -33,49 +33,33 @@ struct RacialDeformer {
     #[bw(ignore)]
     _padding: u16,
 
-    /// 4x3 matrix
+    /// A 4x3 transformation matrix.
     #[br(count = bone_count)]
-    #[br(err_context("offset = {} bone count = {}", data_offset, bone_count))]
-    transform: Vec<[f32; 12]>,
+    pub transform: Vec<[f32; 12]>,
 }
 
 #[binrw]
 #[derive(Debug)]
-struct PreBoneDeformerItem {
-    body_id: u16, // the combined body id like 0101
-    link_index: i16,
-    #[br(pad_after = 4)]
-    #[br(temp)]
-    #[bw(ignore)]
+pub struct PreBoneDeformerItem {
+    /// The combined body id like `0101`.
+    pub body_id: u16,
+    pub link_index: u16,
     data_offset: i32,
+    unk_scale: f32,
 
-    #[br(args { data_offset: data_offset })]
-    #[br(seek_before = SeekFrom::Start(data_offset as u64))]
-    #[br(restore_position)]
-    deformer: RacialDeformer,
+    /// Some bodies like 101 don't have a deformer.
+    #[br(if(data_offset > 0), seek_before = SeekFrom::Start(data_offset as u64), args { data_offset: data_offset }, restore_position)]
+    pub deformer: Option<RacialDeformer>,
 }
 
 #[binrw]
 #[derive(Debug)]
 #[allow(dead_code)]
-struct PreBoneDeformerLink {
-    parent_index: i16,
-    first_child_index: i16,
-    next_sibling_index: i16,
-    deformer_index: u16,
-}
-
-#[binrw]
-#[derive(Debug)]
-#[allow(dead_code)]
-struct PreBoneDeformerHeader {
-    count: i32,
-
-    #[br(count = count)]
-    items: Vec<PreBoneDeformerItem>,
-
-    #[br(count = count)]
-    links: Vec<PreBoneDeformerLink>,
+pub struct PreBoneDeformerLink {
+    pub parent_index: i16,
+    pub first_child_index: i16,
+    pub next_sibling_index: i16,
+    pub deformer_index: u16,
 }
 
 /// Pre-bone deformer file, usually with the `.pbd` file extension.
@@ -84,7 +68,15 @@ struct PreBoneDeformerHeader {
 #[binrw]
 #[derive(Debug)]
 pub struct PreBoneDeformer {
-    header: PreBoneDeformerHeader,
+    #[br(temp)]
+    #[bw(calc = (items.len() + links.len()) as u32)]
+    entry_count: u32,
+
+    #[br(count = entry_count)]
+    pub items: Vec<PreBoneDeformerItem>,
+
+    #[br(count = entry_count)]
+    pub links: Vec<PreBoneDeformerLink>,
 }
 
 #[derive(Debug)]
@@ -136,24 +128,24 @@ impl PreBoneDeformer {
             return None;
         }
 
-        let mut item = self
-            .header
-            .items
-            .iter()
-            .find(|x| x.body_id == from_body_id)?;
-        let mut next = &self.header.links[item.link_index as usize];
+        let mut item = self.items.iter().find(|x| x.body_id == from_body_id)?;
+        let mut next = &self.links[item.link_index as usize];
 
         if next.next_sibling_index == -1 {
             return None;
         }
 
+        let Some(deformer) = &item.deformer else {
+            return None;
+        };
+
         let mut bones = vec![];
 
         loop {
-            for i in 0..item.deformer.bone_count {
+            for i in 0..deformer.bone_count {
                 bones.push(PreBoneDeformBone {
-                    name: item.deformer.bone_names[i as usize].clone(),
-                    deform: item.deformer.transform[i as usize],
+                    name: deformer.bone_names[i as usize].clone(),
+                    deform: deformer.transform[i as usize],
                 })
             }
 
@@ -161,8 +153,8 @@ impl PreBoneDeformer {
                 break;
             }
 
-            next = &self.header.links[next.parent_index as usize];
-            item = &self.header.items[next.deformer_index as usize];
+            next = &self.links[next.parent_index as usize];
+            item = &self.items[next.deformer_index as usize];
 
             if item.body_id == to_body_id {
                 break;
