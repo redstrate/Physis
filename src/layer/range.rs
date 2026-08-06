@@ -31,10 +31,10 @@ pub struct ExitRangeInstanceObject {
     pub index: i32,
     pub destination_instance_id: u32,
     pub return_instance_id: u32,
-    unk1: u32,
+    pub player_running_direction: f32,
     #[brw(pad_after = 2)] // padding, not read
-    unk2: u16,
-    unk3: u32,
+    pub unk9c: u16,
+    pub unk_instance_id: u32,
 }
 
 #[binrw]
