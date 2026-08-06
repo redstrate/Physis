@@ -15,7 +15,9 @@ use binrw::binrw;
 #[binrw]
 #[derive(Debug, Clone, Copy)]
 pub struct Plate {
+    /// X position of this plate.
     pub x: i16,
+    /// Y position of this plate.
     pub y: i16,
 }
 
@@ -25,20 +27,22 @@ pub struct Plate {
 #[binrw]
 #[derive(Debug, Clone)]
 pub struct Terrain {
-    // Example: 0x1000003
+    /// Example: 0x1000003
     version: u32,
-
+    /// How many plates are in this file.
     #[bw(calc = plates.len() as u32)]
     #[br(temp)]
     plate_count: u32,
-
     /// Size of each plate in units.
     pub plate_size: u32,
+    /// Distance past which the terrain is not drawn, which is zero in most files.
     pub clip_distance: f32,
-
-    unknown: f32,
-
-    #[brw(pad_before = 32)] // empty padding
+    /// How far a plate's textures blend into its neighbours, over `0.0..=1.0`.
+    pub edge_bias: f32,
+    /// Mask of the texture slots the plate materials sample with the alternate mip LOD bias, the colour slot in the lowest bit, then normal and specular. No other bit is ever set.
+    #[brw(pad_after = 28)]
+    pub sampler_bias: u32,
+    /// The plates contained within this file,
     #[br(count = plate_count)]
     pub plates: Vec<Plate>,
 }
@@ -106,7 +110,8 @@ mod tests {
             version: 16777219,
             plate_size: 128,
             clip_distance: 0.0,
-            unknown: 1.0,
+            edge_bias: 1.0,
+            sampler_bias: 0,
             plates: vec![
                 Plate { x: -1, y: -1 },
                 Plate { x: 0, y: -1 },
