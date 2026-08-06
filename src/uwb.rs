@@ -53,9 +53,9 @@ pub struct Uwc {
     pub depth_transition_start: f32,
     pub depth_transition_range: f32,
     /// Fog just under the surface.
-    pub fog_shallow: Fog,
+    pub fog_shallow: UnderwaterFogAttenuation,
     /// Fog past the depth transition.
-    pub fog_deep: Fog,
+    pub fog_deep: UnderwaterFogAttenuation,
     /// Where caustics start fading with distance, and how far that fade runs.
     pub caustics_distance_fade_start: f32,
     pub caustics_distance_fade_range: f32,
@@ -73,7 +73,7 @@ pub struct Uwc {
 
 #[binrw]
 #[derive(Debug, Default)]
-pub struct Fog {
+pub struct UnderwaterFogAttenuation {
     pub vertical_fade_upper: f32,
     pub vertical_fade_lower: f32,
     pub vertical_attenuation_strength: f32,
