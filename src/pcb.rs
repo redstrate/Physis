@@ -146,8 +146,8 @@ pub struct List {
     #[br(temp)]
     #[bw(calc = entries.len() as u32)]
     entry_count: u32,
-    pub bounds: AABB,
     #[brw(pad_after = 4)] // empty padding
+    pub bounds: AABB,
     #[br(count = entry_count)]
     pub entries: Vec<ListEntry>,
 }
@@ -157,7 +157,7 @@ pub struct List {
 #[derive(Debug)]
 pub struct ListEntry {
     pub mesh_id: u32,
-    #[brw(pad_before = 4)] // empty padding
+    #[brw(pad_after = 4)] // empty padding
     pub bounds: AABB,
 }
 
