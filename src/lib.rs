@@ -146,7 +146,7 @@ pub mod patchlist;
 /// Types for underwater binary (`.uwb`) files.
 pub mod uwb;
 
-/// Types for light culling binary (`.lcb`) files.
+/// Types for light clipping binary (`.lcb`) files.
 pub mod lcb;
 
 /// Types for level variable binary (`.lvb`) files.

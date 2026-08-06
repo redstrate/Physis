@@ -12,7 +12,7 @@ use binrw::BinRead;
 use binrw::BinWrite;
 use binrw::binrw;
 
-/// Light culling binary file, usually with the `.lcb` file extension.
+/// Light clipping binary file, usually with the `.lcb` file extension.
 #[binrw]
 #[derive(Debug)]
 #[brw(magic = b"LCB1")]
@@ -58,7 +58,7 @@ pub struct LccEntry {
     /// Points to a Light or SharedGroup in this zone.
     pub instance_id: u32,
     /// If `instance_id` is pointing to a SharedGroup, this is the Light ID inside of the SGB it's referring to.
-    pub sub_id: u32,
+    pub members: [u8; 4],
     /// Minimum bounds.
     pub min: [f32; 3],
     /// Maximum bounds.
