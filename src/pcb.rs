@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 use std::io::Cursor;
+use std::io::Seek;
 use std::io::SeekFrom;
 
 use crate::ByteBuffer;
@@ -14,34 +15,20 @@ use binrw::BinResult;
 use binrw::BinWrite;
 use binrw::binrw;
 
-#[binrw]
-#[derive(Debug)]
-struct PcbResourceHeader {
-    /// Lumina: 0x0 is resource, 0x1 is list?
-    kind: u32,
-    /// ClientStructs: 0 is 'legacy', 1/4 are 'normal', rest unsupported
-    version: u32,
-    total_nodes: u32,
-    total_polygons: u32,
-}
-
 #[binrw::parser(reader, endian)]
-fn parse_resource_node_children(
-    child1_offset: i32,
-    child2_offset: i32,
-) -> BinResult<Vec<ResourceNode>> {
+fn parse_resource_node_children(child1_offset: i32, child2_offset: i32) -> BinResult<Vec<Node>> {
     let initial_position = reader.stream_position()?;
-    let struct_start = initial_position - ResourceNode::HEADER_SIZE as u64;
+    let struct_start = initial_position - Node::HEADER_SIZE as u64;
 
     let mut children = Vec::new();
     if child1_offset != 0 {
         reader.seek(SeekFrom::Start(struct_start + child1_offset as u64))?;
-        children.push(ResourceNode::read_options(reader, endian, ())?);
+        children.push(Node::read_options(reader, endian, ())?);
     }
 
     if child2_offset != 0 {
         reader.seek(SeekFrom::Start(struct_start + child2_offset as u64))?;
-        children.push(ResourceNode::read_options(reader, endian, ())?);
+        children.push(Node::read_options(reader, endian, ())?);
     }
 
     Ok(children)
@@ -62,7 +49,7 @@ fn uncompress_vertices(local_bounds: &AABB, vertex: &[u16; 3]) -> [f32; 3] {
 
 #[binrw]
 #[derive(Debug)]
-pub struct ResourceNode {
+pub struct Node {
     // TODO: figure out what these two values are
     magic: u32,   // pretty terrible magic if you ask me, lumina calls it so
     version: u32, // usually 0x0, is this really a version?!
@@ -84,7 +71,7 @@ pub struct ResourceNode {
     /// The children of this node.
     #[br(parse_with = parse_resource_node_children, args(child1_offset, child2_offset))]
     #[br(restore_position)]
-    pub children: Vec<ResourceNode>,
+    pub children: Vec<Node>,
 
     #[bw(calc = vertices.clone())]
     #[br(count = num_vert_f32)]
@@ -103,8 +90,26 @@ pub struct ResourceNode {
     pub polygons: Vec<Polygon>,
 }
 
-impl ResourceNode {
+impl Node {
     pub(crate) const HEADER_SIZE: usize = 0x30;
+
+    fn child_node_count(&self) -> usize {
+        let mut count = self.children.len();
+        for child in &self.children {
+            count += child.child_node_count();
+        }
+
+        count
+    }
+
+    fn polygon_count(&self) -> usize {
+        let mut count = self.polygons.len();
+        for child in &self.children {
+            count += child.polygon_count();
+        }
+
+        count
+    }
 }
 
 #[binrw]
@@ -129,16 +134,57 @@ pub struct Polygon {
 /// Contains a tree of polygons that makes up a collision mesh.
 #[binrw]
 #[derive(Debug)]
-pub struct Pcb {
-    header: PcbResourceHeader,
-    /// The root node of this PCB.
-    pub root_node: ResourceNode,
+pub enum Pcb {
+    Mesh(Node),
+    List(List),
+}
+
+#[binrw]
+#[derive(Debug, Default)]
+pub struct List {
+    /// How many entries are in the file.
+    #[br(temp)]
+    #[bw(calc = entries.len() as u32)]
+    entry_count: u32,
+    pub bounds: AABB,
+    #[brw(pad_after = 4)] // empty padding
+    #[br(count = entry_count)]
+    pub entries: Vec<ListEntry>,
+}
+
+/// Represents a PCB file in the same directory, with the filename `tr{mesh_id}.pcb`.
+#[binrw]
+#[derive(Debug)]
+pub struct ListEntry {
+    pub mesh_id: u32,
+    #[brw(pad_before = 4)] // empty padding
+    pub bounds: AABB,
 }
 
 impl ReadableFile for Pcb {
     fn from_existing(platform: Platform, buffer: ByteSpan) -> crate::Result<Self> {
         let mut cursor = Cursor::new(buffer);
-        Ok(Pcb::read_options(&mut cursor, platform.endianness(), ())?)
+
+        let entry_count = u32::read_options(&mut cursor, platform.endianness(), ())?;
+        if entry_count == 0 {
+            let _ = u32::read_options(&mut cursor, platform.endianness(), ())?; // version
+            let _ = u32::read_options(&mut cursor, platform.endianness(), ())?; // total nodes
+            let _ = u32::read_options(&mut cursor, platform.endianness(), ())?; // total poylgons
+
+            Ok(Pcb::Mesh(Node::read_options(
+                &mut cursor,
+                platform.endianness(),
+                (),
+            )?))
+        } else {
+            cursor.seek(SeekFrom::Current(-(std::mem::size_of::<u32>() as i64)))?; // List will read the entry count again!
+
+            Ok(Pcb::List(List::read_options(
+                &mut cursor,
+                platform.endianness(),
+                (),
+            )?))
+        }
     }
 }
 
@@ -148,6 +194,21 @@ impl WritableFile for Pcb {
 
         {
             let mut cursor = Cursor::new(&mut buffer);
+
+            if let Pcb::Mesh(node) = self {
+                let entry_count = 0u32;
+                entry_count.write_options(&mut cursor, platform.endianness(), ())?;
+
+                let version = 1u32;
+                version.write_options(&mut cursor, platform.endianness(), ())?;
+
+                let total_nodes = node.child_node_count() as u32;
+                total_nodes.write_options(&mut cursor, platform.endianness(), ())?;
+
+                let total_polygons = node.polygon_count() as u32;
+                total_polygons.write_options(&mut cursor, platform.endianness(), ())?;
+            }
+
             self.write_options(&mut cursor, platform.endianness(), ())?;
         }
 
@@ -172,24 +233,16 @@ impl Pcb {
             local_bounds.max[2] = local_bounds.max[2].max(vertex[2]);
         }
 
-        Self {
-            header: PcbResourceHeader {
-                kind: 0,
-                version: 1,
-                total_nodes: 0,
-                total_polygons: 1,
-            },
-            root_node: ResourceNode {
-                magic: 0,
-                version: 0,
-                child1_offset: 0,
-                child2_offset: 0,
-                local_bounds,
-                children: Vec::new(),
-                vertices: vertices.to_vec(),
-                polygons: polygons.to_vec(),
-            },
-        }
+        Self::Mesh(Node {
+            magic: 0,
+            version: 0,
+            child1_offset: 0,
+            child2_offset: 0,
+            local_bounds,
+            children: Vec::new(),
+            vertices: vertices.to_vec(),
+            polygons: polygons.to_vec(),
+        })
     }
 }
 
@@ -224,6 +277,18 @@ mod tests {
                 material: 28672,
             }],
         );
+
+        assert_eq!(*empty_pcb, pcb.write_to_buffer(Platform::Win32).unwrap());
+    }
+
+    #[test]
+    fn test_write_empty() {
+        let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        d.push("resources/tests");
+        d.push("empty_list.pcb");
+
+        let empty_pcb = &read(d).unwrap();
+        let pcb = Pcb::List(List::default());
 
         assert_eq!(*empty_pcb, pcb.write_to_buffer(Platform::Win32).unwrap());
     }
