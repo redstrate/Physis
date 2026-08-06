@@ -11,11 +11,12 @@ use crate::{ByteBuffer, ByteSpan, ReadableFile, WritableFile, common::Platform, 
 #[binrw]
 #[derive(Debug, Default)]
 pub struct PcbList {
+    /// How many entries are in the file.
     #[br(temp)]
     #[bw(calc = entries.len() as u32)]
     entry_count: u32,
     pub bounds: AABB,
-    #[brw(pad_before = 4)] // empty padding
+    #[brw(pad_after = 4)] // empty padding
     #[br(count = entry_count)]
     pub entries: Vec<PcbListEntry>,
 }

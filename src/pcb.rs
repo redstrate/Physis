@@ -17,16 +17,18 @@ use binrw::binrw;
 #[binrw]
 #[derive(Debug)]
 struct PcbResourceHeader {
-    pcb_type: u32, // Lumina: 0x0 is resource, 0x1 is list?
-    version: u32,  // ClientStructs: 0 is 'legacy', 1/4 are 'normal', rest unsupported
+    /// Lumina: 0x0 is resource, 0x1 is list?
+    kind: u32,
+    /// ClientStructs: 0 is 'legacy', 1/4 are 'normal', rest unsupported
+    version: u32,
     total_nodes: u32,
     total_polygons: u32,
 }
 
 #[binrw::parser(reader, endian)]
 fn parse_resource_node_children(
-    child1_offset: u32,
-    child2_offset: u32,
+    child1_offset: i32,
+    child2_offset: i32,
 ) -> BinResult<Vec<ResourceNode>> {
     let initial_position = reader.stream_position()?;
     let struct_start = initial_position - ResourceNode::HEADER_SIZE as u64;
@@ -65,8 +67,8 @@ pub struct ResourceNode {
     magic: u32,   // pretty terrible magic if you ask me, lumina calls it so
     version: u32, // usually 0x0, is this really a version?!
 
-    child1_offset: u32,
-    child2_offset: u32,
+    child1_offset: i32,
+    child2_offset: i32,
 
     /// The bounding box of this node.
     pub local_bounds: AABB,
@@ -172,7 +174,7 @@ impl Pcb {
 
         Self {
             header: PcbResourceHeader {
-                pcb_type: 0,
+                kind: 0,
                 version: 1,
                 total_nodes: 0,
                 total_polygons: 1,
