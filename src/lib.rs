@@ -219,3 +219,6 @@ pub mod spm;
 
 /// Types for grass zone data (`.gzd`) files.
 pub mod gzd;
+
+/// Types for grass grid data (`.ggd`) files.
+pub mod ggd;

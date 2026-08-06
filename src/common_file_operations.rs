@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2024 Joshua Goins <josh@redstrate.com>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-use binrw::{BinRead, BinReaderExt, BinResult, binread};
+use binrw::{BinRead, BinReaderExt, BinResult, binread, binrw};
 use half::f16;
 use std::ffi::CString;
 use std::fmt::Debug;
@@ -122,9 +122,18 @@ fn read_half3(data: [u16; 3]) -> Half3 {
     }
 }
 
-#[binread]
+fn write_half3(data: &Half3) -> [u8; 6] {
+    let data0 = data.r.to_le_bytes();
+    let data1 = data.g.to_le_bytes();
+    let data2 = data.b.to_le_bytes();
+
+    [data0[0], data0[1], data1[0], data1[1], data2[0], data2[1]]
+}
+
+#[binrw]
 #[derive(Debug, Default, Clone, Copy)]
 #[br(map = read_half3)]
+#[bw(map = write_half3)]
 pub(crate) struct Half3 {
     pub r: f16,
     pub g: f16,
