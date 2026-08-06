@@ -27,8 +27,8 @@ pub struct Plate {
 #[binrw]
 #[derive(Debug, Clone)]
 pub struct Terrain {
-    /// Example: 0x1000003
-    version: u32,
+    /// What version this file is.
+    pub version: u32,
     /// How many plates are in this file.
     #[bw(calc = plates.len() as u32)]
     #[br(temp)]
@@ -39,12 +39,18 @@ pub struct Terrain {
     pub clip_distance: f32,
     /// How far a plate's textures blend into its neighbours, over `0.0..=1.0`.
     pub edge_bias: f32,
-    /// Mask of the texture slots the plate materials sample with the alternate mip LOD bias, the colour slot in the lowest bit, then normal and specular. No other bit is ever set.
+    /// Mask of the texture slots the plate materials sample with the alternate mip LOD bias, the colour slot in the lowest bit, then normal and specular. No other bit is ever set.bi
     #[brw(pad_after = 28)]
     pub sampler_bias: u32,
     /// The plates contained within this file,
     #[br(count = plate_count)]
     pub plates: Vec<Plate>,
+}
+
+impl Terrain {
+    pub const VERSION_V1_0_0_1: u32 = 0x01000001;
+    pub const VERSION_V1_0_0_2: u32 = 0x01000002;
+    pub const VERSION_V1_0_0_3: u32 = 0x01000003;
 }
 
 impl ReadableFile for Terrain {
@@ -107,7 +113,7 @@ mod tests {
 
         let simple_tera = &read(d).unwrap();
         let tera = Terrain {
-            version: 16777219,
+            version: Terrain::VERSION_V1_0_0_3,
             plate_size: 128,
             clip_distance: 0.0,
             edge_bias: 1.0,
