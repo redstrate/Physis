@@ -140,7 +140,8 @@ pub struct EventRangeInstanceObject {
 pub struct FateRangeInstanceObject {
     pub parent_data: RangeInstanceObject,
     #[brw(pad_before = 8)] // padding, not read
-    unk1: u32,
+    /// ???
+    pub fate_layout_label_id: u32,
 }
 
 #[binrw]
