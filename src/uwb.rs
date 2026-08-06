@@ -12,7 +12,7 @@ use binrw::BinRead;
 use binrw::BinWrite;
 use binrw::binrw;
 
-/// Uwb file, usually with the `.uwb` file extension.
+/// Underwater binary file, usually with the `.uwb` file extension.
 #[binrw]
 #[derive(Debug)]
 #[brw(magic = b"UWB1")]
@@ -45,7 +45,38 @@ pub struct Uwc {
     #[br(temp)]
     #[bw(calc = Self::SIZE as u32)]
     size: u32,
-    unk: [f32; 20],
+    pub version: i32,
+    /// Height the water surface sits at, which the depth of a point is measured down from.
+    pub water_surface_y: f32,
+    /// Where the blend from [`fog_shallow`](Self::fog_shallow) to [`fog_deep`](Self::fog_deep)
+    /// starts, and how far it runs.
+    pub depth_transition_start: f32,
+    pub depth_transition_range: f32,
+    /// Fog just under the surface.
+    pub fog_shallow: Fog,
+    /// Fog past the depth transition.
+    pub fog_deep: Fog,
+    /// Where caustics start fading with distance, and how far that fade runs.
+    pub caustics_distance_fade_start: f32,
+    pub caustics_distance_fade_range: f32,
+    /// The two scales the caustic pattern is sampled at.
+    pub caustics_uv_size: [f32; 2],
+    pub caustics_scroll_speed: f32,
+    pub caustics_intensity: f32,
+    pub sun_size: f32,
+    pub sun_fade_start: f32,
+    /// Scales everything lit underwater.
+    pub lighting_multiplier: f32,
+    /// The client tests this for zero and does nothing else with it.
+    pub unknown: u32,
+}
+
+#[binrw]
+#[derive(Debug, Default)]
+pub struct Fog {
+    pub vertical_fade_upper: f32,
+    pub vertical_fade_lower: f32,
+    pub vertical_attenuation_strength: f32,
 }
 
 impl Uwc {

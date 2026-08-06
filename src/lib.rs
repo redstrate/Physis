@@ -143,7 +143,7 @@ pub mod stm;
 /// Types for patch lists.
 pub mod patchlist;
 
-/// Types for uwb (`.uwb`) files.
+/// Types for underwater binary (`.uwb`) files.
 pub mod uwb;
 
 /// Types for light culling binary (`.lcb`) files.
