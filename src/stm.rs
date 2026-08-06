@@ -240,7 +240,7 @@ fn read_entries<T: From<StainingTemplateEntry>>(
 impl ReadableFile for Stm {
     fn from_existing(platform: Platform, buffer: ByteSpan) -> crate::Result<Self> {
         let mut cursor = Cursor::new(buffer);
-        Ok(Stm::read_options(&mut cursor, platform.endianness(), ())?)
+        Ok(Self::read_options(&mut cursor, platform.endianness(), ())?)
     }
 }
 

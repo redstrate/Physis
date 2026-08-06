@@ -288,9 +288,9 @@ pub struct ShaderPackage {
 const SELECTOR_MULTIPLER: u32 = 31;
 
 impl ReadableFile for ShaderPackage {
-    fn from_existing(platform: Platform, buffer: ByteSpan) -> crate::Result<ShaderPackage> {
+    fn from_existing(platform: Platform, buffer: ByteSpan) -> crate::Result<Self> {
         let mut cursor = Cursor::new(buffer);
-        let mut package = ShaderPackage::read_options(&mut cursor, platform.endianness(), ())?;
+        let mut package = Self::read_options(&mut cursor, platform.endianness(), ())?;
 
         for (i, node) in package.nodes.iter().enumerate() {
             package.node_selectors.push((node.selector, i as u32));

@@ -76,7 +76,7 @@ pub struct Skeleton {
 }
 
 impl ReadableFile for Skeleton {
-    fn from_existing(platform: Platform, buffer: ByteSpan) -> crate::Result<Skeleton> {
+    fn from_existing(platform: Platform, buffer: ByteSpan) -> crate::Result<Self> {
         let mut cursor = Cursor::new(buffer);
 
         let sklb = SKLB::read_options(&mut cursor, platform.endianness(), ())?;

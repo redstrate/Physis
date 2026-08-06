@@ -484,7 +484,7 @@ where
 impl ReadableFile for Avfx {
     fn from_existing(platform: Platform, buffer: ByteSpan) -> crate::Result<Self> {
         let mut cursor = Cursor::new(buffer);
-        let header = AvfxBlock::<Avfx>::read_options(&mut cursor, platform.endianness(), ())?;
+        let header = AvfxBlock::<Self>::read_options(&mut cursor, platform.endianness(), ())?;
         Ok(header.data)
     }
 }

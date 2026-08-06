@@ -159,10 +159,10 @@ pub struct CTTLNode {
 }
 
 impl ReadableFile for Cutscene {
-    fn from_existing(platform: Platform, buffer: ByteSpan) -> crate::Result<Cutscene> {
+    fn from_existing(platform: Platform, buffer: ByteSpan) -> crate::Result<Self> {
         let mut cursor = Cursor::new(buffer);
         let string_heap = StringHeap::from(0);
-        Ok(Cutscene::read_options(
+        Ok(Self::read_options(
             &mut cursor,
             platform.endianness(),
             (&string_heap,),

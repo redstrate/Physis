@@ -171,7 +171,7 @@ impl ReadableFile for Pcb {
             let _ = u32::read_options(&mut cursor, platform.endianness(), ())?; // total nodes
             let _ = u32::read_options(&mut cursor, platform.endianness(), ())?; // total poylgons
 
-            Ok(Pcb::Mesh(Node::read_options(
+            Ok(Self::Mesh(Node::read_options(
                 &mut cursor,
                 platform.endianness(),
                 (),
@@ -179,7 +179,7 @@ impl ReadableFile for Pcb {
         } else {
             cursor.seek(SeekFrom::Current(-(std::mem::size_of::<u32>() as i64)))?; // List will read the entry count again!
 
-            Ok(Pcb::List(List::read_options(
+            Ok(Self::List(List::read_options(
                 &mut cursor,
                 platform.endianness(),
                 (),

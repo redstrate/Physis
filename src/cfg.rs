@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2023 Joshua Goins <josh@redstrate.com>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-use crate::{ByteBuffer, ByteSpan};
+use crate::{ByteBuffer, ByteSpan, Platform, ReadableFile, WritableFile};
 use std::collections::HashMap;
 use std::io::{BufRead, BufReader, BufWriter, Cursor, Write};
 
@@ -23,10 +23,9 @@ pub struct ConfigFile {
     pub settings: HashMap<String, ConfigMap>,
 }
 
-impl ConfigFile {
-    /// Read an existing file.
-    pub fn from_existing(buffer: ByteSpan) -> Option<ConfigFile> {
-        let mut cfg = ConfigFile {
+impl ReadableFile for ConfigFile {
+    fn from_existing(_platform: Platform, buffer: ByteSpan) -> crate::Result<Self> {
+        let mut cfg = Self {
             categories: Vec::new(),
             settings: HashMap::new(),
         };
@@ -51,18 +50,20 @@ impl ConfigFile {
                         .entry(category.clone())
                         .or_insert_with(|| ConfigMap { keys: Vec::new() });
                     cfg.settings
-                        .get_mut(category)?
+                        .get_mut(category)
+                        .ok_or(crate::Error::InvalidFile)?
                         .keys
                         .push((key.to_string(), value.to_string()));
                 }
             }
         }
 
-        Some(cfg)
+        Ok(cfg)
     }
+}
 
-    /// Writes data back to a buffer.
-    pub fn write_to_buffer(&self) -> Option<ByteBuffer> {
+impl WritableFile for ConfigFile {
+    fn write_to_buffer(&self, _platform: Platform) -> crate::Result<ByteBuffer> {
         let mut buffer = ByteBuffer::new();
 
         {
@@ -70,25 +71,23 @@ impl ConfigFile {
             let mut writer = BufWriter::new(cursor);
 
             for category in &self.categories {
-                writer
-                    .write_all(format!("\r\n<{}>\r\n", category).as_ref())
-                    .ok()?;
+                writer.write_all(format!("\r\n<{}>\r\n", category).as_ref())?;
 
                 if self.settings.contains_key(category) {
                     for key in &self.settings[category].keys {
-                        writer
-                            .write_all(format!("{}\t{}\r\n", key.0, key.1).as_ref())
-                            .ok()?;
+                        writer.write_all(format!("{}\t{}\r\n", key.0, key.1).as_ref())?;
                     }
                 }
             }
 
-            writer.write_all(b"\0").ok()?;
+            writer.write_all(b"\0")?;
         }
 
-        Some(buffer)
+        Ok(buffer)
     }
+}
 
+impl ConfigFile {
     /// Checks if the CFG contains a key named `select_key`
     pub fn has_key(&self, select_key: &str) -> bool {
         for map in self.settings.values() {
@@ -131,7 +130,7 @@ mod tests {
         d.push("resources/tests");
         d.push("FFXIV.cfg");
 
-        ConfigFile::from_existing(&read(d).unwrap()).unwrap()
+        ConfigFile::from_existing(Platform::Win32, &read(d).unwrap()).unwrap()
     }
 
     fn common_setup_modified() -> ByteBuffer {
@@ -165,7 +164,7 @@ mod tests {
 
         cfg.set_value("CutsceneMovieOpening", "1");
 
-        let cfg_buffer = cfg.write_to_buffer().unwrap();
+        let cfg_buffer = cfg.write_to_buffer(Platform::Win32).unwrap();
 
         assert_eq!(modified_cfg, cfg_buffer);
     }
@@ -175,6 +174,6 @@ mod tests {
         let cfg = common_setup_invalid();
 
         // Feeding it invalid data should not panic
-        ConfigFile::from_existing(&cfg);
+        let _ = ConfigFile::from_existing(Platform::Win32, &cfg);
     }
 }

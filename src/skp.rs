@@ -33,7 +33,7 @@ pub struct Skp {
 impl ReadableFile for Skp {
     fn from_existing(platform: Platform, buffer: ByteSpan) -> crate::Result<Self> {
         let mut cursor = Cursor::new(buffer);
-        Ok(Skp::read_options(&mut cursor, platform.endianness(), ())?)
+        Ok(Self::read_options(&mut cursor, platform.endianness(), ())?)
     }
 }
 

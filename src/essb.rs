@@ -39,7 +39,7 @@ impl ReadableFile for Essb {
         let mut cursor = Cursor::new(buffer);
         let string_heap = StringHeap::from(cursor.position() as i64);
 
-        Ok(Essb::read_options(
+        Ok(Self::read_options(
             &mut cursor,
             endianness,
             (&string_heap,),

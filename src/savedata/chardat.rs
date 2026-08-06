@@ -172,7 +172,7 @@ impl ReadableFile for CharacterData {
     fn from_existing(platform: Platform, buffer: ByteSpan) -> crate::Result<Self> {
         let mut cursor = Cursor::new(buffer);
 
-        Ok(CharacterData::read(&mut cursor)?)
+        Ok(Self::read(&mut cursor)?)
     }
 }
 

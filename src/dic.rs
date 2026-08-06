@@ -116,7 +116,7 @@ impl ReadableFile for Dictionary {
             dict.entries.push(cursor.read_type::<EntryItem>(endian)?);
         }
 
-        let mut dict = Dictionary {
+        let mut dict = Self {
             header: dict,
             words: Vec::new(),
         };
@@ -137,7 +137,7 @@ impl Dictionary {
                 continue;
             }
 
-            let chara = Dictionary::index_to_rune(&lut, id as u32);
+            let chara = Self::index_to_rune(&lut, id as u32);
             if let Some(c) = char::from_u32(chara as u32) {
                 self.dump_dict_node(&mut result, *v as i32, String::from(c))
             }

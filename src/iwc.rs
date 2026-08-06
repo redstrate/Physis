@@ -28,7 +28,7 @@ pub struct Iwc {
 impl ReadableFile for Iwc {
     fn from_existing(platform: Platform, buffer: ByteSpan) -> crate::Result<Self> {
         let mut cursor = Cursor::new(buffer);
-        Ok(Iwc::read_options(&mut cursor, platform.endianness(), ())?)
+        Ok(Self::read_options(&mut cursor, platform.endianness(), ())?)
     }
 }
 

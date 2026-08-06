@@ -6,7 +6,7 @@ use std::io::Cursor;
 use std::path::Path;
 
 use crate::common_file_operations::{read_string, write_string};
-use crate::{ByteBuffer, ByteSpan};
+use crate::{ByteBuffer, ByteSpan, Platform, ReadableFile, WritableFile};
 use binrw::binrw;
 use binrw::{BinRead, BinWrite};
 
@@ -55,31 +55,33 @@ pub struct FIINEntry {
     pub sha1: Vec<u8>,
 }
 
-impl FileInfo {
-    /// Read an existing file.
-    pub fn from_existing(buffer: ByteSpan) -> Option<FileInfo> {
+impl ReadableFile for FileInfo {
+    fn from_existing(platform: Platform, buffer: ByteSpan) -> crate::Result<Self> {
         let mut cursor = Cursor::new(buffer);
-        FileInfo::read(&mut cursor).ok()
+        Ok(Self::read_options(&mut cursor, platform.endianness(), ())?)
     }
+}
 
-    /// Writes data back to a buffer.
-    pub fn write_to_buffer(&self) -> Option<ByteBuffer> {
+impl WritableFile for FileInfo {
+    fn write_to_buffer(&self, platform: Platform) -> crate::Result<ByteBuffer> {
         let mut buffer = ByteBuffer::new();
 
         {
             let mut cursor = Cursor::new(&mut buffer);
-            self.write(&mut cursor).ok()?;
+            self.write_options(&mut cursor, platform.endianness(), ())?;
         }
 
-        Some(buffer)
+        Ok(buffer)
     }
+}
 
+impl FileInfo {
     /// Creates a new FileInfo structure from a list of filenames. These filenames must be present in
     /// the current working directory in order to be read properly, since it also generates SHA1
     /// hashes.
     ///
     /// These paths are converted to just their filenames.
-    pub fn new(files: &[&str]) -> Option<FileInfo> {
+    pub fn new(files: &[&str]) -> Option<Self> {
         let mut entries = vec![];
 
         for path in files {
@@ -92,7 +94,7 @@ impl FileInfo {
             });
         }
 
-        Some(FileInfo { entries })
+        Some(Self { entries })
     }
 }
 
@@ -102,13 +104,14 @@ mod tests {
     use std::path::PathBuf;
 
     use crate::fiin::FileInfo;
+    use crate::{Platform, ReadableFile, WritableFile};
 
     fn common_setup() -> FileInfo {
         let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
         d.push("resources/tests");
         d.push("test.fiin");
 
-        FileInfo::from_existing(&read(d).unwrap()).unwrap()
+        FileInfo::from_existing(Platform::Win32, &read(d).unwrap()).unwrap()
     }
 
     #[test]
@@ -138,7 +141,10 @@ mod tests {
 
         let testing_fiin = FileInfo::new(&[d2.to_str().unwrap(), d3.to_str().unwrap()]).unwrap();
 
-        assert_eq!(*valid_fiin, testing_fiin.write_to_buffer().unwrap());
+        assert_eq!(
+            *valid_fiin,
+            testing_fiin.write_to_buffer(Platform::Win32).unwrap()
+        );
     }
 
     #[test]
@@ -148,6 +154,6 @@ mod tests {
         d.push("random");
 
         // Feeding it invalid data should not panic
-        FileInfo::from_existing(&read(d).unwrap());
+        let _ = FileInfo::from_existing(Platform::Win32, &read(d).unwrap());
     }
 }

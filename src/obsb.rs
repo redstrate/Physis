@@ -38,7 +38,7 @@ impl ReadableFile for Obsb {
         let mut cursor = Cursor::new(buffer);
         let string_heap = StringHeap::from(cursor.position() as i64);
 
-        Ok(Obsb::read_options(
+        Ok(Self::read_options(
             &mut cursor,
             endianness,
             (&string_heap,),

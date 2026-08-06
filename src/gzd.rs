@@ -3,12 +3,15 @@
 
 use std::io::Cursor;
 
+use crate::ByteBuffer;
 use crate::ByteSpan;
 use crate::ReadableFile;
+use crate::WritableFile;
 use crate::common::Platform;
 use crate::common_file_operations::read_string;
 use binrw::BinRead;
 use binrw::BinResult;
+use binrw::BinWrite;
 use binrw::binrw;
 
 /// Grass zone data file, usually with the `.gzd` file extension.
@@ -68,6 +71,19 @@ impl ReadableFile for GrassZoneData {
     fn from_existing(platform: Platform, buffer: ByteSpan) -> crate::Result<Self> {
         let mut cursor = Cursor::new(buffer);
         Ok(Self::read_options(&mut cursor, platform.endianness(), ())?)
+    }
+}
+
+impl WritableFile for GrassZoneData {
+    fn write_to_buffer(&self, platform: Platform) -> crate::Result<ByteBuffer> {
+        let mut buffer = ByteBuffer::new();
+
+        {
+            let mut cursor = Cursor::new(&mut buffer);
+            self.write_options(&mut cursor, platform.endianness(), ())?;
+        }
+
+        Ok(buffer)
     }
 }
 

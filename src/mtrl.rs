@@ -473,7 +473,7 @@ pub struct Material {
 }
 
 impl ReadableFile for Material {
-    fn from_existing(platform: Platform, buffer: ByteSpan) -> crate::Result<Material> {
+    fn from_existing(platform: Platform, buffer: ByteSpan) -> crate::Result<Self> {
         let mut cursor = Cursor::new(buffer);
         let mat_data = MaterialData::read_options(&mut cursor, platform.endianness(), ())?;
 
@@ -523,7 +523,7 @@ impl ReadableFile for Material {
         let color_table = mat_data.color_table.clone();
         let color_dye_table = mat_data.color_dye_table.clone();
 
-        Ok(Material {
+        Ok(Self {
             mat_data,
             shader_package_name,
             texture_paths,

@@ -45,7 +45,7 @@ impl ReadableFile for Lvb {
         let mut cursor = Cursor::new(buffer);
         let string_heap = StringHeap::from(cursor.position() as i64);
 
-        Ok(Lvb::read_options(
+        Ok(Self::read_options(
             &mut cursor,
             platform.endianness(),
             (&string_heap,),

@@ -102,7 +102,7 @@ pub struct Pap {
 impl ReadableFile for Pap {
     fn from_existing(platform: Platform, buffer: ByteSpan) -> crate::Result<Self> {
         let mut cursor = Cursor::new(buffer);
-        Ok(Pap::read_options(&mut cursor, platform.endianness(), ())?)
+        Ok(Self::read_options(&mut cursor, platform.endianness(), ())?)
     }
 }
 

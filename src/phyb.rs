@@ -419,7 +419,7 @@ pub struct Phyb {
 impl ReadableFile for Phyb {
     fn from_existing(platform: Platform, buffer: ByteSpan) -> crate::Result<Self> {
         let mut cursor = Cursor::new(buffer);
-        Ok(Phyb::read_options(&mut cursor, platform.endianness(), ())?)
+        Ok(Self::read_options(&mut cursor, platform.endianness(), ())?)
     }
 }
 

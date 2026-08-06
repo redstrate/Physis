@@ -1174,7 +1174,7 @@ impl ReadableFile for MDL {
             });
         }
 
-        Ok(MDL {
+        Ok(Self {
             file_header: model_file_header,
             model_data: model,
             lods,

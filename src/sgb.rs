@@ -33,7 +33,11 @@ impl ReadableFile for Sgb {
         let mut cursor = Cursor::new(buffer);
         let string_heap = StringHeap::from(cursor.position() as i64);
 
-        Ok(Sgb::read_options(&mut cursor, endianness, (&string_heap,))?)
+        Ok(Self::read_options(
+            &mut cursor,
+            endianness,
+            (&string_heap,),
+        )?)
     }
 }
 

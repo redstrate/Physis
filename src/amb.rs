@@ -136,7 +136,7 @@ impl ReadableFile for Amb {
         let endianness = platform.endianness();
         let mut cursor = Cursor::new(buffer);
 
-        Ok(Amb::read_options(&mut cursor, endianness, ())?)
+        Ok(Self::read_options(&mut cursor, endianness, ())?)
     }
 }
 

@@ -96,11 +96,7 @@ pub struct PreBoneDeformMatrices {
 impl ReadableFile for PreBoneDeformer {
     fn from_existing(platform: Platform, buffer: ByteSpan) -> crate::Result<Self> {
         let mut cursor = Cursor::new(buffer);
-        Ok(PreBoneDeformer::read_options(
-            &mut cursor,
-            platform.endianness(),
-            (),
-        )?)
+        Ok(Self::read_options(&mut cursor, platform.endianness(), ())?)
     }
 }
 

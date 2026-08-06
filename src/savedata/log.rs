@@ -150,7 +150,7 @@ impl ReadableFile for ChatLog {
             entries.push(entry);
         }
 
-        Ok(ChatLog { entries })
+        Ok(Self { entries })
     }
 }
 

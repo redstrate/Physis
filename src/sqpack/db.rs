@@ -3,11 +3,16 @@
 
 use std::io::Cursor;
 
+use crate::ByteBuffer;
 use crate::ByteSpan;
+use crate::Platform;
+use crate::ReadableFile;
+use crate::WritableFile;
 use crate::common_file_operations::read_string;
 use crate::common_file_operations::write_string;
 use crate::sqpack::SqPackHeader;
 use binrw::BinRead;
+use binrw::BinWrite;
 use binrw::binrw;
 use binrw::helpers::until_eof;
 
@@ -51,10 +56,22 @@ pub struct SqPackDatabase {
     entries: Vec<SQDBEntry>,
 }
 
-impl SqPackDatabase {
-    /// Read an existing file.
-    pub fn from_existing(buffer: ByteSpan) -> Option<Self> {
+impl ReadableFile for SqPackDatabase {
+    fn from_existing(platform: Platform, buffer: ByteSpan) -> crate::Result<Self> {
         let mut cursor = Cursor::new(buffer);
-        Self::read(&mut cursor).ok()
+        Ok(Self::read_options(&mut cursor, platform.endianness(), ())?)
+    }
+}
+
+impl WritableFile for SqPackDatabase {
+    fn write_to_buffer(&self, platform: Platform) -> crate::Result<ByteBuffer> {
+        let mut buffer = ByteBuffer::new();
+
+        {
+            let mut cursor = Cursor::new(&mut buffer);
+            self.write_options(&mut cursor, platform.endianness(), ())?;
+        }
+
+        Ok(buffer)
     }
 }

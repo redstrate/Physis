@@ -121,7 +121,7 @@ impl ReadableFile for Lgb {
             layers,
         };
 
-        Ok(Lgb {
+        Ok(Self {
             chunks: vec![layer_chunk],
         })
     }

@@ -159,7 +159,7 @@ impl ReadableFile for GearSets {
         let decoded = buffer.iter().map(|x| *x ^ GEARSET_KEY).collect::<Vec<_>>();
         let mut cursor = Cursor::new(decoded);
 
-        Ok(GearSets::read(&mut cursor)?)
+        Ok(Self::read(&mut cursor)?)
     }
 }
 

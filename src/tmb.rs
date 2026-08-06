@@ -281,7 +281,7 @@ impl ReadableFile for Tmb {
     fn from_existing(platform: Platform, buffer: ByteSpan) -> crate::Result<Self> {
         let mut cursor = Cursor::new(buffer);
         let string_heap = StringHeap::from(0);
-        Ok(Tmb::read_options(
+        Ok(Self::read_options(
             &mut cursor,
             platform.endianness(),
             (&string_heap,),
