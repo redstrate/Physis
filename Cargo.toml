@@ -10,17 +10,9 @@ keywords = ["ffxiv", "modding"]
 documentation = "https://docs.xiv.zone/docs/physis/"
 readme = "README.md"
 
-[[test]]
-name = "retail_test"
-required-features = ["retail_testing"]
-
 [features]
 default = []
-
 glam = ["dep:glam"]
-
-# Testing only features
-retail_testing = []
 
 [dependencies]
 # Amazing binary parsing/writing library
