@@ -16,16 +16,16 @@ use crate::{
 pub struct CollisionBoxInstanceObject {
     pub parent_data: TriggerBoxInstanceObject,
     #[br(temp)]
-    #[bw(calc = 0)] // TODO
+    #[bw(calc = *collision_material_mask as u32)]
     collision_material_mask_low: u32,
     #[br(temp)]
-    #[bw(calc = 0)] // TODO
+    #[bw(calc = *collision_material_id as u32)]
     collision_material_id_low: u32,
     #[br(temp)]
-    #[bw(calc = 0)] // TODO
+    #[bw(calc = (*collision_material_mask >> 32) as u32)]
     collision_material_mask_high: u32,
     #[br(temp)]
-    #[bw(calc = 0)] // TODO
+    #[bw(calc = (*collision_material_id >> 32) as u32)]
     collision_material_id_high: u32,
     #[br(calc = ((collision_material_id_high as u64) << 32) | collision_material_id_low as u64)]
     #[bw(ignore)] // written above
@@ -33,8 +33,11 @@ pub struct CollisionBoxInstanceObject {
     #[br(calc = ((collision_material_mask_high as u64) << 32) | collision_material_mask_low as u64)]
     #[bw(ignore)] // written above
     pub collision_material_mask: u64,
+    /// If true, CollisionBoxLayoutInstance.GetLayerMask returns 0x43. Otherwise returns 1.
     #[brw(pad_after = 3)] // Padding, not read
-    layer_mask_is_43h: u8,
+    #[br(map = read_bool_from::<u8>)]
+    #[bw(map = write_bool_as::<u8>)]
+    pub layer_mask_is_43h: bool,
 
     /// Path to the PCB if `trigger_box_shape` is `Mesh`.
     #[brw(args(heap_pointer, string_heap))]

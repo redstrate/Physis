@@ -53,16 +53,16 @@ pub struct BgPartInstanceObject {
     /// How collision for this object be handled.
     pub collision_type: ModelCollisionType,
     #[br(temp)]
-    #[bw(calc = 0)] // TODO
+    #[bw(calc = *collision_material_mask as u32)]
     collision_material_mask_low: u32,
     #[br(temp)]
-    #[bw(calc = 0)] // TODO
+    #[bw(calc = *collision_material_id as u32)]
     collision_material_id_low: u32,
     #[br(temp)]
-    #[bw(calc = 0)] // TODO
+    #[bw(calc = (*collision_material_mask >> 32) as u32)]
     collision_material_mask_high: u32,
     #[br(temp)]
-    #[bw(calc = 0)] // TODO
+    #[bw(calc = (*collision_material_id >> 32) as u32)]
     collision_material_id_high: u32,
     #[br(calc = ((collision_material_id_high as u64) << 32) | collision_material_id_low as u64)]
     #[bw(ignore)] // written above
@@ -70,7 +70,7 @@ pub struct BgPartInstanceObject {
     #[br(calc = ((collision_material_mask_high as u64) << 32) | collision_material_mask_low as u64)]
     #[bw(ignore)] // written above
     pub collision_material_mask: u64,
-    pub unk_offset: i32, // TODO: probably some sort of collision config
+    pub unk_offset: i32, // TODO: probably some sort of collision config?
     /// Controls whether the render model is visible.
     /// Unknown effect on the collision mesh.
     #[br(map = read_bool_from::<u8>)]
