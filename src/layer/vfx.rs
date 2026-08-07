@@ -9,6 +9,7 @@ use crate::{
     string_heap::{HeapPointer, HeapString, StringHeap},
 };
 
+/// Visual effect object.
 #[binrw]
 #[br(import(string_heap: &StringHeap, heap_pointer: HeapPointer))]
 #[bw(import(string_heap: &mut StringHeap, heap_pointer: HeapPointer))]
@@ -61,6 +62,7 @@ pub enum LineStyle {
     RedFar = 3,
 }
 
+/// Generic VFX that are those dotted lines used for zone transitions and boundaries.
 #[binrw]
 #[derive(Debug, PartialEq, Clone, Default)]
 pub struct LineVFXInstanceObject {

@@ -19,6 +19,7 @@ pub enum ExitType {
     Invisible = 2,
 }
 
+/// Zone transitions (the visible part is probably LineVFX?)
 #[binrw]
 #[derive(Debug, PartialEq, Clone, Default)]
 pub struct ExitRangeInstanceObject {
@@ -37,6 +38,7 @@ pub struct ExitRangeInstanceObject {
     pub unk_instance_id: u32,
 }
 
+/// Unknown object.
 #[binrw]
 #[derive(Debug, PartialEq, Clone, Default)]
 pub struct MapRangeInstanceObject {
@@ -113,6 +115,7 @@ pub enum PopType {
     Content = 3,
 }
 
+/// Generic range for characters to spawn in.
 #[binrw]
 #[derive(Debug, PartialEq, Clone, Default)]
 pub struct PopRangeInstanceObject {
@@ -129,12 +132,14 @@ pub struct PopRangeInstanceObject {
     pub positions: Vec<[f32; 3]>,
 }
 
+/// Generic areas for events to use like FATEs or cutscene triggers.
 #[binrw]
 #[derive(Debug, PartialEq, Clone, Default)]
 pub struct EventRangeInstanceObject {
     pub parent_data: TriggerBoxInstanceObject,
 }
 
+/// Unknown object.
 #[binrw]
 #[derive(Debug, PartialEq, Clone, Default)]
 pub struct FateRangeInstanceObject {
@@ -144,6 +149,7 @@ pub struct FateRangeInstanceObject {
     pub fate_layout_label_id: u32,
 }
 
+/// Unknown object.
 #[binrw]
 #[derive(Debug, PartialEq, Clone, Default)]
 pub struct GimmickRangeInstanceObject {
@@ -159,12 +165,14 @@ pub struct GimmickRangeInstanceObject {
     unk7: u16,
 }
 
+/// Unknown object.
 #[binrw]
 #[derive(Debug, PartialEq, Clone, Default)]
 pub struct ClickableRangeInstanceObject {
     pub parent_data: RangeInstanceObject,
 }
 
+/// Unknown object.
 #[binrw]
 #[derive(Debug, PartialEq, Clone, Default)]
 pub struct PrefetchRangeInstanceObject {
@@ -172,12 +180,14 @@ pub struct PrefetchRangeInstanceObject {
     pub bound_instance_id: u32,
 }
 
+/// Unknown object.
 #[binrw]
 #[derive(Debug, PartialEq, Clone, Default)]
 pub struct DoorRangeInstanceObject {
     pub parent_data: RangeInstanceObject,
 }
 
+/// Base struct for range objects.
 #[binrw]
 #[derive(Debug, PartialEq, Clone, Default)]
 pub struct RangeInstanceObject {

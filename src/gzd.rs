@@ -38,7 +38,7 @@ pub struct GrassZoneData {
     #[bw(calc = model_paths.len() as u8)]
     model_path_count: u8,
 
-    /// For each non-empty string, it loads <gzd-dir>/<basename>.tex
+    /// For each non-empty string, it loads `<gzd-dir>/<basename>.tex`
     /// Renderer binds slot N with GGD auto-grass layer N
     /// color_map_u_offset selects within this tex
     #[br(parse_with = parse_auto_layer_color_map)]

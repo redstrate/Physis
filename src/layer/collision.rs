@@ -8,6 +8,7 @@ use crate::{
     string_heap::{HeapPointer, HeapString, StringHeap},
 };
 
+/// Unknown object.
 #[binrw]
 #[derive(Debug, PartialEq, Clone, Default)]
 #[br(import(string_heap: &StringHeap, heap_pointer: HeapPointer))]
@@ -55,6 +56,7 @@ pub enum TriggerBoxShape {
     PlaneTwoSided,
 }
 
+/// Base struct for collision objects.
 #[binrw]
 #[derive(Debug, PartialEq, Clone, Default)]
 pub struct TriggerBoxInstanceObject {
@@ -66,6 +68,7 @@ pub struct TriggerBoxInstanceObject {
     pub enabled: bool,
 }
 
+/// Unknown object.
 #[binrw]
 #[derive(Debug, PartialEq, Clone, Default)]
 pub struct CullingBoxInstanceObject {

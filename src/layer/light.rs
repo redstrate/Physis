@@ -4,12 +4,13 @@
 use binrw::binrw;
 
 use crate::{
+    Color,
     common_file_operations::write_bool_as,
     envs::{read_dawntrail_marker, write_dawntrail_marker},
     string_heap::{HeapPointer, HeapString, StringHeap},
 };
 
-use super::{ColorHDRI, read_bool_from};
+use super::read_bool_from;
 
 #[binrw]
 #[brw(repr = i32)]
@@ -41,6 +42,7 @@ pub enum PointLightType {
     Hemisphere = 0x1,
 }
 
+/// Light object.
 #[binrw]
 #[derive(Debug, PartialEq, Clone)]
 #[br(import(string_heap: &StringHeap, heap_pointer: HeapPointer))]
@@ -60,8 +62,9 @@ pub struct LightInstanceObject {
     #[brw(args(heap_pointer, string_heap))]
     pub texture_path: HeapString,
     /// The color and intensity for this light.
+    pub color: Color,
     #[brw(pad_after = 4)]
-    pub color: ColorHDRI,
+    pub intensity: f32,
     /// Whether specular highlights for this light is enabled.
     #[br(map = read_bool_from::<u8>)]
     #[bw(map = write_bool_as::<u8>)]
@@ -120,6 +123,7 @@ impl Default for LightInstanceObject {
             spot_angle: 45.0,
             texture_path: Default::default(),
             color: Default::default(),
+            intensity: 1.0,
             enable_specular_highlights: Default::default(),
             enable_bg_part_shadows: Default::default(),
             enable_character_shadows: Default::default(),

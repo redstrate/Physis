@@ -46,6 +46,7 @@ pub struct SoundParameters {
     pub binaries: Vec<u8>,
 }
 
+/// Sound object.
 #[binrw]
 #[br(import(string_heap: &StringHeap, heap_pointer: HeapPointer))]
 #[bw(import(string_heap: &mut StringHeap, heap_pointer: HeapPointer))]

@@ -13,8 +13,9 @@ use crate::{
     common_file_operations::{read_null_terminated_utf8, write_string},
 };
 
-/// A string that exists in a different location in the file, usually a heap with a bunch of other strings.
-/// Pointer points to where the string offset is relative to, usually the start of a struct.
+/// Implementation-detail specific string type.
+///
+/// This enables writing to string heaps used in various file types, and users can access the inner value via the `value` field or the `From` trait implementation.
 #[binrw]
 #[br(import(pointer: HeapPointer, string_heap: &StringHeap), stream = r)]
 #[bw(import(pointer: HeapPointer, string_heap: &mut StringHeap))]
@@ -48,6 +49,7 @@ impl From<&str> for HeapString {
     }
 }
 
+#[doc(hidden)]
 #[derive(Debug, Default)]
 pub struct StringHeap {
     pub(crate) pos: i64,
@@ -55,6 +57,7 @@ pub struct StringHeap {
     pub(crate) free_pos: u64,
 }
 
+#[doc(hidden)]
 #[binrw]
 #[derive(Clone, Copy, Debug)]
 pub struct HeapPointer {

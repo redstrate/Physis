@@ -17,6 +17,9 @@ pub enum PositionMarkerType {
     LQEvent = 4,
 }
 
+/// Debug information.
+///
+/// This is stripped out of retail data, and is not used by the client.
 #[binrw]
 #[derive(Debug, PartialEq, Clone, Copy, Default)]
 pub struct PositionMarkerInstanceObject {
@@ -35,6 +38,7 @@ pub enum ChairType {
     Bed = 1,
 }
 
+/// Marker used to determine where a character to sit or lay down.
 #[binrw]
 #[derive(Debug, PartialEq, Clone, Default)]
 pub struct ChairMarkerInstanceObject {
@@ -51,6 +55,7 @@ pub struct ChairMarkerInstanceObject {
     pub chair_type: ChairType,
 }
 
+/// Unknown object.
 #[binrw]
 #[derive(Debug, PartialEq, Clone, Default)]
 pub struct QuestMarkerInstanceObject {
@@ -73,6 +78,7 @@ pub enum TargetMarkerType {
     Unk2 = 6, // Seen in bg/ex5/02_ykt_y6/twn/y6t1/level/planevent.lgb
 }
 
+/// Unknown object.
 #[binrw]
 #[derive(Debug, PartialEq, Clone, Default)]
 pub struct TargetMarkerInstanceObject {

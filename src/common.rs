@@ -227,7 +227,7 @@ pub type ByteSpan<'a> = &'a [u8];
 /// A continuous block of memory which is owned.
 pub type ByteBuffer = Vec<u8>;
 
-/// Names for rows in the Excel sheet of the same name.
+/// Names for the rows of the Excel sheet of the same name.
 ///
 /// Based off of <https://github.com/aers/FFXIVClientStructs/blob/main/FFXIVClientStructs/FFXIV/Client/Enums/TerritoryIntendedUse.cs>.
 #[repr(u8)]
@@ -367,13 +367,18 @@ pub enum TerritoryIntendedUse {
     KeyboundBrawler = 65,
 }
 
+/// 32-bit color.
 #[binrw]
 #[repr(C)]
 #[derive(Debug, PartialEq, Clone, Copy, Default)]
 pub struct Color {
+    /// Red component.
     pub red: u8,
+    /// Green component.
     pub green: u8,
+    /// Blue component.
     pub blue: u8,
+    /// Alpha component.
     pub alpha: u8,
 }
 

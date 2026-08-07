@@ -5,9 +5,11 @@ use binrw::binrw;
 
 use crate::layer::GameObjectInstanceObject;
 
+/// Event object.
 #[binrw]
 #[derive(Debug, PartialEq, Clone, Default)]
 pub struct EventObjectInstanceObject {
+    /// GameObject base ID refers to the EObj Excel sheet.
     pub parent_data: GameObjectInstanceObject,
     /// A reference to another object, most likely.
     #[brw(pad_after = 4)] // padding, not read

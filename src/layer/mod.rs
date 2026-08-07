@@ -21,9 +21,6 @@ pub use collision::{
     CollisionBoxInstanceObject, CullingBoxInstanceObject, TriggerBoxInstanceObject, TriggerBoxShape,
 };
 
-mod common;
-pub use common::{ColorHDRI, GameObjectInstanceObject};
-
 mod env;
 pub use env::{EnvLocationObject, EnvSetInstanceObject, EnvSetShape};
 
@@ -74,6 +71,14 @@ pub use treasure::TreasureInstanceObject;
 mod vfx;
 pub use vfx::{LineStyle, LineVFXInstanceObject, VFXInstanceObject};
 
+/// Base struct for objects that refer to game data.
+#[binrw]
+#[derive(Debug, PartialEq, Clone, Copy, Default)]
+pub struct GameObjectInstanceObject {
+    /// What sheet this ID refers to depends on the kind of [InstanceObject] this is.
+    pub base_id: u32,
+}
+
 // From https://github.com/NotAdam/Lumina/tree/40dab50183eb7ddc28344378baccc2d63ae71d35/src/Lumina/Data/Parsing/Layer
 // Also see https://github.com/aers/FFXIVClientStructs/blob/6b62122cae38bfbc016bf697bef75f80f37abac1/FFXIVClientStructs/FFXIV/Client/LayoutEngine/ILayoutInstance.cs
 // Note that this doesn't include *everything*, only the things actually read by the client from an LGB file. FFXIVClientStructs also covers stuff that only exists in-memory during gameplay.
@@ -85,68 +90,103 @@ pub enum LayerEntryType {
     /// This represents nothing. It's also used as a temporary fallback for any unknown objects.
     #[default]
     Unknown = 0,
-    /// Background model object.
+    /// Background model object that can have collision.
     BgPart = 1,
     /// Light object.
     Light = 3,
     /// Visual effect object.
     Vfx = 4,
+    /// Debug information.
+    ///
+    /// This is stripped out of retail data, and is not used by the client.
     PositionMarker = 5,
-    /// Shared group object.
+    /// Instance of a shared group object.
     SharedGroup = 6,
     /// Sound object.
     Sound = 7,
     /// Event NPC object.
     EventNPC = 8,
-    /// Battle NPC object. These are stripped out of the released client.
+    /// Battle NPC object.
+    ///
+    /// This is stripped out of retail data, and is not used by the client.
     BattleNPC = 9,
     /// Aetheryte object.
     Aetheryte = 12,
+    /// Unknown object.
     EnvSpace = 13,
-    /// Gathering point. These are stripped out of the released client.
+    /// Gathering point.
+    ///
+    /// This is stripped out of retail data, and is not used by the client.
     Gathering = 14,
+    /// Unknown object.
     HelperObject = 15,
     /// Treasure object.
     Treasure = 16,
+    /// Unknown object.
     Weapon = 39,
     /// Generic range for characters to spawn in.
     PopRange = 40,
-    /// Zone Transitions (the visible part is probably LineVFX?)
+    /// Zone transitions (the visible part is probably LineVFX?)
     ExitRange = 41,
+    /// Unknown object.
     MapRange = 43,
+    /// Unknown object.
     NaviMeshRange = 44,
     /// Event object.
     EventObject = 45,
+    /// Unknown object.
     EnvLocation = 47,
-    /// Generic ranges for events to use.
+    /// Generic areas for events to use like FATEs or cutscene triggers.
     EventRange = 49,
+    /// Unknown object.
     QuestMarker = 51,
+    /// Unknown object.
     CollisionBox = 57,
+    /// Unknown object.
     DoorRange = 58,
-    /// Generic VFX that displays those dotted lines used for zone transitions and boundaries.
+    /// Generic VFX that are those dotted lines used for zone transitions and boundaries.
     LineVFX = 59,
     /// Path object.
     ClientPath = 65,
-    /// Path object that (presumably) only exists on the server.
+    /// Path object.
+    ///
+    /// This is stripped out of retail data, and is not used by the client.
     ServerPath = 66,
+    /// Unknown object.
     GimmickRange = 67,
+    /// Unknown object.
     TargetMarker = 68,
-    /// Place for a character to sit.
+    /// Marker used to determine where a character to sit or lay down.
     ChairMarker = 69,
+    /// Unknown object.
     ClickableRange = 70,
+    /// Unknown object.
     PrefetchRange = 71,
+    /// Unknown object.
     FateRange = 72,
+    /// Unknown object.
     SphereCastRange = 75,
+    /// Unknown object.
     IndoorObject = 76,
+    /// Unknown object.
     OutdoorObject = 77,
+    /// Unknown object.
     Decal = 83,
+    /// Unknown object.
     ColliderLayer7 = 86,
+    /// Unknown object.
     ColliderLayer8 = 87,
+    /// Unknown object.
     ColliderLayer9 = 88,
+    /// Unknown object.
     ColliderLayer10 = 89,
+    /// Unknown object.
     CullingBox = 90,
+    /// Unknown object.
     Unk91 = 91,
+    /// Unknown object.
     Unk92 = 92,
+    /// Unknown object.
     VolumetricCloud = 93,
 }
 
@@ -203,143 +243,105 @@ impl From<&LayerEntryData> for LayerEntryType {
     }
 }
 
+/// Type used to store data for a [InstanceObject].
+///
+/// The documentation for variants can be found in their individual types or [LayerEntryType].
 #[binrw]
 #[derive(Debug, PartialEq, Clone, Default)]
 #[br(import(magic: &LayerEntryType, string_heap: &StringHeap, heap_pointer: HeapPointer))]
 #[bw(import(string_heap: &mut StringHeap, heap_pointer: HeapPointer))]
 pub enum LayerEntryData {
-    /// Representing nothing.
     #[default]
     #[br(pre_assert(*magic == LayerEntryType::Unknown))]
     Unknown,
-    /// Background model.
     #[br(pre_assert(*magic == LayerEntryType::BgPart))]
     BgPart(#[brw(args(string_heap, heap_pointer))] BgPartInstanceObject),
-    /// Light source.
     #[br(pre_assert(*magic == LayerEntryType::Light))]
     Light(#[brw(args(string_heap, heap_pointer))] LightInstanceObject),
-    /// Visual effect.
     #[br(pre_assert(*magic == LayerEntryType::Vfx))]
     Vfx(#[brw(args(string_heap, heap_pointer))] VFXInstanceObject),
-    /// Unknown purpose.
     #[br(pre_assert(*magic == LayerEntryType::PositionMarker))]
     PositionMarker(PositionMarkerInstanceObject),
-    /// Instance of a prefab.
     #[br(pre_assert(*magic == LayerEntryType::SharedGroup))]
     SharedGroup(#[brw(args(string_heap, heap_pointer))] SharedGroupInstance),
-    /// Unknown purpose.
     #[br(pre_assert(*magic == LayerEntryType::Sound))]
     Sound(#[brw(args(string_heap, heap_pointer))] SoundInstanceObject),
-    /// Event NPC.
     #[br(pre_assert(*magic == LayerEntryType::EventNPC))]
     EventNPC(EventNpcInstanceObject),
-    /// Battle NPC.
     #[br(pre_assert(*magic == LayerEntryType::BattleNPC))]
     BattleNPC(BattleNpcInstanceObject),
-    /// Aetheryte.
     #[br(pre_assert(*magic == LayerEntryType::Aetheryte))]
     Aetheryte(AetheryteInstanceObject),
-    /// Unknown purpose.
     #[br(pre_assert(*magic == LayerEntryType::EnvSpace))]
     EnvSpace(#[brw(args(string_heap, heap_pointer))] EnvSetInstanceObject),
-    /// Unknown purpose.
     #[br(pre_assert(*magic == LayerEntryType::Gathering))]
     Gathering(GatheringInstanceObject),
     #[br(pre_assert(*magic == LayerEntryType::HelperObject))]
     HelperObject(),
-    /// Unknown purpose.
     #[br(pre_assert(*magic == LayerEntryType::Treasure))]
     Treasure(TreasureInstanceObject),
     #[br(pre_assert(*magic == LayerEntryType::Weapon))]
     Weapon(),
     #[br(pre_assert(*magic == LayerEntryType::PopRange))]
     PopRange(PopRangeInstanceObject),
-    /// Walkable transitions between zones.
     #[br(pre_assert(*magic == LayerEntryType::ExitRange))]
     ExitRange(ExitRangeInstanceObject),
-    /// Locations on the map, such as sanctuaries.
     #[br(pre_assert(*magic == LayerEntryType::MapRange))]
     MapRange(MapRangeInstanceObject),
     #[br(pre_assert(*magic == LayerEntryType::NaviMeshRange))]
     NaviMeshRange(),
-    /// Event object.
     #[br(pre_assert(*magic == LayerEntryType::EventObject))]
     EventObject(EventObjectInstanceObject),
-    /// Unknown purpose.
     #[br(pre_assert(*magic == LayerEntryType::EnvLocation))]
     EnvLocation(#[brw(args(string_heap, heap_pointer))] EnvLocationObject),
-    /// Unknown purpose.
     #[br(pre_assert(*magic == LayerEntryType::EventRange))]
     EventRange(EventRangeInstanceObject),
     #[br(pre_assert(*magic == LayerEntryType::QuestMarker))]
     QuestMarker(QuestMarkerInstanceObject),
-    /// Unknown purpose.
     #[br(pre_assert(*magic == LayerEntryType::CollisionBox))]
     CollisionBox(#[brw(args(string_heap, heap_pointer))] CollisionBoxInstanceObject),
-    /// Unknown purpose.
     #[br(pre_assert(*magic == LayerEntryType::DoorRange))]
     DoorRange(DoorRangeInstanceObject),
-    /// Unknown purpose.
     #[br(pre_assert(*magic == LayerEntryType::LineVFX))]
     LineVFX(LineVFXInstanceObject),
-    /// Unknown purpose.
     #[br(pre_assert(*magic == LayerEntryType::ClientPath))]
     ClientPath(ClientPathInstanceObject),
-    /// Unknown purpose.
     #[br(pre_assert(*magic == LayerEntryType::ServerPath))]
     ServerPath(ServerPathInstanceObject),
-    /// Unknown purpose.
     #[br(pre_assert(*magic == LayerEntryType::GimmickRange))]
     GimmickRange(GimmickRangeInstanceObject),
-    /// Unknown purpose.
     #[br(pre_assert(*magic == LayerEntryType::TargetMarker))]
     TargetMarker(TargetMarkerInstanceObject),
-    /// Unknown purpose.
     #[br(pre_assert(*magic == LayerEntryType::ChairMarker))]
     ChairMarker(ChairMarkerInstanceObject),
-    /// Unknown purpose.
     #[br(pre_assert(*magic == LayerEntryType::ClickableRange))]
     ClickableRange(ClickableRangeInstanceObject),
-    /// Unknown purpose.
     #[br(pre_assert(*magic == LayerEntryType::PrefetchRange))]
     PrefetchRange(PrefetchRangeInstanceObject),
-    /// Unknown purpose.
     #[br(pre_assert(*magic == LayerEntryType::FateRange))]
     FateRange(FateRangeInstanceObject),
-    /// Unknown purpose.
     #[br(pre_assert(*magic == LayerEntryType::SphereCastRange))]
     SphereCastRange(),
-    /// Unknown purpose.
     #[br(pre_assert(*magic == LayerEntryType::IndoorObject))]
     IndoorObject(),
-    /// Unknown purpose.
     #[br(pre_assert(*magic == LayerEntryType::OutdoorObject))]
     OutdoorObject(),
-    /// Unknown purpose.
     #[br(pre_assert(*magic == LayerEntryType::Decal))]
     Decal(),
-    /// Unknown purpose.
     #[br(pre_assert(*magic == LayerEntryType::ColliderLayer7))]
     ColliderLayer7(),
-    /// Unknown purpose.
     #[br(pre_assert(*magic == LayerEntryType::ColliderLayer8))]
     ColliderLayer8(),
-    /// Unknown purpose.
     #[br(pre_assert(*magic == LayerEntryType::ColliderLayer9))]
     ColliderLayer9(),
-    /// Unknown purpose.
     #[br(pre_assert(*magic == LayerEntryType::ColliderLayer10))]
     ColliderLayer10(),
-    /// Unknown purpose.
     #[br(pre_assert(*magic == LayerEntryType::CullingBox))]
     CullingBox(CullingBoxInstanceObject),
-    /// Unknown purpose.
     #[br(pre_assert(*magic == LayerEntryType::Unk91))]
     Unk91(),
-    /// Unknown purpose.
     #[br(pre_assert(*magic == LayerEntryType::Unk92))]
     Unk92(),
-    /// Unknown purpose.
     #[br(pre_assert(*magic == LayerEntryType::VolumetricCloud))]
     VolumetricCloud(),
 }
@@ -553,7 +555,7 @@ pub struct ObjectSetEnableReferenced {
     padding: [u8; 2],
 }
 
-/// Represents a single object in a [Layer], which could be anything from a light to an aetheryte.
+/// Represents a single object in [Layer].
 #[binrw]
 #[derive(Debug, PartialEq, Clone, Default)]
 #[br(import(string_heap: &StringHeap))]

@@ -110,6 +110,7 @@ impl MovePathSettings {
     pub const SIZE: usize = 60;
 }
 
+/// Instance of a shared group object.
 #[binrw]
 #[derive(Debug, PartialEq, Default, Clone)]
 #[br(import(string_heap: &StringHeap, heap_pointer: HeapPointer))]

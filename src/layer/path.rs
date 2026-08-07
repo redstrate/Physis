@@ -12,6 +12,7 @@ pub struct PathControlPoint {
     pub _padding: u8,
 }
 
+/// Base struct for path objects.
 #[binrw]
 #[derive(Debug, PartialEq, Clone, Default)]
 pub struct PathInstanceObject {
@@ -24,6 +25,7 @@ pub struct PathInstanceObject {
     pub control_points: Vec<PathControlPoint>,
 }
 
+/// Path object.
 #[binrw]
 #[derive(Debug, PartialEq, Clone, Default)]
 pub struct ClientPathInstanceObject {
@@ -32,6 +34,7 @@ pub struct ClientPathInstanceObject {
     _padding: u8,
 }
 
+/// Path object.
 #[binrw]
 #[derive(Debug, PartialEq, Clone, Default)]
 pub struct ServerPathInstanceObject {}

@@ -73,10 +73,10 @@ pub mod envb;
 /// Types for character make parameter (`.cmp`) files.
 pub mod cmp;
 
-/// Types for and writing various saved data formats from the game.
+/// Types for various saved data formats.
 pub mod savedata;
 
-/// Types for and writing the plaintext config (`.cfg`) files.
+/// Types for plaintext config (`.cfg`) files.
 pub mod cfg;
 
 /// Havok file parsing currently used for reading skeletons.
@@ -175,10 +175,10 @@ pub use error::Error;
 /// A type alias for `Result<T, physis::Error>`.
 pub type Result<T> = std::result::Result<T, Error>;
 
-/// Find existing installation directories
+/// Find existing installation directories.
 pub mod existing_dirs;
 
-/// Reading data from executables
+/// Reading data from executables.
 pub mod execlookup;
 
 /// Types for layer group binary (`.lgb`) files.

@@ -21,6 +21,7 @@ pub enum EnvSetShape {
     Cylinder = 3,
 }
 
+/// Unknown object.
 #[binrw]
 #[derive(Debug, PartialEq, Clone, Default)]
 #[br(import(string_heap: &StringHeap, heap_pointer: HeapPointer))]
@@ -43,6 +44,7 @@ pub struct EnvSetInstanceObject {
     pub sound_asset_path: HeapString,
 }
 
+/// Unknown object.
 #[binrw]
 #[derive(Debug, PartialEq, Clone, Default)]
 #[br(import(string_heap: &StringHeap, heap_pointer: HeapPointer))]

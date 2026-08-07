@@ -140,7 +140,9 @@ pub trait Resource: Send + Sync + ClonableResource + 'static {
 // Below are generic across all Resources. We have to do this because of limitations with dyn Traits in Rust.
 // And we also don't want these solely in ResourceResolver, because these are also useful standalone.
 
-/// Generically parse a file from a `Resource`. You most likely want to use the method in `ResourceResolver.`
+/// Generically parse a file from a `Resource`.
+///
+/// You most likely want to use the method in `ResourceResolver.`
 pub fn generic_parsed<R: Resource + ?Sized, F: ReadableFile>(
     resource: &mut R,
     path: &str,
@@ -149,7 +151,9 @@ pub fn generic_parsed<R: Resource + ?Sized, F: ReadableFile>(
     F::from_existing(resource.platform(), &bytes)
 }
 
-/// Read an excel sheet header by name (e.g. "Achievement"). You most likely want to use the method in `ResourceResolver.`
+/// Read an excel sheet header by name (e.g. "Achievement").
+///
+/// You most likely want to use the method in `ResourceResolver.`
 pub fn generic_read_excel_sheet_header<R: Resource + ?Sized>(
     resource: &mut R,
     name: &str,
@@ -161,7 +165,9 @@ pub fn generic_read_excel_sheet_header<R: Resource + ?Sized>(
     generic_parsed::<R, EXH>(resource, &path)
 }
 
-/// Read an excel sheet by name (e.g. "Achievement"). You most likely want to use the method in `ResourceResolver.`
+/// Read an excel sheet by name (e.g. "Achievement").
+///
+/// You most likely want to use the method in `ResourceResolver.`
 pub fn generic_read_excel_sheet<R: Resource + ?Sized>(
     resource: &mut R,
     exh: &EXH,
@@ -180,7 +186,9 @@ pub fn generic_read_excel_sheet<R: Resource + ?Sized>(
     })
 }
 
-/// Returns all known sheet names listed in the root list. You most likely want to use the method in `ResourceResolver.`
+/// Returns all known sheet names listed in the root list.
+///
+/// You most likely want to use the method in `ResourceResolver.`
 pub fn generic_get_all_sheet_names<R: Resource + ?Sized>(
     resource: &mut R,
 ) -> crate::Result<Vec<String>> {

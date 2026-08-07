@@ -171,6 +171,7 @@ pub struct IndexEntry {
     pub offset: u64,
 }
 
+/// SqPack index file, usually with the `.index` or `.index2` file extension.
 #[binrw]
 #[derive(Debug, Clone)]
 pub struct SqPackIndex {

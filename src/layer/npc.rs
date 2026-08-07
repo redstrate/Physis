@@ -7,9 +7,11 @@ use binrw::binrw;
 
 use crate::layer::GameObjectInstanceObject;
 
+/// Base struct for character objects.
 #[binrw]
 #[derive(Debug, PartialEq, Clone, Default)]
 pub struct CharacterInstanceObject {
+    /// GameObject base ID depends on what kind of character this is.
     pub parent_data: GameObjectInstanceObject,
     // NOTE: Don't remove these, they are needed for correct padding
     pub unk1: u32,
@@ -20,9 +22,11 @@ pub struct CharacterInstanceObject {
     pub unk6: u32,
 }
 
+/// Event NPC object.
 #[binrw]
 #[derive(Debug, PartialEq, Clone, Default)]
 pub struct EventNpcInstanceObject {
+    /// Character base ID refers to the ENpcBase/ENpcResident Excel sheets.
     pub parent_data: CharacterInstanceObject,
     // NOTE: Don't remove these, they are needed for correct padding
     pub unk1: u32,
@@ -30,9 +34,13 @@ pub struct EventNpcInstanceObject {
     pub unk3: u32,
 }
 
+/// Battle NPC object.
+///
+/// This is stripped out of retail data, and is not used by the client.
 #[binrw]
 #[derive(Debug, PartialEq, Clone, Default)]
 pub struct BattleNpcInstanceObject {
+    /// Character base ID refers to the BNpcBase Excel sheet.
     pub parent_data: CharacterInstanceObject,
     pub name_id: u32,
     pub drop_item: u32,

@@ -4,17 +4,17 @@
 
 use binrw::binrw;
 
-/// Transformation within the world space.
+/// Transformation within world space.
 #[binrw]
 #[derive(Debug, Clone, Copy, PartialEq)]
 #[repr(C)]
 #[allow(dead_code)] // most of the fields are unused at the moment
 pub struct Transformation {
-    /// X, Y, Z of the location in world space.
+    /// X, Y, Z of the location in world units.
     pub translation: [f32; 3],
-    /// Yaw, pitch and roll of the rotation in world space. In radians.
+    /// Yaw, pitch and roll of the rotation in radians.
     pub rotation: [f32; 3],
-    /// Width, height and depth of the scale in world space.
+    /// Width, height and depth of in world units.
     pub scale: [f32; 3],
 }
 

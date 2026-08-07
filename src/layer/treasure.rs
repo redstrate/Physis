@@ -5,6 +5,7 @@ use binrw::binrw;
 
 use crate::layer::GameObjectInstanceObject;
 
+/// Treasure object.
 #[binrw]
 #[derive(Debug, PartialEq, Clone, Default)]
 pub struct TreasureInstanceObject {

@@ -24,7 +24,6 @@ pub struct SQDBHeader {
     unk: u32,
 }
 
-// 264 bytes
 #[binrw]
 #[derive(Debug)]
 pub struct SQDBEntry {
@@ -44,6 +43,7 @@ pub struct SQDBEntry {
     path: String,
 }
 
+/// SqPack database file, usually with the `.sqdb` file extension.
 #[binrw]
 #[derive(Debug)]
 #[brw(little)]

@@ -38,6 +38,7 @@ pub enum ShadowMode {
     Inherit = 0x2,
 }
 
+/// Background model object that can have collision.
 #[binrw]
 #[derive(Debug, PartialEq, Clone)]
 #[br(import(string_heap: &StringHeap, heap_pointer: HeapPointer))]

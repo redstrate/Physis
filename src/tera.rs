@@ -12,6 +12,7 @@ use binrw::BinRead;
 use binrw::BinWrite;
 use binrw::binrw;
 
+/// One plate in a [Terrain].
 #[binrw]
 #[derive(Debug, Clone, Copy)]
 pub struct Plate {
@@ -39,7 +40,7 @@ pub struct Terrain {
     pub clip_distance: f32,
     /// How far a plate's textures blend into its neighbours, over `0.0..=1.0`.
     pub edge_bias: f32,
-    /// Mask of the texture slots the plate materials sample with the alternate mip LOD bias, the colour slot in the lowest bit, then normal and specular. No other bit is ever set.bi
+    /// Mask of the texture slots the plate materials sample with the alternate mip LOD bias, the colour slot in the lowest bit, then normal and specular.
     #[brw(pad_after = 28)]
     pub sampler_bias: u32,
     /// The plates contained within this file,
