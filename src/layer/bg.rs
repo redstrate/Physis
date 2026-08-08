@@ -5,6 +5,9 @@ use binrw::binrw;
 
 use crate::{
     common_file_operations::write_bool_as,
+    layer::collision::{
+        CollisionAttributes, read_collision_attributes, write_collision_attributes,
+    },
     string_heap::{HeapPointer, HeapString},
 };
 
@@ -52,24 +55,9 @@ pub struct BgPartInstanceObject {
     pub collision_asset_path: HeapString,
     /// How collision for this object be handled.
     pub collision_type: ModelCollisionType,
-    #[br(temp)]
-    #[bw(calc = *collision_material_mask as u32)]
-    collision_material_mask_low: u32,
-    #[br(temp)]
-    #[bw(calc = *collision_material_id as u32)]
-    collision_material_id_low: u32,
-    #[br(temp)]
-    #[bw(calc = (*collision_material_mask >> 32) as u32)]
-    collision_material_mask_high: u32,
-    #[br(temp)]
-    #[bw(calc = (*collision_material_id >> 32) as u32)]
-    collision_material_id_high: u32,
-    #[br(calc = ((collision_material_id_high as u64) << 32) | collision_material_id_low as u64)]
-    #[bw(ignore)] // written above
-    pub collision_material_id: u64,
-    #[br(calc = ((collision_material_mask_high as u64) << 32) | collision_material_mask_low as u64)]
-    #[bw(ignore)] // written above
-    pub collision_material_mask: u64,
+    #[br(parse_with = read_collision_attributes)]
+    #[bw(write_with = write_collision_attributes)]
+    pub collision_attributes: CollisionAttributes,
     pub unk_offset: i32, // TODO: probably some sort of collision config?
     /// Controls whether the render model is visible.
     /// Unknown effect on the collision mesh.
@@ -78,9 +66,11 @@ pub struct BgPartInstanceObject {
     pub visible: bool,
     /// Controls whether the visual model will cast shadows from the world light.
     /// Has no effect if the model has no shadow mesh?
+    #[br(try)]
     pub world_light_shadow_mode: ShadowMode,
     /// Controls whether the visual model will cast shadows from normal Light objects.
     #[brw(pad_after = 1)] // padding, not read
+    #[br(try)]
     pub object_light_shadow_mode: ShadowMode,
     /// Distance between the camera and this object before it fades out of existence.
     /// Currently only has an effect if the LOD option is turned on.
@@ -96,8 +86,7 @@ impl Default for BgPartInstanceObject {
             asset_path: Default::default(),
             collision_asset_path: Default::default(),
             collision_type: Default::default(),
-            collision_material_mask: Default::default(),
-            collision_material_id: Default::default(),
+            collision_attributes: Default::default(),
             unk_offset: Default::default(),
             visible: true,
             world_light_shadow_mode: Default::default(),

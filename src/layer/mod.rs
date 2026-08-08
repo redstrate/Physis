@@ -19,8 +19,8 @@ pub use bg::{BgPartInstanceObject, ModelCollisionType, ShadowMode};
 mod collision;
 pub use collision::{
     ColliderLayer7InstanceObject, ColliderLayer8InstanceObject, ColliderLayer9InstanceObject,
-    ColliderLayer10InstanceObject, CollisionBoxInstanceObject, CullingBoxInstanceObject,
-    TriggerBoxInstanceObject, TriggerBoxShape,
+    ColliderLayer10InstanceObject, CollisionAttributes, CollisionBoxInstanceObject,
+    CullingBoxInstanceObject, TriggerBoxInstanceObject, TriggerBoxShape,
 };
 
 mod env;
