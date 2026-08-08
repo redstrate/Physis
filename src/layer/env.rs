@@ -26,7 +26,7 @@ pub enum EnvSetShape {
 #[derive(Debug, PartialEq, Clone, Default)]
 #[br(import(string_heap: &StringHeap, heap_pointer: HeapPointer))]
 #[bw(import(string_heap: &mut StringHeap, heap_pointer: HeapPointer))]
-pub struct EnvSetInstanceObject {
+pub struct EnvSpaceInstanceObject {
     #[brw(args(heap_pointer, string_heap))]
     pub asset_path: HeapString,
     pub bound_instance_id: u32,
@@ -54,5 +54,8 @@ pub struct EnvLocationObject {
     pub ambient_light_asset_path: HeapString,
     #[brw(args(heap_pointer, string_heap))]
     pub env_map_asset_path: HeapString,
-    padding: [u8; 24], // TODO: UNKNOWN, MAYBE WRONG
+    padding: [u8; 12],
+    pub unk_offset: u32,
+    pub unk_count: u32, // of 0x4c objects?
+    padding2: [u8; 4],
 }

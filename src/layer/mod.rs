@@ -18,11 +18,13 @@ pub use bg::{BgPartInstanceObject, ModelCollisionType, ShadowMode};
 
 mod collision;
 pub use collision::{
-    CollisionBoxInstanceObject, CullingBoxInstanceObject, TriggerBoxInstanceObject, TriggerBoxShape,
+    ColliderLayer7InstanceObject, ColliderLayer8InstanceObject, ColliderLayer9InstanceObject,
+    ColliderLayer10InstanceObject, CollisionBoxInstanceObject, CullingBoxInstanceObject,
+    TriggerBoxInstanceObject, TriggerBoxShape,
 };
 
 mod env;
-pub use env::{EnvLocationObject, EnvSetInstanceObject, EnvSetShape};
+pub use env::{EnvLocationObject, EnvSetShape, EnvSpaceInstanceObject};
 
 mod event;
 pub use event::EventObjectInstanceObject;
@@ -69,7 +71,10 @@ mod treasure;
 pub use treasure::TreasureInstanceObject;
 
 mod vfx;
-pub use vfx::{LineStyle, LineVFXInstanceObject, VFXInstanceObject};
+pub use vfx::{
+    DecalInstanceObject, LineStyle, LineVFXInstanceObject, VFXInstanceObject,
+    VolumetricCloudInstanceObject,
+};
 
 /// Base struct for objects that refer to game data.
 #[binrw]
@@ -167,10 +172,6 @@ pub enum LayerEntryType {
     /// Unknown object.
     SphereCastRange = 75,
     /// Unknown object.
-    IndoorObject = 76,
-    /// Unknown object.
-    OutdoorObject = 77,
-    /// Unknown object.
     Decal = 83,
     /// Unknown object.
     ColliderLayer7 = 86,
@@ -228,17 +229,15 @@ impl From<&LayerEntryData> for LayerEntryType {
             LayerEntryData::Weapon() => LayerEntryType::Weapon,
             LayerEntryData::NaviMeshRange() => LayerEntryType::NaviMeshRange,
             LayerEntryData::SphereCastRange() => LayerEntryType::SphereCastRange,
-            LayerEntryData::IndoorObject() => LayerEntryType::IndoorObject,
-            LayerEntryData::OutdoorObject() => LayerEntryType::OutdoorObject,
-            LayerEntryData::Decal() => LayerEntryType::Decal,
-            LayerEntryData::ColliderLayer7() => LayerEntryType::ColliderLayer7,
-            LayerEntryData::ColliderLayer8() => LayerEntryType::ColliderLayer8,
-            LayerEntryData::ColliderLayer9() => LayerEntryType::ColliderLayer9,
-            LayerEntryData::ColliderLayer10() => LayerEntryType::ColliderLayer10,
+            LayerEntryData::Decal(_) => LayerEntryType::Decal,
+            LayerEntryData::ColliderLayer7(_) => LayerEntryType::ColliderLayer7,
+            LayerEntryData::ColliderLayer8(_) => LayerEntryType::ColliderLayer8,
+            LayerEntryData::ColliderLayer9(_) => LayerEntryType::ColliderLayer9,
+            LayerEntryData::ColliderLayer10(_) => LayerEntryType::ColliderLayer10,
             LayerEntryData::CullingBox(_) => LayerEntryType::CullingBox,
             LayerEntryData::Unk91() => LayerEntryType::Unk91,
             LayerEntryData::Unk92() => LayerEntryType::Unk92,
-            LayerEntryData::VolumetricCloud() => LayerEntryType::VolumetricCloud,
+            LayerEntryData::VolumetricCloud(_) => LayerEntryType::VolumetricCloud,
         }
     }
 }
@@ -273,7 +272,7 @@ pub enum LayerEntryData {
     #[br(pre_assert(*magic == LayerEntryType::Aetheryte))]
     Aetheryte(AetheryteInstanceObject),
     #[br(pre_assert(*magic == LayerEntryType::EnvSpace))]
-    EnvSpace(#[brw(args(string_heap, heap_pointer))] EnvSetInstanceObject),
+    EnvSpace(#[brw(args(string_heap, heap_pointer))] EnvSpaceInstanceObject),
     #[br(pre_assert(*magic == LayerEntryType::Gathering))]
     Gathering(GatheringInstanceObject),
     #[br(pre_assert(*magic == LayerEntryType::HelperObject))]
@@ -322,20 +321,16 @@ pub enum LayerEntryData {
     FateRange(FateRangeInstanceObject),
     #[br(pre_assert(*magic == LayerEntryType::SphereCastRange))]
     SphereCastRange(),
-    #[br(pre_assert(*magic == LayerEntryType::IndoorObject))]
-    IndoorObject(),
-    #[br(pre_assert(*magic == LayerEntryType::OutdoorObject))]
-    OutdoorObject(),
     #[br(pre_assert(*magic == LayerEntryType::Decal))]
-    Decal(),
+    Decal(#[brw(args(string_heap, heap_pointer))] DecalInstanceObject),
     #[br(pre_assert(*magic == LayerEntryType::ColliderLayer7))]
-    ColliderLayer7(),
+    ColliderLayer7(ColliderLayer7InstanceObject),
     #[br(pre_assert(*magic == LayerEntryType::ColliderLayer8))]
-    ColliderLayer8(),
+    ColliderLayer8(ColliderLayer8InstanceObject),
     #[br(pre_assert(*magic == LayerEntryType::ColliderLayer9))]
-    ColliderLayer9(),
+    ColliderLayer9(ColliderLayer9InstanceObject),
     #[br(pre_assert(*magic == LayerEntryType::ColliderLayer10))]
-    ColliderLayer10(),
+    ColliderLayer10(ColliderLayer10InstanceObject),
     #[br(pre_assert(*magic == LayerEntryType::CullingBox))]
     CullingBox(CullingBoxInstanceObject),
     #[br(pre_assert(*magic == LayerEntryType::Unk91))]
@@ -343,7 +338,7 @@ pub enum LayerEntryData {
     #[br(pre_assert(*magic == LayerEntryType::Unk92))]
     Unk92(),
     #[br(pre_assert(*magic == LayerEntryType::VolumetricCloud))]
-    VolumetricCloud(),
+    VolumetricCloud(#[brw(args(string_heap, heap_pointer))] VolumetricCloudInstanceObject),
 }
 
 #[binrw]

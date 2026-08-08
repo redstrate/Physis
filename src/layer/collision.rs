@@ -77,3 +77,39 @@ pub struct TriggerBoxInstanceObject {
 pub struct CullingBoxInstanceObject {
     unk1: u32,
 }
+
+/// Unknown object.
+#[binrw]
+#[derive(Debug, PartialEq, Clone, Default)]
+pub struct ColliderLayer7InstanceObject {
+    pub parent_data: TriggerBoxInstanceObject,
+    #[br(map = read_bool_from::<u8>)]
+    #[bw(map = write_bool_as::<u8>)]
+    pub unk1: bool,
+    #[br(map = read_bool_from::<u8>)]
+    #[bw(map = write_bool_as::<u8>)]
+    pub unk2: bool,
+}
+
+/// Unknown object.
+#[binrw]
+#[derive(Debug, PartialEq, Clone, Default)]
+pub struct ColliderLayer8InstanceObject {
+    pub parent_data: TriggerBoxInstanceObject,
+    pub unk_offset: i32,
+    pub unk_count: u32,
+}
+
+/// Unknown object.
+#[binrw]
+#[derive(Debug, PartialEq, Clone, Default)]
+pub struct ColliderLayer9InstanceObject {
+    pub parent_data: TriggerBoxInstanceObject,
+}
+
+/// Unknown object.
+#[binrw]
+#[derive(Debug, PartialEq, Clone, Default)]
+pub struct ColliderLayer10InstanceObject {
+    pub parent_data: TriggerBoxInstanceObject,
+}

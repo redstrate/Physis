@@ -5,7 +5,10 @@ use std::io::SeekFrom;
 
 use binrw::binrw;
 
-use crate::layer::GameObjectInstanceObject;
+use crate::{
+    common_file_operations::{read_bool_from, write_bool_as},
+    layer::GameObjectInstanceObject,
+};
 
 /// Base struct for character objects.
 #[binrw]
@@ -30,8 +33,21 @@ pub struct EventNpcInstanceObject {
     pub parent_data: CharacterInstanceObject,
     // NOTE: Don't remove these, they are needed for correct padding
     pub unk1: u32,
+    /// Sets CharacterLayoutInstance.Unk78
     pub unk2: u32,
-    pub unk3: u32,
+    /// Sets EventNpcInstanceObject.Unk80
+    #[br(map = read_bool_from::<u8>)]
+    #[bw(map = write_bool_as::<u8>)]
+    pub unk3: bool,
+    /// Sets EventNpcInstanceObject.Unk81
+    #[br(map = read_bool_from::<u8>)]
+    #[bw(map = write_bool_as::<u8>)]
+    pub unk4: bool,
+    /// Sets EventNpcInstanceObject.Unk82
+    #[br(map = read_bool_from::<u8>)]
+    #[bw(map = write_bool_as::<u8>)]
+    pub unk5: bool,
+    pub unk6: u8,
 }
 
 /// Battle NPC object.

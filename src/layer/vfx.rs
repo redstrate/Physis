@@ -68,3 +68,30 @@ pub enum LineStyle {
 pub struct LineVFXInstanceObject {
     pub line_style: LineStyle,
 }
+
+/// Unknown object.
+#[binrw]
+#[br(import(string_heap: &StringHeap, heap_pointer: HeapPointer))]
+#[bw(import(string_heap: &mut StringHeap, heap_pointer: HeapPointer))]
+#[derive(Debug, PartialEq, Clone, Default)]
+pub struct DecalInstanceObject {
+    /// Path to an `.tex` file.
+    #[brw(args(heap_pointer, string_heap))]
+    pub asset_path: HeapString,
+}
+
+/// Unknown object.
+#[binrw]
+#[br(import(string_heap: &StringHeap, heap_pointer: HeapPointer))]
+#[bw(import(string_heap: &mut StringHeap, heap_pointer: HeapPointer))]
+#[derive(Debug, PartialEq, Clone, Default)]
+pub struct VolumetricCloudInstanceObject {
+    /// Path to something?
+    #[brw(args(heap_pointer, string_heap))]
+    pub asset_path: HeapString,
+    pub color: Color,
+    pub intensity: f32,
+    #[br(map = read_bool_from::<u8>)]
+    #[bw(map = write_bool_as::<u8>)]
+    pub active: bool,
+}
