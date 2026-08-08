@@ -219,3 +219,6 @@ pub mod gzd;
 
 /// Types for grass grid data (`.ggd`) files.
 pub mod ggd;
+
+/// Types for cloud data binary (`.cldb`) files.
+pub mod cldb;

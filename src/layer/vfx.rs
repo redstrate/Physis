@@ -86,7 +86,7 @@ pub struct DecalInstanceObject {
 #[bw(import(string_heap: &mut StringHeap, heap_pointer: HeapPointer))]
 #[derive(Debug, PartialEq, Clone, Default)]
 pub struct VolumetricCloudInstanceObject {
-    /// Path to something?
+    /// Path to a `.cldb` file.
     #[brw(args(heap_pointer, string_heap))]
     pub asset_path: HeapString,
     pub color: Color,
@@ -94,4 +94,6 @@ pub struct VolumetricCloudInstanceObject {
     #[br(map = read_bool_from::<u8>)]
     #[bw(map = write_bool_as::<u8>)]
     pub active: bool,
+    pub unk1: [u8; 3],
+    pub unk2: u32,
 }
