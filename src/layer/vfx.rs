@@ -69,7 +69,7 @@ pub struct LineVFXInstanceObject {
     pub line_style: LineStyle,
 }
 
-/// Unknown object.
+/// 2D decal drawn on top of a 3D object.
 #[binrw]
 #[br(import(string_heap: &StringHeap, heap_pointer: HeapPointer))]
 #[bw(import(string_heap: &mut StringHeap, heap_pointer: HeapPointer))]
@@ -80,7 +80,9 @@ pub struct DecalInstanceObject {
     pub asset_path: HeapString,
 }
 
-/// Unknown object.
+/// (Presumably) a volumetric cloud.
+///
+/// This does not currently function in the Dawntrail client.
 #[binrw]
 #[br(import(string_heap: &StringHeap, heap_pointer: HeapPointer))]
 #[bw(import(string_heap: &mut StringHeap, heap_pointer: HeapPointer))]

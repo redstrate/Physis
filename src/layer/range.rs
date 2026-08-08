@@ -38,7 +38,7 @@ pub struct ExitRangeInstanceObject {
     pub unk_instance_id: u32,
 }
 
-/// Unknown object.
+/// Used to demarcate various aspects of the map, such as location or the BGM used.
 #[binrw]
 #[derive(Debug, PartialEq, Clone, Default)]
 pub struct MapRangeInstanceObject {
@@ -172,7 +172,7 @@ pub struct ClickableRangeInstanceObject {
     pub parent_data: RangeInstanceObject,
 }
 
-/// Unknown object.
+/// A hint for the client to preload an area.
 #[binrw]
 #[derive(Debug, PartialEq, Clone, Default)]
 pub struct PrefetchRangeInstanceObject {
@@ -180,7 +180,7 @@ pub struct PrefetchRangeInstanceObject {
     pub bound_instance_id: u32,
 }
 
-/// Unknown object.
+/// A hint used to animate the opening of doors.
 #[binrw]
 #[derive(Debug, PartialEq, Clone, Default)]
 pub struct DoorRangeInstanceObject {

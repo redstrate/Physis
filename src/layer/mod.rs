@@ -133,7 +133,7 @@ pub enum LayerEntryType {
     PopRange = 40,
     /// Zone transitions (the visible part is probably LineVFX?)
     ExitRange = 41,
-    /// Unknown object.
+    /// Used to demarcate various aspects of the map, such as location or the BGM used.
     MapRange = 43,
     /// Unknown object.
     NaviMeshRange = 44,
@@ -147,13 +147,13 @@ pub enum LayerEntryType {
     QuestMarker = 51,
     /// Unknown object.
     CollisionBox = 57,
-    /// Unknown object.
+    /// A hint used to animate the opening of doors.
     DoorRange = 58,
     /// Generic VFX that are those dotted lines used for zone transitions and boundaries.
     LineVFX = 59,
-    /// Path object.
+    /// Path object that objects and characters can follow.
     ClientPath = 65,
-    /// Path object.
+    /// Path object that objects and characters can follow.
     ///
     /// This is stripped out of retail data, and is not used by the client.
     ServerPath = 66,
@@ -165,13 +165,13 @@ pub enum LayerEntryType {
     ChairMarker = 69,
     /// Unknown object.
     ClickableRange = 70,
-    /// Unknown object.
+    /// A hint for the client to preload an area.
     PrefetchRange = 71,
     /// Unknown object.
     FateRange = 72,
     /// Unknown object.
     SphereCastRange = 75,
-    /// Unknown object.
+    /// 2D decal drawn on top of a 3D object.
     Decal = 83,
     /// Unknown object.
     ColliderLayer7 = 86,
@@ -187,7 +187,9 @@ pub enum LayerEntryType {
     Unk91 = 91,
     /// Unknown object.
     Unk92 = 92,
-    /// Unknown object.
+    /// (Presumably) a volumetric cloud.
+    ///
+    /// This does not currently function in the Dawntrail client.
     VolumetricCloud = 93,
 }
 

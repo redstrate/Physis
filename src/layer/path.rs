@@ -25,7 +25,7 @@ pub struct PathInstanceObject {
     pub control_points: Vec<PathControlPoint>,
 }
 
-/// Path object.
+/// Path object that objects and characters can follow.
 #[binrw]
 #[derive(Debug, PartialEq, Clone, Default)]
 pub struct ClientPathInstanceObject {
@@ -34,7 +34,9 @@ pub struct ClientPathInstanceObject {
     _padding: u8,
 }
 
-/// Path object.
+/// Path object that objects and characters can follow.
+///
+/// This is stripped out of retail data, and is not used by the client.
 #[binrw]
 #[derive(Debug, PartialEq, Clone, Default)]
 pub struct ServerPathInstanceObject {}
