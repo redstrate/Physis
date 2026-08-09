@@ -382,6 +382,23 @@ pub struct Color {
     pub alpha: u8,
 }
 
+/// 32-bit color with an extra 32-bit intensity component.
+#[binrw]
+#[repr(C)]
+#[derive(Debug, PartialEq, Clone, Copy, Default)]
+pub struct ColorIntensity {
+    /// Red component.
+    pub red: u8,
+    /// Green component.
+    pub green: u8,
+    /// Blue component.
+    pub blue: u8,
+    /// Alpha component.
+    pub alpha: u8,
+    /// Intensity of the color?
+    pub intensity: f32,
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

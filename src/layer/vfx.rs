@@ -4,7 +4,7 @@
 use binrw::binrw;
 
 use crate::{
-    Color,
+    Color, ColorIntensity,
     common_file_operations::{read_bool_from, write_bool_as},
     string_heap::{HeapPointer, HeapString, StringHeap},
 };
@@ -91,8 +91,7 @@ pub struct VolumetricCloudInstanceObject {
     /// Path to a `.cldb` file.
     #[brw(args(heap_pointer, string_heap))]
     pub asset_path: HeapString,
-    pub color: Color,
-    pub intensity: f32,
+    pub color: ColorIntensity,
     #[br(map = read_bool_from::<u8>)]
     #[bw(map = write_bool_as::<u8>)]
     pub active: bool,
