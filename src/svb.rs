@@ -52,7 +52,11 @@ pub struct Svc {
 }
 
 impl Svc {
-    pub(crate) const HEADER_SIZE: u32 = 20;
+    pub const HEADER_SIZE: u32 = 20;
+
+    fn calculate_file_size(&self) -> u32 {
+        Self::HEADER_SIZE + (self.entries.len() as u32) * SvcEntry::SIZE
+    }
 }
 
 #[binrw]
@@ -62,6 +66,10 @@ pub struct SvcEntry {
     pub instance_id: u32,
     pub members: [u8; 4],
     pub visibility: f32,
+}
+
+impl SvcEntry {
+    pub const SIZE: u32 = 12;
 }
 
 impl ReadableFile for Svb {
@@ -97,8 +105,12 @@ impl Svb {
     }
 
     fn calculate_file_size(&self) -> u32 {
-        // TODO: take entries into account
-        Svb::HEADER_SIZE + Svc::HEADER_SIZE
+        Svb::HEADER_SIZE
+            + self
+                .svcs
+                .iter()
+                .map(|x| x.calculate_file_size())
+                .sum::<u32>()
     }
 }
 
@@ -131,5 +143,175 @@ mod tests {
         let svb = Svb::new();
 
         assert_eq!(*empty_svb, svb.write_to_buffer(Platform::Win32).unwrap());
+    }
+
+    #[test]
+    fn test_simple() {
+        let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        d.push("resources/tests");
+        d.push("s1e6.svb");
+
+        let file = &read(d).unwrap();
+        let svb = Svb {
+            svcs: vec![Svc {
+                id: 0,
+                unk1: 12,
+                entries: vec![
+                    SvcEntry {
+                        instance_id: 2378523,
+                        members: [0, 0, 0, 0],
+                        visibility: 0.25,
+                    },
+                    SvcEntry {
+                        instance_id: 2378521,
+                        members: [0, 0, 0, 0],
+                        visibility: 1.0,
+                    },
+                    SvcEntry {
+                        instance_id: 2378520,
+                        members: [0, 0, 0, 0],
+                        visibility: 0.25,
+                    },
+                    SvcEntry {
+                        instance_id: 2378524,
+                        members: [0, 0, 0, 0],
+                        visibility: 0.25,
+                    },
+                    SvcEntry {
+                        instance_id: 2378528,
+                        members: [0, 0, 0, 0],
+                        visibility: 0.25,
+                    },
+                    SvcEntry {
+                        instance_id: 2378527,
+                        members: [0, 0, 0, 0],
+                        visibility: 0.25,
+                    },
+                    SvcEntry {
+                        instance_id: 2378526,
+                        members: [0, 0, 0, 0],
+                        visibility: 0.25,
+                    },
+                    SvcEntry {
+                        instance_id: 2378516,
+                        members: [0, 0, 0, 0],
+                        visibility: 0.25,
+                    },
+                    SvcEntry {
+                        instance_id: 2378542,
+                        members: [0, 0, 0, 0],
+                        visibility: 0.25,
+                    },
+                    SvcEntry {
+                        instance_id: 2378525,
+                        members: [0, 0, 0, 0],
+                        visibility: 0.25,
+                    },
+                    SvcEntry {
+                        instance_id: 2378522,
+                        members: [0, 0, 0, 0],
+                        visibility: 0.25,
+                    },
+                    SvcEntry {
+                        instance_id: 2378543,
+                        members: [0, 0, 0, 0],
+                        visibility: 0.25,
+                    },
+                    SvcEntry {
+                        instance_id: 2378515,
+                        members: [0, 0, 0, 0],
+                        visibility: 0.25,
+                    },
+                    SvcEntry {
+                        instance_id: 2378536,
+                        members: [0, 0, 0, 0],
+                        visibility: 0.25,
+                    },
+                    SvcEntry {
+                        instance_id: 2378544,
+                        members: [0, 0, 0, 0],
+                        visibility: 0.25,
+                    },
+                    SvcEntry {
+                        instance_id: 2378540,
+                        members: [0, 0, 0, 0],
+                        visibility: 0.25,
+                    },
+                    SvcEntry {
+                        instance_id: 2378539,
+                        members: [0, 0, 0, 0],
+                        visibility: 0.25,
+                    },
+                    SvcEntry {
+                        instance_id: 2378538,
+                        members: [0, 0, 0, 0],
+                        visibility: 0.25,
+                    },
+                    SvcEntry {
+                        instance_id: 2378541,
+                        members: [0, 0, 0, 0],
+                        visibility: 0.25,
+                    },
+                    SvcEntry {
+                        instance_id: 4222649,
+                        members: [0, 0, 0, 0],
+                        visibility: 0.25,
+                    },
+                    SvcEntry {
+                        instance_id: 2378518,
+                        members: [0, 0, 0, 0],
+                        visibility: 0.25,
+                    },
+                    SvcEntry {
+                        instance_id: 2378517,
+                        members: [0, 0, 0, 0],
+                        visibility: 0.25,
+                    },
+                    SvcEntry {
+                        instance_id: 2378537,
+                        members: [0, 0, 0, 0],
+                        visibility: 0.25,
+                    },
+                    SvcEntry {
+                        instance_id: 2378531,
+                        members: [0, 0, 0, 0],
+                        visibility: 0.25,
+                    },
+                    SvcEntry {
+                        instance_id: 2378530,
+                        members: [0, 0, 0, 0],
+                        visibility: 0.25,
+                    },
+                    SvcEntry {
+                        instance_id: 2378529,
+                        members: [0, 0, 0, 0],
+                        visibility: 0.25,
+                    },
+                    SvcEntry {
+                        instance_id: 2378532,
+                        members: [0, 0, 0, 0],
+                        visibility: 0.25,
+                    },
+                    SvcEntry {
+                        instance_id: 2378535,
+                        members: [0, 0, 0, 0],
+                        visibility: 0.25,
+                    },
+                    SvcEntry {
+                        instance_id: 2378534,
+                        members: [0, 0, 0, 0],
+                        visibility: 0.25,
+                    },
+                    SvcEntry {
+                        instance_id: 2378533,
+                        members: [0, 0, 0, 0],
+                        visibility: 0.25,
+                    },
+                ],
+            }],
+        };
+
+        // round-trip
+        assert_eq!(*file, svb.write_to_buffer(Platform::Win32).unwrap());
     }
 }
