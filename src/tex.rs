@@ -22,7 +22,7 @@ use bitflags::bitflags;
 
 #[binrw]
 #[repr(C)]
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq)]
 pub struct TextureAttribute(u32);
 
 // Attributes and Format are adapted from Lumina (https://github.com/NotAdam/Lumina/blob/master/src/Lumina/Data/Files/TexFile.cs)
@@ -66,7 +66,7 @@ impl std::fmt::Debug for TextureAttribute {
 #[binrw]
 #[brw(repr = u32)]
 #[repr(u32)]
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 #[allow(non_camel_case_types)] // NOTE: It's currently allowed to make updating this list not a giant pain
 pub enum TextureFormat {
     L8_UNORM = 0x1130,
@@ -256,6 +256,8 @@ impl Texture {
 
 #[cfg(test)]
 mod tests {
+    use std::{fs::read, path::PathBuf};
+
     use crate::pass_random_invalid;
 
     use super::*;
@@ -263,5 +265,24 @@ mod tests {
     #[test]
     fn test_invalid() {
         pass_random_invalid::<Texture>();
+    }
+
+    #[test]
+    fn test_grid() {
+        let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        d.push("resources/tests");
+        d.push("grid.tex");
+
+        let file = &read(d).unwrap();
+        let tex = Texture::from_existing(Platform::Win32, &file).unwrap();
+        assert_eq!(tex.attribute, TextureAttribute::TEXTURE_TYPE2_D);
+        assert_eq!(tex.format, TextureFormat::B8G8R8A8_UNORM);
+        assert_eq!(tex.width, 256);
+        assert_eq!(tex.height, 256);
+        assert_eq!(tex.depth, 1);
+        assert_eq!(tex.mip_levels, 9);
+
+        // round-trip
+        assert_eq!(*file, tex.write_to_buffer(Platform::Win32).unwrap());
     }
 }
