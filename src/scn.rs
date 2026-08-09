@@ -6,8 +6,10 @@ use std::io::SeekFrom;
 use binrw::{BinResult, BinWrite, binrw};
 
 use crate::{
-    common_file_operations::{read_bool_from, read_null_terminated_utf8, write_bool_as},
-    envs::{read_dawntrail_marker, write_dawntrail_marker},
+    common_file_operations::{
+        read_bool_from, read_dawntrail_marker, read_null_terminated_utf8, write_bool_as,
+        write_dawntrail_marker,
+    },
     layer::Layer,
     string_heap::{HeapPointer, HeapString, StringHeap},
     tmb::Tmb,

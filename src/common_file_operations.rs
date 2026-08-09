@@ -174,6 +174,17 @@ pub fn write_short_identifier(identifier: &String) -> BinResult<()> {
     Ok(())
 }
 
+/// Used by the game's formats to denote something as needing Dawntrail & above behavior.
+pub(crate) const DAWNTRAIL_MARKER: &[u8; 4] = b"007V";
+
+pub(crate) fn read_dawntrail_marker(x: [u8; 4]) -> bool {
+    &x == DAWNTRAIL_MARKER
+}
+
+pub(crate) fn write_dawntrail_marker(x: &bool) -> [u8; 4] {
+    if *x { *DAWNTRAIL_MARKER } else { [0; 4] }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

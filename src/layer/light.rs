@@ -5,8 +5,7 @@ use binrw::binrw;
 
 use crate::{
     Color,
-    common_file_operations::write_bool_as,
-    envs::{read_dawntrail_marker, write_dawntrail_marker},
+    common_file_operations::{read_dawntrail_marker, write_bool_as, write_dawntrail_marker},
     string_heap::{HeapPointer, HeapString, StringHeap},
 };
 

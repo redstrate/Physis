@@ -7,18 +7,11 @@ use std::io::SeekFrom;
 use binrw::{BinRead, BinResult, BinWrite, binrw};
 
 use crate::{
-    common::DAWNTRAIL_MARKER,
-    common_file_operations::{read_bool_from, write_bool_as},
+    common_file_operations::{
+        read_bool_from, read_dawntrail_marker, write_bool_as, write_dawntrail_marker,
+    },
     string_heap::{HeapPointer, HeapString, StringHeap},
 };
-
-pub(crate) fn read_dawntrail_marker(x: [u8; 4]) -> bool {
-    &x == DAWNTRAIL_MARKER
-}
-
-pub(crate) fn write_dawntrail_marker(x: &bool) -> [u8; 4] {
-    if *x { *DAWNTRAIL_MARKER } else { [0; 4] }
-}
 
 #[binrw::writer(writer, endian)]
 pub(crate) fn write_envs(envs: &Vec<Envs>, string_heap: &mut StringHeap) -> BinResult<()> {
