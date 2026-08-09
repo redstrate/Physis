@@ -105,6 +105,8 @@ impl WritableFile for Uwb {
 
 #[cfg(test)]
 mod tests {
+    use std::{fs::read, path::PathBuf};
+
     use crate::{common::ensure_size, pass_random_invalid};
 
     use super::*;
@@ -117,5 +119,43 @@ mod tests {
     #[test]
     fn test_uwc_size() {
         ensure_size::<Uwc, { Uwc::SIZE }>();
+    }
+
+    #[test]
+    fn test_simple() {
+        let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        d.push("resources/tests");
+        d.push("s1h1.uwb");
+
+        let file = &read(d).unwrap();
+        let uwb = Uwb {
+            uwcs: vec![Uwc {
+                version: 0,
+                water_surface_y: 0.0,
+                depth_transition_start: 50.0,
+                depth_transition_range: 250.0,
+                fog_shallow: UnderwaterFogAttenuation {
+                    vertical_fade_upper: 0.2,
+                    vertical_fade_lower: -0.8,
+                    vertical_attenuation_strength: 0.7,
+                },
+                fog_deep: UnderwaterFogAttenuation {
+                    vertical_fade_upper: 4.0,
+                    vertical_fade_lower: -0.8,
+                    vertical_attenuation_strength: 0.7,
+                },
+                caustics_distance_fade_start: 20.0,
+                caustics_distance_fade_range: 200.0,
+                caustics_uv_size: [10.0, 15.0],
+                caustics_scroll_speed: 0.5,
+                caustics_intensity: 0.1,
+                sun_size: 0.8,
+                sun_fade_start: 0.1,
+                lighting_multiplier: 0.1,
+                unknown: 0,
+            }],
+        };
+
+        assert_eq!(*file, uwb.write_to_buffer(Platform::Win32).unwrap());
     }
 }
