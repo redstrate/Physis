@@ -142,7 +142,7 @@ pub struct Wind {
     /// Between 0 and 86400 seconds (one day.)
     pub time: f32,
     /// In degrees.
-    pub layer0_azimuth: u32,
+    pub layer0_azimuth: f32,
     pub unk3: f32,
     pub layer0_max_strength: f32,
     #[br(map = read_dawntrail_marker)]
