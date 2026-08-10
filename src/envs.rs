@@ -252,46 +252,67 @@ pub enum EnvTimelineElement {
         Vec<VerticalFog>,
     ),
     #[br(pre_assert(index == 20))]
-    Element20(
+    AmbientSoundPaths(
         #[br(parse_with = unknown2_from_offsets, args(EnvTimeline::SIZE as u32, offset, unknown2_offsets, string_heap))]
         #[br(restore_position)]
         #[bw(ignore)] // TODO: support writing
-        Vec<Element20>,
+        Vec<AmbientSoundPaths>,
+    ),
+    #[br(pre_assert(index == 21))]
+    AmbientSoundFlags(
+        #[br(parse_with = unknown2_from_offsets, args(EnvTimeline::SIZE as u32, offset, unknown2_offsets, string_heap))]
+        #[br(restore_position)]
+        #[bw(ignore)] // TODO: support writing
+        Vec<AmbientSoundFlags>,
     ),
     #[br(pre_assert(index == 29))]
-    ChangeVisibility(
+    ObjectVisibility(
         #[br(parse_with = unknown2_from_offsets, args(EnvTimeline::SIZE as u32, offset, unknown2_offsets, string_heap))]
         #[br(restore_position)]
         #[bw(ignore)] // TODO: support writing
-        Vec<ChangeVisibility>,
+        Vec<ObjectVisibility>,
+    ),
+    #[br(pre_assert(index == 30))]
+    ObjectTransform(
+        #[br(parse_with = unknown2_from_offsets, args(EnvTimeline::SIZE as u32, offset, unknown2_offsets, string_heap))]
+        #[br(restore_position)]
+        #[bw(ignore)] // TODO: support writing
+        Vec<ObjectTransform>,
     ),
     #[br(pre_assert(index == 31))]
-    Element31(
+    ObjectOscillator(
         #[br(parse_with = unknown2_from_offsets, args(EnvTimeline::SIZE as u32, offset, unknown2_offsets, string_heap))]
         #[br(restore_position)]
         #[bw(ignore)] // TODO: support writing
-        Vec<Element31>,
+        Vec<ObjectOscillator>,
+    ),
+    #[br(pre_assert(index == 32))]
+    ObjectRotation(
+        #[br(parse_with = unknown2_from_offsets, args(EnvTimeline::SIZE as u32, offset, unknown2_offsets, string_heap))]
+        #[br(restore_position)]
+        #[bw(ignore)] // TODO: support writing
+        Vec<ObjectRotation>,
     ),
     #[br(pre_assert(index == 33))]
-    Element33(
+    ObjectRgbColor(
         #[br(parse_with = unknown2_from_offsets, args(EnvTimeline::SIZE as u32, offset, unknown2_offsets, string_heap))]
         #[br(restore_position)]
         #[bw(ignore)] // TODO: support writing
-        Vec<Element33>,
+        Vec<ObjectRgbColor>,
     ),
     #[br(pre_assert(index == 34))]
-    Element34(
+    ObjectRgbColorPair(
         #[br(parse_with = unknown2_from_offsets, args(EnvTimeline::SIZE as u32, offset, unknown2_offsets, string_heap))]
         #[br(restore_position)]
         #[bw(ignore)] // TODO: support writing
-        Vec<Element34>,
+        Vec<ObjectRgbColorPair>,
     ),
     #[br(pre_assert(index == 35))]
-    Element35(
+    ObjectRgbaColor(
         #[br(parse_with = unknown2_from_offsets, args(EnvTimeline::SIZE as u32, offset, unknown2_offsets, string_heap))]
         #[br(restore_position)]
         #[bw(ignore)] // TODO: support writing
-        Vec<Element35>,
+        Vec<ObjectRgbaColor>,
     ),
     #[default] // TODO: is this is a sensible default?
     UnknownNeedsParsing,
@@ -422,28 +443,6 @@ pub struct Cloud {
 
 impl Cloud {
     pub const SIZE: usize = 28;
-}
-
-#[binrw]
-#[derive(Debug)]
-#[br(import(string_heap: &StringHeap))]
-#[bw(import(string_heap: &mut StringHeap))]
-pub struct Element3 {
-    /// Between 0 and 86400 seconds (one day.)
-    pub time: f32,
-    unk2: u32,
-    unk3: u32,
-    unk4: u32,
-    unk5: u32,
-    unk6: u32,
-    unk7: u32,
-    unk8: u32,
-    unk9: u32,
-    unk10: u32,
-    unk11: u32,
-    unk12: u32,
-    unk13: u32,
-    unk14: u32,
 }
 
 #[binrw]
@@ -737,7 +736,7 @@ impl VerticalFog {
 #[derive(Debug, Default)]
 #[br(import(string_heap: &StringHeap))]
 #[bw(import(string_heap: &mut StringHeap))]
-pub struct Element20 {
+pub struct AmbientSoundPaths {
     #[br(temp)]
     #[bw(ignore)]
     heap_pointer: HeapPointer,
@@ -746,41 +745,53 @@ pub struct Element20 {
     pub time: f32,
     offset: u32,
     count: u32,
-    unk4: u32,
-    unk5: u32,
-    unk6: u32,
-    unk7: u32,
-    unk8: u32,
 
-    #[br(seek_before = SeekFrom::Current(offset as i64 - Element20::SIZE as i64))]
+    #[br(seek_before = SeekFrom::Current(offset as i64 - Self::SIZE as i64))]
     #[br(temp)]
     #[bw(ignore)]
     #[br(restore_position)]
     heap_pointer: HeapPointer,
 
     #[br(count = count, args { inner: (heap_pointer, string_heap,) })]
-    #[br(seek_before = SeekFrom::Current(offset as i64 - Element20::SIZE as i64))]
+    #[br(seek_before = SeekFrom::Current(offset as i64 - Self::SIZE as i64))]
     #[br(restore_position)]
     #[bw(ignore)] // TODO: support writing
     pub paths: Vec<HeapString>,
 }
 
-impl Element20 {
-    pub(crate) const SIZE: usize = 0x20;
+impl AmbientSoundPaths {
+    pub(crate) const SIZE: usize = 12;
+}
+
+#[binrw]
+#[derive(Debug, Default)]
+#[br(import(string_heap: &StringHeap))]
+#[bw(import(string_heap: &mut StringHeap))]
+pub struct AmbientSoundFlags {
+    /// Between 0 and 86400 seconds (one day.)
+    pub time: f32,
+    #[br(map = read_bool_from::<u8>)]
+    #[bw(map = write_bool_as::<u8>)]
+    pub ambient_setting0_enabled: bool,
+    #[br(map = read_bool_from::<u8>)]
+    #[bw(map = write_bool_as::<u8>)]
+    #[brw(pad_after = 2)] // padding
+    pub ambient_setting1_enabled: bool,
 }
 
 #[binrw]
 #[derive(Debug)]
 #[br(import(string_heap: &StringHeap))]
 #[bw(import(string_heap: &mut StringHeap))]
-pub struct ChangeVisibility {
+pub struct ObjectVisibility {
     /// Between 0 and 86400 seconds (one day.)
     pub time: f32,
-    // Always seems to be 200?
-    unk2: u16,
+    /// In "centiseconds".
+    pub transition_duration: u16,
     /// Whether this game object should be visible.
-    #[br(map = read_bool_from::<u16>)]
-    #[bw(map = write_bool_as::<u16>)]
+    #[br(map = read_bool_from::<u8>)]
+    #[bw(map = write_bool_as::<u8>)]
+    #[brw(pad_after = 1)] // padding
     pub visible: bool,
 }
 
@@ -788,81 +799,84 @@ pub struct ChangeVisibility {
 #[derive(Debug)]
 #[br(import(string_heap: &StringHeap))]
 #[bw(import(string_heap: &mut StringHeap))]
-pub struct Element31 {
+pub struct ObjectTransform {
     /// Between 0 and 86400 seconds (one day.)
     pub time: f32,
-    unk2: f32,
-    unk3: f32,
+    pub value: f32,
 }
 
 #[binrw]
 #[derive(Debug)]
 #[br(import(string_heap: &StringHeap))]
 #[bw(import(string_heap: &mut StringHeap))]
-pub struct Element33 {
+pub struct ObjectOscillator {
     /// Between 0 and 86400 seconds (one day.)
     pub time: f32,
-    unk2: u32,
-    unk3: u32,
-    unk4: f32,
+    pub phase_rate: f32,
+    pub amplitude: f32,
 }
 
 #[binrw]
 #[derive(Debug)]
 #[br(import(string_heap: &StringHeap))]
 #[bw(import(string_heap: &mut StringHeap))]
-pub struct Element34 {
+pub struct ObjectRotation {
     /// Between 0 and 86400 seconds (one day.)
     pub time: f32,
-    unk2: u32,
-    unk3: u32,
-    unk4: f32,
-    unk5: f32,
-    unk6: f32,
-    unk7: f32,
+    pub value: f32,
 }
 
 #[binrw]
 #[derive(Debug)]
 #[br(import(string_heap: &StringHeap))]
 #[bw(import(string_heap: &mut StringHeap))]
-pub struct Element35 {
+pub struct ObjectRgbColor {
     /// Between 0 and 86400 seconds (one day.)
     pub time: f32,
-    unk2: u32,
-    unk3: u32,
-    unk4: f32,
+    color_offset: i32,
+
+    #[br(seek_before = SeekFrom::Current(color_offset as i64 - Self::SIZE as i64), restore_position)]
+    pub color: ColorIntensity,
 }
 
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn test_envheader_size() {
-        // FIXME: Needs StringHeap
-        // ensure_size::<EnvsHeader, { EnvsHeader::SIZE }>();
-    }
+impl ObjectRgbColor {
+    pub const SIZE: usize = 8;
+}
 
-    #[test]
-    fn test_envchildsection_size() {
-        // FIXME: Needs StringHeap
-        // ensure_size::<EnvChildSection, {EnvChildSection::SIZE }>();
-    }
+#[binrw]
+#[derive(Debug)]
+#[br(import(string_heap: &StringHeap))]
+#[bw(import(string_heap: &mut StringHeap))]
+pub struct ObjectRgbColorPair {
+    /// Between 0 and 86400 seconds (one day.)
+    pub time: f32,
+    color0_offset: i32,
+    color1_offset: i32,
 
-    #[test]
-    fn test_envunknown1_size() {
-        // FIXME: Needs StringHeap
-        // ensure_size::<EnvUnknown1, { EnvUnknown1::SIZE }>();
-    }
+    #[br(seek_before = SeekFrom::Current(color0_offset as i64 - Self::SIZE as i64), restore_position)]
+    pub color0: ColorIntensity,
 
-    #[test]
-    fn test_element20_size() {
-        // FIXME: Needs StringHeap
-        // ensure_size::<Element11, { Element11::SIZE }>();
-    }
+    #[br(seek_before = SeekFrom::Current(color1_offset as i64 - Self::SIZE as i64), restore_position)]
+    pub color1: ColorIntensity,
+}
 
-    #[test]
-    fn test_element11_size() {
-        // FIXME: Needs StringHeap
-        // ensure_size::<Element20, { Element20::SIZE }>();
-    }
+impl ObjectRgbColorPair {
+    pub const SIZE: usize = 12;
+}
+
+#[binrw]
+#[derive(Debug)]
+#[br(import(string_heap: &StringHeap))]
+#[bw(import(string_heap: &mut StringHeap))]
+pub struct ObjectRgbaColor {
+    /// Between 0 and 86400 seconds (one day.)
+    pub time: f32,
+    color_offset: i32,
+
+    #[br(seek_before = SeekFrom::Current(color_offset as i64 - Self::SIZE as i64), restore_position)]
+    pub color: ColorIntensity,
+}
+
+impl ObjectRgbaColor {
+    pub const SIZE: usize = 8;
 }
