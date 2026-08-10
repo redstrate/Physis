@@ -22,7 +22,7 @@ pub struct AmbientSoundPaths {
 
     /// Between 0 and 86400 seconds (one day.)
     pub time: f32,
-    offset: u32,
+    offset: i32,
     count: u32,
 
     #[br(seek_before = SeekFrom::Current(offset as i64 - Self::SIZE as i64))]
@@ -39,7 +39,7 @@ pub struct AmbientSoundPaths {
 }
 
 impl AmbientSoundPaths {
-    pub(crate) const SIZE: usize = 12;
+    const SIZE: usize = 12;
 }
 
 #[binrw]

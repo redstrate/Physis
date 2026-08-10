@@ -73,7 +73,7 @@ pub struct ObjectRgbColor {
 }
 
 impl ObjectRgbColor {
-    pub const SIZE: usize = 8;
+    const SIZE: usize = 8;
 }
 
 #[binrw]
@@ -94,7 +94,7 @@ pub struct ObjectRgbColorPair {
 }
 
 impl ObjectRgbColorPair {
-    pub const SIZE: usize = 12;
+    const SIZE: usize = 12;
 }
 
 #[binrw]

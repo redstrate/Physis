@@ -21,12 +21,12 @@ use crate::{
 pub struct GlobalLighting {
     /// Between 0 and 86400 seconds (one day.)
     pub time: f32,
-    sunlight_color_offset: u32,
+    sunlight_color_offset: i32,
     pub ambient_light_scale: f32,
     pub ambient_light_saturation: f32,
     pub ambient_attenuation: f32,
-    extra_ambient_color_offset: u32,
-    moonlight_color_offset: u32,
+    extra_ambient_color_offset: i32,
+    moonlight_color_offset: i32,
     pub extra_ambient_color_weight: f32,
     pub extra_param: f32,
     pub param0: f32,
@@ -49,7 +49,7 @@ pub struct GlobalLighting {
 }
 
 impl GlobalLighting {
-    pub const SIZE: usize = 52;
+    const SIZE: usize = 52;
 }
 
 #[binrw]
@@ -59,9 +59,9 @@ impl GlobalLighting {
 pub struct FakeSpecular {
     /// Between 0 and 86400 seconds (one day.)
     pub time: f32,
-    color0_offset: u32,
-    color1_offset: u32,
-    color2_offset: u32,
+    color0_offset: i32,
+    color1_offset: i32,
+    color2_offset: i32,
     /// In degrees.
     pub elevation0: f32,
     /// In degrees.
@@ -82,7 +82,7 @@ pub struct FakeSpecular {
 }
 
 impl FakeSpecular {
-    pub const SIZE: usize = 32;
+    const SIZE: usize = 32;
 }
 
 #[binrw]
@@ -96,8 +96,8 @@ pub struct Cloud {
     pub alternate_cloud: u32,
     pub main_intensity: f32,
     pub alternate_intensity: f32,
-    diffuse_color_offset: u32,
-    ambient_color_offset: u32,
+    diffuse_color_offset: i32,
+    ambient_color_offset: i32,
 
     #[br(seek_before = SeekFrom::Current(diffuse_color_offset as i64 - Self::SIZE as i64), restore_position)]
     pub diffuse_color: ColorIntensity,
@@ -107,7 +107,7 @@ pub struct Cloud {
 }
 
 impl Cloud {
-    pub const SIZE: usize = 28;
+    const SIZE: usize = 28;
 }
 
 #[binrw]
@@ -123,7 +123,7 @@ pub struct WeatherParticles {
     pub distance_response_profile: f32,
     pub extra_param: f32,
     pub modulation_rate: f32,
-    color_offset: u32,
+    color_offset: i32,
     pub flags: u32,
 
     #[br(seek_before = SeekFrom::Current(color_offset as i64 - Self::SIZE as i64), restore_position)]
@@ -131,7 +131,7 @@ pub struct WeatherParticles {
 }
 
 impl WeatherParticles {
-    pub const SIZE: usize = 36;
+    const SIZE: usize = 36;
 }
 
 #[binrw]
@@ -170,9 +170,9 @@ pub struct Wind {
 pub struct LightShaft {
     /// Between 0 and 86400 seconds (one day.)
     pub time: f32,
-    unk2: u32,
-    color_offset: u32,
-    radiance_color_offset: u32,
+    pub unk2: u32,
+    color_offset: i32,
+    radiance_color_offset: i32,
     pub scale: f32,
     pub param: f32,
 
@@ -184,7 +184,7 @@ pub struct LightShaft {
 }
 
 impl LightShaft {
-    pub const SIZE: usize = 24;
+    const SIZE: usize = 24;
 }
 
 #[binrw]
@@ -260,8 +260,8 @@ pub struct ColorFilter {
 }
 
 impl ColorFilter {
-    pub const SIZE: usize = 52;
-    pub const DAWNTRAIL_SIZE: usize = Self::SIZE + 24;
+    const SIZE: usize = 52;
+    const DAWNTRAIL_SIZE: usize = Self::SIZE + 24;
 }
 
 #[binrw]
@@ -310,7 +310,7 @@ pub struct Effect {
 }
 
 impl Effect {
-    pub(crate) const SIZE: usize = 48;
+    const SIZE: usize = 48;
 }
 
 #[binrw]
@@ -324,7 +324,7 @@ pub struct Starfield {
     pub b_intensity: u32,
     pub c_intensity: u32,
     pub unk5: f32,
-    pub moon_color_offset: u32,
+    moon_color_offset: i32,
     pub unk7: f32,
     pub procedural_star_intensity: f32,
 
@@ -333,7 +333,7 @@ pub struct Starfield {
 }
 
 impl Starfield {
-    pub const SIZE: usize = 32;
+    const SIZE: usize = 32;
 }
 
 #[binrw]
@@ -343,7 +343,7 @@ impl Starfield {
 pub struct VerticalFog {
     /// Between 0 and 86400 seconds (one day.)
     pub time: f32,
-    fog_color_offset: u32,
+    fog_color_offset: i32,
     pub fog_start_distance: f32,
     pub fog_intensity_0: f32,
     pub fog_fade_distance: f32,
@@ -393,6 +393,6 @@ pub struct VerticalFog {
 }
 
 impl VerticalFog {
-    pub const SIZE: usize = 32;
-    pub const DAWNTRAIL_SIZE: usize = Self::SIZE + 56;
+    const SIZE: usize = 32;
+    const DAWNTRAIL_SIZE: usize = Self::SIZE + 56;
 }

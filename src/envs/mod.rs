@@ -40,13 +40,12 @@ pub struct Envs {
     /// Offset to the sections array.
     #[br(temp)]
     #[bw(calc = 16)]
-    offset_to_sections: u32,
+    offset_to_sections: i32,
     /// Number of sections.
     #[br(temp)]
     #[bw(calc = sections.len() as u32)]
     section_count: u32,
-    /// Seems to indicate the remaining amount of bytes in this file, including this u32.
-    remaining_size: u32,
+    auxiliary_offset: i32, // TODO: read this data
     /// Equal to `section_count` * `EnvChildSection::SIZE`.
     #[br(temp)]
     #[bw(calc = section_count * EnvChildSection::SIZE as u32)]
@@ -61,7 +60,7 @@ pub struct Envs {
 }
 
 #[binrw::writer(writer, endian)]
-pub(crate) fn write_child_sections(
+fn write_child_sections(
     sections: &Vec<EnvChildSection>,
     string_heap: &mut StringHeap,
 ) -> BinResult<()> {
@@ -73,7 +72,7 @@ pub(crate) fn write_child_sections(
 }
 
 impl Envs {
-    pub(crate) const SIZE: usize = 0x18;
+    const SIZE: usize = 0x18;
 }
 
 #[binrw]
@@ -88,7 +87,7 @@ pub struct EnvChildSection {
     #[br(temp)]
     #[bw(calc = 0)] // TODO
     count: u32,
-    /// Which weather this applied in. Index into the Weather Excel sheet.
+    /// I think which weather this applied in. Index into the Weather Excel sheet.
     pub owner_id: u32,
     #[br(temp)]
     #[bw(calc = 0)] // TODO
@@ -97,7 +96,7 @@ pub struct EnvChildSection {
     #[br(count = count, args { inner: (string_heap,) })]
     #[br(seek_before = SeekFrom::Current(offset as i64 - EnvChildSection::SIZE as i64))]
     #[br(restore_position)]
-    #[bw(ignore)] // TODO: support writing
+    #[bw(ignore)]
     pub timelines: Vec<EnvTimeline>,
 
     /// In seconds.
@@ -121,13 +120,13 @@ pub struct EnvChildSection {
 }
 
 impl EnvChildSection {
-    pub(crate) const SIZE: usize = 0x10;
+    const SIZE: usize = 0x10;
 }
 
 #[binrw::parser(reader, endian)]
 fn unknown2_from_offsets<T>(
     size: u32,
-    main_offset: u32,
+    main_offset: i32,
     offsets: &[i32],
     string_heap: &StringHeap,
 ) -> BinResult<Vec<T>>
@@ -151,7 +150,7 @@ where
 }
 
 #[binrw]
-#[br(import(index: u32, offset: u32, unknown2_offsets: &[i32], string_heap: &StringHeap))]
+#[br(import(index: u32, offset: i32, unknown2_offsets: &[i32], string_heap: &StringHeap))]
 #[bw(import(string_heap: &mut StringHeap))]
 #[derive(Debug, Default)]
 pub enum EnvTimelineElement {
@@ -159,165 +158,165 @@ pub enum EnvTimelineElement {
     GlobalLighting(
         #[br(parse_with = unknown2_from_offsets, args(EnvTimeline::SIZE as u32, offset, unknown2_offsets, string_heap))]
         #[br(restore_position)]
-        #[bw(ignore)] // TODO: support writing
+        #[bw(ignore)]
         Vec<GlobalLighting>,
     ),
     #[br(pre_assert(index == 1))]
     FakeSpecular(
         #[br(parse_with = unknown2_from_offsets, args(EnvTimeline::SIZE as u32, offset, unknown2_offsets, string_heap))]
         #[br(restore_position)]
-        #[bw(ignore)] // TODO: support writing
+        #[bw(ignore)]
         Vec<FakeSpecular>,
     ),
     #[br(pre_assert(index == 2))]
     Cloud(
         #[br(parse_with = unknown2_from_offsets, args(EnvTimeline::SIZE as u32, offset, unknown2_offsets, string_heap))]
         #[br(restore_position)]
-        #[bw(ignore)] // TODO: support writing
+        #[bw(ignore)]
         Vec<Cloud>,
     ),
     #[br(pre_assert(index == 3))]
     Rain(
         #[br(parse_with = unknown2_from_offsets, args(EnvTimeline::SIZE as u32, offset, unknown2_offsets, string_heap))]
         #[br(restore_position)]
-        #[bw(ignore)] // TODO: support writing
+        #[bw(ignore)]
         Vec<WeatherParticles>,
     ),
     #[br(pre_assert(index == 4))]
     Snow(
         #[br(parse_with = unknown2_from_offsets, args(EnvTimeline::SIZE as u32, offset, unknown2_offsets, string_heap))]
         #[br(restore_position)]
-        #[bw(ignore)] // TODO: support writing
+        #[bw(ignore)]
         Vec<WeatherParticles>,
     ),
     #[br(pre_assert(index == 5))]
     Dust(
         #[br(parse_with = unknown2_from_offsets, args(EnvTimeline::SIZE as u32, offset, unknown2_offsets, string_heap))]
         #[br(restore_position)]
-        #[bw(ignore)] // TODO: support writing
+        #[bw(ignore)]
         Vec<WeatherParticles>,
     ),
     #[br(pre_assert(index == 6))]
     Wind(
         #[br(parse_with = unknown2_from_offsets, args(EnvTimeline::SIZE as u32, offset, unknown2_offsets, string_heap))]
         #[br(restore_position)]
-        #[bw(ignore)] // TODO: support writing
+        #[bw(ignore)]
         Vec<Wind>,
     ),
     #[br(pre_assert(index == 7))]
     LightShaft(
         #[br(parse_with = unknown2_from_offsets, args(EnvTimeline::SIZE as u32, offset, unknown2_offsets, string_heap))]
         #[br(restore_position)]
-        #[bw(ignore)] // TODO: support writing
+        #[bw(ignore)]
         Vec<LightShaft>,
     ),
     #[br(pre_assert(index == 8))]
     Wetness(
         #[br(parse_with = unknown2_from_offsets, args(EnvTimeline::SIZE as u32, offset, unknown2_offsets, string_heap))]
         #[br(restore_position)]
-        #[bw(ignore)] // TODO: support writing
+        #[bw(ignore)]
         Vec<Wetness>,
     ),
     #[br(pre_assert(index == 9))]
     ToneMapping(
         #[br(parse_with = unknown2_from_offsets, args(EnvTimeline::SIZE as u32, offset, unknown2_offsets, string_heap))]
         #[br(restore_position)]
-        #[bw(ignore)] // TODO: support writing
+        #[bw(ignore)]
         Vec<ToneMapping>,
     ),
     #[br(pre_assert(index == 10))]
     ColorFilter(
         #[br(parse_with = unknown2_from_offsets, args(EnvTimeline::SIZE as u32, offset, unknown2_offsets, string_heap))]
         #[br(restore_position)]
-        #[bw(ignore)] // TODO: support writing
+        #[bw(ignore)]
         Vec<ColorFilter>,
     ),
     #[br(pre_assert(index == 11))]
     Effect(
         #[br(parse_with = unknown2_from_offsets, args(EnvTimeline::SIZE as u32, offset, unknown2_offsets, string_heap))]
         #[br(restore_position)]
-        #[bw(ignore)] // TODO: support writing
+        #[bw(ignore)]
         Vec<Effect>,
     ),
     #[br(pre_assert(index == 12))]
     Starfield(
         #[br(parse_with = unknown2_from_offsets, args(EnvTimeline::SIZE as u32, offset, unknown2_offsets, string_heap))]
         #[br(restore_position)]
-        #[bw(ignore)] // TODO: support writing
+        #[bw(ignore)]
         Vec<Starfield>,
     ),
     #[br(pre_assert(index == 13))]
     VerticalFog(
         #[br(parse_with = unknown2_from_offsets, args(EnvTimeline::SIZE as u32, offset, unknown2_offsets, string_heap))]
         #[br(restore_position)]
-        #[bw(ignore)] // TODO: support writing
+        #[bw(ignore)]
         Vec<VerticalFog>,
     ),
     #[br(pre_assert(index == 20))]
     AmbientSoundPaths(
         #[br(parse_with = unknown2_from_offsets, args(EnvTimeline::SIZE as u32, offset, unknown2_offsets, string_heap))]
         #[br(restore_position)]
-        #[bw(ignore)] // TODO: support writing
+        #[bw(ignore)]
         Vec<AmbientSoundPaths>,
     ),
     #[br(pre_assert(index == 21))]
     AmbientSoundFlags(
         #[br(parse_with = unknown2_from_offsets, args(EnvTimeline::SIZE as u32, offset, unknown2_offsets, string_heap))]
         #[br(restore_position)]
-        #[bw(ignore)] // TODO: support writing
+        #[bw(ignore)]
         Vec<AmbientSoundFlags>,
     ),
     #[br(pre_assert(index == 29))]
     ObjectVisibility(
         #[br(parse_with = unknown2_from_offsets, args(EnvTimeline::SIZE as u32, offset, unknown2_offsets, string_heap))]
         #[br(restore_position)]
-        #[bw(ignore)] // TODO: support writing
+        #[bw(ignore)]
         Vec<ObjectVisibility>,
     ),
     #[br(pre_assert(index == 30))]
     ObjectTransform(
         #[br(parse_with = unknown2_from_offsets, args(EnvTimeline::SIZE as u32, offset, unknown2_offsets, string_heap))]
         #[br(restore_position)]
-        #[bw(ignore)] // TODO: support writing
+        #[bw(ignore)]
         Vec<ObjectTransform>,
     ),
     #[br(pre_assert(index == 31))]
     ObjectOscillator(
         #[br(parse_with = unknown2_from_offsets, args(EnvTimeline::SIZE as u32, offset, unknown2_offsets, string_heap))]
         #[br(restore_position)]
-        #[bw(ignore)] // TODO: support writing
+        #[bw(ignore)]
         Vec<ObjectOscillator>,
     ),
     #[br(pre_assert(index == 32))]
     ObjectRotation(
         #[br(parse_with = unknown2_from_offsets, args(EnvTimeline::SIZE as u32, offset, unknown2_offsets, string_heap))]
         #[br(restore_position)]
-        #[bw(ignore)] // TODO: support writing
+        #[bw(ignore)]
         Vec<ObjectRotation>,
     ),
     #[br(pre_assert(index == 33))]
     ObjectRgbColor(
         #[br(parse_with = unknown2_from_offsets, args(EnvTimeline::SIZE as u32, offset, unknown2_offsets, string_heap))]
         #[br(restore_position)]
-        #[bw(ignore)] // TODO: support writing
+        #[bw(ignore)]
         Vec<ObjectRgbColor>,
     ),
     #[br(pre_assert(index == 34))]
     ObjectRgbColorPair(
         #[br(parse_with = unknown2_from_offsets, args(EnvTimeline::SIZE as u32, offset, unknown2_offsets, string_heap))]
         #[br(restore_position)]
-        #[bw(ignore)] // TODO: support writing
+        #[bw(ignore)]
         Vec<ObjectRgbColorPair>,
     ),
     #[br(pre_assert(index == 35))]
     ObjectRgbaColor(
         #[br(parse_with = unknown2_from_offsets, args(EnvTimeline::SIZE as u32, offset, unknown2_offsets, string_heap))]
         #[br(restore_position)]
-        #[bw(ignore)] // TODO: support writing
+        #[bw(ignore)]
         Vec<ObjectRgbaColor>,
     ),
-    #[default] // TODO: is this is a sensible default?
-    UnknownNeedsParsing,
+    #[default]
+    Unknown,
 }
 
 #[binrw]
@@ -327,7 +326,7 @@ pub enum EnvTimelineElement {
 pub struct EnvTimeline {
     #[br(temp)]
     #[bw(ignore)]
-    offset: u32,
+    offset: i32,
     #[br(temp)]
     #[bw(ignore)]
     count: u32,
@@ -338,7 +337,7 @@ pub struct EnvTimeline {
     #[br(count = count)]
     #[br(seek_before = SeekFrom::Current(offset as i64 - EnvTimeline::SIZE as i64))]
     #[br(restore_position)]
-    #[bw(ignore)] // TODO: support writing
+    #[bw(ignore)]
     #[br(temp)]
     offsets: Vec<i32>,
 
@@ -348,5 +347,5 @@ pub struct EnvTimeline {
 }
 
 impl EnvTimeline {
-    pub(crate) const SIZE: usize = 0xc;
+    const SIZE: usize = 0xc;
 }
