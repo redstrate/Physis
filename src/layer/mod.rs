@@ -18,9 +18,8 @@ pub use bg::{BgPartInstanceObject, ModelCollisionType, ShadowMode};
 
 mod collision;
 pub use collision::{
-    ColliderLayer7InstanceObject, ColliderLayer8InstanceObject, ColliderLayer9InstanceObject,
-    ColliderLayer10InstanceObject, CollisionAttributes, CollisionBoxInstanceObject,
-    CullingBoxInstanceObject, TriggerBoxInstanceObject, TriggerBoxShape,
+    CollisionAttributes, CollisionBoxInstanceObject, CullingBoxInstanceObject,
+    TriggerBoxInstanceObject, TriggerBoxShape,
 };
 
 mod env;
@@ -51,9 +50,11 @@ pub use path::{
 
 mod range;
 pub use range::{
-    ClickableRangeInstanceObject, DoorRangeInstanceObject, EventRangeInstanceObject,
-    ExitRangeInstanceObject, ExitType, FateRangeInstanceObject, GimmickRangeInstanceObject,
-    MapRangeInstanceObject, PopRangeInstanceObject, PopType, PrefetchRangeInstanceObject,
+    ClickableRangeInstanceObject, DoorRangeInstanceObject, EventEffectRangeInstanceObject,
+    EventRangeInstanceObject, ExitRangeInstanceObject, ExitType, FateRangeInstanceObject,
+    GameContentsRangeInstanceObject, GimmickRangeInstanceObject, MapRangeInstanceObject,
+    PopRangeInstanceObject, PopType, PrefetchRangeInstanceObject, ShowHideRangeInstanceObject,
+    WaterRangeInstanceObject,
 };
 
 mod shared_group;
@@ -174,13 +175,13 @@ pub enum LayerEntryType {
     /// 2D decal drawn on top of a 3D object.
     Decal = 83,
     /// Unknown object.
-    ColliderLayer7 = 86,
+    WaterRange = 86,
     /// Unknown object.
-    ColliderLayer8 = 87,
+    ShowHideRange = 87,
     /// Unknown object.
-    ColliderLayer9 = 88,
+    GameContentsRange = 88,
     /// Unknown object.
-    ColliderLayer10 = 89,
+    EventEffectRange = 89,
     /// Unknown object.
     CullingBox = 90,
     /// Unknown object.
@@ -232,10 +233,10 @@ impl From<&LayerEntryData> for LayerEntryType {
             LayerEntryData::NaviMeshRange() => LayerEntryType::NaviMeshRange,
             LayerEntryData::SphereCastRange() => LayerEntryType::SphereCastRange,
             LayerEntryData::Decal(_) => LayerEntryType::Decal,
-            LayerEntryData::ColliderLayer7(_) => LayerEntryType::ColliderLayer7,
-            LayerEntryData::ColliderLayer8(_) => LayerEntryType::ColliderLayer8,
-            LayerEntryData::ColliderLayer9(_) => LayerEntryType::ColliderLayer9,
-            LayerEntryData::ColliderLayer10(_) => LayerEntryType::ColliderLayer10,
+            LayerEntryData::WaterRange(_) => LayerEntryType::WaterRange,
+            LayerEntryData::ShowHideRange(_) => LayerEntryType::ShowHideRange,
+            LayerEntryData::GameContentsRange(_) => LayerEntryType::GameContentsRange,
+            LayerEntryData::EventEffectRange(_) => LayerEntryType::EventEffectRange,
             LayerEntryData::CullingBox(_) => LayerEntryType::CullingBox,
             LayerEntryData::Unk91() => LayerEntryType::Unk91,
             LayerEntryData::Unk92() => LayerEntryType::Unk92,
@@ -325,14 +326,14 @@ pub enum LayerEntryData {
     SphereCastRange(),
     #[br(pre_assert(*magic == LayerEntryType::Decal))]
     Decal(#[brw(args(string_heap, heap_pointer))] DecalInstanceObject),
-    #[br(pre_assert(*magic == LayerEntryType::ColliderLayer7))]
-    ColliderLayer7(ColliderLayer7InstanceObject),
-    #[br(pre_assert(*magic == LayerEntryType::ColliderLayer8))]
-    ColliderLayer8(ColliderLayer8InstanceObject),
-    #[br(pre_assert(*magic == LayerEntryType::ColliderLayer9))]
-    ColliderLayer9(ColliderLayer9InstanceObject),
-    #[br(pre_assert(*magic == LayerEntryType::ColliderLayer10))]
-    ColliderLayer10(ColliderLayer10InstanceObject),
+    #[br(pre_assert(*magic == LayerEntryType::WaterRange))]
+    WaterRange(WaterRangeInstanceObject),
+    #[br(pre_assert(*magic == LayerEntryType::ShowHideRange))]
+    ShowHideRange(ShowHideRangeInstanceObject),
+    #[br(pre_assert(*magic == LayerEntryType::GameContentsRange))]
+    GameContentsRange(GameContentsRangeInstanceObject),
+    #[br(pre_assert(*magic == LayerEntryType::EventEffectRange))]
+    EventEffectRange(EventEffectRangeInstanceObject),
     #[br(pre_assert(*magic == LayerEntryType::CullingBox))]
     CullingBox(CullingBoxInstanceObject),
     #[br(pre_assert(*magic == LayerEntryType::Unk91))]

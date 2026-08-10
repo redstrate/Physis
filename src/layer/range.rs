@@ -193,3 +193,39 @@ pub struct DoorRangeInstanceObject {
 pub struct RangeInstanceObject {
     unk1: i32,
 }
+
+/// Unknown object.
+#[binrw]
+#[derive(Debug, PartialEq, Clone, Default)]
+pub struct WaterRangeInstanceObject {
+    pub parent_data: TriggerBoxInstanceObject,
+    #[br(map = read_bool_from::<u8>)]
+    #[bw(map = write_bool_as::<u8>)]
+    pub unk1: bool,
+    #[br(map = read_bool_from::<u8>)]
+    #[bw(map = write_bool_as::<u8>)]
+    pub unk2: bool,
+}
+
+/// Unknown object.
+#[binrw]
+#[derive(Debug, PartialEq, Clone, Default)]
+pub struct ShowHideRangeInstanceObject {
+    pub parent_data: TriggerBoxInstanceObject,
+    pub unk_offset: i32,
+    pub unk_count: u32,
+}
+
+/// Unknown object.
+#[binrw]
+#[derive(Debug, PartialEq, Clone, Default)]
+pub struct GameContentsRangeInstanceObject {
+    pub parent_data: TriggerBoxInstanceObject,
+}
+
+/// Unknown object.
+#[binrw]
+#[derive(Debug, PartialEq, Clone, Default)]
+pub struct EventEffectRangeInstanceObject {
+    pub parent_data: TriggerBoxInstanceObject,
+}
