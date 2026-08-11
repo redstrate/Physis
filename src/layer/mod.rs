@@ -53,8 +53,8 @@ pub use range::{
     ClickableRangeInstanceObject, DoorRangeInstanceObject, EventEffectRangeInstanceObject,
     EventRangeInstanceObject, ExitRangeInstanceObject, ExitType, FateRangeInstanceObject,
     GameContentsRangeInstanceObject, GimmickRangeInstanceObject, MapRangeInstanceObject,
-    PopRangeInstanceObject, PopType, PrefetchRangeInstanceObject, ShowHideRangeInstanceObject,
-    WaterRangeInstanceObject,
+    PopRangeInstanceObject, PopType, PrefetchRangeInstanceObject, RangeShape,
+    ShowHideRangeInstanceObject, WaterRangeInstanceObject,
 };
 
 mod shared_group;

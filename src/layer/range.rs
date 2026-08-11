@@ -187,11 +187,24 @@ pub struct DoorRangeInstanceObject {
     pub parent_data: RangeInstanceObject,
 }
 
+#[binrw]
+#[repr(u32)]
+#[brw(repr = u32)]
+#[derive(Debug, PartialEq, Clone, Copy, Default)]
+pub enum RangeShape {
+    #[default]
+    None,
+    Box,
+    Sphere,
+    Cylinder,
+    Plane,
+}
+
 /// Base struct for range objects.
 #[binrw]
 #[derive(Debug, PartialEq, Clone, Default)]
 pub struct RangeInstanceObject {
-    unk1: i32,
+    pub shape: RangeShape,
 }
 
 /// Provides underwater effects like bubbles and swimming.
