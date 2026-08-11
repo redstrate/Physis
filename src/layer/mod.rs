@@ -73,7 +73,7 @@ pub use treasure::TreasureInstanceObject;
 
 mod vfx;
 pub use vfx::{
-    DecalInstanceObject, LineStyle, LineVFXInstanceObject, VFXInstanceObject,
+    DecalInstanceObject, LineStyle, LineVFXInstanceObject, VfxInstanceObject,
     VolumetricCloudInstanceObject,
 };
 
@@ -261,7 +261,7 @@ pub enum LayerEntryData {
     #[br(pre_assert(*magic == LayerEntryType::Light))]
     Light(#[brw(args(string_heap, heap_pointer))] LightInstanceObject),
     #[br(pre_assert(*magic == LayerEntryType::Vfx))]
-    Vfx(#[brw(args(string_heap, heap_pointer))] VFXInstanceObject),
+    Vfx(#[brw(args(string_heap, heap_pointer))] VfxInstanceObject),
     #[br(pre_assert(*magic == LayerEntryType::PositionMarker))]
     PositionMarker(PositionMarkerInstanceObject),
     #[br(pre_assert(*magic == LayerEntryType::SharedGroup))]
