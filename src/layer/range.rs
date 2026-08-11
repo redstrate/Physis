@@ -194,14 +194,16 @@ pub struct RangeInstanceObject {
     unk1: i32,
 }
 
-/// Unknown object.
+/// Provides underwater effects like bubbles and swimming.
 #[binrw]
 #[derive(Debug, PartialEq, Clone, Default)]
 pub struct WaterRangeInstanceObject {
     pub parent_data: TriggerBoxInstanceObject,
+    /// If false, the underwater effect is not visible and you don't swim if spawned inside.
     #[br(map = read_bool_from::<u8>)]
     #[bw(map = write_bool_as::<u8>)]
-    pub unk1: bool,
+    pub enabled: bool,
+    /// This doesn't seem to do anything? It's definitely read.
     #[br(map = read_bool_from::<u8>)]
     #[bw(map = write_bool_as::<u8>)]
     pub unk2: bool,

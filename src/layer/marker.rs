@@ -82,6 +82,6 @@ pub enum TargetMarkerType {
 #[binrw]
 #[derive(Debug, PartialEq, Clone, Default)]
 pub struct TargetMarkerInstanceObject {
-    pub nameplate_offset_y: f32,
+    #[brw(pad_before = 4)] // not read?
     pub target_marker_type: TargetMarkerType,
 }

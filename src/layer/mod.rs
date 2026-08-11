@@ -174,7 +174,7 @@ pub enum LayerEntryType {
     SphereCastRange = 75,
     /// 2D decal drawn on top of a 3D object.
     Decal = 83,
-    /// Unknown object.
+    /// Provides underwater effects like bubbles and swimming.
     WaterRange = 86,
     /// Unknown object.
     ShowHideRange = 87,
