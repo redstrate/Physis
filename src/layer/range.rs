@@ -216,7 +216,7 @@ pub struct WaterRangeInstanceObject {
     #[br(map = read_bool_from::<u8>)]
     #[bw(map = write_bool_as::<u8>)]
     pub enabled: bool,
-    /// This doesn't seem to do anything? It's definitely read.
+    /// Controls something in the environment ala The Tempest.
     #[br(map = read_bool_from::<u8>)]
     #[bw(map = write_bool_as::<u8>)]
     pub unk2: bool,
