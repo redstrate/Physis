@@ -6,7 +6,6 @@ use crate::havok::byte_reader::ByteReader;
 use crate::havok::object::HavokObject;
 use crate::havok::transform::HavokTransform;
 use core::{cell::RefCell, cmp};
-use std::f32;
 use std::sync::Arc;
 
 #[repr(u8)]
@@ -206,8 +205,8 @@ impl HavokSplineCompressedAnimation {
         let b = low - a * a;
         let c = if a == 0. { f32::MAX } else { 1. / (a + a) };
 
-        let theta = a / 511.0 * (f32::consts::PI / 2.);
-        let phi = b * c * (f32::consts::PI / 2.);
+        let theta = a / 511.0 * (std::f32::consts::PI / 2.);
+        let phi = b * c * (std::f32::consts::PI / 2.);
 
         // spherical coordinate to cartesian coordinate
         let mut result = [
