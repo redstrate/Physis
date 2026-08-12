@@ -182,7 +182,7 @@ pub enum LayerEntryType {
     GameContentsRange = 88,
     /// Unknown object.
     EventEffectRange = 89,
-    /// Unknown object.
+    /// Anything occluded by this object is not drawn.
     CullingBox = 90,
     /// Unknown object.
     Unk91 = 91,

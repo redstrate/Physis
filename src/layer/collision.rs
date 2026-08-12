@@ -135,9 +135,10 @@ pub struct TriggerBoxInstanceObject {
     pub enabled: bool,
 }
 
-/// Unknown object.
+/// Anything occluded by this object is not drawn.
 #[binrw]
 #[derive(Debug, PartialEq, Clone, Default)]
 pub struct CullingBoxInstanceObject {
-    unk1: u32,
+    /// Doesn't seem to do anything.
+    pub unk1: u32,
 }
