@@ -387,20 +387,17 @@ pub struct LayerHeader {
     #[bw(map = write_bool_as::<u8>)]
     pub visible: bool,
 
-    /// Whether this layer is supposed to be read-only in tool mode.
     #[br(map = read_bool_from::<u8>)]
     #[bw(map = write_bool_as::<u8>)]
-    pub tool_mode_read_only: bool,
+    pub unk1: bool,
 
-    /// Whether this is a bush layer.
     #[br(map = read_bool_from::<u8>)]
     #[bw(map = write_bool_as::<u8>)]
-    pub is_bush_layer: bool,
+    pub unk2: bool,
 
-    /// If this layer should be visible on the Playstation 3.
     #[br(map = read_bool_from::<u8>)]
     #[bw(map = write_bool_as::<u8>)]
-    pub ps3_visible: bool,
+    pub unk3: bool,
 
     #[br(temp)]
     #[bw(calc = data_heap.get_free_offset_args(&layer_set_referenced_list).saturating_sub(heap_pointer.pos as i32) - 12)]
@@ -417,18 +414,15 @@ pub struct LayerHeader {
     /// Only show this layer if this festival phase ID is active..
     pub festival_phase_id: u16,
 
-    /// Whether this layer is temporary.
     #[br(map = read_bool_from::<u8>)]
     #[bw(map = write_bool_as::<u8>)]
-    pub is_temporary: bool,
+    pub unk4: bool,
 
-    /// Whether this is a housing-related layer.
     #[br(map = read_bool_from::<u8>)]
     #[bw(map = write_bool_as::<u8>)]
-    pub is_housing: bool,
+    pub unk5: bool,
 
-    /// Unknown purpose, but probably version related.
-    pub version_mask: u16,
+    pub unk6: u16,
 
     #[brw(pad_before = 4)]
     #[br(temp)]
@@ -484,15 +478,15 @@ impl Default for LayerHeader {
             instance_object_offset: Default::default(),
             instance_object_count: Default::default(),
             visible: true,
-            tool_mode_read_only: Default::default(),
-            is_bush_layer: Default::default(),
-            ps3_visible: Default::default(),
+            unk1: Default::default(),
+            unk2: Default::default(),
+            unk3: Default::default(),
             layer_set_referenced_list: Default::default(),
             festival_id: Default::default(),
             festival_phase_id: Default::default(),
-            is_temporary: Default::default(),
-            is_housing: Default::default(),
-            version_mask: Default::default(),
+            unk4: Default::default(),
+            unk5: Default::default(),
+            unk6: Default::default(),
             object_set_referenced: Default::default(),
             object_set_enable_referenced: Default::default(),
         }
