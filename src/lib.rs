@@ -110,7 +110,7 @@ pub mod uld;
 /// Types for shared group binary (`.sgb`) files.
 pub mod sgb;
 
-/// Types for `.scd` files.
+/// Types for sound compressed data (`.scd`) files.
 pub mod scd;
 
 /// Types for hardware cursor (`.hwc`) files.
