@@ -222,10 +222,11 @@ impl StringHeap {
         let old_pos = reader.stream_position().unwrap();
         reader
             .seek(SeekFrom::Start(
-                (self.pos as i32 + heap_pointer.pos as i32 + offset) as u64,
+                (self.pos + heap_pointer.pos as i64 + offset as i64) as u64,
             ))
             .unwrap();
 
+        // HACK: This fails on bg/ffxiv/sea_s1/shared/for_vfx/sgvf_f1t1_taki1.sgb for some reason. It has a negative offset?
         let obj: Vec<T> = reader
             .read_type_args(
                 endian,
@@ -234,7 +235,7 @@ impl StringHeap {
                     .inner((string_heap,))
                     .finalize(),
             )
-            .unwrap();
+            .unwrap_or_default();
         reader.seek(SeekFrom::Start(old_pos)).unwrap();
         obj
     }
