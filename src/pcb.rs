@@ -5,6 +5,7 @@ use std::io::Cursor;
 use std::io::Seek;
 use std::io::SeekFrom;
 
+use crate::AABB;
 use crate::ByteBuffer;
 use crate::ByteSpan;
 use crate::ReadableFile;
@@ -110,14 +111,6 @@ impl Node {
 
         count
     }
-}
-
-#[binrw]
-#[derive(Debug, Clone, PartialEq, Default)]
-#[allow(dead_code)]
-pub struct AABB {
-    pub min: [f32; 3],
-    pub max: [f32; 3],
 }
 
 #[binrw]

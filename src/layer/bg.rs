@@ -6,12 +6,12 @@ use std::io::SeekFrom;
 use binrw::binrw;
 
 use crate::{
+    AABB,
     common_file_operations::write_bool_as,
     layer::{
         Transformation,
         collision::{CollisionAttributes, read_collision_attributes, write_collision_attributes},
     },
-    pcb::AABB,
     string_heap::{HeapPointer, HeapString},
 };
 

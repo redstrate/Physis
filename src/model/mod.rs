@@ -327,6 +327,7 @@ fn write_bone_tables_v2(bone_tables_v2: &BoneTablesV2) -> BinResult<()> {
     Ok(())
 }
 
+// TODO: Replace with AABB type eventually I guess, but it's padded to 16 bytes.
 #[binrw]
 #[derive(Default, Debug, Clone, Copy, PartialEq)]
 #[allow(dead_code)]

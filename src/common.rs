@@ -399,6 +399,15 @@ pub struct ColorIntensity {
     pub intensity: f32,
 }
 
+/// A bounding box defined by min and max coordinates.
+#[binrw]
+#[derive(Debug, Clone, PartialEq, Default)]
+#[allow(dead_code)]
+pub struct AABB {
+    pub min: [f32; 3],
+    pub max: [f32; 3],
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
