@@ -125,6 +125,7 @@ pub struct Texture {
     pub depth: u16,
     #[br(map = |x: u8| x & 127)] // last bit is unknown
     pub mip_levels: u8,
+    /// Only applicable to `TEXTURE_TYPE2_D_ARRAY` because its zero otherwise.
     array_size: u8,
     lod_offsets: [u32; 3],
     offset_to_surface: [u32; 13],
@@ -157,6 +158,44 @@ impl WritableFile for Texture {
 }
 
 impl Texture {
+    const HEADER_SIZE: usize = 80;
+
+    pub fn layers(&self) -> u8 {
+        if self
+            .attribute
+            .contains(TextureAttribute::TEXTURE_TYPE2_D_ARRAY)
+        {
+            return self.array_size;
+        }
+        if self.attribute.contains(TextureAttribute::TEXTURE_TYPE_CUBE) {
+            return 6;
+        }
+        1
+    }
+
+    pub fn mip_data(&self, level: u8) -> Option<(usize, usize)> {
+        if level >= self.mip_levels {
+            return None;
+        }
+
+        let offset = |level: u8| -> Option<usize> {
+            let raw = *self.offset_to_surface.get(usize::from(level))? as usize;
+            raw.checked_sub(Self::HEADER_SIZE)
+        };
+        let start = offset(level)?;
+        // The next level's offset bounds this one; the last runs to the end of the data.
+        let end = match offset(level + 1) {
+            Some(end) if level + 1 < self.mip_levels && end > start => end,
+            _ => self.data.len(),
+        };
+        Some((start, end.min(self.data.len())))
+    }
+
+    pub fn mip_size(&self, level: u8) -> (u16, u16) {
+        let shift = u32::from(level).min(u16::BITS - 1);
+        ((self.width >> shift).max(1), (self.height >> shift).max(1))
+    }
+
     fn decode(src: &[u8], width: usize, height: usize, decode_func: DecodeFunction) -> Vec<u8> {
         let mut image: Vec<u32> = vec![0; width * height];
         decode_func(src, width, height, &mut image).unwrap();
