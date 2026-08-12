@@ -101,10 +101,8 @@ pub struct LightInstanceObject {
     /// Only used if `is_dawntrail` is true.
     pub unk8: f32,
     /// Only used if `is_dawntrail` is true.
-    #[br(map = read_bool_from::<u8>)]
-    #[bw(map = write_bool_as::<u8>)]
     #[brw(pad_after = 3)] // padding, not read
-    pub unk9: bool,
+    pub unk9: u8, // TODO: it might be a boolean, there's a 30 sometimes but that's probably a fluke.
     #[br(map = read_dawntrail_marker)]
     #[bw(map = write_dawntrail_marker)]
     pub is_dawntrail: bool,
@@ -136,7 +134,7 @@ impl Default for LightInstanceObject {
             unk6: 4.0,
             unk7: 0,
             unk8: 0.0,
-            unk9: false,
+            unk9: 0,
             is_dawntrail: true,
         }
     }

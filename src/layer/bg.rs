@@ -1,13 +1,17 @@
 // SPDX-FileCopyrightText: 2025 Joshua Goins <josh@redstrate.com>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+use std::io::SeekFrom;
+
 use binrw::binrw;
 
 use crate::{
     common_file_operations::write_bool_as,
-    layer::collision::{
-        CollisionAttributes, read_collision_attributes, write_collision_attributes,
+    layer::{
+        Transformation,
+        collision::{CollisionAttributes, read_collision_attributes, write_collision_attributes},
     },
+    pcb::AABB,
     string_heap::{HeapPointer, HeapString},
 };
 
@@ -58,12 +62,16 @@ pub struct BgPartInstanceObject {
     #[br(parse_with = read_collision_attributes)]
     #[bw(write_with = write_collision_attributes)]
     pub collision_attributes: CollisionAttributes,
-    pub unk_offset: i32, // TODO: probably some sort of collision config?
+    #[br(temp)]
+    #[bw(calc = 0)]
+    offset_collider_analytic_data: i32,
+    #[br(if(offset_collider_analytic_data != 0), restore_position, seek_before = SeekFrom::Current(offset_collider_analytic_data as i64 - 80))]
+    pub analytic_collider: Option<AnalyticCollider>,
     /// Controls whether the render model is visible.
     /// Unknown effect on the collision mesh.
     #[br(map = read_bool_from::<u8>)]
     #[bw(map = write_bool_as::<u8>)]
-    pub visible: bool,
+    pub visible: bool, // NOTE: I'm not sure why, but something in retail puts 255 here. That's still considered "true" but that's strange.
     /// Controls whether the visual model will cast shadows from the world light.
     /// Has no effect if the model has no shadow mesh?
     #[br(try)]
@@ -87,7 +95,7 @@ impl Default for BgPartInstanceObject {
             collision_asset_path: Default::default(),
             collision_type: Default::default(),
             collision_attributes: Default::default(),
-            unk_offset: Default::default(),
+            analytic_collider: None,
             visible: true,
             world_light_shadow_mode: Default::default(),
             object_light_shadow_mode: Default::default(),
@@ -95,4 +103,29 @@ impl Default for BgPartInstanceObject {
             bounding_sphere_size: Default::default(),
         }
     }
+}
+
+#[binrw]
+#[derive(Debug, PartialEq, Clone)]
+pub struct AnalyticCollider {
+    pub material_mask: u32,
+    pub material_id: u32,
+    pub unk1: u32,
+    pub unk2: u32,
+    pub collider_type: AnalyticColliderType,
+    pub transform: Transformation,
+    pub bounds: AABB,
+}
+
+#[binrw]
+#[repr(u32)]
+#[brw(repr = u32)]
+#[derive(Debug, PartialEq, Clone, Copy, Default)]
+pub enum AnalyticColliderType {
+    #[default]
+    None,
+    Box,
+    Sphere,
+    Cylinder,
+    Plane,
 }

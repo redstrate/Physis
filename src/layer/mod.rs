@@ -14,7 +14,9 @@ mod aetheryte;
 pub use aetheryte::AetheryteInstanceObject;
 
 mod bg;
-pub use bg::{BgPartInstanceObject, ModelCollisionType, ShadowMode};
+pub use bg::{
+    AnalyticCollider, AnalyticColliderType, BgPartInstanceObject, ModelCollisionType, ShadowMode,
+};
 
 mod collision;
 pub use collision::{
