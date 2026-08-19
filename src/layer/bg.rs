@@ -129,3 +129,19 @@ pub enum AnalyticColliderType {
     Cylinder,
     Plane,
 }
+
+/// Displays a weapon model.
+#[binrw]
+#[derive(Debug, PartialEq, Clone)]
+#[br(import(string_heap: &StringHeap, heap_pointer: HeapPointer))]
+#[bw(import(string_heap: &mut StringHeap, heap_pointer: HeapPointer))]
+pub struct WeaponInstanceObject {
+    /// ID of the weapon to spawn.
+    pub weapon_id: u32,
+    /// Which variant of the animation to use, I guess?
+    pub animation_variant: u32,
+    /// Whether the weapon is visible or not.
+    #[br(map = read_bool_from::<u32>)]
+    #[bw(map = write_bool_as::<u32>)]
+    pub visible: bool,
+}

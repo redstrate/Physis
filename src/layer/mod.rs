@@ -16,6 +16,7 @@ pub use aetheryte::AetheryteInstanceObject;
 mod bg;
 pub use bg::{
     AnalyticCollider, AnalyticColliderType, BgPartInstanceObject, ModelCollisionType, ShadowMode,
+    WeaponInstanceObject,
 };
 
 mod collision;
@@ -126,11 +127,9 @@ pub enum LayerEntryType {
     ///
     /// This is stripped out of retail data, and is not used by the client.
     Gathering = 14,
-    /// Unknown object.
-    HelperObject = 15,
     /// Treasure object.
     Treasure = 16,
-    /// Unknown object.
+    /// Displays a weapon model.
     Weapon = 39,
     /// Generic range for characters to spawn in.
     PopRange = 40,
@@ -230,8 +229,7 @@ impl From<&LayerEntryData> for LayerEntryType {
             LayerEntryData::PrefetchRange(_) => LayerEntryType::PrefetchRange,
             LayerEntryData::FateRange(_) => LayerEntryType::FateRange,
             LayerEntryData::DoorRange(_) => LayerEntryType::DoorRange,
-            LayerEntryData::HelperObject() => LayerEntryType::HelperObject,
-            LayerEntryData::Weapon() => LayerEntryType::Weapon,
+            LayerEntryData::Weapon(_) => LayerEntryType::Weapon,
             LayerEntryData::NaviMeshRange() => LayerEntryType::NaviMeshRange,
             LayerEntryData::SphereCastRange() => LayerEntryType::SphereCastRange,
             LayerEntryData::Decal(_) => LayerEntryType::Decal,
@@ -280,12 +278,10 @@ pub enum LayerEntryData {
     EnvSpace(#[brw(args(string_heap, heap_pointer))] EnvSpaceInstanceObject),
     #[br(pre_assert(*magic == LayerEntryType::Gathering))]
     Gathering(GatheringInstanceObject),
-    #[br(pre_assert(*magic == LayerEntryType::HelperObject))]
-    HelperObject(),
     #[br(pre_assert(*magic == LayerEntryType::Treasure))]
     Treasure(TreasureInstanceObject),
     #[br(pre_assert(*magic == LayerEntryType::Weapon))]
-    Weapon(),
+    Weapon(#[brw(args(string_heap, heap_pointer))] WeaponInstanceObject),
     #[br(pre_assert(*magic == LayerEntryType::PopRange))]
     PopRange(PopRangeInstanceObject),
     #[br(pre_assert(*magic == LayerEntryType::ExitRange))]

@@ -227,8 +227,16 @@ pub struct WaterRangeInstanceObject {
 #[derive(Debug, PartialEq, Clone, Default)]
 pub struct ShowHideRangeInstanceObject {
     pub parent_data: TriggerBoxInstanceObject,
-    pub unk_offset: i32,
-    pub unk_count: u32,
+    #[br(temp)]
+    #[bw(calc = 68)]
+    layer_set_reference_offset: i32,
+    #[br(temp)]
+    #[bw(calc = layer_set_references.len() as u32)]
+    layer_set_reference_count: u32,
+
+    /// List of layer set IDs.
+    #[br(restore_position, seek_before = SeekFrom::Current(layer_set_reference_offset as i64 - 68), count = layer_set_reference_count)]
+    pub layer_set_references: Vec<u32>,
 }
 
 /// Unknown object.
