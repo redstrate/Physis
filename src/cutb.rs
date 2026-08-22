@@ -134,7 +134,7 @@ pub struct CTDSNode {
     #[br(seek_before = SeekFrom::Current(offset_to_level as i64 - 76))] // 76 is the offset within this node, yes i know it's bad
     #[br(restore_position, parse_with = read_string_until_null)]
     #[bw(ignore)]
-    level_name: String,
+    pub level_name: String,
     unk3: [u32; 2], // seems to be empty
     #[br(count = num_entries)]
     entries: Vec<u64>,
