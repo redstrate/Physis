@@ -365,6 +365,7 @@ pub enum TerritoryIntendedUse {
     AirForceOne = 64,
     /// ???
     KeyboundBrawler = 65,
+    Unknown66 = 66,
 }
 
 /// 32-bit color.
