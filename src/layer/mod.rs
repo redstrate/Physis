@@ -103,9 +103,10 @@ pub struct GameObjectInstanceObject {
     pub base_id: u32,
 }
 
-// From https://github.com/NotAdam/Lumina/tree/40dab50183eb7ddc28344378baccc2d63ae71d35/src/Lumina/Data/Parsing/Layer
-// Also see https://github.com/aers/FFXIVClientStructs/blob/6b62122cae38bfbc016bf697bef75f80f37abac1/FFXIVClientStructs/FFXIV/Client/LayoutEngine/ILayoutInstance.cs
-// Note that this doesn't include *everything*, only the things actually read by the client from an LGB file. FFXIVClientStructs also covers stuff that only exists in-memory during gameplay.
+/// What kind of InstanceObject this is.
+///
+/// See <https://github.com/aers/FFXIVClientStructs/blob/main/FFXIVClientStructs/FFXIV/Client/LayoutEngine/ILayoutInstance.cs>.
+/// Our enum only includes types that are read by the client from LGB files.
 #[binrw]
 #[brw(repr = i32)]
 #[repr(i32)]
@@ -363,10 +364,10 @@ pub enum LayerEntryData {
 #[derive(Debug, PartialEq, Default, Copy, Clone)]
 pub enum LayerSetReferencedType {
     #[default]
-    All = 0x0,
-    Include = 0x1,
-    Exclude = 0x2,
-    Undetermined = 0x3,
+    All = 0,
+    Include = 1,
+    Exclude = 2,
+    Undetermined = 3,
 }
 
 /// Metadata information for a [Layer].
