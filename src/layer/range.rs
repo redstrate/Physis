@@ -51,7 +51,9 @@ pub struct MapRangeInstanceObject {
     pub weather: u32,
     #[brw(pad_after = 8)] // Not read by the client
     pub bgm: u32,
-    pub unk1: u8,
+    #[br(map = read_bool_from::<u8>)]
+    #[bw(map = write_bool_as::<u8>)]
+    pub unk1: bool,
     /// If `housing_enabled` is true and this is not zero, refers to the housing subdivision this range covers.
     pub housing_subdivision: u8,
     /// If `housing_enabled` is true and this is not 255, refers to the housing block this range covers.
