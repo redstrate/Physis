@@ -78,15 +78,17 @@ pub struct ScnSection {
     /// offset to a list of path offsets (ints)
     offset_layer_group_resources: i32,
     num_layer_group_resources: i32,
-    unk2: i32,
+    /// Used for some cutscene SGBs and one bossline?
+    offset_unk1: i32,
     offset_action_descriptors: i32,
-    unk4: i32,
-    unk5: i32,
+    /// Used for some cutscene SGBs and one bossline?
+    offset_unk2: i32,
+    /// Used for some cutscene SGBs and one bossline?
+    offset_unk3: i32,
     offset_stain_info: i32,
-    unk7: i32,
-    unk8: i32,
-    unk9: i32,
-    unk10: i32,
+    /// Used for some cutscene SGBs.
+    #[brw(pad_after = 12)] // Not used or set as far as I can tell
+    offset_unk4: i32,
 
     /// List of embedded layer groups.
     #[br(count = num_layer_groups, args { inner: (string_heap,) })]
