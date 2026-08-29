@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: 2025 Joshua Goins <josh@redstrate.com>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+#![allow(unused)] // Clippy thinks SIZE is unused, but binrw uses it
+
 use std::io::SeekFrom;
 
 use binrw::binrw;
@@ -107,7 +109,7 @@ pub struct MovePathSettings {
 }
 
 impl MovePathSettings {
-    pub const SIZE: usize = 60;
+    const SIZE: usize = 60;
 }
 
 /// Instance of a shared group object.
@@ -151,7 +153,7 @@ pub struct SharedGroupInstance {
 }
 
 impl SharedGroupInstance {
-    pub const SIZE: usize = 92;
+    const SIZE: usize = 92;
 }
 
 #[cfg(test)]

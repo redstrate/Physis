@@ -464,8 +464,6 @@ pub struct LayerHeader {
 }
 
 impl LayerHeader {
-    pub const SIZE: usize = 0x34;
-
     /// Whether this layer set ID is included or excluded.
     pub fn has_layer_set(&self, id: u32) -> bool {
         match self.layer_set_referenced_list.referenced_type {
@@ -634,14 +632,5 @@ impl Layer {
         }
 
         Ok(Layer { header, objects })
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn test_layerheader_size() {
-        // FIXME: Needs StringHeap
-        // ensure_size::<LayerHeader, { LayerHeader::SIZE }>();
     }
 }

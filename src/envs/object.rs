@@ -111,5 +111,5 @@ pub struct ObjectRgbaColor {
 }
 
 impl ObjectRgbaColor {
-    pub const SIZE: usize = 8;
+    const SIZE: usize = 8;
 }

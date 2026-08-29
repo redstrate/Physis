@@ -55,7 +55,7 @@ pub(crate) struct DataSectionHeader {
 }
 
 impl DataSectionHeader {
-    pub const SIZE: usize = 6;
+    pub(crate) const SIZE: usize = 6;
 }
 
 #[binrw]

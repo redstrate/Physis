@@ -154,7 +154,7 @@ pub struct DrawVertex {
 }
 
 impl DrawVertex {
-    pub const SIZE: usize = 36; // Serialized size
+    const SIZE: usize = 36; // Serialized size
 }
 
 fn read_half4(data: [u16; 4]) -> [f32; 4] {

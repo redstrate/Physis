@@ -69,7 +69,7 @@ pub struct SvcEntry {
 }
 
 impl SvcEntry {
-    pub const SIZE: u32 = 12;
+    const SIZE: u32 = 12;
 }
 
 impl ReadableFile for Svb {
