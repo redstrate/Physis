@@ -987,9 +987,9 @@ mod tests {
     use super::*;
 
     // Prepares a temporary data directory to use
-    fn prepare_data_dir() -> String {
+    fn prepare_data_dir(name: &str) -> String {
         let mut dir = std::env::temp_dir();
-        dir.push("physis-patch-tests");
+        dir.push(format!("physis-patch-tests-{name}"));
         if dir.exists() {
             fs::remove_dir_all(&dir).unwrap();
         }
@@ -1005,7 +1005,7 @@ mod tests {
         d.push("resources/tests");
         d.push("random");
 
-        let data_dir = prepare_data_dir();
+        let data_dir = prepare_data_dir("test-invalid");
 
         write(data_dir.clone() + "/test.patch", read(d).unwrap()).unwrap();
 
@@ -1023,7 +1023,7 @@ mod tests {
         d.push("resources/tests");
         d.push("random");
 
-        let data_dir = prepare_data_dir();
+        let data_dir = prepare_data_dir("test-add-file-op");
 
         let mut resources_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
         resources_dir.push("resources/tests");
