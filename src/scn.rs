@@ -179,8 +179,13 @@ pub struct ScnGeneralSection {
     #[bw(calc = HeapPointer::from_stream(w))]
     heap_pointer: HeapPointer,
 
-    flags1: [u8; 4],
+    /// If false, the client doesn't load anything from `lgb_paths`.
+    #[br(map = read_bool_from::<u8>)]
+    #[bw(map = write_bool_as::<u8>)]
+    pub use_layer_group_resources: bool,
+    flags1: [u8; 3],
 
+    /// The client uses this to load other files like terrain.
     #[brw(args(heap_pointer, string_heap))]
     pub bg_path: HeapString,
 
@@ -198,9 +203,14 @@ pub struct ScnGeneralSection {
 
     // All these floats are also environmental data!
     unk2: f32,
+    /// Controls something related to how shadows from the sky light are positioned.
+    ///
+    /// If zero, the shadow does not follow the sun/moon position in the sky.
     unk3: f32,
     unk4: f32,
+    /// Controls something related to shadows from the sky light.
     unk5: f32,
+    /// Controls something related to the sky light contribution. Setting it to zero makes terrain super dark.
     unk6: f32,
     unk7: f32,
     unk8_offset: i32,
@@ -229,6 +239,9 @@ pub struct ScnGeneralSection {
     #[bw(write_with = write_env_spaces, args(string_heap))]
     pub env_spaces: Vec<ScnEnvSpace>,
 
+    /// List of weather used in this scene.
+    ///
+    /// If the client tries to load a weather not present in the list, the sky will appear black.
     #[br(count = 32)]
     #[br(seek_before = SeekFrom::Current(weather_ids_offset as i64 - ScnGeneralSection::SIZE as i64 + 4))]
     #[br(restore_position)]
