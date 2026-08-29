@@ -39,7 +39,7 @@ struct LayerChunkHeader {
     #[bw(calc = HeapPointer::from_stream(w))]
     heap_pointer: HeapPointer,
 
-    layer_group_id: i32,
+    layer_group_id: u32,
 
     /// Name of this layer.
     #[brw(args(heap_pointer, string_heap))]
@@ -56,7 +56,7 @@ impl LayerChunkHeader {
 #[derive(Debug)]
 pub struct LayerChunk {
     /// The ID of this chunk.
-    pub layer_group_id: i32,
+    pub layer_group_id: u32,
     /// Name of this layer chunk.
     pub name: String,
     /// The layers in this chunk.

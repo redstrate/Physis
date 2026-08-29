@@ -80,6 +80,21 @@ pub use vfx::{
     VolumetricCloudInstanceObject,
 };
 
+/// Layer group ID for "Shared" layer groups.
+pub const SHARED_LAYER_GROUP_ID: u32 = 256;
+/// Layer group ID for "VFX" layer groups.
+pub const VFX_LAYER_GROUP_ID: u32 = 257;
+/// Layer group ID for "Planner" layer groups.
+pub const PLANNER_LAYER_GROUP_ID: u32 = 258;
+/// Layer group ID for "PlanMap" layer groups.
+pub const PLANMAP_LAYER_GROUP_ID: u32 = 259;
+/// Layer group ID for "PlanEvent" layer groups.
+pub const PLANEVENT_LAYER_GROUP_ID: u32 = 260;
+/// Layer group ID for "PlanLive" layer groups.
+pub const PLANLIVE_LAYER_GROUP_ID: u32 = 261;
+/// Layer group ID for "Sound" layer groups.
+pub const SOUND_LAYER_GROUP_ID: u32 = 262;
+
 /// Base struct for objects that refer to game data.
 #[binrw]
 #[derive(Debug, PartialEq, Clone, Copy, Default)]
