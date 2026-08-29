@@ -80,6 +80,8 @@ pub use vfx::{
     VolumetricCloudInstanceObject,
 };
 
+/// Layer group ID for "BG" layer groups.
+pub const BG_LAYER_GROUP_ID: u32 = 256;
 /// Layer group ID for "Shared" layer groups.
 pub const SHARED_LAYER_GROUP_ID: u32 = 256;
 /// Layer group ID for "VFX" layer groups.
@@ -427,7 +429,7 @@ pub struct LayerHeader {
 
     /// Only show this layer if this festival ID is active.
     pub festival_id: u16,
-    /// Only show this layer if this festival phase ID is active..
+    /// Only show this layer if this festival phase ID is active.
     pub festival_phase_id: u16,
 
     /// False in all retail layers.
@@ -438,6 +440,7 @@ pub struct LayerHeader {
     /// Sets 4 in LayerManager::Flags client-side.
     ///
     /// Seen true/false in retail layers. Might indicate whether a layer is "indoors"?
+    /// When set, the objects disappear as if the layer is invisible.
     #[br(map = read_bool_from::<u8>)]
     #[bw(map = write_bool_as::<u8>)]
     pub unk5: bool,
@@ -445,12 +448,12 @@ pub struct LayerHeader {
     /// Has various values in retail layers.
     pub unk6: u16,
 
-    /// Stored in LayerManager 0x1F client-side after casting to a char.
+    /// Refers to the housing subdivision this layer exists in. Unclear what this does in the client.
     ///
+    /// Stored in LayerManager 0x1F client-side after casting to a char.
     /// Seen as 1 or 2 in retail layers, mostly housing but also `bg/ex4/05_zon_z5/shared/for_bg/sgbg_z5r3_a1_bos03.sgb`.
-    /// Related to `unk5` in some way, I think.
     #[brw(pad_after = 2)]
-    pub unk7: u16,
+    pub housing_subdivision: u16,
 
     #[br(temp)]
     #[bw(calc = data_heap.get_free_vec_offset_args(object_set_referenced, string_heap).saturating_sub(heap_pointer.pos as i32) - 12)]
@@ -512,7 +515,7 @@ impl Default for LayerHeader {
             unk4: Default::default(),
             unk5: Default::default(),
             unk6: Default::default(),
-            unk7: Default::default(),
+            housing_subdivision: Default::default(),
             object_set_referenced: Default::default(),
             object_set_enable_referenced: Default::default(),
         }

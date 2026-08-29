@@ -52,7 +52,9 @@ pub struct MapRangeInstanceObject {
     #[brw(pad_after = 8)] // Not read by the client
     pub bgm: u32,
     pub unk1: u8,
-    pub unk2: u8,
+    /// If `housing_enabled` is true and this is not zero, refers to the housing subdivision this range covers.
+    pub housing_subdivision: u8,
+    /// If `housing_enabled` is true and this is not 255, refers to the housing block this range covers.
     pub housing_block_id: u8,
     /// Most likely affects whether the EXP bonus affects this area.
     #[br(map = read_bool_from::<u8>)]

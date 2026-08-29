@@ -125,7 +125,7 @@ pub enum TriggerBoxShape {
 
 /// Base struct for collision objects.
 #[binrw]
-#[derive(Debug, PartialEq, Clone, Default)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct TriggerBoxInstanceObject {
     pub trigger_box_shape: TriggerBoxShape,
     pub priority: i16,
@@ -133,6 +133,16 @@ pub struct TriggerBoxInstanceObject {
     #[bw(map = write_bool_as::<u8>)]
     #[brw(pad_after = 5)] // Padding, not read
     pub enabled: bool,
+}
+
+impl Default for TriggerBoxInstanceObject {
+    fn default() -> Self {
+        Self {
+            trigger_box_shape: Default::default(),
+            priority: 100,
+            enabled: true,
+        }
+    }
 }
 
 /// Anything occluded by this object is not drawn.
