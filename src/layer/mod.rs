@@ -372,25 +372,29 @@ pub struct LayerHeader {
     #[brw(args(heap_pointer, string_heap))]
     pub name: HeapString,
 
-    // TODO: remove these from public API!!
-    /// This field should be left at it's default. This will be removed in a future version.
+    /// This field should be left at it's default.
     pub instance_object_offset: i32,
-    /// This field should be left at it's default. This will be removed in a future version.
+    /// This field should be left at it's default.
     pub instance_object_count: i32,
 
-    /// Whether this layer is visible by default. If false, it does not show up in game.
+    /// Whether this layer is visible by default. If false, it does not show up in-game.
     #[br(map = read_bool_from::<u8>)]
     #[bw(map = write_bool_as::<u8>)]
-    pub visible: bool,
+    pub active: bool,
 
+    /// Sets 2 in LayerManager::Flags client-side.
+    ///
+    /// Doesn't seem to be set in any retail layers.
     #[br(map = read_bool_from::<u8>)]
     #[bw(map = write_bool_as::<u8>)]
     pub unk1: bool,
 
+    /// Always seems to be false in retail layers.
     #[br(map = read_bool_from::<u8>)]
     #[bw(map = write_bool_as::<u8>)]
     pub unk2: bool,
 
+    /// Unsure of its purpose, but can be true/false for retail layers.
     #[br(map = read_bool_from::<u8>)]
     #[bw(map = write_bool_as::<u8>)]
     pub unk3: bool,
@@ -410,17 +414,28 @@ pub struct LayerHeader {
     /// Only show this layer if this festival phase ID is active..
     pub festival_phase_id: u16,
 
+    /// False in all retail layers.
     #[br(map = read_bool_from::<u8>)]
     #[bw(map = write_bool_as::<u8>)]
     pub unk4: bool,
 
+    /// Sets 4 in LayerManager::Flags client-side.
+    ///
+    /// Seen true/false in retail layers. Might indicate whether a layer is "indoors"?
     #[br(map = read_bool_from::<u8>)]
     #[bw(map = write_bool_as::<u8>)]
     pub unk5: bool,
 
+    /// Has various values in retail layers.
     pub unk6: u16,
 
-    #[brw(pad_before = 4)]
+    /// Stored in LayerManager 0x1F client-side after casting to a char.
+    ///
+    /// Seen as 1 or 2 in retail layers, mostly housing but also `bg/ex4/05_zon_z5/shared/for_bg/sgbg_z5r3_a1_bos03.sgb`.
+    /// Related to `unk5` in some way, I think.
+    #[brw(pad_after = 2)]
+    pub unk7: u16,
+
     #[br(temp)]
     #[bw(calc = data_heap.get_free_vec_offset_args(object_set_referenced, string_heap).saturating_sub(heap_pointer.pos as i32) - 12)]
     // lol again
@@ -473,7 +488,7 @@ impl Default for LayerHeader {
             name: Default::default(),
             instance_object_offset: Default::default(),
             instance_object_count: Default::default(),
-            visible: true,
+            active: true,
             unk1: Default::default(),
             unk2: Default::default(),
             unk3: Default::default(),
@@ -483,6 +498,7 @@ impl Default for LayerHeader {
             unk4: Default::default(),
             unk5: Default::default(),
             unk6: Default::default(),
+            unk7: Default::default(),
             object_set_referenced: Default::default(),
             object_set_enable_referenced: Default::default(),
         }
