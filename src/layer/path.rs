@@ -9,6 +9,7 @@ use crate::common_file_operations::{read_bool_from, write_bool_as};
 
 #[binrw]
 #[derive(Debug, PartialEq, Clone, Default)]
+#[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
 pub struct PathControlPoint {
     pub position: [f32; 3],
     pub point_id: u16,
@@ -22,6 +23,7 @@ pub struct PathControlPoint {
 #[binrw]
 #[brw(import(size: i32))]
 #[derive(Debug, PartialEq, Clone, Default)]
+#[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
 pub struct PathInstanceObject {
     #[br(temp)]
     #[bw(calc = 56 + size)]
@@ -62,6 +64,7 @@ pub struct ClientPathInstanceObject {
 /// This is stripped out of retail data, and is not used by the client.
 #[binrw]
 #[derive(Debug, PartialEq, Clone, Default)]
+#[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
 pub struct ServerPathInstanceObject {
     #[brw(args(0))]
     pub parent_data: PathInstanceObject,
