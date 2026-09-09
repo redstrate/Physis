@@ -6,7 +6,7 @@ use crate::{ByteBuffer, ByteSpan, Platform, ReadableFile, WritableFile};
 
 #[binrw]
 #[brw(magic = b"FFXIVREPLAY\0")]
-#[derive(Debug)]
+#[derive(Debug, Clone, Default)]
 pub struct Replay {
     /// Only version 5 is supported right now.
     pub version: u16,
@@ -24,10 +24,12 @@ pub struct Replay {
     pub player_index: u8,
     pub chapters_size: u32,
     #[brw(pad_after = 28)] // seems empty?
-    pub packets_size: u32,
+    #[br(temp)]
+    #[bw(calc = self.calculate_packets_size())]
+    packets_size: u32,
     #[br(temp)]
     #[bw(calc = chapters.len() as u32)]
-    pub chapter_count: u32,
+    chapter_count: u32,
     #[br(count = chapter_count)]
     pub chapters: Vec<ReplayChapter>,
     #[br(parse_with = until_eof)]
@@ -38,7 +40,7 @@ pub struct Replay {
 #[binrw]
 #[brw(repr = u8)]
 #[repr(u8)]
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum ReplayChapterType {
     None = 0,
     Countdown = 1,
@@ -48,7 +50,7 @@ pub enum ReplayChapterType {
 }
 
 #[binrw]
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ReplayChapter {
     #[brw(pad_after = 3)] // unused
     pub chapter_type: ReplayChapterType,
@@ -57,14 +59,26 @@ pub struct ReplayChapter {
 }
 
 #[binrw]
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ReplayPacket {
     pub opcode: u16,
-    pub packet_data_size: u16,
+    #[br(temp)]
+    #[bw(calc = data.len() as u16)]
+    packet_data_size: u16,
     pub offset: u32,
     pub actor_id: u32,
     #[br(count = packet_data_size)]
     pub data: Vec<u8>,
+}
+
+impl Replay {
+    fn calculate_packets_size(&self) -> u32 {
+        let mut size = 0;
+        for packet in &self.packets {
+            size += 12 + packet.data.len() as u32;
+        }
+        size
+    }
 }
 
 impl ReadableFile for Replay {
