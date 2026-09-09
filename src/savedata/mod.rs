@@ -12,3 +12,6 @@ pub mod log;
 
 /// Implementation details for dat-based files.
 pub(crate) mod dat;
+
+/// Reading and writing replay files.
+pub mod replay;
