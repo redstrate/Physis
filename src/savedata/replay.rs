@@ -10,16 +10,21 @@ use crate::{ByteBuffer, ByteSpan, Platform, ReadableFile, WritableFile};
 pub struct Replay {
     /// Only version 5 is supported right now.
     pub version: u16,
+    /// The operating system this was recorded on(?)
     pub operating_system_type: u16,
+    /// The client build revision this was recorded with.
     pub game_build_revision: u32,
     pub timestamp: u32,
     pub total_milliseconds: u32,
     pub displayed_milliseconds: u32,
+    /// Index into the ContentFinderCondition Excel sheet. This is displayed in the Duty Recorder UI.
     #[brw(pad_after = 6)] // seems empty?
     pub content_finder_condition_id: u16,
     #[brw(pad_after = 15)] // seems empty?
     pub flags: u8,
-    pub job_ids: [u8; 8],
+    /// Classes that were in your party. This is displayed in the Duty Recorder UI.
+    pub classjob_ids: [u8; 8],
+    /// Your index into the `classjobs_ids` array.
     #[brw(pad_after = 3)] // seems empty?
     pub player_index: u8,
     pub chapters_size: u32,
@@ -32,6 +37,7 @@ pub struct Replay {
     chapter_count: u32,
     #[br(count = chapter_count)]
     pub chapters: Vec<ReplayChapter>,
+    /// The server packets contained within this replay.
     #[br(parse_with = until_eof)]
     #[brw(pad_before = 756)] // HACK: use offset
     pub packets: Vec<ReplayPacket>,
@@ -61,12 +67,14 @@ pub struct ReplayChapter {
 #[binrw]
 #[derive(Debug, Clone)]
 pub struct ReplayPacket {
+    /// The IPC opcode of this packet.
     pub opcode: u16,
     #[br(temp)]
     #[bw(calc = data.len() as u16)]
     packet_data_size: u16,
     pub offset: u32,
     pub actor_id: u32,
+    /// The IPC data of this packet.
     #[br(count = packet_data_size)]
     pub data: Vec<u8>,
 }
