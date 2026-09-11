@@ -203,18 +203,13 @@ mod tests {
     use std::fs::read;
     use std::path::PathBuf;
 
-    use crate::Platform;
+    use crate::{Platform, pass_random_invalid};
 
     use super::*;
 
     #[test]
     fn test_invalid() {
-        let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-        d.push("resources/tests");
-        d.push("random");
-
-        // Feeding it invalid data should not panic
-        let _ = GearSets::from_existing(Platform::Win32, &read(d).unwrap());
+        pass_random_invalid::<GearSets>();
     }
 
     fn common_setup(name: &str) -> GearSets {

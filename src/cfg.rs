@@ -123,6 +123,8 @@ mod tests {
     use std::fs::read;
     use std::path::PathBuf;
 
+    use crate::pass_random_invalid;
+
     use super::*;
 
     fn common_setup() -> ConfigFile {
@@ -137,14 +139,6 @@ mod tests {
         let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
         d.push("resources/tests");
         d.push("FFXIV.modified.cfg");
-
-        read(d).unwrap()
-    }
-
-    fn common_setup_invalid() -> ByteBuffer {
-        let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-        d.push("resources/tests");
-        d.push("random");
 
         read(d).unwrap()
     }
@@ -171,9 +165,6 @@ mod tests {
 
     #[test]
     fn test_invalid() {
-        let cfg = common_setup_invalid();
-
-        // Feeding it invalid data should not panic
-        let _ = ConfigFile::from_existing(Platform::Win32, &cfg);
+        pass_random_invalid::<ConfigFile>();
     }
 }

@@ -104,7 +104,7 @@ mod tests {
     use std::path::PathBuf;
 
     use crate::fiin::FileInfo;
-    use crate::{Platform, ReadableFile, WritableFile};
+    use crate::{Platform, ReadableFile, WritableFile, pass_random_invalid};
 
     fn common_setup() -> FileInfo {
         let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
@@ -149,11 +149,6 @@ mod tests {
 
     #[test]
     fn test_invalid() {
-        let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-        d.push("resources/tests");
-        d.push("random");
-
-        // Feeding it invalid data should not panic
-        let _ = FileInfo::from_existing(Platform::Win32, &read(d).unwrap());
+        pass_random_invalid::<FileInfo>();
     }
 }
