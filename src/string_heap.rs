@@ -180,7 +180,7 @@ impl StringHeap {
     ) -> T
     where
         R: Read + Seek,
-        T: for<'a> BinRead<Args<'a> = (&'a StringHeap,)>,
+        T: for<'a> BinRead<Args<'a> = (&'a StringHeap,)> + Default,
     {
         let old_pos = reader.stream_position().unwrap();
         reader
@@ -188,7 +188,9 @@ impl StringHeap {
                 (self.pos as i32 + heap_pointer.pos as i32 + offset) as u64,
             ))
             .unwrap();
-        let obj = reader.read_type_args::<T>(endian, (self,)).unwrap();
+        let obj = reader
+            .read_type_args::<T>(endian, (self,))
+            .unwrap_or_default(); // FIXME: Fails in Ul'dah for some reason, should be looked into
         reader.seek(SeekFrom::Start(old_pos)).unwrap();
         obj
     }
