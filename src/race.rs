@@ -7,9 +7,10 @@ use strum_macros::FromRepr;
 /// The playable genders in the game.
 #[binrw]
 #[brw(repr = u8)]
-#[derive(PartialEq, Eq, Clone, Copy, Debug, FromRepr)]
+#[derive(PartialEq, Eq, Clone, Copy, Debug, FromRepr, Default)]
 #[repr(u8)]
 pub enum Gender {
+    #[default]
     Male = 0,
     Female = 1,
 }
@@ -18,10 +19,11 @@ pub enum Gender {
 /// Each race has two similar-looking tribes, with the exception of Highlander Hyur which are visually distinct.
 #[binrw]
 #[brw(repr = u8)]
-#[derive(PartialEq, Eq, Clone, Copy, Debug, FromRepr)]
+#[derive(PartialEq, Eq, Clone, Copy, Debug, FromRepr, Default)]
 #[repr(u8)]
 pub enum Tribe {
     Unknown = 0,
+    #[default]
     Midlander = 1,
     Highlander = 2,
     Wildwood = 3,
@@ -43,10 +45,11 @@ pub enum Tribe {
 /// The playable races in the game.
 #[binrw]
 #[brw(repr = u8)]
-#[derive(PartialEq, Eq, Clone, Copy, Debug, FromRepr)]
+#[derive(PartialEq, Eq, Clone, Copy, Debug, FromRepr, Default)]
 #[repr(u8)]
 pub enum Race {
     Unknown = 0,
+    #[default]
     Hyur = 1,
     Elezen = 2,
     Lalafell = 3,
