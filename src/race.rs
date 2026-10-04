@@ -2,12 +2,14 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 use binrw::binrw;
+use strum::{Display, EnumIter};
 use strum_macros::FromRepr;
 
 /// The playable genders in the game.
 #[binrw]
 #[brw(repr = u8)]
-#[derive(PartialEq, Eq, Clone, Copy, Debug, FromRepr, Default)]
+#[derive(PartialEq, Eq, Clone, Copy, Debug, FromRepr, Default, EnumIter, Display)]
+#[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
 #[repr(u8)]
 pub enum Gender {
     #[default]
@@ -19,7 +21,8 @@ pub enum Gender {
 /// Each race has two similar-looking tribes, with the exception of Highlander Hyur which are visually distinct.
 #[binrw]
 #[brw(repr = u8)]
-#[derive(PartialEq, Eq, Clone, Copy, Debug, FromRepr, Default)]
+#[derive(PartialEq, Eq, Clone, Copy, Debug, FromRepr, Default, EnumIter, Display)]
+#[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
 #[repr(u8)]
 pub enum Tribe {
     Unknown = 0,
@@ -45,7 +48,8 @@ pub enum Tribe {
 /// The playable races in the game.
 #[binrw]
 #[brw(repr = u8)]
-#[derive(PartialEq, Eq, Clone, Copy, Debug, FromRepr, Default)]
+#[derive(PartialEq, Eq, Clone, Copy, Debug, FromRepr, Default, EnumIter, Display)]
+#[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
 #[repr(u8)]
 pub enum Race {
     Unknown = 0,
