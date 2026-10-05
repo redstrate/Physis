@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 Joshua Goins <josh@redstrate.com>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 use std::io::{BufWriter, Cursor};
 
 use binrw::{BinRead, BinWrite, binrw, helpers::until_eof};
