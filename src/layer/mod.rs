@@ -178,6 +178,8 @@ pub enum LayerEntryType {
     /// This is stripped out of retail data, and is not used by the client.
     ServerPath = 66,
     /// Unknown object.
+    ///
+    /// This does not appear to be used.
     GimmickRange = 67,
     /// Unknown object.
     TargetMarker = 68,
@@ -204,8 +206,12 @@ pub enum LayerEntryType {
     /// Anything occluded by this object is not drawn.
     CullingBox = 90,
     /// Unknown object.
+    ///
+    /// It does not appear to be used.
     Unk91 = 91,
     /// Unknown object.
+    ///
+    /// It does not appear to be used.
     Unk92 = 92,
     /// (Presumably) a volumetric cloud.
     ///
