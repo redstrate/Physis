@@ -231,9 +231,10 @@ pub type ByteBuffer = Vec<u8>;
 ///
 /// Based off of <https://github.com/aers/FFXIVClientStructs/blob/main/FFXIVClientStructs/FFXIV/Client/Enums/TerritoryIntendedUse.cs>.
 #[repr(u8)]
-#[derive(FromRepr, Display, Clone, Copy, PartialEq)]
+#[derive(FromRepr, Display, Clone, Copy, PartialEq, Debug, Default)]
 pub enum TerritoryIntendedUse {
     /// Towns such as Limsa Lominsa.
+    #[default]
     Town = 0,
     /// Open world zones such as everything out of towns.
     Overworld = 1,
