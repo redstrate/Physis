@@ -263,7 +263,7 @@ pub enum TerritoryIntendedUse {
     HousingOutdoor = 13,
     /// Indoor housing zones.
     HousingIndoor = 14,
-    /// ???
+    /// Used for zones such as the Command Room (ARR) or the Unmoored Isle (DT) where you shouldn't see other players.
     SoloOverworldInstances = 15,
     /// Raids with trash mobs in the beginning. Can revive self, but won't be able to re-enter ongoing battles.
     Raid1 = 16,
