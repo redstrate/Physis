@@ -257,23 +257,23 @@ pub enum TerritoryIntendedUse {
     Trial = 10,
     /// Currently unused.
     Unknown11 = 11,
-    /// ???
+    /// Used in some raids, unclear what for though?
     WaitingRoom = 12,
-    /// ???
+    /// Outdoor housing zones like the Mist.
     HousingOutdoor = 13,
-    /// ???
+    /// Indoor housing zones.
     HousingIndoor = 14,
     /// ???
     SoloOverworldInstances = 15,
-    /// Fighting arenas for raids like.
+    /// Raids with trash mobs in the beginning. Can revive self, but won't be able to re-enter ongoing battles.
     Raid1 = 16,
-    /// Seen in at least AAC Heavyweight M1 (Savage)
+    /// Raids with boss arena. Unable to self-revive. Seen in at least AAC Heavyweight M1 (Savage).
     Raid2 = 17,
     /// Zones used for Frontline PvP.
     Frontline = 18,
     /// Now unused.
     ChocoboSquareOld = 19,
-    /// ???
+    /// Chocobo Racing zones.
     ChocoboRacing = 20,
     /// Used for the only Ishgard Restoration zone, the Firamament.
     Firmament = 21,
@@ -283,9 +283,9 @@ pub enum TerritoryIntendedUse {
     GoldSaucer = 23,
     /// Now unused.
     OriginalStepsOfFaith = 24,
-    /// ???
+    /// Used by the Lord of Verminion minigame.
     LordOfVerminion = 25,
-    /// ???
+    /// Used by the Diadem.
     ExploratoryMissions = 26,
     /// Used for the Hall of Novice tutorials.
     HallOfTheNovice = 27,
@@ -301,13 +301,13 @@ pub enum TerritoryIntendedUse {
     Seasonal = 32,
     /// Treasure dungeons like Vault Oneiron.
     TreasureMapInstance = 33,
-    /// ???
+    /// Used for zones like the Haunted Manor and the Patisserie.
     SeasonalInstancedArea = 34,
-    /// ???
+    /// Used by the Triple Triad Battlehall duty.
     TripleTriadBattleHall = 35,
     /// Used for raids like The Cloud of Darkness (Chaotic).
     ChaoticRaid = 36,
-    /// ???
+    /// Used for Crystalline Conflict Custom Matches.
     CrystallineConflictCustomMatch = 37,
     /// Diadem
     HuntingGrounds = 38,
@@ -323,29 +323,29 @@ pub enum TerritoryIntendedUse {
     TheCalamityRetold = 43,
     /// Leap of Faith zones.
     LeapOfFaith = 44,
-    /// ???
+    /// Used for the Blue Mage The Masked Carnivale.
     MaskedCarnival = 45,
     /// Zones used for Ocean Fishing.
     OceanFishing = 46,
-    /// ???
+    /// Diadem zones.
     Diadem = 47,
-    /// ???
+    /// Bozja zones.
     Bozja = 48,
     /// Island Sanctuary zones.
     IslandSanctuary = 49,
-    /// ???
+    /// Used in the Triple Triad Open Tournament duty.
     TripleTriadOpenTournament = 50,
     /// Used in the Triple Triad Invitational Parlor duty.
     TripleTriadInvitationalParlor = 51,
-    /// ???
+    /// Used by the Delubrum Reginae duty.
     DelubrumReginae = 52,
-    /// ???
+    /// Used by the Delubrum Reginae (Savage) duty.
     DelubrumReginaeSavage = 53,
     /// Propylaion and Ultima Thule
     EndwalkerMsqSoloOverworld = 54,
     /// Currently unused.
     Unknown55 = 55,
-    /// ???
+    /// Instanced area for the Omicron Allied Society quests.
     Elysion = 56,
     /// Criterion Dungeon zones.
     CriterionDungeon = 57,
@@ -357,14 +357,15 @@ pub enum TerritoryIntendedUse {
     CosmicExploration = 60,
     /// Occult Crescent zones.
     OccultCrescent = 61,
-    /// ???
-    Unknown62 = 62,
+    /// Used for Beastmaster's Crucible boards.
+    CrucibleOfTheUnbroken = 62,
     /// Lilyswim (Hatching-tide 2026)
     Seasonal3 = 63,
-    /// ???
+    /// Used by the Air Force One minigame.
     AirForceOne = 64,
-    /// ???
+    /// Used by the Keybound Brawler minigame.
     KeyboundBrawler = 65,
+    /// Currently unused.
     Unknown66 = 66,
 }
 
