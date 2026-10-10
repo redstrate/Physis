@@ -135,6 +135,7 @@ pub fn find_existing_game_dirs() -> Vec<ExistingGameDirectory> {
             }
 
             // TODO: Add Astra
+            // TODO: Add Steam
         }
         &_ => {}
     }
