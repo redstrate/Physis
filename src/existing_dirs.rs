@@ -10,7 +10,7 @@ use std::path::PathBuf;
 use crate::resource::SqPackResource;
 
 /// Where the existing installation came from.
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 #[repr(C)]
 pub enum ExistingInstallType {
     /// Installed via the official launcher.
@@ -26,6 +26,7 @@ pub enum ExistingInstallType {
 }
 
 /// An existing install location on disk.
+#[derive(Debug)]
 pub struct ExistingGameDirectory {
     /// The application where this installation was from.
     pub install_type: ExistingInstallType,
@@ -110,6 +111,11 @@ pub fn find_existing_game_dirs() -> Vec<ExistingGameDirectory> {
                 &from_home_dir(".local/share/astra/game/"),
                 &mut install_dirs,
             );
+            // This may look dumb (because if you're running Physis in a sandbox, you can't read this) but it can still be useful for unsandboxed applications like KAwari.
+            read_astra_game(
+                &from_home_dir(".var/app/zone.xiv.astra/data/astra/game/"),
+                &mut install_dirs,
+            );
         }
         "macos" => {
             // Official install
@@ -176,6 +182,7 @@ pub fn find_existing_game_dirs() -> Vec<ExistingGameDirectory> {
 }
 
 /// An existing user directory.
+#[derive(Debug)]
 pub struct ExistingUserDirectory {
     /// The application where this directory was from.
     pub install_type: ExistingInstallType,
@@ -230,6 +237,11 @@ pub fn find_existing_user_dirs() -> Vec<ExistingUserDirectory> {
 
             // Astra locations
             read_astra_user(&from_home_dir(".local/share/astra/user/"), &mut user_dirs);
+            // Ditto (see above)
+            read_astra_user(
+                &from_home_dir(".var/app/zone.xiv.astra/data/astra/user/"),
+                &mut user_dirs,
+            );
         }
         "macos" => {
             // Official install
