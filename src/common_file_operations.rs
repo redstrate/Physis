@@ -17,7 +17,7 @@ pub(crate) fn read_bool_from<T: std::convert::From<u8> + std::cmp::PartialEq + D
             std::backtrace::Backtrace::force_capture()
         );
     }
-    x == T::from(1u8)
+    x != T::from(0u8)
 }
 
 pub(crate) fn write_bool_as<T: std::convert::From<u8>>(x: &bool) -> T {
