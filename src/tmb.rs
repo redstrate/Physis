@@ -158,6 +158,76 @@ pub struct C042 {
     sound_id: i32,
 }
 
+/// Animation.
+#[binrw]
+#[derive(Debug, Clone)]
+#[br(import(string_heap: &StringHeap))]
+#[bw(import(string_heap: &mut StringHeap), stream = w)]
+#[repr(C)]
+pub struct C010 {
+    #[br(temp)]
+    #[bw(calc = HeapPointer::from_stream(w))]
+    heap_pointer: HeapPointer,
+    pub id: u16,
+    pub time: u16,
+    pub duration: i32,
+    pub unk1: i32,
+    pub flags: i32,
+    pub animation_start: f32,
+    pub animation_end: f32,
+    #[brw(args(heap_pointer, string_heap))]
+    pub path: HeapString,
+    pub unk2: i32,
+}
+
+/// Sound effect.
+#[binrw]
+#[derive(Debug, Clone)]
+#[br(import(string_heap: &StringHeap))]
+#[bw(import(string_heap: &mut StringHeap), stream = w)]
+#[repr(C)]
+pub struct C063 {
+    #[br(temp)]
+    #[bw(calc = HeapPointer::from_stream(w))]
+    heap_pointer: HeapPointer,
+    pub id: u16,
+    pub time: u16,
+    pub loop_and_duration: i32,
+    pub unk1: i32,
+    #[brw(args(heap_pointer, string_heap))]
+    pub path: HeapString,
+    pub sound_index: i32,
+    pub sound_position: u8,
+    pub bind_id: u8,
+    pub unk2: u16,
+}
+
+/// Animation cancelled by movement.
+#[binrw]
+#[derive(Debug, Clone)]
+#[repr(C)]
+pub struct C131 {
+    pub id: u16,
+    pub time: u16,
+    #[br(map = read_bool_from::<i32>)]
+    #[bw(map = write_bool_as::<i32>)]
+    pub enabled: bool,
+    pub unk2: i32,
+}
+
+/// Fly text.
+#[binrw]
+#[derive(Debug, Clone)]
+#[repr(C)]
+pub struct C011 {
+    pub id: u16,
+    pub time: u16,
+    #[br(map = read_bool_from::<i32>)]
+    #[bw(map = write_bool_as::<i32>)]
+    pub enabled: bool,
+    pub unk2: i32,
+}
+
 /// Timeline F-Curve.
 #[binrw]
 #[derive(Debug)]
@@ -242,6 +312,14 @@ pub enum TimelineNodeData {
     C013(C013),
     #[br(pre_assert(tag == "C042"))]
     C042(C042),
+    #[br(pre_assert(tag == "C010"))]
+    C010(#[brw(args(string_heap,))] C010),
+    #[br(pre_assert(tag == "C063"))]
+    C063(#[brw(args(string_heap,))] C063),
+    #[br(pre_assert(tag == "C131"))]
+    C131(C131),
+    #[br(pre_assert(tag == "C011"))]
+    C011(C011),
     Unknown(#[br(count = size - 8)] Vec<u8>),
 }
 
