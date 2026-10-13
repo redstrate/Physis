@@ -20,6 +20,7 @@ use binrw::binrw;
 use binrw::helpers::until_eof;
 use bitflags::bitflags;
 
+/// Texture attributes.
 #[binrw]
 #[repr(C)]
 #[derive(Clone, Copy, PartialEq)]
@@ -62,6 +63,7 @@ impl std::fmt::Debug for TextureAttribute {
     }
 }
 
+/// Texture formats.
 // From https://github.com/aers/FFXIVClientStructs/blob/344f5d488197e9c9d5fd78e92439e7104f25e2e0/FFXIVClientStructs/FFXIV/Client/Graphics/Kernel/Texture.cs#L97
 #[binrw]
 #[brw(repr = u32)]
@@ -117,12 +119,13 @@ pub struct Texture {
     /// Format of the texture.
     pub format: TextureFormat,
 
-    /// Width of the texture in pixels.
+    /// Width of the texture, in pixels.
     pub width: u16,
-    /// Height of the texture in pixels.
+    /// Height of the texture, in pixels.
     pub height: u16,
-    /// Depth of the texture in pixels.
+    /// Depth of the texture, in pixels.
     pub depth: u16,
+    /// Number of mip levels.
     #[br(map = |x: u8| x & 127)] // last bit is unknown
     pub mip_levels: u8,
     /// Only applicable to `TEXTURE_TYPE2_D_ARRAY` because its zero otherwise.
@@ -130,7 +133,9 @@ pub struct Texture {
     lod_offsets: [u32; 3],
     offset_to_surface: [u32; 13],
 
-    /// Encoded data of `format`.
+    /// Raw data of this texture.
+    ///
+    /// To sensibly access this data, use [Self::slice] or [Self::decode].
     #[br(parse_with = until_eof)]
     pub data: Vec<u8>,
 }
@@ -157,9 +162,38 @@ impl WritableFile for Texture {
     }
 }
 
+/// Read-only view of a `Texture`.
+///
+/// This represents one level and layer.
+#[repr(C)]
+#[derive(Default)]
+pub struct TextureSlice {
+    /// The start point of this slice.
+    pub start: usize,
+    /// The end point of this slice.
+    pub end: usize,
+    /// The width of this slice, in pixels.
+    pub width: u16,
+    /// The height of this slice, in pixels.
+    pub height: u16,
+}
+
+/// RGBA representation of `Texture`.
+///
+/// This represents one level and layer.
+pub struct TextureRgba {
+    /// The RGBA data.
+    pub data: Vec<u8>,
+    /// The width of this data, in pixels.
+    pub width: u16,
+    /// The height of this data, in pixels.
+    pub height: u16,
+}
+
 impl Texture {
     const HEADER_SIZE: usize = 80;
 
+    /// Returns the number of layers.
     pub fn layers(&self) -> u8 {
         if self
             .attribute
@@ -173,30 +207,51 @@ impl Texture {
         1
     }
 
-    pub fn mip_data(&self, level: u8) -> Option<(usize, usize)> {
+    /// Returns a new [TextureSlice] pointing to `level` and `layer`.
+    ///
+    /// `level` must be between 0 and [Self::mip_levels].
+    ///
+    /// `layer` must be between 0 and [Self::layers].
+    pub fn slice(&self, level: u8, layer: u8) -> Option<TextureSlice> {
         if level >= self.mip_levels {
             return None;
         }
+        if layer >= self.layers() {
+            return None;
+        }
+
+        let (width, height) = self.mip_size(level);
 
         let offset = |level: u8| -> Option<usize> {
             let raw = *self.offset_to_surface.get(usize::from(level))? as usize;
             raw.checked_sub(Self::HEADER_SIZE)
         };
-        let start = offset(level)?;
+        let start =
+            offset(level)? + self.layer_offset(layer as usize, width as usize, height as usize);
         // The next level's offset bounds this one; the last runs to the end of the data.
         let end = match offset(level + 1) {
             Some(end) if level + 1 < self.mip_levels && end > start => end,
             _ => self.data.len(),
         };
-        Some((start, end.min(self.data.len())))
+        Some(TextureSlice {
+            start,
+            end: end.min(self.data.len()),
+            width,
+            height,
+        })
     }
 
-    pub fn mip_size(&self, level: u8) -> (u16, u16) {
+    fn mip_size(&self, level: u8) -> (u16, u16) {
         let shift = u32::from(level).min(u16::BITS - 1);
         ((self.width >> shift).max(1), (self.height >> shift).max(1))
     }
 
-    fn decode(src: &[u8], width: usize, height: usize, decode_func: DecodeFunction) -> Vec<u8> {
+    fn internal_decode(
+        src: &[u8],
+        width: usize,
+        height: usize,
+        decode_func: DecodeFunction,
+    ) -> Vec<u8> {
         let mut image: Vec<u32> = vec![0; width * height];
         decode_func(src, width, height, &mut image).unwrap();
 
@@ -209,19 +264,48 @@ impl Texture {
             .collect::<Vec<u8>>()
     }
 
-    /// Decode this texture to RGBA data, if we know how to decode it in software.
-    pub fn to_rgba(&self) -> Option<Vec<u8>> {
-        match self.format {
+    fn layer_offset(&self, layer: usize, width: usize, height: usize) -> usize {
+        layer
+            * match self.format {
+                TextureFormat::BC7_UNORM => {
+                    usize::max(1, width.div_ceil(4)) * usize::max(1, height.div_ceil(4)) * 16
+                }
+                _ => {
+                    if layer > 0 {
+                        println!(
+                            "Don't know block size for texture format {:?}, slicing via layer won't work - please report this as a bug!",
+                            self.format
+                        );
+                    }
+                    0
+                }
+            }
+    }
+
+    /// Decode this texture to RGBA data through software.
+    ///
+    /// Software decoding may not be available for all formats, and in those cases this will return [None].
+    ///
+    /// `level` must be between 0 and [Self::mip_levels].
+    ///
+    /// `layer` must be between 0 and [Self::layers].
+    pub fn decode(&self, level: u8, layer: u8) -> Option<TextureRgba> {
+        let slice = self.slice(level, layer)?;
+        let data = &self.data[slice.start..];
+
+        let data = match self.format {
             TextureFormat::B4G4R4A4_UNORM => {
                 let mut dst =
-                    vec![0u8; self.width as usize * self.height as usize * self.depth as usize * 4];
+                    vec![
+                        0u8;
+                        slice.width as usize * slice.height as usize * self.depth as usize * 4
+                    ];
 
                 let mut offset = 0;
                 let mut dst_offset = 0;
 
-                for _ in 0..self.width as usize * self.height as usize {
-                    let short: u16 =
-                        ((self.data[offset] as u16) << 8) | self.data[offset + 1] as u16;
+                for _ in 0..slice.width as usize * slice.height as usize {
+                    let short: u16 = ((data[offset] as u16) << 8) | data[offset + 1] as u16;
 
                     let src_b = short & 0xF;
                     let src_g = (short >> 4) & 0xF;
@@ -237,19 +321,22 @@ impl Texture {
                     dst_offset += 4;
                 }
 
-                Some(dst)
+                dst
             }
             TextureFormat::B8G8R8A8_UNORM => {
                 let mut dst =
-                    vec![0u8; self.width as usize * self.height as usize * self.depth as usize * 4];
+                    vec![
+                        0u8;
+                        slice.width as usize * slice.height as usize * self.depth as usize * 4
+                    ];
 
                 let mut offset = 0;
 
-                for _ in 0..self.width as usize * self.height as usize * self.depth as usize {
-                    let src_b = self.data[offset];
-                    let src_g = self.data[offset + 1];
-                    let src_r = self.data[offset + 2];
-                    let src_a = self.data[offset + 3];
+                for _ in 0..slice.width as usize * slice.height as usize * self.depth as usize {
+                    let src_b = data[offset];
+                    let src_g = data[offset + 1];
+                    let src_r = data[offset + 2];
+                    let src_a = data[offset + 3];
 
                     dst[offset] = src_r;
                     dst[offset + 1] = src_g;
@@ -259,38 +346,40 @@ impl Texture {
                     offset += 4;
                 }
 
-                Some(dst)
+                dst
             }
-            TextureFormat::BC1_UNORM => Some(Texture::decode(
-                &self.data,
-                self.width as usize,
-                self.height as usize * self.depth as usize,
+            TextureFormat::BC1_UNORM => Texture::internal_decode(
+                data,
+                slice.width as usize,
+                slice.height as usize * self.depth as usize,
                 decode_bc1,
-            )),
-            TextureFormat::BC3_UNORM => Some(Texture::decode(
-                &self.data,
-                self.width as usize,
-                self.height as usize * self.depth as usize,
+            ),
+            TextureFormat::BC3_UNORM => Texture::internal_decode(
+                data,
+                slice.width as usize,
+                slice.height as usize * self.depth as usize,
                 decode_bc3,
-            )),
-            TextureFormat::BC5_UNORM => Some(Texture::decode(
-                &self.data,
-                self.width as usize,
-                self.height as usize * self.depth as usize,
+            ),
+            TextureFormat::BC5_UNORM => Texture::internal_decode(
+                data,
+                slice.width as usize,
+                slice.height as usize * self.depth as usize,
                 decode_bc5,
-            )),
-            TextureFormat::BC7_UNORM => Some(Texture::decode(
-                &self.data,
-                self.width as usize,
-                self.height as usize * self.depth as usize,
+            ),
+            TextureFormat::BC7_UNORM => Texture::internal_decode(
+                data,
+                slice.width as usize,
+                slice.height as usize * self.depth as usize,
                 decode_bc7,
-            )),
+            ),
             TextureFormat::B5G5R5A1_UNORM => {
                 let mut dst =
-                    vec![0u8; self.width as usize * self.height as usize * self.depth as usize * 4];
+                    vec![
+                        0u8;
+                        slice.width as usize * slice.height as usize * self.depth as usize * 4
+                    ];
 
-                for (packed_color, dst) in self
-                    .data
+                for (packed_color, dst) in data
                     .as_chunks::<2>()
                     .0
                     .iter()
@@ -312,13 +401,19 @@ impl Texture {
                     dst[3] = if alpha != 0 { 255 } else { 0 };
                 }
 
-                Some(dst)
+                dst
             }
             _ => {
                 println!("Unsupported texture format {:?}!", self.format);
-                None
+                return None;
             }
-        }
+        };
+
+        Some(TextureRgba {
+            data,
+            width: slice.width,
+            height: slice.height,
+        })
     }
 }
 
