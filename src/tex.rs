@@ -285,6 +285,35 @@ impl Texture {
                 self.height as usize * self.depth as usize,
                 decode_bc7,
             )),
+            TextureFormat::B5G5R5A1_UNORM => {
+                let mut dst =
+                    vec![0u8; self.width as usize * self.height as usize * self.depth as usize * 4];
+
+                for (packed_color, dst) in self
+                    .data
+                    .as_chunks::<2>()
+                    .0
+                    .iter()
+                    .map(|x| u16::from_le_bytes([x[0], x[1]]))
+                    .zip(dst.as_chunks_mut::<4>().0.iter_mut())
+                {
+                    let blue_bits = (packed_color & 0x1F) as u8;
+                    let green_bits = ((packed_color >> 5) & 0x1F) as u8;
+                    let red_bits = ((packed_color >> 10) & 0x1F) as u8;
+
+                    let alpha = (packed_color >> 15) as u8;
+                    let red = (red_bits << 3) | (red_bits >> 2);
+                    let green = (green_bits << 3) | (green_bits >> 2);
+                    let blue = (blue_bits << 3) | (blue_bits >> 2);
+
+                    dst[0] = red;
+                    dst[1] = green;
+                    dst[2] = blue;
+                    dst[3] = if alpha != 0 { 255 } else { 0 };
+                }
+
+                Some(dst)
+            }
             _ => {
                 println!("Unsupported texture format {:?}!", self.format);
                 None
