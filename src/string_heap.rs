@@ -10,7 +10,7 @@ use binrw::{BinRead, BinReaderExt, BinResult, BinWrite, Endian, Error, VecArgs, 
 
 use crate::{
     ByteBuffer,
-    common_file_operations::{read_null_terminated_utf8, write_string},
+    common_file_operations::{read_string_until_nul, write_string},
 };
 
 /// Implementation-detail specific string type.
@@ -203,7 +203,7 @@ impl StringHeap {
 
         let old_pos = reader.stream_position().unwrap();
         reader.seek(SeekFrom::Start(offset as u64)).unwrap();
-        let s = read_null_terminated_utf8(reader);
+        let s = read_string_until_nul(reader, Endian::Little, ()).unwrap();
         reader.seek(SeekFrom::Start(old_pos)).unwrap();
         s
     }

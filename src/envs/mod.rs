@@ -6,7 +6,7 @@ use std::io::SeekFrom;
 
 use binrw::{BinRead, BinResult, BinWrite, binrw};
 
-use crate::{common_file_operations::read_string_until_null, string_heap::StringHeap};
+use crate::{common_file_operations::read_string_until_nul, string_heap::StringHeap};
 
 mod environment;
 pub use environment::*;
@@ -111,10 +111,10 @@ pub struct EnvChildSection {
     #[br(seek_before = SeekFrom::Current(offset_to_footer as i64 + 16 - EnvChildSection::SIZE as i64), restore_position)]
     resource_path_1_offset: i32,
 
-    #[br(parse_with = read_string_until_null, seek_before = SeekFrom::Current(offset_to_footer as i64 + resource_path_0_offset as i64 - EnvChildSection::SIZE as i64), restore_position)]
+    #[br(parse_with = read_string_until_nul, seek_before = SeekFrom::Current(offset_to_footer as i64 + resource_path_0_offset as i64 - EnvChildSection::SIZE as i64), restore_position)]
     #[bw(ignore)]
     pub resource_path_0: String,
-    #[br(parse_with = read_string_until_null, seek_before = SeekFrom::Current(offset_to_footer as i64 + resource_path_1_offset as i64 - EnvChildSection::SIZE as i64), restore_position)]
+    #[br(parse_with = read_string_until_nul, seek_before = SeekFrom::Current(offset_to_footer as i64 + resource_path_1_offset as i64 - EnvChildSection::SIZE as i64), restore_position)]
     #[bw(ignore)]
     pub resource_path_1: String,
 }

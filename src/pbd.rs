@@ -8,11 +8,23 @@ use crate::ByteSpan;
 use crate::ReadableFile;
 use crate::WritableFile;
 use crate::common::Platform;
-use crate::common_file_operations::strings_parser;
+use crate::common_file_operations::read_string_until_nul;
 use binrw::BinRead;
+use binrw::BinResult;
 use binrw::BinWrite;
 use binrw::binrw;
 
+#[binrw::parser(reader, endian)]
+fn strings_parser(base_offset: u64, strings_offset: &Vec<u16>) -> BinResult<Vec<String>> {
+    let mut strings: Vec<String> = vec![];
+
+    for offset in strings_offset {
+        reader.seek(SeekFrom::Start(base_offset + *offset as u64))?;
+        strings.push(read_string_until_nul(reader, endian, ())?);
+    }
+
+    Ok(strings)
+}
 #[binrw]
 #[derive(Debug)]
 #[br(import { data_offset: i32 })]

@@ -7,7 +7,7 @@ use binrw::{BinResult, BinWrite, binrw};
 
 use crate::{
     common_file_operations::{
-        read_bool_from, read_dawntrail_marker, read_null_terminated_utf8, write_bool_as,
+        read_bool_from, read_dawntrail_marker, read_string_until_nul, write_bool_as,
         write_dawntrail_marker,
     },
     layer::Layer,
@@ -512,7 +512,7 @@ pub struct ScnLayerSet {
     pub nvx_path: HeapString,
 }
 
-#[binrw::parser(reader)]
+#[binrw::parser(reader, endian)]
 fn strings_from_offsets(offsets: &Vec<i32>) -> BinResult<Vec<String>> {
     let base_offset = reader.stream_position()?;
 
@@ -522,7 +522,7 @@ fn strings_from_offsets(offsets: &Vec<i32>) -> BinResult<Vec<String>> {
         let string_offset = *offset as u64;
 
         reader.seek(SeekFrom::Start(base_offset + string_offset))?;
-        strings.push(read_null_terminated_utf8(reader));
+        strings.push(read_string_until_nul(reader, endian, ())?);
     }
 
     Ok(strings)

@@ -12,7 +12,7 @@ use crate::ReadableFile;
 use crate::WritableFile;
 use crate::common::Platform;
 use crate::common_file_operations::read_string;
-use crate::common_file_operations::read_string_until_null;
+use crate::common_file_operations::read_string_until_nul;
 use crate::common_file_operations::write_string;
 use crate::string_heap::StringHeap;
 use crate::tmb::TimelineNode;
@@ -71,7 +71,7 @@ pub struct StringNode {
 
     // TODO: we may be using offset wrong, unsure
     #[br(seek_before = SeekFrom::Current(offset as i64 - 4))]
-    #[br(restore_position, parse_with = read_string_until_null)]
+    #[br(restore_position, parse_with = read_string_until_nul)]
     #[bw(ignore)]
     pub value: String,
 
@@ -132,7 +132,7 @@ pub struct CTDSNode {
     /// From the beginning of this node.
     offset_to_level: u32,
     #[br(seek_before = SeekFrom::Current(offset_to_level as i64 - 76))] // 76 is the offset within this node, yes i know it's bad
-    #[br(restore_position, parse_with = read_string_until_null)]
+    #[br(restore_position, parse_with = read_string_until_nul)]
     #[bw(ignore)]
     pub level_name: String,
     unk3: [u32; 2], // seems to be empty

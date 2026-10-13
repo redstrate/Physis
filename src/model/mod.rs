@@ -16,7 +16,7 @@ use binrw::{BinWrite, BinWriterExt, binrw};
 use bitflags::bitflags;
 
 use crate::common::Platform;
-use crate::common_file_operations::{null_terminated_utf8, read_bool_from, write_bool_as};
+use crate::common_file_operations::{read_bool_from, read_string_from_offset, write_bool_as};
 use crate::equipment::{CharacterCategory, EquipSlotCategory};
 use crate::race::{Gender, Race, Tribe, get_race_id};
 use crate::{ByteBuffer, ByteSpan, ReadableFile, WritableFile};
@@ -837,14 +837,14 @@ impl ReadableFile for MDL {
         let mut affected_bone_names = vec![];
 
         for offset in &model.bone_name_offsets {
-            let (name, _) = null_terminated_utf8(&model.header.strings, *offset as usize);
+            let (name, _) = read_string_from_offset(&model.header.strings, *offset as usize);
             affected_bone_names.push(name);
         }
 
         let mut material_names = vec![];
 
         for offset in &model.material_name_offsets {
-            let (name, _) = null_terminated_utf8(&model.header.strings, *offset as usize);
+            let (name, _) = read_string_from_offset(&model.header.strings, *offset as usize);
             material_names.push(name);
         }
 
@@ -1114,7 +1114,7 @@ impl ReadableFile for MDL {
                             vertex.position[2] = new_vertex.position[2] - old_vertex.position[2];
                         }
 
-                        let (name, _) = null_terminated_utf8(
+                        let (name, _) = read_string_from_offset(
                             &model.header.strings,
                             shape.string_offset as usize,
                         );

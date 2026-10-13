@@ -14,9 +14,7 @@ use binrw::{BinRead, BinResult, Endian};
 use binrw::{BinWrite, binrw};
 
 use crate::common::Platform;
-use crate::common_file_operations::{
-    get_string_len, read_bool_from, read_string, write_bool_as, write_string,
-};
+use crate::common_file_operations::{read_bool_from, read_string, write_bool_as, write_string};
 use crate::sqpack::{read_data_block_patch, write_data_block_patch};
 
 #[binrw]
@@ -139,7 +137,7 @@ pub struct ApplyOptionChunk {
 pub struct DirectoryChunk {
     #[br(temp)]
     #[brw(big)]
-    #[bw(calc = get_string_len(name) as u32)]
+    #[bw(calc = name.len() as u32 + 1)]
     name_length: u32,
 
     #[brw(pad_after = 8)]
@@ -277,7 +275,7 @@ pub struct SqpkFileOperationData {
 
     // Note: counts the \0 at the end... for some reason
     #[br(temp)]
-    #[bw(calc = get_string_len(path) as u32)]
+    #[bw(calc = path.len() as u32 + 1)]
     path_length: u32,
 
     #[brw(pad_after = 2)]

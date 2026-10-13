@@ -6,7 +6,7 @@
 use std::io::Cursor;
 
 use crate::common::Platform;
-use crate::common_file_operations::{Half1, Half2, Half3, null_terminated_utf8};
+use crate::common_file_operations::{Half1, Half2, Half3, read_string_from_offset};
 use crate::mtrl::ColorDyeTable::{
     DawntrailColorDyeTable, LegacyColorDyeTable, OpaqueColorDyeTable,
 };
@@ -486,12 +486,12 @@ impl ReadableFile for Material {
 
         let mut offset = 0;
         for _ in 0..mat_data.file_header.texture_count {
-            let (s, next) = null_terminated_utf8(&mat_data.strings, offset);
+            let (s, next) = read_string_from_offset(&mat_data.strings, offset);
             texture_paths.push(s);
             offset = next;
         }
 
-        let (shader_package_name, _) = null_terminated_utf8(
+        let (shader_package_name, _) = read_string_from_offset(
             &mat_data.strings,
             mat_data.file_header.shader_package_name_offset as usize,
         );

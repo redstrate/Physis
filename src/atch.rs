@@ -9,7 +9,7 @@ use crate::ByteSpan;
 use crate::ReadableFile;
 use crate::WritableFile;
 use crate::common::Platform;
-use crate::common_file_operations::read_string_until_null;
+use crate::common_file_operations::read_string_until_nul;
 use binrw::binrw;
 use binrw::{BinRead, BinWrite};
 
@@ -19,7 +19,7 @@ pub struct AtchEntryState {
     #[br(temp)]
     #[bw(ignore)]
     string_pos: u32,
-    #[br(restore_position, seek_before = SeekFrom::Start(string_pos as u64), parse_with = read_string_until_null)]
+    #[br(restore_position, seek_before = SeekFrom::Start(string_pos as u64), parse_with = read_string_until_nul)]
     #[bw(ignore)]
     pub name: String,
     pub scale: f32,

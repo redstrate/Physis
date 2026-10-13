@@ -9,7 +9,7 @@ use crate::ByteSpan;
 use crate::ReadableFile;
 use crate::WritableFile;
 use crate::common::Platform;
-use crate::common_file_operations::read_string_until_null;
+use crate::common_file_operations::read_string_until_nul;
 use crate::common_file_operations::write_string;
 use binrw::BinRead;
 use binrw::BinWrite;
@@ -35,15 +35,15 @@ pub struct PhybHeader {
 pub struct PhybCapsule {
     #[brw(pad_size_to = 32)]
     #[bw(map = write_string)]
-    #[br(parse_with = read_string_until_null)]
+    #[br(parse_with = read_string_until_nul)]
     pub name: String,
     #[brw(pad_size_to = 32)]
     #[bw(map = write_string)]
-    #[br(parse_with = read_string_until_null)]
+    #[br(parse_with = read_string_until_nul)]
     pub start_bone_name: String,
     #[brw(pad_size_to = 32)]
     #[bw(map = write_string)]
-    #[br(parse_with = read_string_until_null)]
+    #[br(parse_with = read_string_until_nul)]
     pub end_bone_name: String,
     pub start_offset: [f32; 3],
     pub end_offset: [f32; 3],
@@ -56,11 +56,11 @@ pub struct PhybCapsule {
 pub struct PhybEllipsoid {
     #[brw(pad_size_to = 32)]
     #[bw(map = write_string)]
-    #[br(parse_with = read_string_until_null)]
+    #[br(parse_with = read_string_until_nul)]
     pub name: String,
     #[brw(pad_size_to = 32)]
     #[bw(map = write_string)]
-    #[br(parse_with = read_string_until_null)]
+    #[br(parse_with = read_string_until_nul)]
     pub bone_name: String,
     offset1: [f32; 3],
     offset2: [f32; 3],
@@ -75,11 +75,11 @@ pub struct PhybEllipsoid {
 pub struct PhybNormalPlane {
     #[brw(pad_size_to = 32)]
     #[bw(map = write_string)]
-    #[br(parse_with = read_string_until_null)]
+    #[br(parse_with = read_string_until_nul)]
     pub name: String,
     #[brw(pad_size_to = 32)]
     #[bw(map = write_string)]
-    #[br(parse_with = read_string_until_null)]
+    #[br(parse_with = read_string_until_nul)]
     pub bone_name: String,
     pub bone_offset: [f32; 3],
     pub normal: [f32; 3],
@@ -92,11 +92,11 @@ pub struct PhybNormalPlane {
 pub struct PhybThreePointPlane {
     #[brw(pad_size_to = 32)]
     #[bw(map = write_string)]
-    #[br(parse_with = read_string_until_null)]
+    #[br(parse_with = read_string_until_nul)]
     pub name: String,
     #[brw(pad_size_to = 32)]
     #[bw(map = write_string)]
-    #[br(parse_with = read_string_until_null)]
+    #[br(parse_with = read_string_until_nul)]
     pub bone_name: String,
     unk1: [f32; 4],
     unk2: [f32; 4],
@@ -114,11 +114,11 @@ pub struct PhybThreePointPlane {
 pub struct PhybSphere {
     #[brw(pad_size_to = 32)]
     #[bw(map = write_string)]
-    #[br(parse_with = read_string_until_null)]
+    #[br(parse_with = read_string_until_nul)]
     pub name: String,
     #[brw(pad_size_to = 32)]
     #[bw(map = write_string)]
-    #[br(parse_with = read_string_until_null)]
+    #[br(parse_with = read_string_until_nul)]
     pub bone_name: String,
     pub bone_offset: [f32; 3],
     pub thickness: f32,
@@ -189,7 +189,7 @@ pub enum CollisionType {
 pub struct PhybCollisionData {
     #[brw(pad_size_to = 32)]
     #[bw(map = write_string)]
-    #[br(parse_with = read_string_until_null)]
+    #[br(parse_with = read_string_until_nul)]
     pub name: String,
     pub collision_type: CollisionType,
 }
@@ -201,7 +201,7 @@ pub struct PhybCollisionData {
 pub struct PhybNode {
     #[brw(pad_size_to = 32)]
     #[bw(map = write_string)]
-    #[br(parse_with = read_string_until_null)]
+    #[br(parse_with = read_string_until_nul)]
     pub bone_name: String,
     pub radius: f32,
     pub attract_by_animation: f32,
@@ -273,7 +273,7 @@ pub struct PhybConnector {
 pub struct PhybAttract {
     #[brw(pad_size_to = 32)]
     #[bw(map = write_string)]
-    #[br(parse_with = read_string_until_null)]
+    #[br(parse_with = read_string_until_nul)]
     pub bone_name: String,
     pub bone_offset: [f32; 3],
     pub chain_id: u16,
@@ -287,7 +287,7 @@ pub struct PhybAttract {
 pub struct PhybPin {
     #[brw(pad_size_to = 32)]
     #[bw(map = write_string)]
-    #[br(parse_with = read_string_until_null)]
+    #[br(parse_with = read_string_until_nul)]
     pub bone_name: String,
     pub bone_offset: [f32; 3],
     pub chain_id: u16,
@@ -312,7 +312,7 @@ pub struct PhybSpring {
 pub struct PhybPostAlignment {
     #[brw(pad_size_to = 32)]
     #[bw(map = write_string)]
-    #[br(parse_with = read_string_until_null)]
+    #[br(parse_with = read_string_until_nul)]
     pub collision_name: String,
     pub chain_id: u16,
     pub node_id: u16,

@@ -8,7 +8,7 @@ use std::io::{Cursor, SeekFrom};
 
 use crate::common::Platform;
 use crate::common_file_operations::{
-    Half3, read_bool_from, read_string, read_string_until_null, write_string,
+    Half3, read_bool_from, read_string, read_string_until_nul, write_string,
 };
 use crate::{ByteBuffer, ByteSpan, ReadableFile, WritableFile};
 use binrw::{BinRead, BinResult, BinWrite, VecArgs};
@@ -217,7 +217,7 @@ where
 #[binrw]
 #[derive(Debug, Clone)]
 pub struct AvfxTexture {
-    #[br(parse_with = read_string_until_null)]
+    #[br(parse_with = read_string_until_nul)]
     #[bw(ignore)] // TODO: stub
     pub path: String,
 }

@@ -8,7 +8,7 @@ use crate::ByteSpan;
 use crate::ReadableFile;
 use crate::WritableFile;
 use crate::common::Platform;
-use crate::common_file_operations::read_string_until_null;
+use crate::common_file_operations::read_string_until_nul;
 use crate::common_file_operations::write_string;
 use binrw::binrw;
 use binrw::{BinRead, BinWrite};
@@ -21,7 +21,7 @@ pub struct EidBindPointOld {
     pub rotation: [f32; 3],
     #[brw(pad_size_to = 12)]
     #[bw(map = write_string)]
-    #[br(parse_with = read_string_until_null)]
+    #[br(parse_with = read_string_until_nul)]
     pub name: String,
     padding_probably: i32,
 }
@@ -31,7 +31,7 @@ pub struct EidBindPointOld {
 pub struct EidBindPointNew {
     #[brw(pad_size_to = 32)]
     #[bw(map = write_string)]
-    #[br(parse_with = read_string_until_null)]
+    #[br(parse_with = read_string_until_nul)]
     pub name: String,
     pub id: i32,
     pub position: [f32; 3],
