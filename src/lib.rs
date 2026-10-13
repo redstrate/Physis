@@ -222,3 +222,6 @@ pub mod ggd;
 
 /// Types for cloud data binary (`.cldb`) files.
 pub mod cldb;
+
+/// Types for SeStrings, which is used for various localized strings.
+pub mod sestring;
