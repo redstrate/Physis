@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 Joshua Goins <josh@redstrate.com>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 use binrw::{BinRead, BinReaderExt, BinWrite};
 
 use crate::ByteSpan;
