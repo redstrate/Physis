@@ -76,6 +76,7 @@ use crate::{
     exd::{DataSectionHeader, EXD, EXDHeader, ExcelDataOffset, SubRowHeader},
     exd_file_operations::{read_row, write_row},
     exh::{EXH, SheetRowKind},
+    sestring::SeString,
 };
 
 mod iterators;
@@ -84,8 +85,8 @@ pub use iterators::*;
 /// Contains a single column's data, which can be various underlying types.
 #[derive(Debug, Clone, PartialEq)]
 pub enum Field {
-    /// String.
-    String(String),
+    /// String. This isn't guaranteed to be valid UTF-8, see [SeString].
+    String(SeString),
     /// Boolean.
     Bool(bool),
     /// 8-bit signed integer.
@@ -110,7 +111,7 @@ pub enum Field {
 
 impl Field {
     /// Returns a `Some(String)` if this column was a `String`, otherwise `None`.
-    pub fn into_string(&self) -> Option<&String> {
+    pub fn into_string(&self) -> Option<&SeString> {
         if let Field::String(value) = self {
             return Some(value);
         }
@@ -600,7 +601,7 @@ mod tests {
                     0,
                     Row {
                         columns: vec![
-                            Field::String("HOWTO_MOVE_AND_CAMERA".to_string()),
+                            Field::String("HOWTO_MOVE_AND_CAMERA".into()),
                             Field::UInt32(1)
                         ]
                     }
@@ -617,7 +618,7 @@ mod tests {
                     0,
                     Row {
                         columns: vec![
-                            Field::String("HOWTO_ANNOUNCE_AND_QUEST".to_string()),
+                            Field::String("HOWTO_ANNOUNCE_AND_QUEST".into()),
                             Field::UInt32(2)
                         ]
                     }
@@ -634,7 +635,7 @@ mod tests {
                     0,
                     Row {
                         columns: vec![
-                            Field::String("HOWTO_QUEST_REWARD".to_string()),
+                            Field::String("HOWTO_QUEST_REWARD".into()),
                             Field::UInt32(11)
                         ]
                     }
@@ -651,7 +652,7 @@ mod tests {
                     0,
                     Row {
                         columns: vec![
-                            Field::String("BGM_MUSIC_NO_MUSIC".to_string()),
+                            Field::String("BGM_MUSIC_NO_MUSIC".into()),
                             Field::UInt32(1001)
                         ]
                     }
@@ -668,7 +669,7 @@ mod tests {
                     0,
                     Row {
                         columns: vec![
-                            Field::String("ITEM_INITIAL_RING_A".to_string()),
+                            Field::String("ITEM_INITIAL_RING_A".into()),
                             Field::UInt32(4423)
                         ]
                     }
@@ -685,7 +686,7 @@ mod tests {
                     0,
                     Row {
                         columns: vec![
-                            Field::String("ITEM_INITIAL_RING_B".to_string()),
+                            Field::String("ITEM_INITIAL_RING_B".into()),
                             Field::UInt32(4424)
                         ]
                     }
@@ -702,7 +703,7 @@ mod tests {
                     0,
                     Row {
                         columns: vec![
-                            Field::String("ITEM_INITIAL_RING_C".to_string()),
+                            Field::String("ITEM_INITIAL_RING_C".into()),
                             Field::UInt32(4425)
                         ]
                     }
@@ -719,7 +720,7 @@ mod tests {
                     0,
                     Row {
                         columns: vec![
-                            Field::String("ITEM_INITIAL_RING_D".to_string()),
+                            Field::String("ITEM_INITIAL_RING_D".into()),
                             Field::UInt32(4426)
                         ]
                     }

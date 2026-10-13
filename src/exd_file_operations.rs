@@ -8,12 +8,11 @@ use std::{
 
 use binrw::{BinRead, BinResult, BinWrite, Endian};
 
-use crate::common_file_operations::read_null_terminated_utf8;
-
 use crate::{
     excel::{Field, Row},
     exd::EXD,
     exh::{ColumnDataType, EXH, ExcelColumnDefinition},
+    sestring::SeString,
 };
 
 pub(crate) fn read_row<T: Read + Seek>(reader: &mut T, exh: &EXH, row_offset: u64) -> Option<Row> {
@@ -152,7 +151,14 @@ impl EXD {
                     ))
                     .ok()?;
 
-                Some(Field::String(read_null_terminated_utf8(cursor)))
+                let mut bytes = Vec::new();
+                while let Ok(byte) = u8::read_ne(cursor)
+                    && byte != 0
+                {
+                    bytes.push(byte);
+                }
+
+                Some(Field::String(SeString::parse(&bytes)))
             }
             ColumnDataType::Bool => {
                 let bool_data: i8 = Self::read_data_raw(cursor).ok()?;
