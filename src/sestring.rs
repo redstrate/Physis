@@ -162,7 +162,7 @@ impl SeString {
                 let index = data.iter().position(|b| *b == 0).unwrap_or(data.len());
                 data.truncate(index);
 
-                payloads.push(Payload::Text(String::from_utf8_lossy_owned(data)));
+                payloads.push(Payload::Text(String::from_utf8(data).unwrap_or_default()));
             } else {
                 let mut data = Vec::new();
                 pos += 1;
