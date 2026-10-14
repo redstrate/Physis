@@ -207,7 +207,7 @@ impl SeString {
             return true;
         }
 
-        self.len() > 0
+        self.len() == 0
     }
 }
 
@@ -239,6 +239,7 @@ mod tests {
         // This shouldn't panic
         let sestring = SeString::parse(&data);
         assert_eq!(sestring.to_string(), "<?:255>");
+        assert_eq!(sestring.is_empty(), false);
     }
 
     #[test]
@@ -248,6 +249,7 @@ mod tests {
         // This shouldn't panic
         let sestring = SeString::parse(&data);
         assert_eq!(sestring.to_string(), "<?:255>");
+        assert_eq!(sestring.is_empty(), false);
     }
 
     #[test]
@@ -265,6 +267,7 @@ mod tests {
         // round-trip shouldn't modify it
         assert_eq!(sestring.as_bytes(), data);
         assert_eq!(sestring.len(), data.len());
+        assert_eq!(sestring.is_empty(), false);
     }
 
     #[test]
@@ -281,5 +284,6 @@ mod tests {
         // round-trip shouldn't modify it
         assert_eq!(sestring.as_bytes(), data);
         assert_eq!(sestring.len(), data.len());
+        assert_eq!(sestring.is_empty(), false);
     }
 }
