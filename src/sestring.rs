@@ -209,6 +209,38 @@ impl SeString {
 
         self.len() == 0
     }
+
+    /// Truncates the string to the given length.
+    ///
+    /// Non-text payloads can't be truncated and may be removed if needed.
+    pub fn truncate(&mut self, new_len: usize) {
+        let mut size = 0;
+        let mut end_index = None;
+        for (i, payload) in self.payloads.iter_mut().enumerate() {
+            let new_size = size + payload.len();
+            if new_size > new_len {
+                // If this payload is going to break it!
+                match payload {
+                    Payload::Text(text) => {
+                        let difference = new_size - new_len;
+                        text.truncate(text.len() - difference);
+                        end_index = Some(i + 1);
+                    }
+                    Payload::Unknown { .. } => {
+                        // You can't break non-text payloads so truncate here.
+                        end_index = Some(i);
+                    }
+                }
+                break;
+            } else {
+                size = new_size;
+            }
+        }
+
+        if let Some(index) = end_index {
+            self.payloads.truncate(index);
+        }
+    }
 }
 
 impl std::fmt::Display for SeString {
@@ -285,5 +317,37 @@ mod tests {
         assert_eq!(sestring.as_bytes(), data);
         assert_eq!(sestring.len(), data.len());
         assert_eq!(sestring.is_empty(), false);
+    }
+
+    #[test]
+    fn test_truncate() {
+        let data = [
+            89, 111, 117, 32, 108, 101, 97, 118, 101, 32, 226, 128, 156, 2, 8, 22, 233, 9, 255, 16,
+            2, 40, 12, 255, 7, 79, 98, 106, 83, 116, 114, 233, 9, 1, 3, 235, 4, 3, 46, 226, 128,
+            157,
+        ];
+
+        let sestring = SeString::parse(&data);
+
+        let mut truncated_at_unknown = sestring.clone();
+        truncated_at_unknown.truncate(14);
+
+        let mut truncated_at_text = sestring.clone();
+        truncated_at_text.truncate(5);
+
+        let mut truncated_nowhere = sestring.clone();
+        truncated_nowhere.truncate(500);
+
+        assert_eq!(sestring.to_string(), "You leave “<?:8>.”");
+        assert_eq!(sestring.len(), 42);
+
+        assert_eq!(truncated_at_unknown.to_string(), "You leave “");
+        assert_eq!(truncated_at_unknown.len(), 13);
+
+        assert_eq!(truncated_at_text.to_string(), "You l");
+        assert_eq!(truncated_at_text.len(), 5);
+
+        assert_eq!(truncated_nowhere.to_string(), "You leave “<?:8>.”");
+        assert_eq!(truncated_nowhere.len(), 42);
     }
 }
