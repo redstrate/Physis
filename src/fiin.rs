@@ -10,8 +10,6 @@ use crate::{ByteBuffer, ByteSpan, Platform, ReadableFile, WritableFile};
 use binrw::binrw;
 use binrw::{BinRead, BinWrite};
 
-use crate::sha1::Sha1;
-
 #[binrw]
 #[brw(magic = b"FileInfo")]
 #[derive(Debug)]
@@ -81,16 +79,16 @@ impl FileInfo {
     /// hashes.
     ///
     /// These paths are converted to just their filenames.
-    pub fn new(files: &[&str]) -> Option<Self> {
+    pub fn new(files: &[(&str, Vec<u8>)]) -> Option<Self> {
         let mut entries = vec![];
 
-        for path in files {
+        for (path, sha1) in files {
             let file = &read(path).expect("Cannot read file.");
 
             entries.push(FIINEntry {
                 file_size: file.len() as i32,
                 file_name: Path::new(path).file_name()?.to_str()?.to_string(),
-                sha1: Sha1::from(file).digest().bytes().to_vec(),
+                sha1: sha1.clone(),
             });
         }
 
@@ -139,7 +137,23 @@ mod tests {
         d3.push("resources/tests");
         d3.push("test.exl");
 
-        let testing_fiin = FileInfo::new(&[d2.to_str().unwrap(), d3.to_str().unwrap()]).unwrap();
+        let testing_fiin = FileInfo::new(&[
+            (
+                d2.to_str().unwrap(),
+                vec![
+                    0x69, 0x34, 0x2c, 0x5c, 0x39, 0xe5, 0xae, 0x5f, 0x00, 0x77, 0xae, 0xcc, 0x32,
+                    0xc0, 0xf8, 0x18, 0x11, 0xfb, 0x81, 0x93, 0x00, 0x00, 0x00, 0x00,
+                ],
+            ),
+            (
+                d3.to_str().unwrap(),
+                vec![
+                    0x12, 0xf9, 0xa2, 0x2d, 0x99, 0x96, 0x71, 0x2d, 0x4a, 0xd7, 0xa3, 0xc9, 0x14,
+                    0xaf, 0xe6, 0x14, 0x5e, 0xfa, 0x93, 0x83, 0x00, 0x00, 0x00, 0x00,
+                ],
+            ),
+        ])
+        .unwrap();
 
         assert_eq!(
             *valid_fiin,

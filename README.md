@@ -65,7 +65,7 @@ See [CONTRIBUTING](CONTRIBUTING.md) for more information about contributing back
 * [ironworks](https://github.com/ackwell/ironworks) for reference and inspiration.
 * [xiv.dev](https://https://xiv.dev/) for reference.
 
-This project integrates code from [texture2ddecoder](https://github.com/UniversalGameExtraction/texture2ddecoder/), [sha1-smol](https://github.com/mitsuhiko/sha1-smol) and [FFXIVTools](https://github.com/dlunch/FFXIVTools).
+This project integrates code from [texture2ddecoder](https://github.com/UniversalGameExtraction/texture2ddecoder/) and [FFXIVTools](https://github.com/dlunch/FFXIVTools).
 
 ## License
 

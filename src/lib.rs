@@ -79,9 +79,8 @@ mod havok;
 /// Types for pre-bone deform (`.pbd`) files.
 pub mod pbd;
 
-/// Algorithms used everywhere.
+/// We need CRC!!
 mod crc;
-mod sha1;
 
 /// Types for layer-related things, used by the [lgb] and [sgb] modules.
 pub mod layer;
