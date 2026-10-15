@@ -30,6 +30,7 @@ pub struct SegementDescriptor {
     sha1_hash: [u8; 20],
 }
 
+/// The kind of index file.
 #[binrw]
 #[brw(repr = u32)]
 #[derive(Debug, PartialEq, Clone, Copy)]
@@ -41,6 +42,7 @@ pub enum IndexType {
 }
 
 impl IndexType {
+    /// Returns the file extension for this index type.
     pub fn file_extension(&self) -> &'static str {
         match self {
             IndexType::Index1 => "index",
@@ -74,18 +76,22 @@ pub struct SqPackIndexHeader {
     sha1_hash: [u8; 20],
 }
 
+/// Represents both kinds of index hashes.
 #[binrw]
 #[br(import(index_type: &IndexType), return_unexpected_error)]
 #[derive(PartialEq, Debug, Clone, Copy)]
 #[repr(C)]
 pub enum Hash {
+    /// Used by [IndexType::Index1].
     // TODO: on the PS3 these are flipped, but I don't have a good way to represent that yet...
     #[br(pre_assert(*index_type == IndexType::Index1))]
     SplitPath { name: u32, path: u32 },
+    /// Used by [IndexType::Index2].
     #[br(pre_assert(*index_type == IndexType::Index2))]
     FullPath(u32),
 }
 
+/// Inner data struct for [FileEntry].
 #[derive(Debug, Clone)]
 pub struct FileEntryData {
     pub is_synonym: bool,
@@ -133,6 +139,7 @@ impl BinWrite for FileEntryData {
     }
 }
 
+/// Represents a file in [SqPackIndex].
 #[binrw]
 #[brw(import(index_type: &IndexType))]
 #[derive(Debug, Clone)]
@@ -165,13 +172,9 @@ pub struct FolderEntry {
     total_files_size: u32,
 }
 
-#[derive(Debug)]
-pub struct IndexEntry {
-    pub data_file_id: u8,
-    pub offset: u64,
-}
-
 /// SqPack index file, usually with the `.index` or `.index2` file extension.
+///
+/// As the name implies, this is a "table of contents" into [super::SqPackData] files.
 #[binrw]
 #[derive(Debug, Clone)]
 pub struct SqPackIndex {
@@ -186,35 +189,35 @@ pub struct SqPackIndex {
 
     #[br(seek_before = SeekFrom::Start(index_header.data_descriptor.offset.into()))]
     #[br(count = index_header.data_descriptor.size / 256)]
-    pub data_entries: Vec<DataEntry>,
+    data_entries: Vec<DataEntry>,
 
     /*#[br(seek_before = SeekFrom::Start(index_header.unknown_descriptor.offset.into()))]
      *    #[br(count = index_header.unknown_descriptor.size / 16)]
      *    pub unknown_entries: Vec<IndexHashTableEntry>,*/
     #[br(seek_before = SeekFrom::Start(index_header.folder_descriptor.offset.into()))]
     #[br(count = index_header.folder_descriptor.size / 16)]
-    pub folder_entries: Vec<FolderEntry>,
+    folder_entries: Vec<FolderEntry>,
 }
 
 const CRC: Jamcrc = Jamcrc::new();
 
 impl SqPackIndex {
-    /// Creates a new reference to an existing index file.
+    /// Creates a new reference to an existing index file at `path`.
+    ///
+    /// This loads the entire file into memory for performance reasons.
     pub fn from_existing(platform: Platform, path: &Path) -> Option<Self> {
-        // Index files are individually small, so we can easily load them entirely to memory.
-        // Our current index-reading code uses seeking, and that's *very* slow when reading from a disk.
         let buf = std::fs::read(path).ok()?;
         Self::read_options(&mut std::io::Cursor::new(buf), platform.endianness(), ()).ok()
     }
 
-    /// Calculates a partial hash for a given path
+    /// Calculates a partial hash for `path`.
     pub fn calculate_partial_hash(path: &str) -> u32 {
         let lowercase = path.to_lowercase();
 
         CRC.checksum(lowercase.as_bytes())
     }
 
-    /// Calculates a hash for `index` files from a game path.
+    /// Calculates a hash for `index` files for `path`.
     pub fn calculate_hash(&self, path: &str) -> Hash {
         let lowercase = path.to_lowercase();
 
@@ -247,27 +250,24 @@ impl SqPackIndex {
         }
     }
 
+    /// Checks if the file at `path` exists.
     pub fn exists(&self, path: &str) -> bool {
         let hash = self.calculate_hash(path);
         self.entries.iter().any(|s| s.hash == hash)
     }
 
-    pub fn find_entry(&self, path: &str) -> Option<IndexEntry> {
+    /// Returns the [FileEntry] for `path`.
+    pub fn find_entry(&self, path: &str) -> Option<&FileEntry> {
         let hash = self.calculate_hash(path);
         self.find_entry_from_hash(hash)
     }
 
-    pub fn find_entry_from_hash(&self, hash: Hash) -> Option<IndexEntry> {
-        if let Some(entry) = self.entries.iter().find(|s| s.hash == hash) {
-            return Some(IndexEntry {
-                data_file_id: entry.data.data_file_id,
-                offset: entry.data.offset,
-            });
-        }
-
-        None
+    /// Returns the [FileEntry] for `hash`.
+    pub fn find_entry_from_hash(&self, hash: Hash) -> Option<&FileEntry> {
+        self.entries.iter().find(|s| s.hash == hash)
     }
 
+    /// Returns the hash for `offset`.
     pub fn find_entry_from_offset(&self, offset: u64) -> Option<Hash> {
         if let Some(entry) = self.entries.iter().find(|s| s.data.offset == offset) {
             return Some(entry.hash);

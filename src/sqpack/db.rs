@@ -24,6 +24,7 @@ pub struct SQDBHeader {
     unk: u32,
 }
 
+/// Represents a file in a [SqPackDatabase].
 #[binrw]
 #[derive(Debug)]
 pub struct SQDBEntry {
@@ -35,15 +36,18 @@ pub struct SQDBEntry {
     // Corresponds to SplitPath hash
     filename_hash: u32,
     path_hash: u32,
+    unk1: [u8; 3],
 
     // TODO: this is terrible, just read until string nul terminator
-    #[br(count = 240)]
+    #[br(count = 237)]
     #[br(map = read_string)]
     #[bw(map = write_string)]
-    path: String,
+    pub path: String,
 }
 
 /// SqPack database file, usually with the `.sqdb` file extension.
+///
+/// Contains a list of paths, which have to be otherwise brute-forced from [super::SqPackIndex] files.
 #[binrw]
 #[derive(Debug)]
 #[brw(little)]
@@ -53,7 +57,7 @@ pub struct SqPackDatabase {
     header: SQDBHeader,
 
     #[br(parse_with = until_eof)]
-    entries: Vec<SQDBEntry>,
+    pub entries: Vec<SQDBEntry>,
 }
 
 impl ReadableFile for SqPackDatabase {

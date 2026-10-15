@@ -19,7 +19,7 @@ use crate::{
         generic_get_all_sheet_names, generic_parsed, generic_read_excel_sheet,
         generic_read_excel_sheet_header,
     },
-    sqpack::{Hash, IndexEntry, IndexType, SqPackData, SqPackIndex},
+    sqpack::{FileEntry, Hash, IndexType, SqPackData, SqPackIndex},
 };
 
 use super::Resource;
@@ -207,7 +207,7 @@ impl SqPackResource {
     /// Finds the offset inside of the DAT file for `path`.
     pub fn find_offset(&mut self, path: &str) -> Option<u64> {
         let slice = self.find_entry(path);
-        slice.map(|(entry, _)| entry.offset)
+        slice.map(|(entry, _)| entry.data.offset)
     }
 
     /// Parses a path structure and spits out the corresponding category and repository.
@@ -386,7 +386,7 @@ impl SqPackResource {
     }
 
     /// Finds the index entry for `path`, if it exists. Also returns the path of the index file it was found in.
-    fn find_entry(&mut self, path: &str) -> Option<(IndexEntry, PathBuf)> {
+    fn find_entry(&mut self, path: &str) -> Option<(FileEntry, PathBuf)> {
         let index_paths = self.get_index_filenames(path)?;
 
         for index_path in index_paths {
@@ -395,7 +395,7 @@ impl SqPackResource {
             if let Some(index_file) = self.get_index_file(&index_path)
                 && let Some(entry) = index_file.find_entry(path)
             {
-                return Some((entry, index_path));
+                return Some((entry.clone(), index_path));
             }
         }
 
@@ -414,9 +414,11 @@ impl SqPackResource {
         let slice = index_file.find_entry_from_hash(hash);
         match slice {
             Some(entry) => {
-                let mut dat_file =
-                    self.get_dat_file(&index_path.to_string_lossy(), entry.data_file_id.into())?;
-                dat_file.read_from_offset(entry.offset)
+                let mut dat_file = self.get_dat_file(
+                    &index_path.to_string_lossy(),
+                    entry.data.data_file_id.into(),
+                )?;
+                dat_file.read_from_offset(entry.data.offset)
             }
             None => Err(crate::Error::HashNotFound { hash }),
         }
@@ -453,10 +455,12 @@ impl Resource for SqPackResource {
         let slice = self.find_entry(path);
         match slice {
             Some((entry, index_path)) => {
-                let mut dat_file =
-                    self.get_dat_file(&index_path.to_string_lossy(), entry.data_file_id.into())?;
+                let mut dat_file = self.get_dat_file(
+                    &index_path.to_string_lossy(),
+                    entry.data.data_file_id.into(),
+                )?;
 
-                dat_file.read_from_offset(entry.offset)
+                dat_file.read_from_offset(entry.data.offset)
             }
             None => Err(Error::FileNotFound {
                 path: path.to_string(),

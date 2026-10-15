@@ -226,7 +226,7 @@ impl SqPackData {
     /// Reads from a certain offset inside of the dat file. This offset will be fixed automatically
     /// by the function.
     ///
-    /// If the block of data is successfully parsed, it returns the file data - otherwise is None.
+    /// If the block of data is successfully parsed, it returns the file data - otherwise is [None].
     pub fn read_from_offset(&mut self, offset: u64) -> crate::Result<ByteBuffer> {
         self.file.seek(SeekFrom::Start(offset))?;
 
@@ -261,7 +261,7 @@ impl SqPackData {
 
     /// Reads from a given reader.
     ///
-    /// If the block of data is successfully parsed, it returns the file data - otherwise is None.
+    /// If the block of data is successfully parsed, it returns the file data - otherwise is [None].
     pub fn read_from_reader<R: Read + Seek>(
         stream: &mut R,
         platform: Platform,
@@ -291,15 +291,13 @@ impl SqPackData {
         let standard_file_info = file_info.standard_info.as_ref().unwrap(); // NOTE: This should never be called if the FileType isn't Standard.
 
         let mut blocks: Vec<Block> = Vec::with_capacity(standard_file_info.num_blocks as usize);
-
         for _ in 0..standard_file_info.num_blocks {
             blocks.push(Block::read_options(stream, endian, ())?);
         }
 
-        let mut data: Vec<u8> = Vec::with_capacity(file_info.file_size as usize);
-
         let starting_position = offset + (file_info.size as u64);
 
+        let mut data: Vec<u8> = Vec::with_capacity(file_info.file_size as usize);
         for i in 0..standard_file_info.num_blocks {
             data.append(&mut read_data_block(
                 stream,
@@ -321,7 +319,10 @@ impl SqPackData {
         assert_eq!(file_info.file_type, FileType::Model);
         let model_file_info = file_info.model_info.as_ref().unwrap(); // NOTE: This should never be called if the FileType isn't Model.
 
-        let mut buffer = Cursor::new(Vec::new());
+        // TODO: not sure if this is the correct
+        let mut buffer = Cursor::new(Vec::with_capacity(
+            model_file_info.uncompressed_size.total() as usize,
+        ));
 
         let base_offset = offset + (file_info.size as u64);
 

@@ -13,21 +13,21 @@ mod data;
 pub use data::SqPackData;
 
 mod db;
-pub use db::SqPackDatabase;
+pub use db::{SQDBEntry, SqPackDatabase};
 
 mod index;
-pub use index::{Hash, IndexEntry, IndexType, SqPackIndex};
+pub use index::{FileEntry, FileEntryData, Hash, IndexType, SqPackIndex};
 
 /// The type of this SqPack file.
 #[binrw]
 #[brw(repr = u32)]
 #[derive(Debug, Clone, Copy)]
 pub(crate) enum SqPackFileType {
-    /// FFXIV Explorer says "SQDB", whatever that is.
+    /// [SqPackDatabase] files.
     Sqdb = 0x0,
-    /// Dat files.
+    /// [SqPackData] files.
     Data = 0x1,
-    /// Index/Index2 files.
+    /// [SqPackIndex] files.
     Index = 0x2,
 }
 
@@ -35,12 +35,14 @@ pub(crate) enum SqPackFileType {
 #[brw(magic = b"SqPack\0\0")]
 #[derive(Debug, Clone)]
 pub(crate) struct SqPackHeader {
+    /// The platform meant to read this file.
     #[brw(pad_size_to = 4)]
     platform: Platform,
-    /// The size of this header in bytes.
+    /// The size of this header, in bytes.
     pub size: u32,
     /// Have only seen version 1.
     version: u32,
+    /// What kind of file this is.
     file_type: SqPackFileType,
 
     // TODO: some unknown value, zeroed out for index files
