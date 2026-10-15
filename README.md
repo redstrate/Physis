@@ -25,7 +25,7 @@ fn main() -> Result<()> {
 }
 ```
 
-Physis can be used to [apply patches for launchers](https://github.com/redstrate/Astra) or [build modding tools](https://github.com/redstrate/Novus)! We can also [power server emulators](https://codeberg.org/redstrate/Kawari) which deal with a lot of Excel and zone data.
+Physis can be used to [apply patches for launchers](https://github.com/redstrate/Astra) or [build modding tools](https://github.com/redstrate/Novus)! We also [power server emulators](https://codeberg.org/redstrate/Kawari) so they can process Excel and zone data.
 
 ## Supported Game Versions
 
@@ -61,17 +61,11 @@ See [CONTRIBUTING](CONTRIBUTING.md) for more information about contributing back
 
 ## Credits & Thank You
 
-* [ironworks](https://github.com/ackwell/ironworks) for inspiration and reference and [Asriel's ironworks fork](https://github.com/WorkingRobot/ironworks).
-* [goatcorp](https://goatcorp.github.io) for XIVQuickLauncher, docs.xiv.dev, and more.
 * [Ioncannon](http://ffxivexplorer.fragmenterworks.com/research.php) for initially documenting the file formats.
-* [binrw team](https://github.com/jam1garner/binrw) for the awesome Rust library that powers our parsing!
-* [sha1-smol](https://github.com/mitsuhiko/sha1-smol) for a dependency-free SHA1 implementation.
-* [FFXIVTools](https://github.com/dlunch/FFXIVTools) for it's Havok parsing implementation.
-* [texture2ddecoder](https://github.com/UniversalGameExtraction/texture2ddecoder/) for it's BCn texture decoding functions.
-* [VFXEditor](https://github.com/0ceal0t/Dalamud-VFXEditor/) for reference of the game's visual formats.
-* [xivdev file-formats](https://github.com/xivdev/file-formats) for reference for the game's formats.
+* [ironworks](https://github.com/ackwell/ironworks) for reference and inspiration.
+* [xiv.dev](https://https://xiv.dev/) for reference.
 
-And everyone else who writes open-source software for FFXIV!
+This project integrates code from [texture2ddecoder](https://github.com/UniversalGameExtraction/texture2ddecoder/), [sha1-smol](https://github.com/mitsuhiko/sha1-smol) and [FFXIVTools](https://github.com/dlunch/FFXIVTools).
 
 ## License
 
