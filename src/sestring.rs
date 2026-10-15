@@ -210,9 +210,9 @@ impl SeString {
         self.len() == 0
     }
 
-    /// Truncates the string to the given length.
+    /// Truncates the string to the given length, in bytes.
     ///
-    /// Non-text payloads can't be truncated and may be removed if needed.
+    /// Non-text payloads won't be truncated and will be removed if needed.
     pub fn truncate(&mut self, new_len: usize) {
         let mut size = 0;
         let mut end_index = None;
