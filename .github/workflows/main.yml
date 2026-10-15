@@ -36,11 +36,11 @@ jobs:
       run: |
         cargo install --locked cargo-semver-checks
     - name: Build
-      run: cargo build --verbose
+      run: cargo build --all-features
     - name: Run tests
-      run: cargo test --verbose
+      run: cargo test --all-features
     - name: Run clippy
-      run: cargo clippy
+      run: cargo clippy --all-features
     - name: Set up SSH key
       if: github.ref == 'refs/heads/main'
       run: |
@@ -50,7 +50,7 @@ jobs:
     - name: Update Docs
       if: github.ref == 'refs/heads/main'
       run: |
-        cargo doc --release --no-deps
+        cargo doc --release --no-deps --all-features
         rsync -e "ssh -p 38901 -o StrictHostKeyChecking=no" --recursive target/doc/ deploy@ryne.moe:/srv/http/physis-docs
     - name: Run semver-checks
       run: |
