@@ -34,7 +34,6 @@ jobs:
     - name: Install Cargo dependencies
       if: steps.cache-deps.outputs.cache-hit != 'true'
       run: |
-        cargo install --locked cargo-deny
         cargo install --locked cargo-semver-checks
     - name: Build
       run: cargo build --verbose
@@ -53,9 +52,6 @@ jobs:
       run: |
         cargo doc --release --no-deps
         rsync -e "ssh -p 38901 -o StrictHostKeyChecking=no" --recursive target/doc/ deploy@ryne.moe:/srv/http/physis-docs
-    - name: Run deny-check
-      run: |
-        cargo deny check
     - name: Run semver-checks
       run: |
         cargo semver-checks check-release

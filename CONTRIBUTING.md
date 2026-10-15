@@ -35,8 +35,6 @@ The current patch testing code has bit-rotten, and was removed. It will be repla
 
 ### Semantic Versioning and Dependency Checks
 
-Physis uses `cargo deny` to check my dependencies for mismatched versions, deprecation warnings, updates and more. This is run on the CI, so you will know if you made it unhappy.
-
 Making sure that the library is semver-compliant is important, and we use `cargo semver` for this. This is to ensure the API does not break when releasing new minor versions. This is run on the CI as well.
 
 ## Dependencies
