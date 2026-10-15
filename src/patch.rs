@@ -9,9 +9,9 @@ use std::io::{BufWriter, Cursor, Seek, SeekFrom, Write};
 use std::path::{Path, PathBuf};
 
 use crate::ByteBuffer;
-use crate::compression::header_decompress;
 use binrw::{BinRead, BinResult, Endian};
 use binrw::{BinWrite, binrw};
+use zlib_rs::{InflateConfig, ReturnCode, decompress_slice};
 
 use crate::common::Platform;
 use crate::common_file_operations::{read_bool_from, read_string, write_bool_as, write_string};
@@ -753,12 +753,15 @@ impl ZiPatch {
                                                 max(chunk.next_size, chunk.prev_size);
                                             let mut decompressed_data: Vec<u8> =
                                                 vec![0; decompressed_size as usize];
-                                            let mut compressed_data = chunk.data.clone();
-                                            let len = header_decompress(
-                                                &mut compressed_data,
+                                            let (output, err) = decompress_slice(
                                                 &mut decompressed_data,
-                                            )?;
-                                            decompressed_data[..len as usize].to_vec()
+                                                &chunk.data,
+                                                InflateConfig::default(),
+                                            );
+                                            if err != ReturnCode::Ok {
+                                                return Err(crate::Error::Zlib(err as i32));
+                                            }
+                                            output.to_vec()
                                         }
                                     };
                                     data.append(&mut chunk_data);

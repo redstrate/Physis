@@ -13,9 +13,6 @@ pub mod repository;
 /// SqPack file formats - including Db, Data and Index/Index2 files.
 pub mod sqpack;
 
-/// Implementation details for SqPack.
-mod compression;
-
 /// Types for model (`.mdl`) files.
 pub mod model;
 

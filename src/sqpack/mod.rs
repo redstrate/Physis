@@ -5,9 +5,9 @@ use std::io::{Read, Seek, SeekFrom, Write};
 
 use binrw::{BinRead, BinResult, BinWrite, Endian, binrw};
 use data::{BlockHeader, CompressionMode};
+use zlib_rs::{InflateConfig, ReturnCode, decompress_slice};
 
 use crate::common::Platform;
-use crate::compression::no_header_decompress;
 
 mod data;
 pub use data::SqPackData;
@@ -75,9 +75,16 @@ pub(crate) fn read_data_block<T: Read + Seek>(
             buf.read_exact(&mut compressed_data)?;
 
             let mut decompressed_data: Vec<u8> = vec![0; decompressed_length as usize];
-            no_header_decompress(&mut compressed_data, &mut decompressed_data)?;
+            let (output, err) = decompress_slice(
+                &mut decompressed_data,
+                &compressed_data,
+                InflateConfig { window_bits: -15 },
+            );
+            if err != ReturnCode::Ok {
+                return Err(crate::Error::Zlib(err as i32));
+            }
 
-            Ok(decompressed_data)
+            Ok(output.to_vec())
         }
         CompressionMode::Uncompressed { file_size } => {
             let mut local_data: Vec<u8> = vec![0; file_size as usize];
@@ -107,14 +114,19 @@ pub(crate) fn read_data_block_patch<T: Read + Seek>(
             buf.read_exact(&mut compressed_data)?;
 
             let mut decompressed_data: Vec<u8> = vec![0; decompressed_length as usize];
-            no_header_decompress(&mut compressed_data, &mut decompressed_data).map_err(|err| {
-                binrw::Error::Custom {
+            let (output, err) = decompress_slice(
+                &mut decompressed_data,
+                &compressed_data,
+                InflateConfig { window_bits: -15 },
+            );
+            if err != ReturnCode::Ok {
+                return Err(binrw::Error::Custom {
                     pos: 0,
-                    err: Box::new(err),
-                }
-            })?;
+                    err: Box::new(crate::Error::Zlib(err as i32)),
+                });
+            }
 
-            Ok(decompressed_data)
+            Ok(output.to_vec())
         }
         CompressionMode::Uncompressed { file_size } => {
             let new_file_size: usize = (file_size as usize + 143) & 0xFFFFFF80;
