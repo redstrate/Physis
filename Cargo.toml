@@ -20,7 +20,7 @@ serde = ["dep:serde", "dep:serde_derive"]
 binrw = { version = "0.15", features = ["std"], default-features = false }
 
 # Used for zlib compression in sqpack files
-libz-rs-sys = { version = "0.6", features = ["std", "rust-allocator"], default-features = false }
+zlib-rs = { version = "0.6", features = ["std", "rust-allocator"], default-features = false }
 
 # Needed for half-float support which FFXIV uses in its model data
 half = { version = "2.7", features = ["std"], default-features = false }
@@ -29,7 +29,7 @@ half = { version = "2.7", features = ["std"], default-features = false }
 bitflags = { version = "2.13", features = ["std"], default-features = false }
 
 # For optional math support
-glam = { version = "0.34", optional = true }
+glam = { version = "0.34", features = ["std"], optional = true }
 
 # Doing cool stuff with enums Rust doesn't have built-in
 strum = { version = "0.28", features = ["std"], default-features = false }
