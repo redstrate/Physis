@@ -10,9 +10,6 @@ pub const PHYSIS_VERSION: &str = env!("CARGO_PKG_VERSION");
 /// Parsing game repositories, such as "ffxiv", "ex1" and their version information.
 pub mod repository;
 
-/// Handling data in the "boot" directory, which contains the launcher files.
-pub mod bootdata;
-
 /// SqPack file formats - including Db, Data and Index/Index2 files.
 pub mod sqpack;
 
