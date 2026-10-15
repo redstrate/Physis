@@ -16,7 +16,10 @@ use crate::race::{Gender, Race, Tribe};
 #[br(little)]
 #[repr(C)]
 #[derive(Clone, Debug)]
-#[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
+#[cfg_attr(
+    feature = "serde",
+    derive(serde_derive::Deserialize, serde_derive::Serialize)
+)]
 pub struct CustomizeData {
     /// The race of the character.
     pub race: Race,

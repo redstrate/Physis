@@ -7,7 +7,7 @@ use std::path::Path;
 #[cfg(test)]
 use binrw::BinWrite;
 use binrw::{Endian, binrw};
-use strum::EnumIter;
+use strum_macros::EnumIter;
 use strum_macros::{Display, FromRepr};
 
 #[binrw]
@@ -232,7 +232,10 @@ pub type ByteBuffer = Vec<u8>;
 /// Based off of <https://github.com/aers/FFXIVClientStructs/blob/main/FFXIVClientStructs/FFXIV/Client/Enums/TerritoryIntendedUse.cs>.
 #[repr(u8)]
 #[derive(FromRepr, Display, Clone, Copy, PartialEq, Debug, Default)]
-#[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
+#[cfg_attr(
+    feature = "serde",
+    derive(serde_derive::Deserialize, serde_derive::Serialize)
+)]
 pub enum TerritoryIntendedUse {
     /// Towns such as Limsa Lominsa.
     #[default]

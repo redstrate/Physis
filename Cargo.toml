@@ -13,7 +13,7 @@ readme = "README.md"
 [features]
 default = []
 glam = ["dep:glam"]
-serde = ["dep:serde"]
+serde = ["dep:serde", "dep:serde_derive"]
 
 [dependencies]
 # Amazing binary parsing/writing library
@@ -32,8 +32,9 @@ bitflags = { version = "2.13", features = ["std"], default-features = false }
 glam = { version = "0.34", optional = true }
 
 # Doing cool stuff with enums Rust doesn't have built-in
-strum = { version = "0.28", features = ["std", "derive"], default-features = false }
+strum = { version = "0.28", features = ["std"], default-features = false }
 strum_macros = { version = "0.28", default-features = false }
 
 # For optional serializing/deserializing layer types
-serde = { version = "1.0", features = ["std", "derive"], default-features = false, optional = true }
+serde = { version = "1.0", features = ["std"], default-features = false, optional = true }
+serde_derive = { version = "1.0", default-features = false, optional = true }

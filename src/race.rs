@@ -2,14 +2,17 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 use binrw::binrw;
-use strum::{Display, EnumIter};
 use strum_macros::FromRepr;
+use strum_macros::{Display, EnumIter};
 
 /// The playable genders in the game.
 #[binrw]
 #[brw(repr = u8)]
 #[derive(PartialEq, Eq, Clone, Copy, Debug, FromRepr, Default, EnumIter, Display)]
-#[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
+#[cfg_attr(
+    feature = "serde",
+    derive(serde_derive::Deserialize, serde_derive::Serialize)
+)]
 #[repr(u8)]
 pub enum Gender {
     #[default]
@@ -22,7 +25,10 @@ pub enum Gender {
 #[binrw]
 #[brw(repr = u8)]
 #[derive(PartialEq, Eq, Clone, Copy, Debug, FromRepr, Default, EnumIter, Display)]
-#[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
+#[cfg_attr(
+    feature = "serde",
+    derive(serde_derive::Deserialize, serde_derive::Serialize)
+)]
 #[repr(u8)]
 pub enum Tribe {
     Unknown = 0,
@@ -49,7 +55,10 @@ pub enum Tribe {
 #[binrw]
 #[brw(repr = u8)]
 #[derive(PartialEq, Eq, Clone, Copy, Debug, FromRepr, Default, EnumIter, Display)]
-#[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
+#[cfg_attr(
+    feature = "serde",
+    derive(serde_derive::Deserialize, serde_derive::Serialize)
+)]
 #[repr(u8)]
 pub enum Race {
     Unknown = 0,
