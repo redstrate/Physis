@@ -13,7 +13,7 @@ mod data;
 pub use data::SqPackData;
 
 mod db;
-pub use db::{SQDBEntry, SqPackDatabase};
+pub use db::{SqPackDatabase, SqPackDatabaseEntry};
 
 mod index;
 pub use index::{FileEntry, FileEntryData, Hash, IndexType, SqPackIndex};
@@ -24,7 +24,7 @@ pub use index::{FileEntry, FileEntryData, Hash, IndexType, SqPackIndex};
 #[derive(Debug, Clone, Copy)]
 pub(crate) enum SqPackFileType {
     /// [SqPackDatabase] files.
-    Sqdb = 0x0,
+    Database = 0x0,
     /// [SqPackData] files.
     Data = 0x1,
     /// [SqPackIndex] files.

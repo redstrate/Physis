@@ -27,7 +27,7 @@ pub struct SQDBHeader {
 /// Represents a file in a [SqPackDatabase].
 #[binrw]
 #[derive(Debug)]
-pub struct SQDBEntry {
+pub struct SqPackDatabaseEntry {
     #[br(pad_before = 4)] // 4 empty bytes
     offset: u32, // TODO: just a guess, offset into what?
     #[br(pad_after = 4)] // 4 more empty bytes
@@ -57,7 +57,7 @@ pub struct SqPackDatabase {
     header: SQDBHeader,
 
     #[br(parse_with = until_eof)]
-    pub entries: Vec<SQDBEntry>,
+    pub entries: Vec<SqPackDatabaseEntry>,
 }
 
 impl ReadableFile for SqPackDatabase {
