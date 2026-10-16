@@ -74,6 +74,7 @@ pub struct SqPackResource {
     /// Repositories in the game directory.
     pub repositories: Vec<Repository>,
 
+    /// Cached index files.
     index_files: HashMap<PathBuf, SqPackIndex>,
 
     /// The platform this resource was designed for.
@@ -193,7 +194,7 @@ impl SqPackResource {
         self.repositories.sort();
     }
 
-    fn get_dat_file(&self, index_path: &str, data_file_id: u32) -> crate::Result<SqPackData> {
+    fn get_dat_file(&self, index_path: &str, data_file_id: u32) -> crate::Result<std::fs::File> {
         // Remove the index or index2 from the last bit of the path
         let dat_path = index_path.replace(".index2", "");
         let dat_path = dat_path.replace(".index", "");
@@ -201,7 +202,7 @@ impl SqPackResource {
         // Append the new dat extension
         let dat_path = format!("{dat_path}.dat{data_file_id}",);
 
-        SqPackData::from_existing(self.platform, &dat_path)
+        Ok(std::fs::File::open(&dat_path)?)
     }
 
     /// Finds the offset inside of the DAT file for `path`.
@@ -375,7 +376,8 @@ impl SqPackResource {
 
     fn cache_index_file(&mut self, filename: &Path) {
         if !self.index_files.contains_key(filename)
-            && let Some(index_file) = SqPackIndex::from_existing(self.platform, filename)
+            && let Ok(index_file) =
+                SqPackIndex::from_existing(self.platform, &std::fs::read(filename).unwrap())
         {
             self.index_files.insert(filename.to_path_buf(), index_file);
         }
@@ -418,19 +420,19 @@ impl SqPackResource {
                     &index_path.to_string_lossy(),
                     entry.data.data_file_id.into(),
                 )?;
-                dat_file.read_from_offset(entry.data.offset)
+                SqPackData::read_from_reader(self.platform, &mut dat_file, entry.data.offset)
             }
             None => Err(crate::Error::HashNotFound { hash }),
         }
     }
 
     /// Generically parse a file from a `Resource`.
-    pub fn parsed<F: ReadableFile>(&mut self, path: &str) -> Result<F, Error> {
+    pub fn parsed<F: ReadableFile>(&mut self, path: &str) -> crate::Result<F> {
         generic_parsed(self, path)
     }
 
     /// Read an excel sheet header by name (e.g. "Achievement").
-    pub fn read_excel_sheet_header(&mut self, name: &str) -> Result<EXH, Error> {
+    pub fn read_excel_sheet_header(&mut self, name: &str) -> crate::Result<EXH> {
         generic_read_excel_sheet_header(self, name)
     }
 
@@ -440,12 +442,12 @@ impl SqPackResource {
         exh: &EXH,
         name: &str,
         language: Language,
-    ) -> Result<Sheet, Error> {
+    ) -> crate::Result<Sheet> {
         generic_read_excel_sheet(self, exh, name, language)
     }
 
     /// Returns all known sheet names listed in the root list.
-    pub fn get_all_sheet_names(&mut self) -> Result<Vec<String>, Error> {
+    pub fn get_all_sheet_names(&mut self) -> crate::Result<Vec<String>> {
         generic_get_all_sheet_names(self)
     }
 }
@@ -459,8 +461,7 @@ impl Resource for SqPackResource {
                     &index_path.to_string_lossy(),
                     entry.data.data_file_id.into(),
                 )?;
-
-                dat_file.read_from_offset(entry.data.offset)
+                SqPackData::read_from_reader(self.platform, &mut dat_file, entry.data.offset)
             }
             None => Err(Error::FileNotFound {
                 path: path.to_string(),

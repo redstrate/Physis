@@ -4,12 +4,16 @@
 #![allow(clippy::identity_op)]
 #![allow(unused_variables)] // for br(temp), meh
 
+use std::io::Cursor;
 use std::io::Read;
 use std::io::Seek;
 use std::io::SeekFrom;
 use std::io::Write;
-use std::path::Path;
 
+use crate::ByteBuffer;
+use crate::ByteSpan;
+use crate::ReadableFile;
+use crate::WritableFile;
 use crate::common::Platform;
 use crate::crc::Jamcrc;
 use crate::sqpack::SqPackHeader;
@@ -202,14 +206,6 @@ pub struct SqPackIndex {
 const CRC: Jamcrc = Jamcrc::new();
 
 impl SqPackIndex {
-    /// Creates a new reference to an existing index file at `path`.
-    ///
-    /// This loads the entire file into memory for performance reasons.
-    pub fn from_existing(platform: Platform, path: &Path) -> Option<Self> {
-        let buf = std::fs::read(path).ok()?;
-        Self::read_options(&mut std::io::Cursor::new(buf), platform.endianness(), ()).ok()
-    }
-
     /// Calculates a partial hash for `path`.
     pub fn calculate_partial_hash(path: &str) -> u32 {
         let lowercase = path.to_lowercase();
@@ -277,6 +273,28 @@ impl SqPackIndex {
     }
 }
 
+impl ReadableFile for SqPackIndex {
+    fn from_existing(platform: Platform, buffer: ByteSpan) -> crate::Result<Self> {
+        let endianness = platform.endianness();
+        let mut cursor = Cursor::new(buffer);
+
+        Ok(Self::read_options(&mut cursor, endianness, ())?)
+    }
+}
+
+impl WritableFile for SqPackIndex {
+    fn write_to_buffer(&self, platform: Platform) -> crate::Result<ByteBuffer> {
+        let mut buffer = ByteBuffer::new();
+
+        {
+            let mut cursor = Cursor::new(&mut buffer);
+            self.write_options(&mut cursor, platform.endianness(), ())?;
+        }
+
+        Ok(buffer)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use std::{io::Cursor, path::PathBuf};
@@ -292,7 +310,7 @@ mod tests {
         d.push("random");
 
         // Feeding it invalid data should not panic
-        SqPackIndex::from_existing(Platform::Win32, &d);
+        let _ = SqPackIndex::from_existing(Platform::Win32, &std::fs::read(d).unwrap());
     }
 
     #[test]

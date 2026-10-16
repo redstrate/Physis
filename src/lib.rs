@@ -10,7 +10,10 @@ pub const PHYSIS_VERSION: &str = env!("CARGO_PKG_VERSION");
 /// Parsing game repositories, such as "ffxiv", "ex1" and their version information.
 pub mod repository;
 
-/// SqPack file formats - including Db, Data and Index/Index2 files.
+/// Various SqPack file formats (`.dat`, `.index`/`.index2` and `.sqdb`).
+///
+/// If you're only looking for a simple way to read game files, you probably want [SqPackResource](crate::resource::SqPackResource).
+/// The types in this module are implementation details for [Resources](crate::resource::Resource).
 pub mod sqpack;
 
 /// Types for model (`.mdl`) files.

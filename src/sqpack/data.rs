@@ -18,7 +18,7 @@ use crate::sqpack::read_data_block;
 #[brw(repr = i32)]
 #[derive(Debug, PartialEq, Eq)]
 /// The file type of the data entry.
-pub enum FileType {
+enum FileType {
     /// Empty entry, usually invalid.
     Empty = 1,
     /// Encompasses every file that is not a model or a texture.
@@ -48,7 +48,7 @@ struct TextureLodBlock {
     block_count: u32,
 }
 
-pub trait AnyNumberType<'a>:
+trait AnyNumberType<'a>:
     BinRead<Args<'a> = ()> + BinWrite<Args<'a> = ()> + std::ops::AddAssign + Copy + Default + 'static
 {
 }
@@ -65,7 +65,7 @@ impl<'a, T> AnyNumberType<'a> for T where
 
 #[binrw]
 #[derive(Debug)]
-pub struct ModelMemorySizes<T: for<'a> AnyNumberType<'a>> {
+struct ModelMemorySizes<T: for<'a> AnyNumberType<'a>> {
     pub stack_size: T,
     pub runtime_size: T,
 
@@ -94,7 +94,7 @@ impl<T: for<'a> AnyNumberType<'a>> ModelMemorySizes<T> {
 #[binrw]
 #[derive(Debug)]
 #[allow(dead_code)]
-pub struct ModelFileBlock {
+struct ModelFileBlock {
     pub num_blocks: u32,
     pub num_used_blocks: u32,
     pub version: u32,
@@ -167,7 +167,7 @@ struct FileInfo {
 }
 
 #[binrw]
-pub struct Block {
+struct Block {
     #[br(pad_after = 4)]
     offset: i32,
 }
@@ -176,7 +176,7 @@ pub struct Block {
 #[derive(Debug)]
 #[br(import { x : i32, y : i32 })]
 #[br(map = | _ : i32 | if x < 32000 { CompressionMode::Compressed{ compressed_length : x, decompressed_length : y} } else { CompressionMode::Uncompressed { file_size : y } } )]
-pub enum CompressionMode {
+pub(crate) enum CompressionMode {
     // we manually map here, because for this case the enum value is also a raw value we want to extract :-)
     Compressed {
         compressed_length: i32,
@@ -189,7 +189,7 @@ pub enum CompressionMode {
 
 #[binrw]
 #[derive(Debug)]
-pub struct BlockHeader {
+pub(crate) struct BlockHeader {
     #[brw(pad_after = 4)]
     pub size: u32,
 
@@ -209,73 +209,32 @@ pub struct BlockHeader {
 /// SqPack data file, usually with the `.dat` file extension.
 ///
 /// This is used to store most of the game's data.
-pub struct SqPackData {
-    platform: Platform,
-    file: std::fs::File,
-}
+/// The struct is only a helper to read from a stream, see [Self::read_from_reader].
+pub struct SqPackData {}
 
 impl SqPackData {
-    /// Creates a new reference to an existing dat file.
-    pub fn from_existing(platform: Platform, path: &str) -> crate::Result<Self> {
-        Ok(Self {
-            platform,
-            file: std::fs::File::open(path)?,
-        })
-    }
-
-    /// Reads from a certain offset inside of the dat file. This offset will be fixed automatically
-    /// by the function.
-    ///
-    /// If the block of data is successfully parsed, it returns the file data - otherwise is [None].
-    pub fn read_from_offset(&mut self, offset: u64) -> crate::Result<ByteBuffer> {
-        self.file.seek(SeekFrom::Start(offset))?;
-
-        let file_info = FileInfo::read_options(
-            &mut self.file,
-            self.platform.endianness(),
-            (&self.platform,),
-        )?;
-
-        match file_info.file_type {
-            FileType::Empty => Err(crate::Error::InvalidFile),
-            FileType::Standard => Self::read_standard_file(
-                &mut self.file,
-                self.platform.endianness(),
-                offset,
-                &file_info,
-            ),
-            FileType::Model => Self::read_model_file(
-                &mut self.file,
-                self.platform.endianness(),
-                offset,
-                &file_info,
-            ),
-            FileType::Texture => Self::read_texture_file(
-                &mut self.file,
-                self.platform.endianness(),
-                offset,
-                &file_info,
-            ),
-        }
-    }
-
-    /// Reads from a given reader.
+    /// Reads from a given `stream` at `offset` for `platform`.
     ///
     /// If the block of data is successfully parsed, it returns the file data - otherwise is [None].
     pub fn read_from_reader<R: Read + Seek>(
-        stream: &mut R,
         platform: Platform,
+        stream: &mut R,
+        offset: u64,
     ) -> crate::Result<ByteBuffer> {
+        stream.seek(SeekFrom::Start(offset))?;
+
         let file_info = FileInfo::read_options(stream, platform.endianness(), (&platform,))?;
 
         match file_info.file_type {
             FileType::Empty => Err(crate::Error::InvalidFile),
             FileType::Standard => {
-                Self::read_standard_file(stream, platform.endianness(), 0, &file_info)
+                Self::read_standard_file(stream, platform.endianness(), offset, &file_info)
             }
-            FileType::Model => Self::read_model_file(stream, platform.endianness(), 0, &file_info),
+            FileType::Model => {
+                Self::read_model_file(stream, platform.endianness(), offset, &file_info)
+            }
             FileType::Texture => {
-                Self::read_texture_file(stream, platform.endianness(), 0, &file_info)
+                Self::read_texture_file(stream, platform.endianness(), offset, &file_info)
             }
         }
     }
@@ -507,24 +466,5 @@ impl SqPackData {
         }
 
         Ok(data)
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use std::path::PathBuf;
-
-    use super::*;
-
-    #[test]
-    fn test_invalid() {
-        let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-        d.push("resources/tests");
-        d.push("random");
-
-        let mut dat = SqPackData::from_existing(Platform::Win32, d.to_str().unwrap()).unwrap();
-
-        // Reading invalid data should just be nothing, but no panics
-        assert!(dat.read_from_offset(0).is_err());
     }
 }
