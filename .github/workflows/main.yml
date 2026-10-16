@@ -6,6 +6,7 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: 0
 
 jobs:
   reuse:
@@ -25,12 +26,8 @@ jobs:
       id: cache-deps
       with:
         path: |
-          ~/.cargo/bin/
-          ~/.cargo/registry/index/
-          ~/.cargo/registry/cache/
-          ~/.cargo/git/db/
-          target/
-        key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.toml') }}
+          ~/.cargo/bin
+        key: cargo-semver-checks
     - name: Install Cargo dependencies
       if: steps.cache-deps.outputs.cache-hit != 'true'
       run: |
@@ -50,7 +47,7 @@ jobs:
     - name: Update Docs
       if: github.ref == 'refs/heads/main'
       run: |
-        cargo doc --release --no-deps --all-features
+        cargo doc --no-deps --all-features
         rsync -e "ssh -p 38901 -o StrictHostKeyChecking=no" --recursive target/doc/ deploy@ryne.moe:/srv/http/physis-docs
     - name: Run semver-checks
       run: |
