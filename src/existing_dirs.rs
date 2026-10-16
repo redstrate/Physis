@@ -7,6 +7,7 @@ use std::fs;
 use std::fs::read_dir;
 use std::path::PathBuf;
 
+use crate::Version;
 use crate::resource::SqPackResource;
 
 /// Where the existing installation came from.
@@ -79,6 +80,8 @@ fn read_astra_game(path: &str, install_dirs: &mut Vec<ExistingGameDirectory>) {
 /// Finds existing installations on disk.
 ///
 /// Will only return locations that actually have files in them, and a really basic check to see if the data is valid.
+///
+/// The list of installations is returned sorted by the game version.
 pub fn find_existing_game_dirs() -> Vec<ExistingGameDirectory> {
     let mut install_dirs = Vec::new();
 
@@ -174,11 +177,21 @@ pub fn find_existing_game_dirs() -> Vec<ExistingGameDirectory> {
         &_ => {}
     }
 
-    install_dirs
+    let mut install_dirs: Vec<ExistingGameDirectory> = install_dirs
         .into_iter()
         .filter(|dir| is_valid_game_dir(&dir.path))
         .filter(|dir| !dir.version.is_empty())
-        .collect()
+        .collect();
+
+    // Naively sort by the latest version (realistically you're only to have one game install)
+    install_dirs.sort_by(|a, b| {
+        let a_version = Version(&a.version);
+        let b_version = Version(&b.version);
+
+        a_version.cmp(&b_version)
+    });
+
+    install_dirs
 }
 
 /// An existing user directory.
