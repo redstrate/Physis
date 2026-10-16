@@ -199,6 +199,24 @@ impl Field {
     }
 }
 
+impl std::fmt::Display for Field {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Field::String(se_string) => write!(f, "{se_string}"),
+            Field::Bool(value) => write!(f, "{value}"),
+            Field::Int8(value) => write!(f, "{value}"),
+            Field::UInt8(value) => write!(f, "{value}"),
+            Field::Int16(value) => write!(f, "{value}"),
+            Field::UInt16(value) => write!(f, "{value}"),
+            Field::Int32(value) => write!(f, "{value}"),
+            Field::UInt32(value) => write!(f, "{value}"),
+            Field::Float32(value) => write!(f, "{value}"),
+            Field::Int64(value) => write!(f, "{value}"),
+            Field::UInt64(value) => write!(f, "{value}"),
+        }
+    }
+}
+
 /// A single row of data.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Row {
