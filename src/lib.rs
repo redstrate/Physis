@@ -23,6 +23,8 @@ pub mod model;
 pub mod race;
 
 /// Types for Excel list (`.exl`) files.
+///
+/// If you're only looking for a simple way to read Excel data, you probably want to look at the [excel] module instead of using these types.
 pub mod exl;
 
 /// Dealing with equipment and its data.
@@ -44,9 +46,13 @@ pub mod patch;
 pub mod blowfish;
 
 /// Types for Excel header (`.exh`) files.
+///
+/// If you're only looking for a simple way to read Excel data, you probably want to look at the [excel] module instead of using these types.
 pub mod exh;
 
 /// Types for Excel data (`.exd`) files.
+///
+/// If you're only looking for a simple way to read Excel data, you probably want to look at the [excel] module instead of using these types.
 pub mod exd;
 
 /// Types for skeleton (`.sklb`) files.
@@ -71,6 +77,8 @@ pub mod envb;
 pub mod cmp;
 
 /// Types for various saved data formats.
+///
+/// These files are saved to the user directory during gameplay.
 pub mod savedata;
 
 /// Types for plaintext config (`.cfg`) files.

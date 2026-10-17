@@ -88,6 +88,7 @@ fn convert_opt_id(id: &Option<u32>) -> u32 {
     id.unwrap_or(0)
 }
 
+/// Inner data struct for [GearSet].
 #[binrw]
 #[derive(Debug, Clone, Default)]
 pub struct GearSlot {
@@ -107,6 +108,7 @@ pub struct GearSlot {
     unknown5: u32,
 }
 
+/// Inner data struct for [GearSets].
 #[binrw]
 #[derive(Debug, Clone, Default)]
 pub struct GearSet {
@@ -129,6 +131,7 @@ pub struct GearSet {
     pub facewear: Option<u32>,
 }
 
+/// Gearsets file, usually named `GEARSET.DAT`.
 #[binrw]
 #[br(little)]
 #[derive(Debug, Clone)]

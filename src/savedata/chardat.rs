@@ -12,6 +12,7 @@ use binrw::{BinRead, BinWrite};
 
 use crate::race::{Gender, Race, Tribe};
 
+/// Inner data struct for [CharacterData].
 #[binrw]
 #[br(little)]
 #[repr(C)]
@@ -139,7 +140,9 @@ impl Default for CustomizeData {
 
 const MAX_COMMENT_LENGTH: usize = 164;
 
-/// Represents the several options that make up a character data file (DAT) which is used by the game's character creation system to save and load presets.
+/// Character data file, usually with the `.DAT` file extension.
+///
+/// This is used by the game's character creation system to save and load presets.
 #[binrw]
 #[br(little)]
 #[brw(magic = 0x2013FF14u32)]
@@ -150,11 +153,11 @@ pub struct CharacterData {
     pub version: u32,
 
     /// The checksum of the data fields.
-    // TODO: should we re-expose this checksum?
     #[brw(pad_after = 4)]
     #[bw(calc = self.calc_checksum())]
     pub checksum: u32,
 
+    /// The customize data.
     pub customize: CustomizeData,
 
     /// The character's chosen voice.
@@ -164,7 +167,7 @@ pub struct CharacterData {
     /// This is a UTC time in seconds since the Unix epoch.
     pub timestamp: u32,
 
-    // TODO: this is terrible, just read until string nul terminator
+    /// User-set comment for this preset.
     #[br(count = MAX_COMMENT_LENGTH)]
     #[bw(pad_size_to = MAX_COMMENT_LENGTH)]
     #[br(map = read_string)]

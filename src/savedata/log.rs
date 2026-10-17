@@ -84,11 +84,11 @@ pub enum EventChannel {
     Unknown19 = 110,
 }
 
+/// Represents an entry in the chat log.
 #[binrw]
 #[derive(Debug)]
 #[allow(dead_code)]
 #[brw(little)]
-/// Represents an entry in the chat log
 pub struct ChatLogEntry {
     timestamp: u32,
     /// The event filter
@@ -105,9 +105,11 @@ pub struct ChatLogEntry {
     pub message: String,
 }
 
+/// Chat log file, usually with the `.log` file extension.
+///
+/// This contains previously recorded messages from other players.
 #[derive(Debug)]
 #[allow(dead_code)]
-/// Chat log, which contains previously recorded messages from other players
 pub struct ChatLog {
     pub entries: Vec<ChatLogEntry>,
 }

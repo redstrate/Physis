@@ -7,6 +7,7 @@ use binrw::{BinRead, BinWrite, binrw, helpers::until_eof};
 
 use crate::{ByteBuffer, ByteSpan, Platform, ReadableFile, WritableFile};
 
+/// Replay file, usually with the `.cutb` file extension.
 #[binrw]
 #[brw(magic = b"FFXIVREPLAY\0")]
 #[derive(Debug, Clone, Default)]
@@ -46,6 +47,7 @@ pub struct Replay {
     pub packets: Vec<ReplayPacket>,
 }
 
+/// The kind of [ReplayChapter].
 #[binrw]
 #[brw(repr = u8)]
 #[repr(u8)]
@@ -58,6 +60,7 @@ pub enum ReplayChapterType {
     ContentStart = 5,
 }
 
+/// Chapter in a [Replay].
 #[binrw]
 #[derive(Debug, Clone)]
 pub struct ReplayChapter {
@@ -67,6 +70,7 @@ pub struct ReplayChapter {
     pub position_milliseconds: u32,
 }
 
+/// Packet in a [Replay].
 #[binrw]
 #[derive(Debug, Clone)]
 pub struct ReplayPacket {
