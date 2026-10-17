@@ -43,7 +43,7 @@ To use Physis in your project, add it as a dependency in your `Cargo.toml`:
 
 ```toml
 [dependencies]
-physis = "0.6"
+physis = "0.7"
 ```
 
 Documentation is available online at [docs.xiv.zone](https://docs.xiv.zone/docs/physis). It's automatically updated as new
