@@ -57,7 +57,7 @@ C and C++ projects (or any compatible language through FFI) can use [libphysis](
 
 Feel free to submit PRs for fixing bugs or adding functionality. Filing issues is appreciated, but I do this in my free time so please don't expect professional support.
 
-See [CONTRIBUTING](CONTRIBUTING.md) for more information about contributing back to the project!
+See [CONTRIBUTING](https://github.com/redstrate/Physis/blob/main/CONTRIBUTING.md) for more information about contributing back to the project!
 
 ## Credits & Thank You
 
