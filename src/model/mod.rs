@@ -19,7 +19,7 @@ use crate::common::Platform;
 use crate::common_file_operations::{read_bool_from, read_string_from_offset, write_bool_as};
 use crate::equipment::{CharacterCategory, EquipSlotCategory};
 use crate::race::{Gender, Race, Tribe, get_race_id};
-use crate::{ByteBuffer, ByteSpan, ReadableFile, WritableFile};
+use crate::{AABB, ByteBuffer, ByteSpan, ReadableFile, WritableFile};
 use vertex_declarations::{
     VERTEX_ELEMENT_SIZE, VertexDeclaration, VertexType, VertexUsage, vertex_element_parser,
     vertex_element_writer,
@@ -327,14 +327,30 @@ fn write_bone_tables_v2(bone_tables_v2: &BoneTablesV2) -> BinResult<()> {
     Ok(())
 }
 
-// TODO: Replace with AABB type eventually I guess, but it's padded to 16 bytes.
-#[binrw]
-#[derive(Default, Debug, Clone, Copy, PartialEq)]
-#[allow(dead_code)]
-#[repr(C)]
-pub struct BoundingBox {
-    pub min: [f32; 4],
-    pub max: [f32; 4],
+/// Maps the model bounding box (padded to 16 bytes) to our AABB type.
+fn read_bounding_box(min_max: [f32; 8]) -> AABB {
+    AABB {
+        min: [min_max[0], min_max[1], min_max[2]],
+        max: [min_max[4], min_max[5], min_max[6]],
+    }
+}
+
+/// Maps our AABB type to the model bounding box (padded to 16 bytes).
+/// The fourth component seems to be 1.0 if the other components != 0.0, and 0.0 otherwise.
+fn write_bounding_box(aabb: &AABB) -> [f32; 8] {
+    let min_used = aabb.min[0] != 0.0 && aabb.min[1] != 0.0 && aabb.min[2] != 0.0;
+    let max_used = aabb.max[0] != 0.0 && aabb.max[1] != 0.0 && aabb.max[2] != 0.0;
+
+    [
+        aabb.min[0],
+        aabb.min[1],
+        aabb.min[2],
+        if min_used { 1.0 } else { 0.0 },
+        aabb.max[0],
+        aabb.max[1],
+        aabb.max[2],
+        if max_used { 1.0 } else { 0.0 },
+    ]
 }
 
 #[binrw]
@@ -455,13 +471,21 @@ pub struct ModelData {
     #[br(count = padding_amount)]
     unknown_padding: Vec<u8>,
 
-    pub bounding_box: BoundingBox,
-    model_bounding_box: BoundingBox,
-    water_bounding_box: BoundingBox,
-    vertical_fog_bounding_box: BoundingBox,
+    #[br(map = read_bounding_box)]
+    #[bw(map = write_bounding_box)]
+    pub bounding_box: AABB,
+    #[br(map = read_bounding_box)]
+    #[bw(map = write_bounding_box)]
+    model_bounding_box: AABB,
+    #[br(map = read_bounding_box)]
+    #[bw(map = write_bounding_box)]
+    water_bounding_box: AABB,
+    #[br(map = read_bounding_box)]
+    #[bw(map = write_bounding_box)]
+    vertical_fog_bounding_box: AABB,
 
     #[br(count = header.bone_count)]
-    bone_bounding_boxes: Vec<BoundingBox>,
+    bone_bounding_boxes: Vec<[f32; 8]>, // TODO: turn into AABB when we eventually need it
 }
 
 #[binrw]
@@ -1540,7 +1564,7 @@ mod tests {
         assert_eq!(mdl.file_header, old_mdl.file_header);
 
         // TODO: bounding box changes this currently :-(
-        //assert_eq!(mdl.model_data, old_mdl.model_data);
+        // assert_eq!(mdl.model_data, old_mdl.model_data);
     }
 
     #[test]
@@ -1571,6 +1595,34 @@ mod tests {
 
         // model header
         assert_eq!(mdl.model_data.header.radius, 1.5340779);
+        assert_eq!(
+            mdl.model_data.bounding_box,
+            AABB {
+                min: [-0.470331, 0.0, -0.1484961],
+                max: [0.470331, 1.4488051, 0.1820646]
+            }
+        );
+        assert_eq!(
+            mdl.model_data.model_bounding_box,
+            AABB {
+                min: [-0.470331, 0.8932776, -0.1484961],
+                max: [0.470331, 1.4488051, 0.1820646]
+            }
+        );
+        assert_eq!(
+            mdl.model_data.water_bounding_box,
+            AABB {
+                min: [0.0, 0.0, 0.0],
+                max: [0.0, 0.0, 0.0]
+            }
+        );
+        assert_eq!(
+            mdl.model_data.vertical_fog_bounding_box,
+            AABB {
+                min: [0.0, 0.0, 0.0],
+                max: [0.0, 0.0, 0.0]
+            }
+        );
     }
 
     #[test]
