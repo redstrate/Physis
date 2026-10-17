@@ -6,7 +6,10 @@
 use std::io::Cursor;
 
 use crate::common::Platform;
-use crate::common_file_operations::{Half1, Half2, Half3, read_string_from_offset};
+use crate::common_file_operations::{
+    read_half1, read_half2, read_half3, read_string_from_offset, write_half1, write_half2,
+    write_half3,
+};
 use crate::mtrl::ColorDyeTable::{
     DawntrailColorDyeTable, LegacyColorDyeTable, OpaqueColorDyeTable,
 };
@@ -52,73 +55,94 @@ struct ColorSet {
 #[repr(C)]
 #[allow(dead_code)]
 pub struct DawntrailColorTableRow {
-    #[br(map = |x: Half3| { [x.r.to_f32(), x.g.to_f32(), x.b.to_f32()] })]
+    #[br(map = read_half3)]
+    #[bw(map = write_half3)]
     pub diffuse_color: [f32; 3],
 
-    #[br(map = |x: Half1| { x.value.to_f32() })]
+    #[br(map = read_half1)]
+    #[bw(map = write_half1)]
     pub unknown1: f32,
 
-    #[br(map = |x: Half3| { [x.r.to_f32(), x.g.to_f32(), x.b.to_f32()] })]
+    #[br(map = read_half3)]
+    #[bw(map = write_half3)]
     pub specular_color: [f32; 3],
 
-    #[br(map = |x: Half1| { x.value.to_f32() })]
+    #[br(map = read_half1)]
+    #[bw(map = write_half1)]
     pub unknown2: f32,
 
-    #[br(map = |x: Half3| { [x.r.to_f32(), x.g.to_f32(), x.b.to_f32()] })]
+    #[br(map = read_half3)]
+    #[bw(map = write_half3)]
     pub emissive_color: [f32; 3],
 
-    #[br(map = |x: Half1| { x.value.to_f32() })]
+    #[br(map = read_half1)]
+    #[bw(map = write_half1)]
     pub unknown3: f32,
 
-    #[br(map = |x: Half1| { x.value.to_f32() })]
+    #[br(map = read_half1)]
+    #[bw(map = write_half1)]
     pub sheen_rate: f32,
 
-    #[br(map = |x: Half1| { x.value.to_f32() })]
+    #[br(map = read_half1)]
+    #[bw(map = write_half1)]
     pub sheen_tint: f32,
 
-    #[br(map = |x: Half1| { x.value.to_f32() })]
+    #[br(map = read_half1)]
+    #[bw(map = write_half1)]
     pub sheen_aperture: f32,
 
-    #[br(map = |x: Half1| { x.value.to_f32() })]
+    #[br(map = read_half1)]
+    #[bw(map = write_half1)]
     pub unknown4: f32,
 
-    #[br(map = |x: Half1| { x.value.to_f32() })]
+    #[br(map = read_half1)]
+    #[bw(map = write_half1)]
     pub roughness: f32,
 
-    #[br(map = |x: Half1| { x.value.to_f32() })]
+    #[br(map = read_half1)]
+    #[bw(map = write_half1)]
     pub unknown5: f32,
 
-    #[br(map = |x: Half1| { x.value.to_f32() })]
+    #[br(map = read_half1)]
+    #[bw(map = write_half1)]
     pub metalness: f32,
 
-    #[br(map = |x: Half1| { x.value.to_f32() })]
+    #[br(map = read_half1)]
+    #[bw(map = write_half1)]
     pub anisotropy: f32,
 
-    #[br(map = |x: Half1| { x.value.to_f32() })]
+    #[br(map = read_half1)]
+    #[bw(map = write_half1)]
     pub unknown6: f32,
 
-    #[br(map = |x: Half1| { x.value.to_f32() })]
+    #[br(map = read_half1)]
+    #[bw(map = write_half1)]
     pub sphere_mask: f32,
 
-    #[br(map = |x: Half1| { x.value.to_f32() })]
+    #[br(map = read_half1)]
+    #[bw(map = write_half1)]
     pub unknown7: f32,
 
-    #[br(map = |x: Half1| { x.value.to_f32() })]
+    #[br(map = read_half1)]
+    #[bw(map = write_half1)]
     pub unknown8: f32,
 
     pub shader_index: u16,
 
     pub tile_set: u16,
 
-    #[br(map = |x: Half1| { x.value.to_f32() })]
+    #[br(map = read_half1)]
+    #[bw(map = write_half1)]
     pub tile_alpha: f32,
 
     pub sphere_index: u16,
 
-    #[br(map = |x: Half2| { [x.x.to_f32(), x.y.to_f32()] })]
+    #[br(map = read_half2)]
+    #[bw(map = write_half2)]
     pub material_repeat: [f32; 2],
 
-    #[br(map = |x: Half2| { [x.x.to_f32(), x.y.to_f32()] })]
+    #[br(map = read_half2)]
+    #[bw(map = write_half2)]
     pub material_skew: [f32; 2],
 }
 
@@ -127,30 +151,38 @@ pub struct DawntrailColorTableRow {
 #[repr(C)]
 #[allow(dead_code)]
 pub struct LegacyColorTableRow {
-    #[br(map = |x: Half3| { [x.r.to_f32(), x.g.to_f32(), x.b.to_f32()] })]
+    #[br(map = read_half3)]
+    #[bw(map = write_half3)]
     pub diffuse_color: [f32; 3],
 
-    #[br(map = |x: Half1| { x.value.to_f32() })]
+    #[br(map = read_half1)]
+    #[bw(map = write_half1)]
     pub specular_strength: f32,
 
-    #[br(map = |x: Half3| { [x.r.to_f32(), x.g.to_f32(), x.b.to_f32()] })]
+    #[br(map = read_half3)]
+    #[bw(map = write_half3)]
     pub specular_color: [f32; 3],
 
-    #[br(map = |x: Half1| { x.value.to_f32() })]
+    #[br(map = read_half1)]
+    #[bw(map = write_half1)]
     pub gloss_strength: f32,
 
-    #[br(map = |x: Half3| { [x.r.to_f32(), x.g.to_f32(), x.b.to_f32()] })]
+    #[br(map = read_half3)]
+    #[bw(map = write_half3)]
     pub emissive_color: [f32; 3],
 
     pub tile_set: u16,
 
-    #[br(map = |x: Half1| { x.value.to_f32() })]
+    #[br(map = read_half1)]
+    #[bw(map = write_half1)]
     pub material_repeat_x: f32,
 
-    #[br(map = |x: Half2| { [x.x.to_f32(), x.y.to_f32()] })]
+    #[br(map = read_half2)]
+    #[bw(map = write_half2)]
     pub material_skew: [f32; 2],
 
-    #[br(map = |x: Half1| { x.value.to_f32() })]
+    #[br(map = read_half1)]
+    #[bw(map = write_half1)]
     pub material_repeat_y: f32,
 }
 

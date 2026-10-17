@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2024 Joshua Goins <josh@redstrate.com>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-use binrw::{BinRead, BinReaderExt, BinResult, binread, binrw};
+use binrw::{BinRead, BinReaderExt, BinResult};
 use half::f16;
 use std::ffi::CString;
 
@@ -56,68 +56,64 @@ pub(crate) fn write_string(str: &String) -> Vec<u8> {
     c_string.as_bytes_with_nul().to_vec()
 }
 
-fn read_half1(data: [u16; 1]) -> Half1 {
-    Half1 {
-        value: f16::from_bits(data[0]),
-    }
+pub(crate) fn read_half1(data: u16) -> f32 {
+    f16::from_bits(data).to_f32_const()
 }
 
-#[binread]
-#[derive(Debug, Default, Clone, Copy)]
-#[br(map = read_half1)]
-pub(crate) struct Half1 {
-    pub value: f16,
+pub(crate) fn write_half1(data: &f32) -> [u8; 2] {
+    let data0 = data.to_le_bytes();
+
+    [data0[0], data0[1]]
 }
 
-fn read_half2(data: [u16; 2]) -> Half2 {
-    Half2 {
-        x: f16::from_bits(data[0]),
-        y: f16::from_bits(data[1]),
-    }
+pub(crate) fn read_half2(data: [u16; 2]) -> [f32; 2] {
+    [
+        f16::from_bits(data[0]).to_f32_const(),
+        f16::from_bits(data[1]).to_f32_const(),
+    ]
 }
 
-#[binread]
-#[derive(Debug, Default, Clone, Copy)]
-#[br(map = read_half2)]
-pub(crate) struct Half2 {
-    pub x: f16,
-    pub y: f16,
+pub(crate) fn write_half2(data: &[f32; 2]) -> [u8; 4] {
+    let data0 = data[0].to_le_bytes();
+    let data1 = data[1].to_le_bytes();
+
+    [data0[0], data0[1], data1[0], data1[1]]
 }
 
-fn read_half3(data: [u16; 3]) -> Half3 {
-    Half3 {
-        r: f16::from_bits(data[0]),
-        g: f16::from_bits(data[1]),
-        b: f16::from_bits(data[2]),
-    }
+pub(crate) fn read_half3(data: [u16; 3]) -> [f32; 3] {
+    [
+        f16::from_bits(data[0]).to_f32_const(),
+        f16::from_bits(data[1]).to_f32_const(),
+        f16::from_bits(data[2]).to_f32_const(),
+    ]
 }
 
-fn write_half3(data: &Half3) -> [u8; 6] {
-    let data0 = data.r.to_le_bytes();
-    let data1 = data.g.to_le_bytes();
-    let data2 = data.b.to_le_bytes();
+pub(crate) fn write_half3(data: &[f32; 3]) -> [u8; 6] {
+    let data0 = data[0].to_le_bytes();
+    let data1 = data[1].to_le_bytes();
+    let data2 = data[2].to_le_bytes();
 
     [data0[0], data0[1], data1[0], data1[1], data2[0], data2[1]]
 }
 
-#[binrw]
-#[derive(Debug, Default, Clone, Copy)]
-#[br(map = read_half3)]
-#[bw(map = write_half3)]
-pub(crate) struct Half3 {
-    pub r: f16,
-    pub g: f16,
-    pub b: f16,
+pub(crate) fn read_half4(data: [u16; 4]) -> [f32; 4] {
+    [
+        f16::from_bits(data[0]).to_f32_const(),
+        f16::from_bits(data[1]).to_f32_const(),
+        f16::from_bits(data[2]).to_f32_const(),
+        f16::from_bits(data[3]).to_f32_const(),
+    ]
 }
 
-impl From<Half3> for [f32; 3] {
-    fn from(val: Half3) -> Self {
-        [
-            val.r.to_f32_const(),
-            val.g.to_f32_const(),
-            val.b.to_f32_const(),
-        ]
-    }
+pub(crate) fn write_half4(data: &[f32; 4]) -> [u8; 8] {
+    let data0 = data[0].to_le_bytes();
+    let data1 = data[1].to_le_bytes();
+    let data2 = data[2].to_le_bytes();
+    let data3 = data[3].to_le_bytes();
+
+    [
+        data0[0], data0[1], data1[0], data1[1], data2[0], data2[1], data3[0], data3[1],
+    ]
 }
 
 /// Reads a 4 byte string.

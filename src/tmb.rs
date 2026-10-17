@@ -350,6 +350,7 @@ pub struct Tmb {
     /// In bytes, including this header.
     file_size: u32,
     num_nodes: u32,
+    /// The nodes of this timeline.
     #[br(count = num_nodes, args { inner: (string_heap,) })]
     #[bw(ignore)]
     pub nodes: Vec<TimelineNode>,

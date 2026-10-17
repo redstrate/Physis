@@ -7,7 +7,7 @@ use std::collections::HashMap;
 use std::io::{Cursor, SeekFrom};
 
 use crate::common::Platform;
-use crate::common_file_operations::Half3;
+use crate::common_file_operations::read_half3;
 use crate::{ByteBuffer, ByteSpan, ReadableFile, WritableFile};
 use binrw::{BinRead, BinResult, BinWrite, Endian};
 use binrw::{BinReaderExt, binrw};
@@ -27,7 +27,7 @@ struct StainingTemplateEntry {
 
     #[br(parse_with = read_color_array, args(&byte_counts, num_colors))]
     #[bw(ignore)]
-    colors: Vec<Half3>,
+    colors: Vec<[f32; 3]>,
     #[br(parse_with = read_scalar_array, args(&byte_counts, num_colors, num_scalars))]
     #[bw(ignore)]
     scalars: Vec<u16>,
@@ -46,9 +46,9 @@ pub struct LegacyDye {
 impl From<StainingTemplateEntry> for LegacyDye {
     fn from(value: StainingTemplateEntry) -> Self {
         Self {
-            diffuse: value.colors[0].into(),
-            specular: value.colors[1].into(),
-            emissive: value.colors[2].into(),
+            diffuse: value.colors[0],
+            specular: value.colors[1],
+            emissive: value.colors[2],
             shininess: f16::from_bits(value.scalars[0]).to_f32_const(),
             specular_mask: f16::from_bits(value.scalars[1]).to_f32_const(),
         }
@@ -75,9 +75,9 @@ pub struct Dye {
 impl From<StainingTemplateEntry> for Dye {
     fn from(value: StainingTemplateEntry) -> Self {
         Self {
-            diffuse: value.colors[0].into(),
-            specular: value.colors[1].into(),
-            emissive: value.colors[2].into(),
+            diffuse: value.colors[0],
+            specular: value.colors[1],
+            emissive: value.colors[2],
             scalar3: f16::from_bits(value.scalars[9]).to_f32_const(),
             metalness: f16::from_bits(value.scalars[1]).to_f32_const(),
             roughness: f16::from_bits(value.scalars[2]).to_f32_const(),
@@ -104,12 +104,12 @@ fn calc_byte_counts(ends: Vec<u16>) -> Vec<u16> {
 }
 
 #[binrw::parser(reader, endian)]
-fn read_color_array(byte_counts: &[u16], num_colors: usize) -> BinResult<Vec<Half3>> {
+fn read_color_array(byte_counts: &[u16], num_colors: usize) -> BinResult<Vec<[f32; 3]>> {
     let mut entries = Vec::with_capacity(num_colors);
 
     for count in byte_counts.iter().take(num_colors) {
-        let mut array: Vec<Half3> = read_array(reader, endian, *count);
-        entries.append(&mut array); // TODO: wrong
+        let mut array: Vec<[u16; 3]> = read_array(reader, endian, *count);
+        entries.append(&mut array.iter().map(|x| read_half3(*x)).collect());
     }
 
     Ok(entries)

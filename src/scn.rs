@@ -312,7 +312,7 @@ pub struct ScnTimeline {
     pub loop_animation: bool,
     unk2: [u8; 10], // unsure
 
-    /// Bytes of a TMLB file.
+    /// The embedded [Tmb] file.
     #[br(seek_before = SeekFrom::Current(offset_tmb as i64 - ScnTimeline::SIZE as i64), restore_position)]
     #[brw(args(string_heap,))]
     pub tmb: Tmb,

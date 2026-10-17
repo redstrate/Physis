@@ -8,7 +8,8 @@ use std::io::{Cursor, SeekFrom};
 
 use crate::common::Platform;
 use crate::common_file_operations::{
-    Half3, read_bool_from, read_string, read_string_until_nul, write_string,
+    read_bool_from, read_half2, read_half4, read_string, read_string_until_nul, write_half2,
+    write_half4, write_string,
 };
 use crate::{ByteBuffer, ByteSpan, ReadableFile, WritableFile};
 use binrw::{BinRead, BinResult, BinWrite, VecArgs};
@@ -137,6 +138,7 @@ pub struct EmitVertex {
 #[derive(Debug, Clone, Default)]
 pub struct DrawVertex {
     #[br(map = read_half4)]
+    #[bw(map = write_half4)]
     pub position: [f32; 4],
     #[br(map = |x: [u8; 4]| [x[0] as f32 - 128.0, x[1] as f32 - 128.0, x[2] as f32 - 128.0, x[3] as f32 - 128.0])]
     pub normal: [f32; 4],
@@ -144,33 +146,21 @@ pub struct DrawVertex {
     pub tangent: [f32; 4],
     pub color: [u8; 4],
     #[br(map = read_half2)]
+    #[bw(map = write_half2)]
     pub uv1: [f32; 2],
     #[br(map = read_half2)]
+    #[bw(map = write_half2)]
     pub uv2: [f32; 2],
     #[br(map = read_half2)]
+    #[bw(map = write_half2)]
     pub uv3: [f32; 2],
     #[br(map = read_half2)]
+    #[bw(map = write_half2)]
     pub uv4: [f32; 2],
 }
 
 impl DrawVertex {
     const SIZE: usize = 36; // Serialized size
-}
-
-fn read_half4(data: [u16; 4]) -> [f32; 4] {
-    [
-        f16::from_bits(data[0]).to_f32(),
-        f16::from_bits(data[1]).to_f32(),
-        f16::from_bits(data[2]).to_f32(),
-        f16::from_bits(data[3]).to_f32(),
-    ]
-}
-
-fn read_half2(data: [u16; 2]) -> [f32; 2] {
-    [
-        f16::from_bits(data[0]).to_f32(),
-        f16::from_bits(data[1]).to_f32(),
-    ]
 }
 
 #[binrw]
@@ -179,6 +169,7 @@ pub struct DrawTriangle {
     pub indices: [u16; 3],
 }
 
+/// A model inside a [Avfx].
 #[binrw]
 #[derive(Debug, Clone)]
 pub struct AvfxDrawModel {
@@ -214,6 +205,7 @@ where
     array_cursor.read_type_args(endian, VecArgs::builder().count(count).finalize())
 }
 
+/// A texture inside a [Avfx].
 #[binrw]
 #[derive(Debug, Clone)]
 pub struct AvfxTexture {
@@ -419,8 +411,10 @@ pub struct Avfx {
     binders: Vec<PlaceholderBlock>,
     #[br(args { inner: ("Efct",) }, count = effector_count)]
     effectors: Vec<PlaceholderBlock>,
+    /// The textures contained within this file.
     #[br(parse_with = read_block_array, args("Tex", texture_count))]
     pub textures: Vec<AvfxTexture>,
+    /// The models contained within this file.
     #[br(parse_with = read_block_array, args("Modl", model_count))]
     pub models: Vec<AvfxDrawModel>,
 }

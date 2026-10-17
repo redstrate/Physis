@@ -20,10 +20,11 @@ pub struct Svb {
     /// Including this header, in bytes.
     #[bw(calc = self.calculate_file_size())]
     file_size: u32,
-    /// Number of Svc's
+    /// Number of Svcs.
     #[br(temp)]
     #[bw(calc = svcs.len() as u32)]
     svc_count: u32,
+    /// The inner data structs.
     #[br(count = svc_count)]
     pub svcs: Vec<Svc>,
 }
@@ -32,6 +33,7 @@ impl Svb {
     pub(crate) const HEADER_SIZE: u32 = 12;
 }
 
+/// Inner data struct for [Svb].
 #[binrw]
 #[derive(Debug)]
 #[brw(magic = b"SVC1")]
@@ -59,6 +61,7 @@ impl Svc {
     }
 }
 
+/// Inner data struct for [Svc].
 #[binrw]
 #[derive(Debug)]
 pub struct SvcEntry {

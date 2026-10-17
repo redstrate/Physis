@@ -9,7 +9,8 @@ use crate::ByteSpan;
 use crate::ReadableFile;
 use crate::WritableFile;
 use crate::common::Platform;
-use crate::common_file_operations::Half3;
+use crate::common_file_operations::read_half3;
+use crate::common_file_operations::write_half3;
 use binrw::BinRead;
 use binrw::BinResult;
 use binrw::BinWrite;
@@ -33,16 +34,20 @@ pub struct GrassGridData {
 
     // Per-auto-layer random lateral offset ranges
     // The result is multiplied by placement.shape_variation / 255
-    #[br(map = |x: Half3| { [x.r.to_f32(), x.g.to_f32(), x.b.to_f32()] })]
+    #[br(map = read_half3)]
+    #[bw(map = write_half3)]
     pub lateral_offset_min: [f32; 3],
-    #[br(map = |x: Half3| { [x.r.to_f32(), x.g.to_f32(), x.b.to_f32()] })]
+    #[br(map = read_half3)]
+    #[bw(map = write_half3)]
     pub lateral_offset_max: [f32; 3],
 
     // Per-auto-layer random yaw range
     // Values in radians
-    #[br(map = |x: Half3| { [x.r.to_f32(), x.g.to_f32(), x.b.to_f32()] })]
+    #[br(map = read_half3)]
+    #[bw(map = write_half3)]
     pub yaw_min: [f32; 3],
-    #[br(map = |x: Half3| { [x.r.to_f32(), x.g.to_f32(), x.b.to_f32()] })]
+    #[br(map = read_half3)]
+    #[bw(map = write_half3)]
     pub yaw_max: [f32; 3],
 
     // Added to every placement position

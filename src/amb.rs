@@ -17,9 +17,10 @@ use binrw::BinWrite;
 use binrw::VecArgs;
 use binrw::binrw;
 
+/// Inner data struct for [Amb].
 #[binrw]
 #[derive(Debug)]
-pub enum AmbSubtype {
+pub enum AmbSubType {
     #[brw(magic = 0u8)]
     AmbientWeather(AmbAmbientWeather),
     #[brw(magic = 1u8)]
@@ -35,7 +36,8 @@ pub struct Amb {
     pub version: u16,
     /// Should be 0?
     pub endianness: u8,
-    pub data: AmbSubtype,
+    /// The inner data.
+    pub data: AmbSubType,
 }
 
 #[binrw]

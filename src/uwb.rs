@@ -21,10 +21,11 @@ pub struct Uwb {
     #[br(temp)]
     #[bw(calc = self.calculate_file_size())]
     file_size: u32,
-    /// Number of UWC's
+    /// Number of UWCs.
     #[br(temp)]
     #[bw(calc = uwcs.len() as u32)]
     uwc_count: u32,
+    /// The inner data structs.
     #[br(count = uwc_count)]
     pub uwcs: Vec<Uwc>,
 }
@@ -36,6 +37,7 @@ impl Uwb {
     }
 }
 
+/// Data struct used by [Uwb].
 #[binrw]
 #[derive(Debug, Default)]
 #[brw(magic = b"UWC1")]
@@ -71,6 +73,7 @@ pub struct Uwc {
     pub unknown: u32,
 }
 
+/// Data struct used by [Uwc].
 #[binrw]
 #[derive(Debug, Default)]
 pub struct UnderwaterFogAttenuation {

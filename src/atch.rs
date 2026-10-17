@@ -13,6 +13,7 @@ use crate::common_file_operations::read_string_until_nul;
 use binrw::binrw;
 use binrw::{BinRead, BinWrite};
 
+/// Inner data struct for [Atch].
 #[binrw]
 #[derive(Debug)]
 pub struct AtchEntryState {

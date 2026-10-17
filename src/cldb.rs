@@ -12,7 +12,7 @@ use crate::common::Platform;
 use binrw::binrw;
 use binrw::{BinRead, BinWrite};
 
-/// cloud data binary file, usually with the `.cldb` file extension.
+/// Cloud data binary file, usually with the `.cldb` file extension.
 #[binrw]
 #[derive(Debug)]
 #[allow(dead_code)]
@@ -33,6 +33,7 @@ pub struct CloudData {
     pub spheres: Vec<CloudAssetSphere>,
 }
 
+/// Inner data struct for [CloudData].
 #[binrw]
 #[derive(Debug)]
 #[allow(dead_code)]

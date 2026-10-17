@@ -115,7 +115,7 @@ pub mod hwc;
 /// Types for `.iwc` files.
 pub mod iwc;
 
-/// Types for `.tmb` files.
+/// Types for timeline binary (`.tmb`) files.
 pub mod tmb;
 
 /// Types for `.skp` files.
