@@ -36,13 +36,6 @@ pub enum RepairAction {
     VersionFileExtraSpacing,
 }
 
-#[derive(Debug, PartialEq)]
-/// Possible errors emitted through the repair process
-pub enum RepairError<'a> {
-    /// Failed to repair a repository
-    FailedRepair(&'a Repository),
-}
-
 /// Which release these SqPacks are from.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(C)]
@@ -308,10 +301,10 @@ impl SqPackResource {
 
     /// Performs the repair, and returns [true] only if _all actions_ were are successfully repaired.
     /// <div class="warning">This is a destructive operation, so be careful when calling this.</div>
-    pub fn perform_repair<'a>(
+    pub fn perform_repair(
         &self,
-        repositories: &Vec<(&'a Repository, RepairAction)>,
-    ) -> Result<(), RepairError<'a>> {
+        repositories: &Vec<(&Repository, RepairAction)>,
+    ) -> crate::Result<()> {
         for (repository, action) in repositories {
             let ver_path: PathBuf = match repository.repo_type {
                 RepositoryType::Base => [self.game_directory.clone(), "ffxivgame.ver".to_string()]
@@ -338,13 +331,9 @@ impl SqPackResource {
                     .iter()
                     .collect();
 
-                    fs::remove_dir_all(&repo_path)
-                        .ok()
-                        .ok_or(RepairError::FailedRepair(repository))?;
+                    fs::remove_dir_all(&repo_path)?;
 
-                    fs::create_dir_all(&repo_path)
-                        .ok()
-                        .ok_or(RepairError::FailedRepair(repository))?;
+                    fs::create_dir_all(&repo_path)?;
 
                     "2012.01.01.0000.0000".to_string() // TODO: is this correct for expansions?
                 }
@@ -358,17 +347,17 @@ impl SqPackResource {
                     .iter()
                     .collect();
 
-                    read_version(&ver_bak_path).ok_or(RepairError::FailedRepair(repository))?
+                    read_version(&ver_bak_path).ok_or(Error::FileNotFound {
+                        path: ver_bak_path.to_str().unwrap().to_string(),
+                    })?
                 }
                 RepairAction::VersionFileExtraSpacing => {
-                    let ver_file = std::fs::read_to_string(&ver_path).unwrap();
+                    let ver_file = std::fs::read_to_string(&ver_path)?;
                     ver_file.trim().to_string()
                 }
             };
 
-            fs::write(ver_path, new_version)
-                .ok()
-                .ok_or(RepairError::FailedRepair(repository))?;
+            fs::write(ver_path, new_version)?;
         }
 
         Ok(())
@@ -376,8 +365,8 @@ impl SqPackResource {
 
     fn cache_index_file(&mut self, filename: &Path) {
         if !self.index_files.contains_key(filename)
-            && let Ok(index_file) =
-                SqPackIndex::from_existing(self.platform, &std::fs::read(filename).unwrap())
+            && let Ok(data) = std::fs::read(filename)
+            && let Ok(index_file) = SqPackIndex::from_existing(self.platform, &data)
         {
             self.index_files.insert(filename.to_path_buf(), index_file);
         }

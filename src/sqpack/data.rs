@@ -355,7 +355,7 @@ impl SqPackData {
                     .ok();
 
                 for _ in 0..size {
-                    let last_pos = stream.stream_position().unwrap();
+                    let last_pos = stream.stream_position()?;
 
                     let data = read_data_block(stream, endian, last_pos)?;
 

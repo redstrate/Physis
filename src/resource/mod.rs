@@ -50,7 +50,7 @@ mod resolver;
 pub use resolver::ResourceResolver;
 
 mod sqpack;
-pub use sqpack::{RepairAction, RepairError, SqPackRelease, SqPackResource};
+pub use sqpack::{RepairAction, SqPackRelease, SqPackResource};
 
 mod unpacked;
 pub use unpacked::UnpackedResource;
