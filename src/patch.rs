@@ -726,23 +726,31 @@ impl ZiPatch {
                     // Currently, IgnoreMissing and IgnoreOldMismatch is not used in XIVQuickLauncher either. This stays as an intentional NOP.
                 }
                 ChunkType::AddDirectory(add_dir) => {
-                    std::fs::create_dir_all([data_dir, &add_dir.name].iter().collect::<PathBuf>())?;
+                    if !add_dir.name.is_empty() {
+                        std::fs::create_dir_all(
+                            [data_dir, &add_dir.name].iter().collect::<PathBuf>(),
+                        )?;
+                    }
                 }
                 ChunkType::DeleteDirectory(remove_dir) => {
-                    // it's okay to let this be fallible
-                    let _ = std::fs::remove_dir_all(
-                        [data_dir, &remove_dir.name].iter().collect::<PathBuf>(),
-                    );
+                    if !remove_dir.name.is_empty() {
+                        // it's okay to let this be fallible
+                        let _ = std::fs::remove_dir_all(
+                            [data_dir, &remove_dir.name].iter().collect::<PathBuf>(),
+                        );
+                    }
                 }
                 ChunkType::Entry(entry) => {
                     let mut data = Vec::new();
                     for chunk in &entry.chunks {
                         match chunk.operation {
                             EntryOperation::Delete => {
-                                // it's okay to let this be fallible
-                                let _ = std::fs::remove_file(
-                                    [data_dir, &entry.path].iter().collect::<PathBuf>(),
-                                );
+                                if !entry.path.is_empty() {
+                                    // it's okay to let this be fallible
+                                    let _ = std::fs::remove_file(
+                                        [data_dir, &entry.path].iter().collect::<PathBuf>(),
+                                    );
+                                }
                             }
                             _ => {
                                 if !chunk.data.is_empty() {
