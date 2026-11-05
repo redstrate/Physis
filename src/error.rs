@@ -5,6 +5,7 @@ use std::path::PathBuf;
 
 /// The error type used throughout this crate.
 #[derive(Debug)]
+#[non_exhaustive]
 pub enum Error {
     /// The specified path was not found in any resources.
     FileNotFound {
