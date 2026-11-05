@@ -10,6 +10,7 @@ use std::io::Cursor;
 use binrw::BinRead;
 use binrw::BinWrite;
 use binrw::binrw;
+use strum_macros::Display;
 
 use crate::ByteBuffer;
 use crate::ByteSpan;
@@ -62,7 +63,7 @@ pub struct EXHHeader {
 #[binrw]
 #[brw(repr(u16))]
 #[repr(u16)]
-#[derive(PartialEq, Eq, Clone, Copy, Debug)]
+#[derive(PartialEq, Eq, Clone, Copy, Debug, Display)]
 pub enum ColumnDataType {
     /// String.
     String = 0x0,
