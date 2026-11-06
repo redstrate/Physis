@@ -40,11 +40,15 @@ pub struct Replay {
     #[bw(calc = chapters.len() as u32)]
     chapter_count: u32,
     #[br(count = chapter_count)]
+    #[brw(pad_size_to = Self::MAX_CHAPTERS * ReplayChapter::SIZE)]
     pub chapters: Vec<ReplayChapter>,
     /// The server packets contained within this replay.
     #[br(parse_with = until_eof)]
-    #[brw(pad_before = 756)] // HACK: use offset
     pub packets: Vec<ReplayPacket>,
+}
+
+impl Replay {
+    const MAX_CHAPTERS: usize = 64;
 }
 
 /// The kind of [ReplayChapter].
@@ -68,6 +72,10 @@ pub struct ReplayChapter {
     pub chapter_type: ReplayChapterType,
     pub offset: u32,
     pub position_milliseconds: u32,
+}
+
+impl ReplayChapter {
+    const SIZE: usize = 12;
 }
 
 /// Packet in a [Replay].
